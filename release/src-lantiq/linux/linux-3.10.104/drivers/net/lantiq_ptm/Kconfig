@@ -1,0 +1,34 @@
+config LTQ_PTM
+	tristate "Lantiq PTM driver"
+	depends on LANTIQ
+	default n
+	---help---
+	Use this exclusively with ATM mode or Acceleration Package
+
+choice
+	prompt "RX Packet Handling Mechanism"
+	depends on LTQ_PTM
+	default LTQ_PTM_RX_NAPI
+
+config LTQ_PTM_RX_NAPI
+	bool "NAPI"
+
+config LTQ_PTM_RX_TASKLET
+	bool "Tasklet"
+	depends on LTQ_PTM_XRX200
+
+config LTQ_PTM_RX_INTERRUPT
+	bool "Interrupt"
+	depends on LTQ_PTM_XRX200
+
+endchoice
+
+config LTQ_PTM_TEST_PROC
+	bool "Lantiq PTM Driver Test Proc"
+	depends on LTQ_PTM
+	default n
+
+config LTQ_PTM_XRX200
+	bool "PTM Platform Selection"
+	depends on LTQ_PTM
+	default y

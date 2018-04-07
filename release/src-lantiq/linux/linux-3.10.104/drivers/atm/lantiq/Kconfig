@@ -1,0 +1,33 @@
+config LTQ_ATM
+	tristate "Lantiq ATM driver"
+	depends on LANTIQ && ATM
+	default n
+	---help---
+	Use this exclusively with PTM mode or Acceleration Package
+
+config LTQ_ATM_TASKLET
+	bool "Support Tasklet"
+	depends on LTQ_ATM
+	default y
+	---help---
+	Use tasklet handle incoming packet. Impact on ATM RX traffic performance.
+
+config LTQ_ATM_RETX
+	bool "Support ReTX"
+	depends on LTQ_ATM && (LTQ_ATM_XRX300 || LTQ_ATM_XRX200)
+	default n
+	---help---
+	Support Retransmission.
+
+choice
+   prompt "ATM Platform Selection"
+   default LTQ_ATM_XRX300
+
+   config LTQ_ATM_XRX200
+   depends on LTQ_ATM
+   bool "xRX200"
+
+   config LTQ_ATM_XRX300
+   depends on LTQ_ATM
+   bool "xRX300"
+endchoice

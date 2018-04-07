@@ -1,0 +1,104 @@
+
+
+config NET_VENDOR_LANTIQ
+        bool "Lantiq network devices"
+        default y
+        depends on  SOC_XWAY || SOC_GRX500
+        ---help---
+          If you have a network (Ethernet) card belonging to this class, say Y
+          and read the Ethernet-HOWTO, available from
+          <http://www.tldp.org/docs.html#howto>.
+
+if NET_VENDOR_LANTIQ
+
+config LANTIQ_VRX318
+	tristate "VRX318 SmartPHY PCIe EP driver"
+	depends on PCIE_LANTIQ
+	default n
+	---help---
+	Supported VRX318 smartPHY PCIe EP
+
+config LANITQ_VRX318_PCIE_SWITCH_DSL_BONDING
+	tristate "VRX318 SmartPHY DSL bonding with PCIe Switch"
+	depends on LANTIQ_VRX318
+	default n
+	---help---
+	Supported VRX318 smartPHY PCIe DSL Bonding with PCIe switch
+
+config LANTIQ_ETH_FRAMEWORK
+	bool "Lantiq framework for ethernet drivers"
+	depends on LANTIQ
+	default n
+	---help---
+	Lantiq framework for ethernet drivers
+
+config LTQ_ETH_XRX500
+        tristate "Lantiq Ethernet driver for XRX500 series"
+        depends on LANTIQ && SOC_GRX500 && LTQ_ETHSW_API && (LTQ_CBM || LTQ_DATAPATH_LIBRARY)
+        default n
+        ---help---
+        Lantiq Ethernet driver for XRX500 series.
+
+config XRX500_ETH_DRV_COC_SUPPORT
+		bool "CoC support in the ethernet driver"
+        depends on LTQ_ETH_XRX500 && LTQ_DATAPATH_CPUFREQ && LTQ_CPUFREQ
+		default y
+		---help---
+		CoC support in the Ethernet driver of XRX500 series
+
+config HGU_BONDING
+ 	bool "Enable ethernet bonding for GRX500 HGU boards"
+	depends on LTQ_ETH_XRX500
+	default n
+	---help---
+	Lantiq HGU ethernet bonding enable
+
+config HGU_BOND_PORT
+	int "Bonded port number"
+	depends on HGU_BONDING
+	default 1
+	---help---
+	   This is the PAE port to be used as bond port along with the port 15 
+	   to provide 2Gbps ethernet bond port for downstream traffic.
+
+config SW_ROUTING_MODE
+        bool "Enable the SW routing mode in ethernet driver"
+	depends on LTQ_ETH_XRX500
+	default y
+        ---help---
+        Lantiq Ethernet driver routing mode
+
+config HAPS_CPU_LOOPBACK_TEST 
+        bool "Enable CPU enqueue and dequeue loopback"
+	depends on LTQ_ETH_XRX500
+	default n
+        ---help---
+        Lantiq Ethernet driver CPU Enqueue and Dequeue test
+
+config LTQ_ETH_OAM
+  tristate "Ethernet OAM Handler"
+  depends on LANTIQ
+  ---help---
+     This feature helps to create a eth oam virtual netdevice and handle the dot1agd control packets.
+
+config LTQ_TOE_DRIVER
+	bool "Enable the TOE (TCP Offload Engine) driver for XRX500"
+        depends on LTQ_ETH_XRX500
+        default n
+        ---help---
+        Lantiq TOE (TCP Offload Engine) driver for XRX500 series.
+config OFFLOAD_FWD_MARK
+	bool "Enable offload fwd mark for the packets already forwarded by switch"
+				depends on LTQ_ETH_XRX500
+				default y
+				---help---
+				Lantiq switch offload for broadcast/multicast packets
+
+source "drivers/net/ethernet/lantiq/datapath/Kconfig"
+source "drivers/net/ethernet/lantiq/switch-api/Kconfig"
+source "drivers/net/ethernet/lantiq/tmu/Kconfig"
+source "drivers/net/ethernet/lantiq/cbm/Kconfig"
+source "drivers/net/ethernet/lantiq/vrx318/Kconfig"
+source "drivers/net/ethernet/lantiq/directconnect_dp/Kconfig"
+
+endif # NET_VENDOR_LANTIQ

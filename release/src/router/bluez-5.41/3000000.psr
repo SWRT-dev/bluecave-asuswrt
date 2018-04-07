@@ -1,0 +1,281 @@
+// # =============================================================================
+// # 
+// #  Copyright (c) 2015 - 2016 Qualcomm Technologies International, Ltd.
+// #  report this in case of problems:
+// #   $Revision: // #4 $
+// #   Built Mon Jan 18 06:16:04 2016 GMT
+// #   Checked-in $DateTime: 2016/01/18 06:17:22 $
+// #   $File: //depot/bc/gemini-a12/dev/patches/10520/pb-207.btcli $
+// # 
+// # Patch is for build 10520 gem_5hci_rom_bt4.1_gemA12_1407301204_dspm_encr128
+// # 
+// # Issues patched: B-158094, B-169261, B-171616, B-174351, B-175336,
+// #                 B-176411, B-184008, B-206751, B-208678
+// # 
+// # Documentation from pb-207.pb
+// # ----------------------------
+// # 
+// # General purpose patch and PSKEY bundle for CSR8811
+// # and CSR8311 A12 BT4.2 (build ID 10520).
+// # 
+// # Documentation from pb-173-common.pb
+// # -----------------------------------
+// # 
+// # General patch bundle for Gemini-A12 (build ID 10520)
+// # Patches and keys in here should be common to all
+// # package variants.
+// # 
+// # Documentation from report_bt4p2.pb
+// # ----------------------------------
+// # 
+// # Issues patched: B-174351
+// # 
+// # Report BT version 4.2
+// # 
+// # Documentation from patch_ulp_adv_avg_to_calc.xap
+// # ------------------------------------------------
+// # 
+// # Issues patched: B-171616
+// # 
+// # BlueCore can be configured through BCCMDVARID_BLE_CONFIG_ADV_RSSI_AVG_PARAM
+// # to report the advertising rssi average through LE ADVERTISING REPORT to the
+// # host for a given PEER LE device.
+// # For more information, See CS-317256-AN.
+// # 
+// # If the BlueCore is unable to receive a LE ADVERTISING REPORT from the PEER
+// # before a configured average rssi supervision timeout, then the BlueCore
+// # should send a LE ADVERTISING REPORT with rssi value equal to -127 conveying
+// # that the PEER is out of the range; however, it fails to do this.
+// # 
+// # Documentation from patch_ble_scan_deaf.xap
+// # ------------------------------------------
+// # 
+// # Issues patched: B-158094
+// # 
+// # When BlueCore is asked to do BLE scanning, it scans for a window
+// # approximately 2.5% shorter than asked for. Generally, this does
+// # not cause noticeable effects; sometimes BLE adverts can be missed
+// # making connection initialisation between two BLE devices take
+// # somewhat longer than expected. In pathological cases, especially
+// # if the scan window is long, connections may fail to be made entirely.
+// # 
+// # Documentation from patch_usb_suspend_deep_// sleep.xap
+// # ---------------------------------------------------
+// # 
+// # Issues patched: B-176411
+// # 
+// # When BlueCore device is bus powered and is in USB suspend mode, 
+// # the current consumption is approximately 8 mA which is higher 
+// # than the expected current of 250 uA
+// # 
+// # Documentation from patch_tx_if_reduction.xap
+// # --------------------------------------------
+// # 
+// # Issues patched: B-169261
+// # 
+// # When a BlueCore7 device is configured to use a +/-500 kHz transmit IF, this
+// # can be overridden and a +/-375 kHz IF used instead. This reduces the
+// # bandwidthof the transmit spectrum providing a greater margin in a Chinese
+// # regulatory test.
+// # Only transmit IFs of +/-500 kHz may be reduced; if BlueCore7 is configured to
+// # use a TX IF of +/-1 MHz IF that will remain unchanged.
+// # 
+// # Documentation from coex_shutdown.xap
+// # ------------------------------------
+// # 
+// # Issues patched: B-208678
+// # 
+// # With Coexistence Unity-3 scheme, If the WLAN_DENY signal is asserted during
+// # the initial phase of an adaptive frequency hopping(AFH) scan, the Bluecore
+// # device fails to deassert its BT_ACTIVE signal
+// # 
+// # Documentation from patch_access_address.xap
+// # -------------------------------------------
+// # 
+// # Issues patched: B-206751
+// # 
+// # BlueCore devices may generate access addresses that only 
+// # have one bit transition in the 6 most significant bits.
+// # The problem is seen on access addresses that have the most 
+// # significant bit set to one and only have one bit transition 
+// # in the 6 most significant bits.
+// # 
+// # Furthermore, the access address, whilst not identical to the
+// # advertising channel packets??Access Address, may differ by 
+// # only one bit.
+// # 
+// # Documentation from patch_semp2.xap
+// # ----------------------------------
+// # 
+// # Issues patched: B-184008
+// # 
+// # If HCI_SET_EVENT_MASK_PAGE_2 command is sent with wrong parameters
+// # to Bluecore device, it returns error code
+// # 'INVALID_HCI_COMMAND_PARAMETERS'. It should return error code
+// # 'UNKNOWN_HCI_COMMAND'.
+// # 
+// # Documentation from patch_disc_ll_pdu.xap
+// # ----------------------------------------
+// # 
+// # Issues patched: B-175336
+// # 
+// # If a CSR Bluetooth Smart (BLE) device receives unexpected Link Layer
+// # PDU in the middle of ecryption start or pause procedure, it doesn't
+// # disconnect the link. The correct behavior is that the Link Layer shall
+// # disconnect the link immediately, and inform the host with error code
+// # "connection terminated due to MIC failure (0x3D)"
+// # 
+// # Version information for input files
+// # -----------------------------------
+// # 
+// # Created by patchmaker.pl Revision: // #68  Date: 2016/01/18 
+// # 
+// # Input file: pb-207.pb
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/pb-207.pb
+// # File revision: 3
+// # 
+// # Input file: pb-173-common.pb
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/pb-173-common.pb
+// # File revision: 4
+// # 
+// # Input file: report_bt4p2.pb
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/report_bt4p2.pb
+// # File revision: 1
+// # 
+// # Input file: patch_ulp_adv_avg_to_calc.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/patch_ulp_adv_avg_to_calc.xap
+// # File revision: 4
+// # 
+// # Input file: ../patch_utils.inc
+// # Depot file: //depot/bc/gemini-a12/dev/patches/patch_utils.inc
+// # File revision: 1
+// # 
+// # Input file: patch_ble_scan_deaf.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/patch_ble_scan_deaf.xap
+// # File revision: 3
+// # 
+// # Input file: patch_usb_suspend_deep_// sleep.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/patch_usb_suspend_deep_// sleep.xap
+// # File revision: 3
+// # 
+// # Input file: patch_tx_if_reduction.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/patch_tx_if_reduction.xap
+// # File revision: 1
+// # 
+// # Input file: coex_shutdown.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/coex_shutdown.xap
+// # File revision: 3
+// # 
+// # Input file: patch_access_address.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/patch_access_address.xap
+// # File revision: 2
+// # 
+// # Input file: patch_semp2.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/patch_semp2.xap
+// # File revision: 3
+// # 
+// # Input file: patch_disc_ll_pdu.xap
+// # Depot file: //depot/bc/gemini-a12/dev/patches/10520/patch_disc_ll_pdu.xap
+// # File revision: 3
+
+// # explicit, PSKEY_HCI_LMP_LOCAL_VERSION (0x010d, 269), 1 words
+&010d = 0808
+
+// # explicit, PSKEY_LMP_REMOTE_VERSION (0x010e, 270), 1 words
+&010e = 0008
+
+// # patch_hardware_0, PSKEY_PATCH50 (0x212c, 8492), 56 words
+&212c = 0000 f001 0617 0513 0118 ff2b ff0e 1a00 2818 009e 081b f100 8888 24f0 f925 f821 0a17 0184 0cf0 0117 0013 0009 02a4 fb25 fa21 f915 f811 fb55 fa61 09e0 ff84 10f0 0117 0013 0009 02a4 f935 f841 f925 f821 0f1b 0712 10a4 0494 0712 e151 0722 f915 f811 0018 ff2b ff0e f000 0518 00e2 5a79
+
+// # patch_hardware_1, PSKEY_PATCH51 (0x212d, 8493), 21 words
+&212d = 0002 968a 0863 f925 f821 0757 0663 e099 02ec 05e0 f915 0727 f815 0627 0218 ff2b ff0e 9700 8d18 00e2 7e34
+
+// # patch_hardware_2, PSKEY_PATCH52 (0x212e, 8494), 16 words
+&212e = 0002 0b5a 0100 7834 0040 0327 0223 f815 e311 0218 ff2b ff0e 0b00 5e18 00e2 59c1
+
+// # patch_hardware_3, PSKEY_PATCH53 (0x212f, 8495), 17 words
+&212f = 0000 7315 0084 04f0 0800 0014 03e0 f800 1215 0b27 0018 ff2b ff0e 7300 1818 00e2 0549
+
+// # patch_hardware_4, PSKEY_PATCH54 (0x2130, 8496), 21 words
+&2130 = 0001 53f8 0817 0e27 0c00 6384 07f0 0118 ff2b ff0e 5400 0918 00e2 0917 0118 ff2b ff0e 5400 fb18 00e2 91f6
+
+// # patch_hardware_5, PSKEY_PATCH55 (0x2131, 8497), 49 words
+&2131 = 0002 c0d5 0423 05f4 031b 0012 0280 1df0 021b 0916 1000 00c4 1ef0 0916 03c4 1bf4 031b 0012 0280 17f4 0380 15f4 0480 13f4 0580 11f4 0680 0ff4 0b80 0df4 0d80 0bf4 019c fb00 6719 0d9e 0218 ff2b ff0e c200 8c18 00e2 0218 ff2b ff0e c100 de18 00e2 c5cf
+
+// # patch_hardware_6, PSKEY_PATCH56 (0x2132, 8498), 42 words
+&2132 = 0003 243f f40b 0827 0923 e019 0916 01b4 0926 0318 ff2b ff0e 2400 4218 00e2 fa0b 3d14 0327 0114 0227 0014 0127 0027 081b 0816 0218 ff2b ff0e f700 fd18 009e e111 081b 0816 0218 ff2b ff0e 3300 ff18 009e fa0f 40f2
+
+// # patch_hardware_7, PSKEY_PATCH57 (0x2133, 8499), 23 words
+&2133 = 0003 254e 02c0 0916 1000 00c4 02f4 02b0 0916 fec4 e1b1 0922 0816 0318 ff2b ff0e 2500 5218 8000 00c0 08f2 00e2 e402
+
+// # patch_hardware_8, PSKEY_PATCH58 (0x2134, 8500), 16 words
+&2134 = 0003 21ca fa0b 0227 0323 e019 0916 01b4 0926 0318 ff2b ff0e 2200 cd18 00e2 22dc
+
+// # patch_hardware_9, PSKEY_PATCH59 (0x2135, 8501), 18 words
+&2135 = 0000 55e2 09f4 0218 ff2b ff0e 2c00 a718 009e 0314 fc0f 0018 ff2b ff0e 5600 0118 00e2 a008
+
+// # patch_hardware_10, PSKEY_PATCH60 (0x2136, 8502), 30 words
+&2136 = 0004 0d80 1aa4 0418 ff2b ff0e 1d00 ba18 009e 0184 0d2c 0013 8f00 89d0 0117 bf00 d6d4 0318 ff2b ff0e 2700 4218 009e 0418 ff2b ff0e 0e00 8418 00e2 6855
+// ===================================
+// # PSKEY_HOST_INTERFACE UART link running H4 for BLE test
+// #&01f9 0003
+// #&01C0 08a8
+// sleep 500
+
+// # PSKEY_HOST_INTERFACE UART link running BCSP
+&01f9 = 0001
+// sleep 500
+
+// # PSKEY_UART_BITRATE 115200 - 0001 c200, 921600 - 000e 1000, 3Mbps - 002d c6c0 
+&01ea = 002d c6c0
+// sleep 300
+
+
+
+// # BT_ADDR
+&0001 = 00DE 5A8D 00F6 3497
+// sleep 300
+
+
+// # Xtal frequency 26MHz
+&01fe = 6590
+// sleep 300
+
+
+// # Set PSKEY_ANA_FTRIM for fine tunning Xtal frequency.
+&01f6 = 001d
+// sleep 300
+
+## Configure co-existence
+# PSKEY_COEX_SCHEME(0x2480) set to 5 for Unity 3+; set to 9 for Unity-3e+ 
+#PSKEY_COEX_SCHEME(0x2480) Unity-3 (standard 3 wire co-existence)                                             
+&2480 = 0003
+
+#PSKEY_COEX_PIO_UNITY_3_BT_ACTIVE_PIO1, Active High    
+&2483 = 0001 0001      
+
+#PSKEY_COEX_PIO_UNITY_3_BT_STATUS_PIO4, Active High
+&2484 = 0004 0001      
+
+#PSKEY_COEX_PIO_UNITY_3_WLAN_DENY_PIO9, Active High     
+&2485 = 0009 0001      
+
+#COEX_UNITY_3_TIMINGS_T1 and T2 timings                               
+&2489 = 0096 0011 
+
+
+# #PSKEY_LC_DEFAULT_TX_POWER
+#psset 0x0021 0x0014
+
+#psset 0x00ef 0xffff 0xfe8f 0xffdb 0x875b
+
+
+
+// sleep 2000
+
+// bcset warm_reset
+
+// sleep 2000
+// quit
+
+

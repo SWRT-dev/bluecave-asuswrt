@@ -1,0 +1,47 @@
+Device Tree settings for Texas Instruments INA219, INA226 power monitor chips
+--------------------------------
+"ti,ina219":
+The INA219 is a high-side current shunt and power monitor with an I2C interface.
+The INA219 monitors shunt drop and supply voltage, with programmable conversion
+times, filtering and calibration. Internal multiplier enable direct readouts of
+current in ampers and power in watts.
+
+Required properties:
+- "compatible" value : one of
+      "ti,ina219"
+      "ti,ina226"
+- "reg" value        : I2C address
+
+Optional properties:
+- "shunt-resistor"   : shunt resistor value in mico-Ohm
+- "rail-name"        : define a name for the measured power rail, e.g. VDD_3V3
+- "user-calibration" : define user calibration data; overwrite default vaules for higher accuracy
+                       < param1 param2 param3 param4 > (4 int32 values must be given)
+                       param1 = calibration factor [R5], param2 = configuration register [R0]
+                       param3 = current_lsb [uA], param4 = power_lsb [uW] 
+
+
+Example: "ti,ina219"
+&i2c {
+    status = "okay";
+
+    ina219@48 {
+        compatible = "ti,ina219";
+        reg = <0x48>;
+        shunt-resistor = <10000>;
+        rail-name = "           PWR_12V ";
+    };
+}
+
+Example: "ti,ina219" with user calibration
+    status = "okay";
+
+    ina219@48 {
+        compatible = "ti,ina219";
+        reg = <0x48>;
+        shunt-resistor = <10000>;
+        user-calibration = <27306 0x019F 15 300>;
+        rail-name = "           PWR_12V ";
+    };
+}
+

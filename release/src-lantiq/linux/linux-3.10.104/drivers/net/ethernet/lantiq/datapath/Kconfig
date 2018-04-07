@@ -1,0 +1,116 @@
+#
+# Datapath Lib
+#
+config LTQ_DATAPATH
+	bool "Datapath Lib"
+	default y
+	depends on SOC_GRX500
+	---help---
+	  Datapath Lib is to provide common rx/tx wrapper API without taking
+	  care of much HW knowledge and also provide common interface for legacy
+	  devices and different HW like to CBM or LRO.
+	  Take note: All devices need to register to datapath API first
+
+config LTQ_DATAPATH_MIB
+	bool "Datapath aggregated mib support"
+	depends on LTQ_DATAPATH
+	default y
+	---help---
+	   It is to aggregate GSWIP-L/R, TMU and driver's MIB counter
+config LTQ_DATAPATH_MIB_TMU_MPE_MIB
+        bool "Support TMU-HAL mib API and MPE_HAL mib API"
+        default y
+        depends on LTQ_DATAPATH_MIB
+        ---help---
+          it is to provide dummpy TMU HAL mib api for standalone testing only
+config LTQ_DATAPATH_DUMMY_TMU_MIB
+	bool "Dummy TMU-HAL mib API"
+	default n
+	depends on LTQ_DATAPATH_MIB_TMU_MPE_MIB
+	---help---
+	  it is to provide dummpy TMU HAL mib api for standalone testing only
+config LTQ_DATAPATH_DUMMY_MPE_MIB
+        bool "Dummy MPE-HAL mib API"
+        default n
+        depends on LTQ_DATAPATH_MIB_TMU_MPE_MIB
+        ---help---
+          it is to provide dummpy MPE HAL mib api for standalone testing only
+config LTQ_DATAPATH_OLD_TMU_HAL
+        bool "Integrate with non-standard TMU HAL"
+        default n
+        depends on LTQ_DATAPATH_MIB_TMU_MPE_MIB
+        ---help---
+          it is to used to do integraion with non-standard TMU HAL. For testing only with old TMU HAL
+config LTQ_DATAPATH_CPUFREQ
+        bool "Datapath DFS(COC) support"
+        depends on LTQ_DATAPATH && LTQ_CPUFREQ
+        default y
+        ---help---
+           It is to support DFS(COC) in Datapath
+config LTQ_DP_ACA_CSUM_WORKAROUND
+	bool "ACA Checksum Workaround"
+	default y
+	---help---
+	  It is to solve system bus hang hang issue 
+
+config LTQ_DATAPATH_MANUAL_PARSE
+        bool "Datapath manual parse network protocol"
+        depends on LTQ_DATAPATH
+        default y
+        ---help---
+           Manual parse network protocol for tcp offloading with some tunnel limit
+
+config LTQ_DATAPATH_COPY_LINEAR_BUF_ONLY
+        bool "Datapath Copy linear buffer only for skb"
+        default n
+        ---help---
+           Datapath Copy linear buffer only for skb if need to alloc new buffer. But it needs CBM driver supports
+
+
+config LTQ_DATAPATH_DBG
+	bool "Datapath Debug Tool"
+	default y
+	depends on LTQ_DATAPATH
+	---help---
+	  Datapath Debug Tool is used to provide simple debug proc tool
+	  Each flag can be enabled/disabled easily
+	  Once this flag is enabled, the debugging information will be printed out
+	  otherwise, no debugging information for this flag will be printed
+
+config LTQ_DATAPATH_DBG_PROTOCOL_PARSE
+        bool "Datapath Debug Tool for hw checksum's protocol parsing"
+        default n
+        depends on LTQ_DATAPATH_DBG
+        ---help---
+          Datapath Debug Tool for hw checksum's protocol parsing
+
+config LTQ_DATAPATH_LOOPETH
+	bool "pseudo driver simulation"
+	default n
+	depends on LTQ_DATAPATH
+	---help---
+	  Pseudo driver is to simulate ethernet/wifi device to register to datapath
+	  api. Use this pseudo driver can test whether datatpath API is implemented
+	  properly or not.
+	  Also it can be used to measure the directpath performance
+
+config LTQ_DP_MPE_FASTHOOK_TEST
+	bool "MPE FW Fast Hook Test for skb"
+	default n
+	depends on  LTQ_DATAPATH
+	---help---
+	  MPE FW Fast Hook is used to quick verify MPE FW Functionality without
+	  fullPPA support. Once it is enabled, it will add some fields in skb structure
+	  in order to support MPE FAST HOOK. The reason is that some network driver is
+	  pre-build out of this build system.
+
+config LTQ_DP_MPE_FASTHOOK_TEST_COMPILE
+        bool "MPE FW Fast Hook Test"
+        default n
+        depends on  LTQ_DP_MPE_FASTHOOK_TEST
+        ---help---
+          MPE FW Fast Hook is used to quick verify MPE FW Functionality without
+          fullPPA support. It will install two hook in dp_rx/dp_xmit API and
+          quickly learn session informatin. Once the session is learned,
+          it will configure MPE FW session table, ie, the compare table and
+          test MPE FW functionalities.

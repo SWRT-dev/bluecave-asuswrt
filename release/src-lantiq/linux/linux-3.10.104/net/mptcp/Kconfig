@@ -1,0 +1,142 @@
+#
+# MPTCP configuration
+#
+config MPTCP
+        bool "MPTCP protocol"
+        depends on (IPV6=y || IPV6=n)
+        ---help---
+          This replaces the normal TCP stack with a Multipath TCP stack,
+          able to use several paths at once.
+
+menuconfig MPTCP_PM_ADVANCED
+	bool "MPTCP: advanced path-manager control"
+	depends on MPTCP=y
+	---help---
+	  Support for selection of different path-managers. You should choose 'Y' here,
+	  because otherwise you will not actively create new MPTCP-subflows.
+
+if MPTCP_PM_ADVANCED
+
+config MPTCP_FULLMESH
+	tristate "MPTCP Full-Mesh Path-Manager"
+	depends on MPTCP=y
+	---help---
+	  This path-management module will create a full-mesh among all IP-addresses.
+
+config MPTCP_FULLMESH_MF
+	tristate "MPTCP Full Mesh Path Manager - 'Master First'"
+	depends on MPTCP=y
+	---help---
+	  This path management module will create a full-mesh among
+	  all IP-addresses.  However, it will at first only open a
+	  subflow on the interface marked "master".  Subflows will be
+	  opened on non-master interfaces upon receiving an
+	  ADD_ADDRESS message from the MPTCP server side.
+
+config MPTCP_NDIFFPORTS
+	tristate "MPTCP ndiff-ports"
+	depends on MPTCP=y
+	---help---
+	  This path-management module will create multiple subflows between the same
+	  pair of IP-addresses, modifying the source-port. You can set the number
+	  of subflows via the mptcp_ndiffports-sysctl.
+
+config MPTCP_BINDER
+	tristate "MPTCP Binder"
+	depends on (MPTCP=y)
+	---help---
+	  This path-management module works like ndiffports, and adds the sysctl
+	  option to set the gateway (and/or path to) per each additional subflow
+	  via Loose Source Routing (IPv4 only).
+
+choice
+	prompt "Default MPTCP Path-Manager"
+	default DEFAULT
+	help
+	  Select the Path-Manager of your choice
+
+	config DEFAULT_FULLMESH
+		bool "Full mesh" if MPTCP_FULLMESH=y
+
+	config DEFAULT_FULLMESH_MF
+		bool "Full mesh (master first)" if MPTCP_FULLMESH_MF=y
+
+	config DEFAULT_NDIFFPORTS
+		bool "ndiff-ports" if MPTCP_NDIFFPORTS=y
+
+	config DEFAULT_BINDER
+		bool "binder" if MPTCP_BINDER=y
+
+	config DEFAULT_DUMMY
+		bool "Default"
+
+endchoice
+
+endif
+
+config DEFAULT_MPTCP_PM
+	string
+	default "default" if DEFAULT_DUMMY
+	default "fullmesh" if DEFAULT_FULLMESH
+	default "fullmesh_mf" if DEFAULT_FULLMESH_MF
+	default "ndiffports" if DEFAULT_NDIFFPORTS
+	default "binder" if DEFAULT_BINDER
+	default "default"
+
+menuconfig MPTCP_SCHED_ADVANCED
+	bool "MPTCP: advanced scheduler control"
+	depends on MPTCP=y
+	---help---
+	  Support for selection of different schedulers. You should choose 'Y' here,
+	  if you want to choose a different scheduler than the default one.
+
+if MPTCP_SCHED_ADVANCED
+
+config MPTCP_ROUNDROBIN
+	tristate "MPTCP Round-Robin"
+	depends on (MPTCP=y)
+	---help---
+	  This is a very simple round-robin scheduler. Probably has bad performance
+	  but might be interesting for researchers.
+
+config MPTCP_MASTERFIRST
+	tristate "MPTCP Master-First"
+	depends on (MPTCP=y)
+	---help---
+	  This is a very simple scheduler that first sends traffic through a selected
+	  master interface.
+
+choice
+	prompt "Default MPTCP Scheduler"
+	default DEFAULT
+	help
+	  Select the Scheduler of your choice
+
+	config DEFAULT_SCHEDULER
+		bool "Default"
+		---help---
+		  This is the default scheduler, sending first on the subflow
+		  with the lowest RTT.
+
+    config DEFAULT_ROUNDROBIN
+		bool "Round-Robin" if MPTCP_ROUNDROBIN=y
+		---help---
+		  This is the round-rob scheduler, sending in a round-robin
+		  fashion..
+
+    config DEFAULT_MASTERFIRST
+		bool "Master-First" if MPTCP_MASTERFIRST=y
+		---help---
+		  This is the master-first scheduler, having one preffered interface
+		  to push traffic.
+
+endchoice
+endif
+
+config DEFAULT_MPTCP_SCHED
+	string
+	depends on (MPTCP=y)
+	default "default" if DEFAULT_SCHEDULER
+	default "roundrobin" if DEFAULT_ROUNDROBIN
+	default "masterfirst" if DEFAULT_MASTERFIRST
+	default "default"

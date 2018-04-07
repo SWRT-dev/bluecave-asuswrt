@@ -1,0 +1,119 @@
+if LANTIQ
+
+config SOC_TYPE_XWAY
+	bool
+	select PINCTRL_XWAY
+	select USB_ARCH_HAS_HCD
+	default n
+
+choice
+	prompt "SoC Type"
+	default SOC_XWAY
+
+config SOC_AMAZON_SE
+	bool "Amazon SE"
+	select SOC_TYPE_XWAY
+
+config SOC_XWAY
+	bool "XWAY"
+	select SOC_TYPE_XWAY
+	select HW_HAS_PCI
+	select ARCH_SUPPORTS_MSI
+	select ARCH_HAS_RESET_CONTROLLER
+	select RESET_CONTROLLER
+
+config SOC_FALCON
+	bool "FALCON"
+	select PINCTRL_FALCON
+
+config SOC_GRX500
+	bool "GRX500"
+	select HW_HAS_PCI
+	select ARCH_SUPPORTS_MSI
+	select ARCH_HAS_RESET_CONTROLLER
+	select RESET_CONTROLLER
+
+config SOC_GRX500_BOOTCORE
+	bool "GRX500_BOOTCORE"
+
+endchoice
+
+menu "Emulator Support"
+config USE_EMULATOR
+	bool "Support for FPGA emulation platform"
+	default no
+	help
+	Use FPGA emulator as platform
+
+choice
+	prompt "Emulator"
+	depends on USE_EMULATOR
+	default USE_PALLADIUM
+
+config USE_HAPS
+	bool "HAPS"
+
+config USE_PALLADIUM
+	bool "Palladium"
+
+endchoice
+endmenu
+
+choice
+	prompt "Devicetree"
+
+config DT_EASY50712
+	bool "Easy50712"
+	depends on SOC_XWAY
+
+endchoice
+
+choice 
+	prompt "TOS_SIZE"
+	depends on SOC_GRX500_BOOTCORE
+	default TOS_SIZE_32M
+config TOS_SIZE_16M
+	bool "16M tos size"
+
+config TOS_SIZE_32M
+	bool "32M tos size"
+
+config TOS_SIZE_64M
+	bool "64M tos size"
+
+config TOS_SIZE_128M
+	bool "128M tos size"
+endchoice
+
+
+config PCI_LANTIQ_BOOT
+	bool "PCI Boot Support"
+	depends on SOC_XWAY && PCI && !PCI_LANTIQ
+	default n
+	---help---
+	PCI bonding boot used for DSL off-chip bonding. Only xRX200 platform is
+	supported To use this option, xRX200 family board and bonding daughter
+	board must connect each other.
+
+config PCI_LANTIQ
+	bool "PCI Support"
+	depends on SOC_XWAY && PCI
+
+config PCIE_LANTIQ
+	bool "PCIE Support"
+	depends on (SOC_XWAY || SOC_GRX500) && PCI
+
+config PCIE_LANTIQ_MSI
+	bool
+	depends on PCIE_LANTIQ && PCI_MSI
+	default y
+
+config XRX200_PHY_FW
+	bool "XRX200 PHY firmware loader"
+	depends on SOC_XWAY
+
+config XRX500_PHY_FW
+	bool "XRX500 PHY firmware loader"
+	depends on SOC_GRX500
+
+endif

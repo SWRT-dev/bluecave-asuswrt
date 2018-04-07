@@ -1,0 +1,10 @@
+/dts-v1/;
+
+/include/ "Malta.dtsi"
+
+/ {
+	chosen {
+		bootargs-append = "console=ttyS0,115200n8r ";
+        };
+
+};

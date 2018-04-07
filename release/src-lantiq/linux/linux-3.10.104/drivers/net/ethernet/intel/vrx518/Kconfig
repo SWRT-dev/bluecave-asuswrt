@@ -1,0 +1,14 @@
+#
+# Intel VRX518 device configuration
+#
+
+config VRX518_TC
+    tristate "Intel(R) VRX518 DSL TC support"
+    depends on VRX518
+    ---help---
+      This driver supports Intel(R) VRX518 DSL TC functions.
+      it support ATM mode, PTM mode and PTM bonding mode.
+
+      Bonding packet's scatter-gathering requires SoC HW support.
+
+source "drivers/net/ethernet/intel/vrx518/tc/Kconfig"

@@ -1,0 +1,27 @@
+#
+#VRX318 driver
+#
+menu "VRX318"
+
+config VRX318_DATAPATH
+	bool "VRX318 datapath driver"
+	depends on LTQ_DATAPATH && LTQ_CBM && LANTIQ_VRX318
+	default n
+	---help---
+	  VRX318 is PCIe endpoint providing ATM/PTM/PTM bonding functions.
+	  datapth built in kernel to provide consistent API support for
+	  MEI driver or other SoC required API support.
+	  Supporting APIs for differnt SoC platforms should be put
+	  in this part.
+
+config VRX318_TC
+	tristate "VRX318 ATM/PTM/BONDING TC"
+	depends on VRX318_DATAPATH
+	default n
+	---help---
+	  Support ATM/PTM/Bonding TC based on VRX318 datapath framework
+	  it merged ATM/PTM/Bonding function in one module.
+	  TC switch from ATM to PTM/Bonding or vice versa can be requested via
+	  API call or proc.
+
+endmenu

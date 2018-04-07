@@ -1,0 +1,159 @@
+*asm:
+%{G*} %(endian_spec) %{mips1} %{mips2} %{mips3} %{mips4} %{mips32*} %{mips64*} %{mips16} %{mno-mips16:-no-mips16} %{mips3d} %{mno-mips3d:-no-mips3d} %{mdmx} %{mno-mdmx:-no-mdmx} %{mdsp} %{mno-dsp} %{mdspr2} %{mno-dspr2} %{mmcu} %{mno-mcu} %{msmartmips} %{mno-smartmips} %{mmt} %{mno-mt} %{mfix-vr4120} %{mfix-vr4130} %{mfix-24k} %{noasmopt:-O0; O0|fno-delayed-branch:-O1; O*:-O2; :-O1} %(subtarget_asm_debugging_spec) %{mabi=*} %{!mabi=*: %(asm_abi_default_spec)} %{mgp32} %{mgp64} %{march=*} %{mxgot:-xgot} %{mfp32} %{mfp64} %{mshared} %{mno-shared} %{msym32} %{mno-sym32} %{mtune=*} %(subtarget_asm_spec)
+
+*asm_debug:
+%{!g0:%{gstabs*:--gstabs}%{!gstabs*:%{g*:--gdwarf2}}} %{fdebug-prefix-map=*:--debug-prefix-map %*}
+
+*asm_final:
+%{gsplit-dwarf: 
+       objcopy --extract-dwo 	 %{c:%{o*:%*}%{!o*:%b%O}}%{!c:%U%O} 	 %{c:%{o*:%:replace-extension(%{o*:%*} .dwo)}%{!o*:%b.dwo}}%{!c:%b.dwo} 
+       objcopy --strip-dwo 	 %{c:%{o*:%*}%{!o*:%b%O}}%{!c:%U%O}     }
+
+*asm_options:
+%{-target-help:%:print-asm-header()} %{v} %{w:-W} %{I*} %a %Y %{c:%W{o*}%{!o*:-o %w%b%O}}%{!c:-o %d%w%u%O}
+
+*invoke_as:
+%{!fwpa:   %{fcompare-debug=*|fdump-final-insns=*:%:compare-debug-dump-opt()}   %{!S:-o %|.s |
+ as %(asm_options) %m.s %A }  }
+
+*cpp:
+%(subtarget_cpp_spec) -idirafter %:getenv(STAGING_DIR /usr/include)
+
+*cpp_options:
+%(cpp_unique_options) %1 %{m*} %{std*&ansi&trigraphs} %{W*&pedantic*} %{w} %{f*} %{g*:%{!g0:%{g*} %{!fno-working-directory:-fworking-directory}}} %{O*} %{undef} %{save-temps*:-fpch-preprocess}
+
+*cpp_debug_options:
+%{d*}
+
+*cpp_unique_options:
+%{!Q:-quiet} %{nostdinc*} %{C} %{CC} %{v} %{I*&F*} %{P} %I %{MD:-MD %{!o:%b.d}%{o*:%.d%*}} %{MMD:-MMD %{!o:%b.d}%{o*:%.d%*}} %{M} %{MM} %{MF*} %{MG} %{MP} %{MQ*} %{MT*} %{!E:%{!M:%{!MM:%{!MT:%{!MQ:%{MD|MMD:%{o*:-MQ %*}}}}}}} %{remap} %{g3|ggdb3|gstabs3|gcoff3|gxcoff3|gvms3:-dD} %{!iplugindir*:%{fplugin*:%:find-plugindir()}} %{H} %C %{D*&U*&A*} %{i*} %Z %i %{fmudflap:-D_MUDFLAP -include mf-runtime.h} %{fmudflapth:-D_MUDFLAP -D_MUDFLAPTH -include mf-runtime.h} %{E|M|MM:%W{o*}}
+
+*trad_capable_cpp:
+cc1 -E %{traditional|traditional-cpp:-traditional-cpp}
+
+*cc1:
+%{G*} %{EB:-meb} %{EL:-mel} %{EB:%{EL:%emay not use both -EB and -EL}} %(subtarget_cc1_spec)
+
+*cc1_options:
+%{pg:%{fomit-frame-pointer:%e-pg and -fomit-frame-pointer are incompatible}} %{!iplugindir*:%{fplugin*:%:find-plugindir()}} %1 %{!Q:-quiet} %{!dumpbase:-dumpbase %B} %{d*} %{m*} %{aux-info*} %{fcompare-debug-second:%:compare-debug-auxbase-opt(%b)}  %{!fcompare-debug-second:%{c|S:%{o*:-auxbase-strip %*}%{!o*:-auxbase %b}}}%{!c:%{!S:-auxbase %b}}  %{g*} %{O*} %{W*&pedantic*} %{w} %{std*&ansi&trigraphs} %{v:-version} %{pg:-p} %{p} %{f*} %{undef} %{Qn:-fno-ident} %{Qy:} %{-help:--help} %{-target-help:--target-help} %{-version:--version} %{-help=*:--help=%*} %{!fsyntax-only:%{S:%W{o*}%{!o*:-o %b.s}}} %{fsyntax-only:-o %j} %{-param*} %{fmudflap|fmudflapth:-fno-builtin -fno-merge-constants} %{coverage:-fprofile-arcs -ftest-coverage}
+
+*cc1plus:
+%{!mandroid|tno-android-cc:;:%{!fexceptions:%{!fno-exceptions: -fno-exceptions}} %{!frtti:%{!fno-rtti: -fno-rtti}}}
+
+*link_gcc_c_sequence:
+%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}
+
+*link_ssp:
+%{fstack-protector|fstack-protector-all:-lssp_nonshared -lssp}
+
+*endfile:
+%{!mandroid|tno-android-ld:%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s} %{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s;:%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s} %{shared: crtend_so%O%s;: crtend_android%O%s}}
+
+*link:
+%{!static:--eh-frame-hdr} %{!mandroid|tno-android-ld:%(endian_spec)   %{shared:-shared}   %{!shared:     %{!static:       %{rdynamic:-export-dynamic}       -dynamic-linker %{mglibc:/lib/ld.so.1;:%{mbionic:/system/bin/linker;:%{mmusl:/lib/ld-musl-mips%{EL:el}%{msoft-float:-sf}.so.1;:/lib/ld-uClibc.so.0}}}}       %{static:-static}};:%(endian_spec)   %{shared:-shared}   %{!shared:     %{!static:       %{rdynamic:-export-dynamic}       -dynamic-linker %{mglibc:/lib/ld.so.1;:%{mbionic:/system/bin/linker;:%{mmusl:/lib/ld-musl-mips%{EL:el}%{msoft-float:-sf}.so.1;:/lib/ld-uClibc.so.0}}}}       %{static:-static}} %{shared: -Bsymbolic}}
+
+*lib:
+%{!mandroid|tno-android-ld:%{pthread:-lpthread} %{shared:-lc}    %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}};:%{shared:-lc}    %{!shared:%{mieee-fp:-lieee} %{profile:-lc_p}%{!profile:-lc}} %{!static: -ldl}}
+
+*mfwrap:
+ %{static: %{fmudflap|fmudflapth:  --wrap=malloc --wrap=free --wrap=calloc --wrap=realloc --wrap=mmap --wrap=mmap64 --wrap=munmap --wrap=alloca} %{fmudflapth: --wrap=pthread_create}} %{fmudflap|fmudflapth: --wrap=main}
+
+*mflib:
+%{fmudflap|fmudflapth: -export-dynamic}
+
+*link_gomp:
+
+
+*libgcc:
+%{static|static-libgcc:-lgcc}%{!static:%{!static-libgcc:-lgcc_s}}
+
+*startfile:
+%{!mandroid|tno-android-ld:%{!shared: %{pg|p|profile:gcrt1.o%s;pie:Scrt1.o%s;:crt1.o%s}}    crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s};:%{shared: crtbegin_so%O%s;:  %{static: crtbegin_static%O%s;: crtbegin_dynamic%O%s}}}
+
+*cross_compile:
+1
+
+*version:
+4.8.3
+
+*multilib:
+. ;
+
+*multilib_defaults:
+EB mips1 mabi=32
+
+*multilib_extra:
+
+
+*multilib_matches:
+
+
+*multilib_exclusions:
+
+
+*multilib_options:
+
+
+*multilib_reuse:
+
+
+*linker:
+collect2
+
+*linker_plugin_file:
+
+
+*lto_wrapper:
+
+
+*lto_gcc:
+
+
+*link_libgcc:
+%D
+
+*md_exec_prefix:
+
+
+*md_startfile_prefix:
+
+
+*md_startfile_prefix_1:
+
+
+*startfile_prefix_spec:
+
+
+*sysroot_spec:
+--sysroot=%R
+
+*sysroot_suffix_spec:
+
+
+*sysroot_hdrs_suffix_spec:
+
+
+*self_spec:
+
+
+*subtarget_cc1_spec:
+%{!mandroid|tno-android-cc:%{profile:-p};:%{profile:-p} %{!mglibc:%{!muclibc:%{!mbionic: -mbionic}}} %{!fno-pic:%{!fno-PIC:%{!fpic:%{!fPIC: -fPIC}}}}}
+
+*subtarget_cpp_spec:
+%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}
+
+*subtarget_asm_debugging_spec:
+%{g} %{g0} %{g1} %{g2} %{g3} %{ggdb:-g} %{ggdb0:-g0} %{ggdb1:-g1} %{ggdb2:-g2} %{ggdb3:-g3} %{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} %{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} %{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3} %{gcoff*:-mdebug} %{!gcoff*:-no-mdebug}
+
+*subtarget_asm_spec:
+%{!mno-abicalls:%{mplt:-call_nonpic;:-KPIC}}
+
+*asm_abi_default_spec:
+-mabi=32
+
+*endian_spec:
+%{!EL:%{!mel:-EB}} %{EL|mel:-EL}
+
+*link_command:
+%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:    %(linker) %{!fno-use-linker-plugin:%{flto|flto=*|fuse-linker-plugin:     -plugin %(linker_plugin_file)     -plugin-opt=%(lto_wrapper)     -plugin-opt=-fresolution=%u.res     %{!nostdlib:%{!nodefaultlibs:%:pass-through-libs(%(link_gcc_c_sequence))}}     }}%{flto|flto=*:%<fcompare-debug*}     %{flto} %{flto=*} %l %{pie:-pie} %{fuse-ld=*:-fuse-ld=%*}    %X %{o*} %{e*} %{N} %{n} %{r}    %{s} %{t} %{u*} %{z} %{Z} %{!nostdlib:%{!nostartfiles:%S}}    %{static:} %{L*} -L %:getenv(STAGING_DIR /usr/lib) -rpath-link %:getenv(STAGING_DIR /usr/lib) %(mfwrap) %(link_libgcc) %{!nostdlib:%{!nodefaultlibs:%{fsanitize=address:%{!shared:libasan_preinit%O%s} %{static-libasan:%{!shared:-Bstatic --whole-archive -lasan --no-whole-archive -Bdynamic}}%{!static-libasan:-lasan}}     %{fsanitize=thread:%{static-libtsan:%{!shared:-Bstatic --whole-archive -ltsan --no-whole-archive -Bdynamic}}%{!static-libtsan:-ltsan}}}} %o    %{fopenmp|ftree-parallelize-loops=*:%:include(libgomp.spec)%(link_gomp)}    %{fgnu-tm:%:include(libitm.spec)%(link_itm)}    %(mflib)  %{fsplit-stack: --wrap=pthread_create}    %{fprofile-arcs|fprofile-generate*|coverage:-lgcov} %{!nostdlib:%{!nodefaultlibs:%{fsanitize=address: %{static-libasan:-ldl -lpthread}    %{static:%ecannot specify -static with -fsanitize=address}    %{fsanitize=thread:%e-fsanitize=address is incompatible with -fsanitize=thread}}    %{fsanitize=thread: %{static-libtsan:-ldl -lpthread}    %{!pie:%{!shared:%e-fsanitize=thread linking must be done with -pie or -shared}}}}}     %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %(link_gcc_c_sequence)}}    %{!nostdlib:%{!nostartfiles:%E}} %{T*} }}}}}}
+

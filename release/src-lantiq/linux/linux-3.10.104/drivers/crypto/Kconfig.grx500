@@ -1,0 +1,43 @@
+config CRYPTO_DEV_LANTIQ_EIP97
+  tristate "Support Lantiq Crypto"
+  depends on LANTIQ && SOC_GRX500
+
+config LTQ_CRYPTO
+  tristate "Lantiq Crypto Hardware support"
+  depends on CRYPTO_DEV_LANTIQ_EIP97
+  select CRYPTO_AUTHENC
+  select CRYPTO_SHA1
+  select CRYPTO_SHA256
+  select CRYPTO_SHA512
+  select CRYPTO_MD5
+  select CRYPTO_AES
+  select CRYPTO_DES
+  select CRYPTO_MANAGER_DISABLE_TESTS
+  
+  default n 
+
+config LTQ_CRYPTO_TEST
+  tristate "Lantiq Crypto Test"
+  depends on m && LTQ_CRYPTO
+  help
+  	Test suites for the hw crypto algs
+
+config LTQ_MPE_IPSEC_SUPPORT
+  bool
+  depends on LTQ_PPA_MPE_IP97
+  default y
+
+config LTQ_CRYPTO_MAX_RING_USED
+  int "Maximum number of ring used in the driver"
+  default "4" if LTQ_MPE_IPSEC_SUPPORT
+  default "2"
+  help
+    Number of rings used in the driver. By default, the driver supports up to
+    two rings. However, if MPE firmware is used, we only use 1 ring in the driver
+
+config CRYPTO_DEV_LANTIQ_EIP123
+   tristate "Support Lantiq EIP123 hardware crypto engine"
+   depends on LANTIQ && SOC_GRX500_BOOTCORE
+   default n
+   help
+      Selects Hardware accelerated EIP123 crypto drivers.

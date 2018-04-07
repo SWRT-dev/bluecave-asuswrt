@@ -1,0 +1,19 @@
+#
+# DirectConnect Datapath Driver
+#
+config LTQ_DIRECTCONNECT_DP
+	tristate "Lantiq DirectConnect Datapath driver for XRX500 series"	
+	default n
+	depends on LANTIQ && SOC_GRX500 && LTQ_DATAPATH && LTQ_HWMCPY
+	---help---
+	  Lantiq DirectConnect Datapath driver for XRX500 series. 
+
+config LTQ_DIRECTCONNECT_DP_DBG
+	bool "Datapath Debug Tool"
+	default y
+	depends on LTQ_DIRECTCONNECT_DP
+	---help---
+	  Directconnect Datapath Debug Tool is used to provide simple debug proc tool
+	  Each flag can be enabled/disabled easily
+	  Once this flag is enabled, the debugging information will be printed out
+	  otherwise, no debugging information for this flag will be printed

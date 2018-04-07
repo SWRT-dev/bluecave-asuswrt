@@ -1,0 +1,28 @@
+#
+# TMU
+#
+
+menu "TMU"
+
+config LTQ_TMU
+	bool "TMU QoS Support. It is a must if CBM is enabled"
+	depends on SOC_GRX500
+	default y
+	---help---
+	  TMU QoS Support
+
+#config LTQ_TMU_DEVICE_TREE
+#	bool "Use Device Tree for TMU"
+#	depends on LTQ_TMU
+#	default n
+#	---help---
+#	  For testing purpose since CBM will call tmu_ll_init
+
+config LTQ_TMU_DDR_SIMULATE_REG
+	bool "Use DDR to Simulate TMU HW Register for testing purpose"
+	depends on LTQ_TMU
+	default n
+	---help---
+	  Use DDR to Simulate TMU HW Register for testing purpose
+
+endmenu

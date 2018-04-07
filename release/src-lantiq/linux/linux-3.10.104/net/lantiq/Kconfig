@@ -1,0 +1,23 @@
+#
+# mcast_helper configuration
+#
+
+
+config LANTIQ_MCAST_HELPER
+	tristate "Multicast Helper support"
+	default m
+	help
+		mcast_helper support
+
+config LANTIQ_MCAST_HELPER_ACL
+	tristate "Multicast Helper ACL support"
+        default y
+        help
+                mcast_helper ACL support
+	
+config LANTIQ_MCAST_HELPER_M2U
+	tristate "Multicast Helper multicast to unicast support"
+        default y
+        help
+                mcast_helper update multicast to unicast support
+

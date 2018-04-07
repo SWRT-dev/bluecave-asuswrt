@@ -1,0 +1,27 @@
+#
+# Stat helper configuration
+#
+
+config LTQ_STAT_HELPER
+	bool "Stat Helper support"
+	default n
+	help
+		Stat helper support
+
+choice
+   prompt "Stat Helper Platform Selection"
+   default LTQ_STAT_HELPER_XRX330
+   
+   config LTQ_STAT_HELPER_XRX200
+      depends on LTQ_STAT_HELPER
+      bool "xRX200"
+
+   config LTQ_STAT_HELPER_XRX300
+      depends on LTQ_STAT_HELPER
+      bool "xRX300"
+   
+   config LTQ_STAT_HELPER_XRX330
+      depends on LTQ_STAT_HELPER
+      bool "xRX330"
+
+endchoice

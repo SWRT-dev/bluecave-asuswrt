@@ -1,0 +1,36 @@
+#
+# Intel VRX518 TC driver configuration
+#
+choice
+    prompt "SoC Platform Selection"
+    depends on VRX518_TC
+    default VRX518_GRX500
+
+    config VRX518_GRX500
+       depends on SOC_GRX500_A21
+       bool "GRX500"
+       ---help---
+       This selection works on intel GRX5XX SoC platform
+       It requests datapath library, DMA driver, CBM driver and
+       UMT driver support.
+       It works without DC_DP function.
+
+    config VRX518_DC_DP
+       depends on LTQ_DIRECTCONNECT_DP
+       bool "DC_DP"
+       ---help---
+       This selection works on any platform which has DC_DP lib.
+       It should be able to work on any one of below mode:
+       1. fast path
+       2. directpath
+       3. CPU path
+
+    config VRX518_CPU
+       bool "CPU path"
+       ---help---
+       This selection works on any platform.
+       It has no dependency on any other library/function except linux kernel.
+
+       It still requires Intel MEI driver to make VRX518 DSL working.
+
+endchoice
