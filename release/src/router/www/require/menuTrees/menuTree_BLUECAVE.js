@@ -144,7 +144,7 @@ define(function(){
 					{url: "Tools_frpc.asp", tabName: "Frp"},
 					{url: "Tools_webshell.asp", tabName: "Webshell"},
 					{url: "Tools_xunlei.asp", tabName: "Xunlei"},
-					{url: "Tools_aria2.asp", tabName: "Aria2"},
+					/*{url: "Tools_aria2.asp", tabName: "Aria2"},*/
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			},

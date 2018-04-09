@@ -1,6 +1,6 @@
 #!/bin/sh
 
-menable=`nvram get ssr_enable`
+menable=`nvram get ssr_enable 2>/dev/null`
 
 IGNORE=/usr/sbin/ssr/ignore.list
 if [ -f "/jffs/configs/ssr_user.txt" ] ;then
@@ -13,21 +13,21 @@ IGNORESIP=/jffs/configs/ssr_sip.txt
 
 flush_r() {
 
-iptables -t nat -F SHADOWSOCKS 2>/dev/null
-iptables -t nat -D PREROUTING -p tcp -j SHADOWSOCKS 2>/dev/null
-iptables -t nat -D OUTPUT -p tcp -j SHADOWSOCKS 2>/dev/null
-iptables -t nat -X SHADOWSOCKS  2>/dev/null
-if [ "$menable" == "0" ] ;then
-ipset -X ssr 2>/dev/null
-fi
-ipset -X ssr_ignore 2>/dev/null
+iptables -t nat -F SHADOWSOCKS > /dev/null 2>&1
+iptables -t nat -D PREROUTING -p tcp -j SHADOWSOCKS > /dev/null 2>&1
+iptables -t nat -D OUTPUT -p tcp -j SHADOWSOCKS > /dev/null 2>&1
+iptables -t nat -X SHADOWSOCKS > /dev/null 2>&1
+
+ipset -F ssr >/dev/null 2>&1 && ipset -X ssr >/dev/null 2>&1
+ipset -F ssr_tg >/dev/null 2>&1 && ipset -X ssr_tg >/dev/null 2>&1
+ipset -F ssr_ignore >/dev/null 2>&1 && ipset -X ssr_ignore >/dev/null 2>&1
 
 #udp
-iptables -t mangle -F gameboost 
-iptables -t mangle  -D PREROUTING -p udp  -j gameboost
-iptables -t mangle  -X gameboost
-ip rule del fwmark 0x01/0x01 table 100 
-ip route del local 0.0.0.0/0 dev lo table 100 
+iptables -t mangle -F SS_SPEC_TPROXY 2>/dev/null 
+iptables -t mangle -D PREROUTING -p udp -j SS_SPEC_TPROXY 2>/dev/null
+iptables -t mangle -X SS_SPEC_TPROXY 2>/dev/null
+ip rule del fwmark 1 table 100 2>/dev/null
+ip route del local default dev lo table 100 2>/dev/null
 
 return 0	
 }
@@ -89,12 +89,18 @@ BEGIN="*nat\n\
 -I PREROUTING -p tcp -j SHADOWSOCKS\n\
 -I OUTPUT 1 -p tcp -j SHADOWSOCKS\n\
 -A SHADOWSOCKS -d $server/32 -j RETURN\n\
+-A SHADOWSOCKS -d 0.0.0.0/8 -j RETURN\n\
+-A SHADOWSOCKS -d 10.0.0.0/8 -j RETURN\n\
+-A SHADOWSOCKS -d 127.0.0.0/8 -j RETURN\n\
+-A SHADOWSOCKS -d 169.254.0.0/16 -j RETURN\n\
+-A SHADOWSOCKS -d 172.16.0.0/12 -j RETURN\n\
+-A SHADOWSOCKS -d 192.168.0.0/16 -j RETURN\n\
+-A SHADOWSOCKS -d 224.0.0.0/4 -j RETURN\n\
+-A SHADOWSOCKS -d 240.0.0.0/4 -j RETURN\n\
 "
 
-ipset create ssr hash:net 2>/dev/null
-if [ ! -f "/tmp/etc/dnsmasq.user" ] ;then
-mkdir /tmp/etc/dnsmasq.user
-fi
+ipset -! create ssr nethash && ipset flush ssr
+ipset -! create ssr_tg nethash && ipset flush ssr_tg
 if [ "$dns_mode" = "1" ] ;then
  cp -f /usr/sbin/ssr/gfw_list.conf /tmp/etc/dnsmasq.user/gfw_list.conf
  if [ -f "/jffs/configs/ssr_gfw.txt" ] ;then
@@ -102,7 +108,7 @@ if [ "$dns_mode" = "1" ] ;then
   if [ $icount -gt 0 ] ;then
    sed '/.*/s/.*/server=\/&\/127.0.0.1#1053\nipset=\/&\/ssr/' /jffs/configs/ssr_gfw.txt > /tmp/etc/dnsmasq.user/gfw_user.conf
   else
-   rm -f /tmp/etc/dnsmasq.user/gfw_user.conf
+		[ -f "/tmp/etc/dnsmasq.user/gfw_user.conf" ] && rm -f /tmp/etc/dnsmasq.user/gfw_user.conf
   fi
  fi
 else
@@ -112,11 +118,12 @@ else
   if [ $icount -gt 0 ] ;then
    sed '/.*/s/.*/address=\/&\/93.46.8.89/' /jffs/configs/ssr_gfw.txt > /tmp/etc/dnsmasq.user/gfw_user.conf
   else
-   rm -f /tmp/etc/dnsmasq.user/gfw_user.conf
+		[ -f "/tmp/etc/dnsmasq.user/gfw_user.conf" ] && rm -f /tmp/etc/dnsmasq.user/gfw_user.conf
   fi
  fi
 fi
-service restart_dns 2>/dev/null
+
+service restart_dnsmasq
 
 
 
@@ -125,44 +132,56 @@ service restart_dns 2>/dev/null
 
 
 if [ "$all_proxy" = "1" ] ;then
+
+ip_gfw="208.67.222.222 208.67.220.220 8.8.8.8 8.8.4.4"
+for ip in $ip_gfw
+do
+	ipset -! add ssr $ip 2>/dev/null
+done
+
+ip_tg="149.154.0.0/16 91.108.4.0/22 91.108.56.0/24 109.239.140.0/24 67.198.55.0/24 "
+for ip in $ip_tg
+do
+	ipset -! add ssr_tg $ip 2>/dev/null
+done
+
 if [ "$dns_mode" = "1" ] ;then
 echo -e "$BEGIN\
 -A SHADOWSOCKS  -p tcp -m set --match-set ssr dst  -j REDIRECT --to-ports $local_port\n\
+-A SHADOWSOCKS  -p tcp -m set --match-set ssr_tg dst  -j REDIRECT --to-ports $local_port\n\
+
 COMMIT" | iptables-restore -n
-ipset add ssr 8.8.4.4 
 else
 echo -e "$BEGIN\
 -A SHADOWSOCKS  -p tcp -d 93.46.8.89/32  -j REDIRECT --to-ports $local_port\n\
+-A SHADOWSOCKS  -p tcp -m set --match-set ssr_tg dst  -j REDIRECT --to-ports $local_port\n\
 
 COMMIT" | iptables-restore -n
 fi
-if [ -f "$IGNORESIP" ] ;then
-sed "/.*/s/.*/iptables -t nat -I SHADOWSOCKS  -p tcp -s & -j RETURN  /" $IGNORESIP  2>/dev/null | sh
-fi
+
 if [ -f "$FORCE" ] ;then
 sed "/.*/s/.*/iptables -t nat -A SHADOWSOCKS  -p tcp -d & -j REDIRECT --to-ports $local_port  /" $FORCE  2>/dev/null | sh
 fi
 
 #udp
 if [ "$udp_enable" == "1" ] ;then
-	ip rule add fwmark 0x01/0x01 table 100
-	ip route add local 0.0.0.0/0 dev lo table 100
-	iptables -t mangle -N gameboost
+	ip rule add fwmark 1 table 100
+	ip route add local default dev lo table 100
+	iptables -t mangle -N SS_SPEC_TPROXY
 	if [ "$dns_mode" = "1" ] ;then
-	iptables -t mangle -A gameboost -p udp -m set  --match-set ssr dst \
-		-j TPROXY --on-port "$local_port" --tproxy-mark 0x01/0x01
+	iptables -t mangle -A SS_SPEC_TPROXY -p udp -m set  --match-set ssr dst \
+		-j TPROXY --on-port $local_port --tproxy-mark 0x01/0x01
 	else
-	iptables -t mangle -A gameboost -p udp -d 93.46.8.89/32 \
-		-j TPROXY --on-port "$local_port" --tproxy-mark 0x01/0x01
+	iptables -t mangle -A SS_SPEC_TPROXY -p udp -d 93.46.8.89/32 \
+		-j TPROXY --on-port $local_port --tproxy-mark 0x01/0x01
 	fi
-	iptables -t mangle  -I PREROUTING 1 -p udp  -j gameboost
 fi
 
 exit 0
 fi
 
 
-ipset create ssr_ignore hash:net 2>/dev/null
+ipset -! create ssr_ignore nethash && ipset flush ssr_ignore
 echo -e "$BEGIN\n\
 -A SHADOWSOCKS -m set --match-set ssr_ignore dst -j RETURN \n\
 -A SHADOWSOCKS -p tcp  -j REDIRECT --to-ports $local_port\n\
@@ -187,16 +206,14 @@ fi
 
 #udp
 if [ "$udp_enable" == "1" ] ;then
-	ip rule add fwmark 0x01/0x01 table 100
-	ip route add local 0.0.0.0/0 dev lo table 100
-	iptables -t mangle -N gameboost
+	ip rule add fwmark 1 table 100
+	ip route add local default dev lo table 100
+	iptables -t mangle -N SS_SPEC_TPROXY
 
-	iptables -t mangle -A gameboost -p udp -m set ! --match-set ssr_ignore dst \
-		-j TPROXY --on-port "$local_port" --tproxy-mark 0x01/0x01
+	iptables -t mangle -A SS_SPEC_TPROXY -p udp -m set ! --match-set ssr_ignore dst \
+		-j TPROXY --on-port $local_port --tproxy-mark 0x01/0x01
 
-	iptables -t mangle  -I PREROUTING 1 -p udp  -j gameboost
+	iptables -t mangle  -I PREROUTING 1 -p udp  -j SS_SPEC_TPROXY
 fi
 exit 0
-
-
 
