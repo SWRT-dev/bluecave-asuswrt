@@ -13,8 +13,13 @@ killall -q -9 ss-redir
 rm -f /tmp/etc/dnsmasq.user/gfw_list.conf 2>/dev/null 
 rm -f /tmp/etc/dnsmasq.user/gfw_addr.conf 2>/dev/null
 rm -f /tmp/etc/dnsmasq.user/gfw_user.conf 2>/dev/null
-service restart_dns 2>/dev/null
-
+service restart_dnsmasq 2>/dev/null
+ienable= `nvram get ipv6_service`
+if [ $ienable != "disabled" ] ;then
+service stop_ipv6_tunnel
+sleep 2
+service start_ipv6_tunnel
+fi
 }
 
 start() {

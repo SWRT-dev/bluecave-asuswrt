@@ -15,13 +15,13 @@ insmod /lib/modules/3.10.104/kernel/net/netfilter/ipset/ip_set_hash_netiface.ko
 insmod /lib/modules/3.10.104/kernel/net/netfilter/ipset/ip_set_hash_netport.ko
 insmod /lib/modules/3.10.104/kernel/net/netfilter/ipset/ip_set_list_set.ko
 insmod /lib/modules/3.10.104/kernel/net/netfilter/xt_set.ko
+insmod /lib/modules/3.10.104/kernel/net/netfilter/xt_TPROXY.ko
 
 /usr/sbin/k3c_webshell.sh &
 /usr/sbin/k3c_xunlei.sh &
 /usr/sbin/k3c_ngrok.sh
 /usr/sbin/k3c_frpc.sh
-#/usr/sbin/k3c_ssr.sh
+/usr/sbin/k3c_ssr.sh
 /usr/sbin/k3c_kms.sh
-#/usr/sbin/k3c_adbyby.sh
-#/usr/sbin/k3c_led_status
+/usr/sbin/k3c_adbyby.sh
 

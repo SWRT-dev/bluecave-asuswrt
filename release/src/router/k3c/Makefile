@@ -21,6 +21,8 @@ install:
 
 # K3C update uboot&ubootconfig tool
 	install -m 0755 mtd $(INSTALLDIR)/sbin
+# K3C softcenter
+	install -m 0755 www/Softcenter.asp $(INSTALLDIR)/www
 # K3C SSR and adbyby plus
 	install -m 0755 base64 $(INSTALLDIR)/usr/bin
 	install -m 0755 ssr-redir $(INSTALLDIR)/usr/sbin

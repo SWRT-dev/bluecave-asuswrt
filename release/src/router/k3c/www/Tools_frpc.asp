@@ -83,7 +83,7 @@ document.form.submit();
 <table width="700px" style="margin-left:25px;">
 <tr>
 <td>
-<div id="guest_image" style="background: url(images/New_ui/zsg.png);width: 100px;height: 87px;"></div>
+<div id="guest_image" style="background: url(images/New_ui/frpc.png);width: 60px;height: 60px;"></div>
 </td>
 <td>&nbsp;&nbsp;</td>
 <td style="font-size: 14px;">

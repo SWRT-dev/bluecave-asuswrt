@@ -3085,3 +3085,6 @@ SSR_server=选择服务器
 SSR_server_none=无服务器配置
 SSR_custom=用户自定义
 SSR_userfile_1=GFW列表
+K3C_Tools=Tools
+K3C_Sysinfo=Sysinfo
+Softcenter=Softcenter

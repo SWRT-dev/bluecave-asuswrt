@@ -132,19 +132,12 @@ define(function(){
 				] 
 			},
 			{
-				menuName: "Tools",
+				menuName: "<#K3C_Tools#>",
 				index: "menu_Tools",
 				tab: [
-					{url: "Tools_Sysinfo.asp", tabName: "Sysinfo"},
+					{url: "Tools_Sysinfo.asp", tabName: "<#K3C_Sysinfo#>"},
 					/*{url: "Tools_OtherSettings.asp", tabName: "Other Settings"},*/
-					{url: "Tools_SSR.asp", tabName: "<#SSR#>"},
-					/*{url: "Tools_Adbyby.asp", tabName: "Adbyby"},*/
-					{url: "Tools_Kms.asp", tabName: "Kms"},
-					{url: "Tools_ngrok.asp", tabName: "Ngrok"},
-					{url: "Tools_frpc.asp", tabName: "Frp"},
-					{url: "Tools_webshell.asp", tabName: "Webshell"},
-					{url: "Tools_xunlei.asp", tabName: "Xunlei"},
-					/*{url: "Tools_aria2.asp", tabName: "Aria2"},*/
+					{url: "Softcenter.asp", tabName: "<#Softcenter#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			},

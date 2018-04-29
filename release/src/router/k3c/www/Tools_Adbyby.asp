@@ -42,42 +42,42 @@ top: 250px;
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script>
 $(document).ready(function () {
-var havecert="<% check_file("/jffs/adbyby/data/certs/ca.crt"); %>";
+var havecert="<% check_file("/jffs/koolproxy/data/certs/ca.crt"); %>";
 if(havecert=="0")
 {
 document.form.mycert.value = "尚未生成";
 document.form.mycert.disabled = true;
 }
-$('#radio_adbyby_enable').iphoneSwitch(document.form.adbyby_enable.value,
+$('#radio_koolproxy_enable').iphoneSwitch(document.form.koolproxy_enable.value,
 function(){
-document.form.adbyby_enable.value = "1";
+document.form.koolproxy_enable.value = "1";
 },
 function(){
-document.form.adbyby_enable.value = "0";
+document.form.koolproxy_enable.value = "0";
 }
 );
-$('#radio_adbyby_video_mode').iphoneSwitch(document.form.adbyby_video_mode.value,
+$('#radio_koolproxy_video_mode').iphoneSwitch(document.form.koolproxy_video_mode.value,
 function(){
-document.form.adbyby_video_mode.value = "1";
+document.form.koolproxy_video_mode.value = "1";
 },
 function(){
-document.form.adbyby_video_mode.value = "0";
+document.form.koolproxy_video_mode.value = "0";
 }
 );
-$('#radio_adbyby_https_mode').iphoneSwitch(document.form.adbyby_https_mode.value,
+$('#radio_koolproxy_https_mode').iphoneSwitch(document.form.koolproxy_https_mode.value,
 function(){
-document.form.adbyby_https_mode.value = "1";
+document.form.koolproxy_https_mode.value = "1";
 },
 function(){
-document.form.adbyby_https_mode.value = "0";
+document.form.koolproxy_https_mode.value = "0";
 }
 );
-$('#radio_adbyby_monitor').iphoneSwitch(document.form.adbyby_monitor.value,
+$('#radio_koolproxy_monitor').iphoneSwitch(document.form.koolproxy_monitor.value,
 function(){
-document.form.adbyby_monitor.value = "1";
+document.form.koolproxy_monitor.value = "1";
 },
 function(){
-document.form.adbyby_monitor.value = "0";
+document.form.koolproxy_monitor.value = "0";
 }
 );
 $('.disabled.cert').click(function(){return false;});
@@ -99,15 +99,9 @@ return str;
 }
 function initial() {
 show_menu();
-document.form.adbyby_srcip.value = document.form.adbyby_srcip.value.replace(/,/g,"\r\n");
-document.form.adbyby_httpsip.value = document.form.adbyby_httpsip.value.replace(/,/g,"\r\n");
 hide_adb(<% nvram_match("adblock_mode", "0", "0"); %>);
 }
 function applyRule() {
-document.form.adbyby_srcip.value = document.form.adbyby_srcip.value.replace(/\r\n/g,",");
-document.form.adbyby_srcip.value = document.form.adbyby_srcip.value.replace(/\n/g,",");
-document.form.adbyby_httpsip.value = document.form.adbyby_httpsip.value.replace(/\r\n/g,",");
-document.form.adbyby_httpsip.value = document.form.adbyby_httpsip.value.replace(/\n/g,",");
 showLoading();
 document.form.submit();
 }
@@ -120,6 +114,9 @@ _value=1;
 showhide("kptr1", (_value == "1"));
 showhide("kptr2", (_value == "1"));
 showhide("kptr3", (_value == "1"));
+}
+function reload_Soft_Center() {
+	location.href = "/Softcenter.asp";
 }
 </script>
 </head>
@@ -152,10 +149,10 @@ showhide("kptr3", (_value == "1"));
 <input type="hidden" name="action_script" value="/usr/sbin/k3c_adbyby.sh">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
-<input type="hidden" name="adbyby_enable" value="<% nvram_get("adbyby_enable"); %>">
-<input type="hidden" name="adbyby_video_mode" value="<% nvram_get("adbyby_video_mode"); %>">
-<input type="hidden" name="adbyby_https_mode" value="<% nvram_get("adbyby_https_mode"); %>">
-<input type="hidden" name="adbyby_monitor" value="<% nvram_get("adbyby_monitor"); %>">
+<input type="hidden" name="koolproxy_enable" value="<% nvram_get("koolproxy_enable"); %>">
+<input type="hidden" name="koolproxy_video_mode" value="<% nvram_get("koolproxy_video_mode"); %>">
+<input type="hidden" name="koolproxy_https_mode" value="<% nvram_get("koolproxy_https_mode"); %>">
+<input type="hidden" name="koolproxy_monitor" value="<% nvram_get("koolproxy_monitor"); %>">
 <input type="hidden" name="save_name" value="">
 <input type="hidden" name="save_content" value="">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
@@ -176,7 +173,30 @@ showhide("kptr3", (_value == "1"));
 <td bgcolor="#4D595D" valign="top">
 <div>&nbsp;</div>
 <div class="formfonttitle">工具箱 - 广告屏蔽</div>
+            <div style="float:right; width:15px; height:25px;margin-top:10px">
+             <img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img>
+            </div>
 <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+<div id="PC_desc">
+<table width="700px" style="margin-left:25px;">
+<tr>
+<td>
+<div id="guest_image" style="background: url(images/New_ui/koolproxy.png);width: 120px;height: 120px;"></div>
+</td>
+<td>&nbsp;&nbsp;</td>
+<td style="font-style: italic;font-size: 14px;">
+<span id="desc_title">使用简介：</span>
+<ol>
+<li>adbyby暂时不正常</li>
+<li>winscp下载证书路径为/jffs/koolproxy/data/certs</li>
+</ol>
+<span id="desc_note" style="color:#FC0;">提示：</span>
+<ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;">
+<li>开启时必须联网</li> </ol>
+</td>
+</tr>
+</table>
+</div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <thead><tr>
 <td colspan="2" >广告屏蔽状态</td>
@@ -184,7 +204,7 @@ showhide("kptr3", (_value == "1"));
 <tbody><tr >
 <th width="30%" style="border-top: 0 none;">启用</th>
 <td style="border-top: 0 none;">
-<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_adbyby_enable"></div>
+<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_koolproxy_enable"></div>
 </td>
 </tr>
 <tr>
@@ -201,22 +221,22 @@ showhide("kptr3", (_value == "1"));
 <tr>
 <th>运行模式</th>
 <td>
-<select name="adbyby_mode" class="input_option input_15_table">
-<option value="0" <% nvram_match( "adbyby_mode", "0","selected"); %>>全局模式</option>
-<option value="1" <% nvram_match( "adbyby_mode", "1","selected"); %>>广告列表模式</option>
+<select name="koolproxy_mode" class="input_option input_15_table">
+<option value="0" <% nvram_match( "koolproxy_mode", "0","selected"); %>>全局模式</option>
+<option value="1" <% nvram_match( "koolproxy_mode", "1","selected"); %>>广告列表模式</option>
 </select>
 </td>
 </tr>
 <tr >
 <th width="30%" style="border-top: 0 none;">启用进程监控</th>
 <td style="border-top: 0 none;">
-<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_adbyby_monitor"></div>
+<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_koolproxy_monitor"></div>
 </td>
 </tr>
 <tr id="kptr1">
 <th width="30%" style="border-top: 0 none;">启用https过滤</th>
 <td style="border-top: 0 none;">
-<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_adbyby_https_mode"></div>
+<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_koolproxy_https_mode"></div>
 </td>
 </tr>
 <tr id="kptr2">
@@ -229,21 +249,19 @@ showhide("kptr3", (_value == "1"));
 <tr id="kptr3">
 <th width="30%" style="border-top: 0 none;">只过滤视频网站</th>
 <td style="border-top: 0 none;">
-<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_adbyby_video_mode"></div>
+<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_koolproxy_video_mode"></div>
 </td>
 </tr>
+<thead>
 <tr>
-<th>不过滤的源IP<i>（留空表示过滤所有源IP）</i></th>
-<td>
-<textarea rows="4" cols="30" style="background-color: #475A5F;color:#FFFFFF;" name="adbyby_srcip" maxlength="100" placeholder="提示：每行一个IP地址"><% nvram_get("adbyby_srcip"); %></textarea>
-</td>
+<td colspan="2">日志信息</td>
 </tr>
-<tr>
-<th>过滤https的源IP<i>（留空表示过滤所有源IP）</i></th>
-<td>
-<textarea rows="4" cols="30" style="background-color: #475A5F;color:#FFFFFF;" name="adbyby_httpsip" maxlength="100" placeholder="提示：每行一个IP地址"><% nvram_get("adbyby_httpsip"); %></textarea>
-</td>
-</tr>
+</thead>
+<tr><td colspan="2">
+<textarea cols="63" rows="25" wrap="off" readonly="readonly" id="textarea" style="width:99%;font-family:Courier New, Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;">
+<% nvram_dump("adbyby.log",""); %>
+</textarea>
+</td></tr>
 </table>
 <div class="apply_gen">
 <input class="button_gen" onclick="applyRule()" type="button" value="应用设置"/>

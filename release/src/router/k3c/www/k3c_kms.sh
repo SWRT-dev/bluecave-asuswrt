@@ -19,7 +19,7 @@ cp -f /usr/kms/kms_dns.conf /tmp/etc/dnsmasq.user/kms_dns.conf
 else
 rm -f /tmp/etc/dnsmasq.user/kms_dns.conf
 fi
-/sbin/restart_dns 2>/dev/null
+/sbin/restart_dnsmasq 2>/dev/null
 
 fi
 
