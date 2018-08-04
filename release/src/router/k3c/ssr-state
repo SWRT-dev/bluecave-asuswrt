@@ -6,7 +6,6 @@ baidu_state()
 /usr/sbin/wget -4 --spider --quiet --tries=2 --timeout=2 wap.baidu.com
 if [ "$?" == "0" ]; then
 	log='baidu   --- [ '$LOGTIME' ]    OK '
-	#log='国内连接 - [ '$LOGTIME' ] ✓'
 else
 	log='baidu   --- [ '$LOGTIME' ]    NO '
 fi
@@ -16,6 +15,7 @@ nvram set ss_china_state="$log"
 
 google_state()
 {
+#这里有个bug,我们并不能正确解析所以这里有且只有失败
 /usr/sbin/wget -4 --spider --quiet --tries=2 --timeout=2 www.google.com.tw
 if [ "$?" == "0" ]; then
 	log=' google - [ '$LOGTIME' ]    OK '
@@ -26,7 +26,10 @@ fi
 nvram set ss_foreign_state="$log"
 }
 
-sleep 12
+sleep 5
+baidu_state
+google_state
+sleep 20
 baidu_state
 google_state
 exit 0

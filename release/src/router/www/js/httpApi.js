@@ -121,6 +121,62 @@ var httpApi ={
 		return retData;
 	},
 
+	"nvramCharToAscii": function(objItems, forceUpdate){
+		var queryArray = [];
+		var retData = {};
+
+		var __nvramget = function(_nvrams){
+			return _nvrams.map(function(elem){return "nvram_char_to_ascii(" + elem + "," + elem + ")";}).join("%3B");
+		};
+
+		if(forceUpdate) cachedData.clear(objItems);
+
+		objItems.forEach(function(key){
+			if(cachedData.get.hasOwnProperty(key)){
+				retData[key] = cachedData.get[key];
+			}
+			else if(asyncData.get.hasOwnProperty(key)){
+				retData[key] = cachedData.get[key] = asyncData.get[key];
+				if(forceUpdate) delete asyncData.get[key];
+			}
+			else{
+				queryArray.push(key);
+			}
+		});
+
+		if(queryArray.length != 0){
+			$.ajax({
+				url: '/appGet.cgi?hook=' + __nvramget(queryArray),
+				dataType: 'json',
+				async: false,
+				error: function(){
+					for(var i=0; i<queryArray.length; i++){retData[queryArray[i]] = "";}
+					retData.isError = true;
+
+					$.ajax({
+						url: '/appGet.cgi?hook=' + __nvramget(queryArray),
+						dataType: 'json',
+						error: function(){
+							for(var i=0; i<queryArray.length; i++){asyncData.get[queryArray[i]] = "";}
+						},
+						success: function(response){
+							Object.keys(response).forEach(function(key){asyncData.get[key] = response[key];})
+						}
+					});
+				},
+				success: function(response){
+					Object.keys(response).forEach(function(key){retData[key] = cachedData.get[key] = response[key];})
+					retData.isError = false;
+				}
+			});
+		}
+		else{
+			retData.isError = false;
+		}
+
+		return retData;
+	},
+
 	"nvramSet": function(postData, handler){
 		delete postData.isError;
 
@@ -230,7 +286,7 @@ var httpApi ={
 			});
 		}
 
-		return retData;
+		return retData[hookName];
 	},
 
 	"startAutoDet": function(){
@@ -262,7 +318,7 @@ var httpApi ={
 		};
 
 		var hadPlugged = function(deviceType){
-			var usbDeviceList = httpApi.hookGet("show_usb_path")["show_usb_path"][0] || [];
+			var usbDeviceList = httpApi.hookGet("show_usb_path")[0] || [];
 			return (usbDeviceList.join().search(deviceType) != -1)
 		}
 
@@ -279,11 +335,7 @@ var httpApi ={
 		){
 			retData.wanType = wanTypeList.connected;
 		}
-		else if(
-			wanInfo.autodet_state == "0" ||
-			wanInfo.autodet_state == "1" ||
-			wanInfo.autodet_state == ""
-		){
+		else if(wanInfo.autodet_state == ""){
 			retData.wanType = wanTypeList.check;			
 		}
 		else if(wanInfo.autodet_state == "6" || wanInfo.autodet_auxstate == "6"){
@@ -325,6 +377,22 @@ var httpApi ={
 		return retData;
 	},
 
+	"isPppAuthFail": function(){
+		if(window.pppAuthFailChecked) return false;
+
+		var wanInfo = httpApi.nvramGet(["wan0_state_t", "wan0_sbstate_t", "wan0_auxstate_t", "wan0_proto", "sw_mode"], true);
+		var result = (	
+			wanInfo.sw_mode         == "1"     &&
+			wanInfo.wan0_proto	    == "pppoe" &&
+			wanInfo.wan0_state_t    == "4"     &&
+			wanInfo.wan0_sbstate_t  == "2"     &&
+			wanInfo.wan0_auxstate_t == "0"
+		)
+
+		window.pppAuthFailChecked = result;
+		return result;
+	},
+
 	"isConnected": function(){
 		var wanInfo = httpApi.nvramGet(["wan0_state_t", "wan0_sbstate_t", "wan0_auxstate_t", "link_internet"], true);
 		return (
@@ -340,16 +408,8 @@ var httpApi ={
 		$.getJSON(hostOrigin + "/chdom.json?hostname=" + token + "&callback=?");
 	},
 
-	"checkCap": function(targetOrigin, targetId){
-		window.chcap = function(){
-			setTimeout(function(){
-				if(isPage("conncap_page")) window.location.href = targetOrigin + "/cfg_onboarding.cgi?id=" + targetId;
-			}, 3000);
-
-			// $("#connCapAlert").hide();
-			$("#loginCapAlert").fadeIn(500);
-		}
-
+	"checkCap": function(targetOrigin, callback){
+		window.chcap = callback;
 		$.getJSON(targetOrigin + "/chcap.json?callback=?");
 	},
 
@@ -416,7 +476,7 @@ var httpApi ={
 				//console.log(response);
 				document.getElementById(_Objid).href = temp_URL_global;
 			},
-			success: function(response) {				
+			success: function(response) {		
 				//console.log(response);
 				if(response.search("QAPage") >= 0)
 					document.getElementById(_Objid).href =  temp_URL_lang;
@@ -445,5 +505,29 @@ var httpApi ={
 		});
 
 		return retData;
+	},
+
+	"uiFlag": {
+		//the list defined as nvram order, the nvram value define the status.
+		//the value defined as status, you can use 0~9 to define any status that to used.
+		//ex. nvram uiFlag=011, defined as feature1/feature2/feature3..., value defined as disable/enable/enable
+		//"list": { "feature" : 0, "feature1" : 1, "feature2" : 2, ...},
+		"list": {
+			"AiMeshHint" : 0
+		},
+
+		"get": function(_name){
+			var uiFlagValue = httpApi.nvramGet(["uiFlag"], true).uiFlag;
+			return uiFlagValue.charAt(httpApi.uiFlag.list[_name]);
+		},
+
+		"set": function(_name, _value){
+			var replaceValue = function(_oriString, _index, _replacement) {
+				return _oriString.substr(0, _index) + _replacement + _oriString.substr(_index + 1);
+			};
+			var uiFlag_ori = httpApi.nvramGet(["uiFlag"], true).uiFlag;
+			var uiFlag_update = replaceValue(uiFlag_ori, httpApi.uiFlag.list[_name], _value);
+			httpApi.nvramSet({"action_mode": "apply", "uiFlag" : uiFlag_update});
+		}
 	}
 }

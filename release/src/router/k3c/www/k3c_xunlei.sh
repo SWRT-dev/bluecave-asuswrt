@@ -2,6 +2,7 @@
 mreact=`nvram get xunlei_react`
 mdisk=`nvram get xunlei_disk`
 usb_disk="/tmp/mnt/$mdisk"
+usbmount=`ls /tmp/mnt/`
 
 stop() {
 if [ -f "/tmp/k3copt/xunlei/portal" ] ;then
@@ -14,6 +15,10 @@ fi
 }
 
 start() {
+while [ "$usbmount" == "" ]
+do
+	sleep 5s
+done
 if [ "$mdisk" != "0" ] ;then
 rm -f /tmp/k3copt
 ln -s $usb_disk /tmp/k3copt

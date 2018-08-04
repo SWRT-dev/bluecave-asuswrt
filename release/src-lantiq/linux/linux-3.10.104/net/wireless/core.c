@@ -37,6 +37,7 @@ MODULE_DESCRIPTION("wireless configuration support");
 
 /* RCU-protected (and cfg80211_mutex for writers) */
 LIST_HEAD(cfg80211_rdev_list);
+EXPORT_SYMBOL(cfg80211_rdev_list);
 int cfg80211_rdev_list_generation;
 
 DEFINE_MUTEX(cfg80211_mutex);

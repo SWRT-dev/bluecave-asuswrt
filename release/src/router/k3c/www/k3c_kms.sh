@@ -16,6 +16,8 @@ if [ $icount = 0  ] ;then
 mauto=`nvram get kms_auto`
 if [ "$mauto" = "1"  ] ;then
 cp -f /usr/kms/kms_dns.conf /tmp/etc/dnsmasq.user/kms_dns.conf
+nvram set lan_domain=lan
+nvram commit
 else
 rm -f /tmp/etc/dnsmasq.user/kms_dns.conf
 fi

@@ -78,9 +78,6 @@
 #include <net/mptcp_v4.h>
 #include <net/mptcp_v6.h>
 #include <net/netdma.h>
-#ifdef CONFIG_MPTCP
-#include <net/lantiq_cbm_api.h>
-#endif
 
 int sysctl_tcp_timestamps __read_mostly = 1;
 int sysctl_tcp_window_scaling __read_mostly = 1;
@@ -5407,16 +5404,13 @@ step5:
 
 	/* Process urgent data. */
 	tcp_urg(sk, skb, th);
-
-#ifdef CONFIG_MPTCP
+#if 1
        if (sock_flag(sk, SOCK_MPTCP) && !skb_cloned(skb)) {
-		if (cbm_get_std_free_count() < 0x400) {
-       			struct sk_buff *new_skb = skb_copy(skb, GFP_ATOMIC);  // FIXME: Check if GFP_DMA is needed
-               			if (new_skb) {
-                       			kfree_skb(skb);
-                       			skb = new_skb;
-               		}
-		}
+       	struct sk_buff *new_skb = skb_copy(skb, GFP_ATOMIC);  // FIXME: Check if GFP_DMA is needed
+               if (new_skb) {
+                       kfree_skb(skb);
+                       skb = new_skb;
+               }
         }
 #endif
 

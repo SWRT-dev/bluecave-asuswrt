@@ -98,6 +98,7 @@ static struct device_type reg_device_type = {
  * information to give us an alpha2.
  */
 const struct ieee80211_regdomain __rcu *cfg80211_regdomain;
+EXPORT_SYMBOL(cfg80211_regdomain);
 
 /*
  * Protects static reg.c components:

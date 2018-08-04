@@ -1024,7 +1024,7 @@ static void ieee80211_chswitch_work(struct work_struct *work)
 	} else {
 		/* update the device channel directly */
 		local->hw.conf.chandef = local->_oper_chandef;
-
+		sdata->vif.bss_conf.chandef = local->_oper_chandef;
 		/* Update channel context */
 		if (!local->use_chanctx){
 			mutex_lock(&local->chanctx_mtx);
@@ -1163,17 +1163,10 @@ ieee80211_sta_process_chanswitch(struct ieee80211_sub_if_data *sdata,
 
 	if (!beacon && sec_chan_offs) {
 		secondary_channel_offset = sec_chan_offs->sec_chan_offs;
-	} else if (beacon && ht_oper) {
-		secondary_channel_offset =
-			ht_oper->ht_param & IEEE80211_HT_PARAM_CHA_SEC_OFFSET;
 	} else if (!(ifmgd->flags & IEEE80211_STA_DISABLE_HT)) {
-		/*
-		 * If it's not a beacon, HT is enabled and the IE not present,
-		 * it's 20 MHz, 802.11-2012 8.5.2.6:
-		 *	This element [the Secondary Channel Offset Element] is
-		 *	present when switching to a 40 MHz channel. It may be
-		 *	present when switching to a 20 MHz channel (in which
-		 *	case the secondary channel offset is set to SCN).
+		/* If the secondary channel offset IE is not present,
+		 * we can't know what's the post-CSA offset, so the
+		 * best we can do is use 20MHz.
 		 */
 		secondary_channel_offset = IEEE80211_HT_PARAM_CHA_SEC_NONE;
 	}
@@ -2122,6 +2115,7 @@ static void ieee80211_mgd_probe_ap(struct ieee80211_sub_if_data *sdata,
 				   bool beacon)
 {
 	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
+	struct ieee80211_local *local = sdata->local;
 	bool already = false;
 
 	if (!ieee80211_sdata_running(sdata))
@@ -2147,6 +2141,16 @@ static void ieee80211_mgd_probe_ap(struct ieee80211_sub_if_data *sdata,
 		ieee80211_cqm_rssi_notify(&sdata->vif,
 					  NL80211_CQM_RSSI_BEACON_LOSS_EVENT,
 					  GFP_KERNEL);
+	} else {
+		if (local->ops->get_connection_alive) {
+			if (drv_get_connection_alive(local, sdata)) {
+				mod_timer(&ifmgd->conn_mon_timer,
+						round_jiffies_up(jiffies +
+								IEEE80211_CONNECTION_IDLE_TIME));
+				mutex_unlock(&sdata->local->mtx);
+				goto out;
+			}
+		}
 	}
 
 	/*
@@ -2715,6 +2719,11 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
 	}
 
 	sband = local->hw.wiphy->bands[ieee80211_get_sdata_band(sdata)];
+        if (!sband) {
+            mutex_unlock(&sdata->local->sta_mtx);
+            ret = false;
+            goto out;
+        }
 
 	/* Set up internal HT/VHT capabilities */
 	if (elems.ht_cap_elem && !(ifmgd->flags & IEEE80211_STA_DISABLE_HT))
@@ -2983,10 +2992,15 @@ static void ieee80211_rx_mgmt_probe_resp(struct ieee80211_sub_if_data *sdata,
 	if (baselen > len)
 		return;
 
-	ieee802_11_parse_elems(mgmt->u.probe_resp.variable, len - baselen,
-			       false, &elems);
+	ieee802_11_parse_elems_crc(mgmt->u.probe_resp.variable, len - baselen,
+			       false, &elems, sdata->wdev.vendor_events_filter,
+				   sdata->wdev.vendor_events_filter_len, 0, 0);
 
 	ieee80211_rx_bss_info(sdata, mgmt, len, rx_status, &elems);
+
+	if (elems.vendor_ie_to_notify)
+		cfg80211_rx_vendoer_specific_mgmt(&sdata->wdev, rx_status->freq,
+				(const u8 *)mgmt, len, GFP_ATOMIC);
 
 	if (ifmgd->associated &&
 	    ether_addr_equal(mgmt->bssid, ifmgd->associated->bssid))
@@ -3050,6 +3064,14 @@ ieee80211_rx_mgmt_beacon(struct ieee80211_sub_if_data *sdata,
 	if (baselen > len)
 		return RX_MGMT_NONE;
 
+	ieee802_11_parse_elems_crc(mgmt->u.beacon.variable,
+			len - baselen, false, &elems, sdata->wdev.vendor_events_filter,
+			   sdata->wdev.vendor_events_filter_len, 0, 0);
+
+	if (elems.vendor_ie_to_notify)
+		 cfg80211_rx_vendoer_specific_mgmt(&sdata->wdev, rx_status->freq,
+			(const u8 *)mgmt, len, GFP_ATOMIC);
+
 	rcu_read_lock();
 	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 	if (!chanctx_conf) {
@@ -3066,8 +3088,6 @@ ieee80211_rx_mgmt_beacon(struct ieee80211_sub_if_data *sdata,
 
 	if (ifmgd->assoc_data && ifmgd->assoc_data->need_beacon &&
 	    ether_addr_equal(mgmt->bssid, ifmgd->assoc_data->bss->bssid)) {
-		ieee802_11_parse_elems(mgmt->u.beacon.variable,
-				       len - baselen, false, &elems);
 
 		ieee80211_rx_bss_info(sdata, mgmt, len, rx_status, &elems);
 		ifmgd->assoc_data->have_beacon = true;
@@ -3178,7 +3198,7 @@ ieee80211_rx_mgmt_beacon(struct ieee80211_sub_if_data *sdata,
 	ncrc = crc32_be(0, (void *)&mgmt->u.beacon.beacon_int, 4);
 	ncrc = ieee802_11_parse_elems_crc(mgmt->u.beacon.variable,
 					  len - baselen, false, &elems,
-					  care_about_ies, ncrc);
+					  NULL, 0, care_about_ies, ncrc);
 
 	if (local->hw.flags & IEEE80211_HW_PS_NULLFUNC_STACK) {
 		bool directed_tim = ieee80211_check_tim(elems.tim,

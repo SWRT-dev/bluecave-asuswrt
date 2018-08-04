@@ -1998,7 +1998,6 @@ int update_resolvconf(void)
 	if (!write_ovpn_resolv(fp))
 #endif
 	{
-		fprintf(fp_servers, "server=127.0.0.1#1053\n");
 		for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
 			char *wan_xdns, *wan_xdomain;
 			char wan_xdns_buf[sizeof("255.255.255.255 ")*2], wan_xdomain_buf[256];
@@ -2455,9 +2454,7 @@ wan_up(const char *pwan_ifname)
 			start_igmpproxy(wan_ifname);
 
 #ifdef RTCONFIG_LANTIQ
-		snprintf(ppa_cmd, sizeof(ppa_cmd), "ppacmd delwan -i %s", wan_ifname);
-		_dprintf("[%s][%d] %s\n", __func__, __LINE__, ppa_cmd);
-		system(ppa_cmd);
+		disable_ppa_wan(wan_ifname);
 #endif
 		_dprintf("%s_x(%s): done.\n", __FUNCTION__, wan_ifname);
 
@@ -2745,16 +2742,11 @@ wan_up(const char *pwan_ifname)
 	}
 
 #ifdef RTCONFIG_LANTIQ
-	snprintf(ppa_cmd, sizeof(ppa_cmd), "ppacmd delwan -i %s", wan_ifname);
-	_dprintf("[%s][%d] %s\n", __func__, __LINE__, ppa_cmd);
-	system(ppa_cmd);
+	disable_ppa_wan(wan_ifname);
 
 	if(ppa_support(wan_unit) == 1){
 		sleep(1);
-
-		snprintf(ppa_cmd, sizeof(ppa_cmd), "ppacmd addwan -i %s", wan_ifname);
-		_dprintf("[%s][%d] %s\n", __func__, __LINE__, ppa_cmd);
-		system(ppa_cmd);
+		enable_ppa_wan(wan_ifname);
 	}
 #endif
 
@@ -2897,7 +2889,7 @@ wan_down(char *wan_ifname)
 	}
 #endif
 #ifdef RTCONFIG_LANTIQ
-	eval("ppacmd", "delwan", "-i", wan_ifname);
+	disable_ppa_wan(wan_ifname);
 #endif
 }
 
@@ -4038,4 +4030,3 @@ int detwan_main(int argc, char *argv[]){
 	return 0;
 }
 #endif	/* RTCONFIG_DETWAN */
-

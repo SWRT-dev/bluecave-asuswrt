@@ -52,8 +52,6 @@ do {\
 #define CBM_QDQCNT_BASE					(g_base_addr.cbm_qdqcnt_addr_base)
 #define CBM_DMADESC_BASE				(g_base_addr.cbm_dmadesc_addr_base)
 
-
-#define CHECK_WHILE_LOOP 1
 extern void *ltq_cbm_std_buf_base;
 extern void *ltq_cbm_jbo_buf_base;
 static struct cbm_ctrl g_cbm_ctrl;
@@ -1458,6 +1456,7 @@ void dump_cbm_desc(struct cbm_desc *desc, int detail)
 static int cbm_cpu_enqueue(uint32_t pid, struct cbm_desc *desc)
 {
 	uint32_t data_pointer, size_to_wb, pointer_to_wb;
+
 	if (!desc || pid >= CPU_EQM_PORT_NUM /*|| ((1 << pid) & g_cpu_port_alloc) == 0*/)
 		return CBM_FAILURE;
 
@@ -1588,7 +1587,7 @@ void *cbm_buffer_alloc(uint32_t pid, uint32_t flag)
 	} while ((buf_addr & 0xFFFFF800) == 0xFFFFF800 && (i++) < DEFAULT_WAIT_CYCLES);
 
 	if ((buf_addr & 0xFFFFF800) == 0xFFFFF800) {
-		cbm_err("alloc buffer fail for portid: %d type %d ofsc %d", pid, flag, cbm_get_std_free_count());
+		cbm_err("alloc buffer fail for portid: %d type %d", pid, flag);
 		local_irq_restore(sys_flag);
 		return NULL;
 	}
@@ -2902,81 +2901,42 @@ int32_t cbm_port_id,
 uint32_t flags)
 {
 	int result = cbm_port_id;
-	int i = 0;
-	uint32_t reg;
-	uint32_t data_pointer = 0;
-	uint32_t cfg;
-
 	if (flags & CBM_PORT_F_DEQUEUE_PORT) {
 		if ((cbm_port_id >= 5) && (cbm_port_id <= 22))
-			result = 5;
+		result = 5;
 		switch (result) {
 		case 4:
 		case 24:
 		case 25:
 		case 26:
-			cfg = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg));
-			rmb();
-			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg)), 0);
-			wmb();
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dptr)), 0x1f);
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, resv2[0])), 0x0);
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dqpc)), 0x0);
-			wmb();
+#ifdef CONFIG_LTQ_UMT_SW_MODE
+			umt_reset_port_dq_idx(cbm_port_id);
+#endif
+			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, resv2[0])), 0x0);
+			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dqpc)), 0x0);
 #ifdef CONFIG_LTQ_UMT_SW_MODE
 			umt_reset_port_dq_idx(cbm_port_id);
 #endif
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, bprc)), 0x0);
-			wmb();
-			for (i = 0; i < dqm_port_info[cbm_port_id].deq_info.num_desc; i++) {
-				reg = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 12);
-				rmb();
-				if (reg & 0x80000000) {
-					data_pointer = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 8);
-					cbm_buffer_free(smp_processor_id(), data_pointer, 1);
-				}
-				xrx500_cbm_w32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 0, 0);
-				xrx500_cbm_w32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 4, 0);
-				xrx500_cbm_w32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 8, 0);
-				xrx500_cbm_w32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 12, 0);
-			}
-                        xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg)), cfg);
-			wmb();
-
 		break;
 		case 0:
 		case 1:
 		case 2:
 		case 3:
-			cfg = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg));
-			rmb();
-			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg)), 0);
-			wmb();
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dptr)), 0x1);
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dqpc)), 0x0);
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, bprc)), 0x0);
-			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg)), cfg);
-			wmb();
 		break;
 		case 5:
-			cfg = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg));
-			rmb();
-			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg)), 0);
-			wmb();
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dptr)), 0x1);
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dqpc)), 0x0);
-			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg)), cfg);
-			wmb();
 		break;
 		case 23:
-			cfg = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg));
-			rmb();
-			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg)), 0);
-			wmb();
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dptr)), 0x1f);
 			xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dqpc)), 0x0);
-			xrx500_cbm_w32(CBM_DQM_BASE + CBM_DQM_CPU_PORT(result, cfg), cfg);
-			wmb();
 		}
 	} else {
 		return CBM_FAILURE;
@@ -3025,6 +2985,8 @@ cbm_dp_port_alloc(
 	struct cbm_qidt_elm qidt_set = {0};
 	struct cbm_qidt_mask qidt_mask = {1, 1, 1, 1, 1, 1, 1, 1};
 	cbm_tmu_res_t *res = NULL;
+	if (!owner)
+		return CBM_FAILURE;
 	if (flags & DP_F_DEREGISTER) {	/*De-register */
 		if (port_id >= PMAC_MAX_NUM || port_id < 0)
 			return DP_FAILURE;
@@ -3347,40 +3309,34 @@ int32_t checksum_dp_enable(uint32_t port_id, uint32_t flags, uint32_t type)
 	return CBM_SUCCESS;
 }
 #endif
-void cbm_restore_qmap(int enable, int qid)
+void cbm_restore_qmap(int enable)
 {
 	uint8_t *ptr, *ptr1;
 	uint32_t i, found = 0, count = 0;
-	uint32_t tmp_drop_flag;
 	for (i = 0; i < 0x1000; i++) {
-		tmp_drop_flag = g_cbm_qidt_mirror[i].qidt_drop_flag;
 		ptr = (uint8_t *)&g_cbm_qidt_mirror[i].qidt_drop_flag;
 		ptr1 = (uint8_t *)&g_cbm_qidt_mirror[i].qidt_shadow;
 
 		if (enable) {
-			if (ptr[3] && (ptr1[3] == qid)) {
+			if (ptr[3]) {
 				cbm_qtable[ptr1[3]].refcnt++;
-				found++;
+				found = 1;
 				count++;
-				tmp_drop_flag &= 0x01010100;
 			}
-			if (ptr[2] && (ptr1[2] == qid)) {
+			if (ptr[2]) {
 				cbm_qtable[ptr1[2]].refcnt++;
-				found++;
+				found = 1;
 				count++;
-				tmp_drop_flag &= 0x01010001;
 			}
-			if (ptr[1]&& (ptr1[1] == qid)) {
+			if (ptr[1]) {
 				cbm_qtable[ptr1[1]].refcnt++;
-				found++;
+				found = 1;
 				count++;
-				tmp_drop_flag &= 0x01000101;
 			}
-			if (ptr[0] && (ptr1[0] == qid)) {
+			if (ptr[0]) {
 				cbm_qtable[ptr1[0]].refcnt++;
-				found++;
+				found = 1;
 				count++;
-				tmp_drop_flag &= 0x00010101;
 			}
 		} else {
 			if (ptr[3] || ptr[2] || ptr[1] || ptr[0])
@@ -3399,7 +3355,7 @@ void cbm_restore_qmap(int enable, int qid)
 			}
 		}
 		if (found) {
-			g_cbm_qidt_mirror[i].qidt_drop_flag = tmp_drop_flag;
+			g_cbm_qidt_mirror[i].qidt_drop_flag = 0;
 			if (enable)
 				xrx500_cbm_w32((CBM_QIDT_BASE + i * 4), g_cbm_qidt_mirror[i].qidt_shadow);
 		}
@@ -3531,8 +3487,6 @@ void cbm_qid_schedule_out(int32_t cbm_port_id, int32_t tmu_queue_id, int32_t ena
 			}
 		}
 	}
-	/*tmu_equeue_link_get(tmu_queue_id, &qlink);
-	pr_info("sched blk in status %d\n",tmu_is_sched_blk_in_enabled(qlink.sbin));*/
 }
 
 static int32_t cbm_empty_queue(int32_t cbm_port_id, uint32_t qocc, uint32_t port_type)
@@ -3540,31 +3494,17 @@ static int32_t cbm_empty_queue(int32_t cbm_port_id, uint32_t qocc, uint32_t port
 	int i;
 	int no_packet = 0;
 	uint32_t reg = 0;
-	#ifdef CHECK_WHILE_LOOP
-	int iter = 0;
-	#endif
+	uint32_t data_pointer = 0;
 	i = 0;
 	while (qocc) {
-		#ifdef CHECK_WHILE_LOOP
-		iter++;
-		if (iter > 30000) {
-			pr_info_once("%s >30k iter qocc %d", __func__, qocc);
-		} else if (iter > 10000) {
-			pr_info_once("%s >10k iter qocc %d", __func__, qocc);
-		} else if (iter > 5000) {			
-			pr_info_once("%s >5k iter qocc %d", __func__, qocc);
-		} else if (iter > 500) {			
-			pr_info_once("%s >500 iter qocc %d", __func__, qocc);
-		}
-		#endif
-
-		
-		/*pr_info("read_dptr_idx=%d num_desc=%d\n", i, dqm_port_info[cbm_port_id].deq_info.num_desc);*/
 		for (i = 0; i < dqm_port_info[cbm_port_id].deq_info.num_desc; ) {
-			/*pr_info("read %d\n", i);*/
+			//pr_info("read %d\n", i);
 			switch(port_type) {
 			case DQM_DMA_TYPE:
 				reg = xrx500_cbm_r32(CBM_DMADESC_BASE + CBM_DQM_DMA_DESC(cbm_port_id, i) + 0x8);
+				break;
+			case DQM_WAVE_TYPE:
+				reg = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 12);
 				break;
 			default:
 				LOGF_KLOG_ERROR("Unknown port type\n");			
@@ -3577,8 +3517,12 @@ static int32_t cbm_empty_queue(int32_t cbm_port_id, uint32_t qocc, uint32_t port
 				case DQM_DMA_TYPE:
 					xrx500_cbm_w32((CBM_DMADESC_BASE + CBM_DQM_DMA_DESC(cbm_port_id, i) + 0x8), (reg & 0x7fffffff) | 0x40000000);
 					break;
+				case DQM_WAVE_TYPE:
+					data_pointer = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 8);
+					xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, scpu_ptr_rtn[i])), data_pointer);
+					break;
 				default:
-					LOGF_KLOG_ERROR("Unknown port type\n");
+					LOGF_KLOG_ERROR("Unknown port type\n");			
 				}
 				wmb();
 				no_packet = 0;
@@ -3603,101 +3547,40 @@ static int32_t cbm_empty_queue(int32_t cbm_port_id, uint32_t qocc, uint32_t port
 			return qocc;
 		}
 	}
-	return 0;
+	return 0;	
 }
 
-static int32_t cbm_wave_empty(int32_t cbm_port_id, int32_t tmu_queue_id)
-{
-	uint32_t wq, qrth, qocc_temp, qavg;
-	int count = 0, pkt_deq = 0;
-	int dqpc = 0, i;
-	uint32_t reg = 0;
-	uint32_t data_pointer = 0;
-
-	#ifdef CHECK_WHILE_LOOP
-	int iter = 0;
-	#endif
-	tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-	dqpc = xrx500_cbm_r32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, dqpc)));
-	if ((qocc_temp == 0) || (dqpc != 0x20)) {
-		pr_info("qocc is %d, dont flush desc fifo %d\n", qocc_temp, dqpc);
-		return CBM_FAILURE;
-	}
-	if ((qocc_temp != 0) && (dqpc == 0x20)) {
-		//pr_info("sane fifo status\n");
-		//pr_info("Disable Backpressure\n");
-		xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg)), 0x107 | ((cbm_port_id << CFG_CPU_EGP_0_EPMAP_POS) & CFG_CPU_EGP_0_EPMAP_MASK));
-		count = qocc_temp + dqpc;
-		while (pkt_deq < count) {
-			#ifdef CHECK_WHILE_LOOP
-			iter++;
-			if (iter > 30000) {
-				pr_info_once("%s >30k iter qocc %d", __func__, count);
-			} else if (iter > 10000) {
-				pr_info_once("%s >10k iter qocc %d", __func__, count);
-			} else if (iter > 5000) {			
-				pr_info_once("%s >5k iter qocc %d", __func__, count);
-			} else if (iter > 500) {			
-				pr_info_once("%s >500 iter qocc %d", __func__, count);
-			}
-			#endif
-			for (i = 0; i < dqm_port_info[cbm_port_id].deq_info.num_desc;) {
-				reg = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 12);
-				rmb();
-				if (reg & 0x80000000) {
-					//pr_info("own set %d\n", i);
-					data_pointer = xrx500_cbm_r32(CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, desc[i].desc0) + 8);
-					xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_SCPU_PORT(cbm_port_id, scpu_ptr_rtn[i])), data_pointer);
-					wmb();
-					pkt_deq++;
-					i++;
-				}
-				if (pkt_deq >= count)
-					break;
-			}
-			//usleep_range(2000, 2500);
-		}
-		//pr_info("Reenable Backpressure\n");
-		xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg)), 0x10F | ((cbm_port_id << CFG_CPU_EGP_0_EPMAP_POS) & CFG_CPU_EGP_0_EPMAP_MASK));
-	}
-	return CBM_SUCCESS;
-}
 static int32_t cbm_queue_empty_process(uint32_t port_type, int32_t cbm_port_id, int32_t tmu_queue_id)
 {
 	uint32_t wq, qrth, qocc_temp, qavg;
 	int result = 0;
 	int no_packet = 0;
-	#ifdef CHECK_WHILE_LOOP
-	int iter = 0;
-	#endif
 	tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
 	qocc_temp += 33;
-	while (1) {
-		#ifdef CHECK_WHILE_LOOP
-		iter++;
-		if (iter > 30000) {
-			tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-			pr_info_once("%s >30k iter qocc %d", __func__, qocc_temp);
-		} else if (iter > 10000) {
-			tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-			pr_info_once("%s >10k iter qocc %d", __func__, qocc_temp);
-		} else if (iter > 5000) {
-			tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-			pr_info_once("%s >5k iter qocc %d", __func__, qocc_temp);
-		} else if (iter > 500) {
-			tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-			pr_info_once("%s >500 iter qocc %d", __func__, qocc_temp);
-		}
-		#endif
-		//pr_info("inter1 qocc %d\n", qocc_temp);
+	switch (port_type) {
+	case DQM_WAVE_TYPE:
+		xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg)), 0x107 | ((cbm_port_id << CFG_CPU_EGP_0_EPMAP_POS) & CFG_CPU_EGP_0_EPMAP_MASK));
+		break;
+	default:
+		break;
+	}
+	while (1) {	
+		/*pr_info("inter1 qocc %d\n", qocc_temp);*/
 		result = cbm_empty_queue(cbm_port_id, qocc_temp, port_type);
 		if (!result) {
 			no_packet = 0;
 			tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
 			/*LOGF_KLOG_ERROR("QOCC %d\n", qocc_temp);*/
-			if (qocc_temp && (qocc_temp != 32767)) {
+			if(qocc_temp && (qocc_temp != 32767)) {
 				continue;
 			} else {
+				switch (port_type) {
+				case DQM_WAVE_TYPE:
+				xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg)), 0x10F | ((cbm_port_id << CFG_CPU_EGP_0_EPMAP_POS) & CFG_CPU_EGP_0_EPMAP_MASK));
+				break;
+				default:
+				break;
+				}
 				return result;
 			}
 		} else {
@@ -3706,6 +3589,13 @@ static int32_t cbm_queue_empty_process(uint32_t port_type, int32_t cbm_port_id, 
 			qocc_temp = result;
 			if (no_packet > 10) {
 				tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
+				switch (port_type) {
+				case DQM_WAVE_TYPE:
+				xrx500_cbm_w32((CBM_DQM_BASE + CBM_DQM_CPU_PORT(cbm_port_id, cfg)), 0x10F | ((cbm_port_id << CFG_CPU_EGP_0_EPMAP_POS) & CFG_CPU_EGP_0_EPMAP_MASK));
+				break;
+				default:
+				break;
+				}
 				return result;
 			}
 		}
@@ -3724,9 +3614,6 @@ uint32_t flags)
 	int32_t pos = 3;
 	int count1 = 0;
 	#endif
-	#ifdef CHECK_WHILE_LOOP
-	int iter = 0;
-	#endif
 	int chan;
 	uint32_t wq, qrth, qocc, qavg;
 	uint32_t qocc_temp;
@@ -3736,40 +3623,16 @@ uint32_t flags)
 		if (tmu_queue_id != -1) {
 			qocc = 0;
 			cbm_qid_schedule_out(cbm_port_id, tmu_queue_id, 0);
-			
 			/* Disable the DMA channels associated with CBM Dequeue Port */
 			if (chan)
 				ltq_dma_chan_off(chan);
 		}
 		tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-		/*LOGF_KLOG_INFO("QOCC %d\n", qocc_temp);*/
 		if ((port_type == DQM_LDMA_TYPE) || (port_type == DQM_WAVE_TYPE)) {
 			if (flags & CBM_Q_F_FORCE_FLUSH) {
-				/*LOGF_KLOG_INFO("Force flush\n");*/
-				if (port_type == DQM_WAVE_TYPE) {
-					cbm_wave_empty(cbm_port_id, tmu_queue_id);
-				} else {
-					cbm_queue_empty_process(port_type, cbm_port_id, tmu_queue_id);
-				}
+				cbm_queue_empty_process(port_type, cbm_port_id, tmu_queue_id);
 			} else {
-				/*LOGF_KLOG_INFO("Auto flush\n");*/
 				while (qocc_temp) {
-					#ifdef CHECK_WHILE_LOOP
-					iter++;
-					if (iter > 30000) {
-						tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-						pr_info_once("%s >30k iter qocc %d", __func__, qocc_temp);
-					} else if (iter > 10000) {
-						tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-						pr_info_once("%s >10k iter qocc %d", __func__, qocc_temp);
-					} else if (iter > 5000) {
-						tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-						pr_info_once("%s >5k iter qocc %d", __func__, qocc_temp);
-					} else if (iter > 500) {
-						tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
-						pr_info_once("%s >500 iter qocc %d", __func__, qocc_temp);
-					}
-					#endif
 					usleep_range(10000, 10100);
 					tmu_qoct_read(tmu_queue_id, &wq, &qrth, &qocc_temp, &qavg);
 					/*LOGF_KLOG_INFO("----->qocc_temp =%d Q %d\n", qocc_temp, tmu_queue_id);*/
@@ -3866,10 +3729,7 @@ EXPORT_SYMBOL(cbm_queue_flush);
 int32_t cbm_queue_sched_mgmt(int32_t tmu_port, uint32_t qid, uint32_t flags)
 {
 	struct tmu_equeue_link qlink;
-
-	/*tmu_equeue_link_get(qid, &qlink);
-	pr_info("QUEUE status %d\n", tmu_is_equeue_enabled(qid));
-	pr_info("Sched blk out status %d\n", tmu_is_sched_blk_out_enabled(qlink.sbin >> 3));*/
+	cbm_debug("\n");
 	if (flags & CBM_Q_F_DISABLE) {
 		if (flags & CBM_Q_F_FLUSH) {
 			cbm_queue_flush(tmu_port, qid, 0, flags);
@@ -3881,7 +3741,6 @@ int32_t cbm_queue_sched_mgmt(int32_t tmu_port, uint32_t qid, uint32_t flags)
 	tmu_equeue_link_get(qid, &qlink);
 	/*Disable the scheduler block input*/
 	tmu_equeue_enable(qid, (flags & CBM_Q_F_DISABLE) ? 0 : 1);
-	/*LOGF_KLOG_INFO("qid %d status %d\n", qid, (flags & CBM_Q_F_DISABLE) ? 0 : 1);*/
 	if (!(flags & CBM_Q_F_DISABLE))
 		tmu_sched_blk_out_enable(qlink.sbin >> 3, 1);
 	return CBM_SUCCESS;
@@ -3936,21 +3795,6 @@ uint32_t flags)
 		/*LOGF_KLOG_INFO("******************ep=%d tmu_port=%d queue=%d\n", dp_port_id,
 					tmu_port,
 					qnum);*/
-		tmu_queue_list(tmu_port, tmp_q_buff2, ARRAY_SIZE(tmp_q_buff2), &q_buff_num, NULL);
-		LOGF_KLOG_INFO(" q_buff_num: %d\n", q_buff_num);
-		if (flags & CBM_Q_F_RESTORE_ONLY) {
-			#if 1
-			/*restore all entries in the queue map table for that
-			EP to map to original queues, and remove the CBM_F_QUEUE_DROP flag from the DDR table*/
-			spin_lock_irqsave(&cbm_qidt_lock, sys_flag);
-			for (j = 0; j < q_buff_num; j++) {
-				cbm_restore_qmap(1, tmp_q_buff2[j]);
-				/*LOGF_KLOG_INFO(" j: %d\n", j);*/
-			}
-			spin_unlock_irqrestore(&cbm_qidt_lock, sys_flag);
-			#endif
-		}
-		
 
 		/*spin_lock_irqsave(&cbm_qidt_lock, sys_flag);*/
 		/*For the Datapath port (EP i), go through all entries in the CBM Queue Map table in DDR, and mark with
@@ -3969,7 +3813,8 @@ uint32_t flags)
 		/*spin_unlock_irqrestore(&cbm_qidt_lock, sys_flag);*/
 		/* For each queue_id in the CBM Queue map table matched entries (by EP), disable/enable the TMU queue by calling
 		the API of the TMU driver*/
-		
+		tmu_queue_list(tmu_port, tmp_q_buff2, ARRAY_SIZE(tmp_q_buff2), &q_buff_num, NULL);
+		/*LOGF_KLOG_INFO(" q_buff_num: %d\n", q_buff_num);*/
 		for (j = 0; j < q_buff_num; j++) {
 			cbm_queue_sched_mgmt(tmu_port, tmp_q_buff2[j], flags);
 			/*LOGF_KLOG_INFO(" j: %d\n", j);*/
@@ -3977,10 +3822,7 @@ uint32_t flags)
 		/*restore all entries in the queue map table for that
 		EP to map to original queues, and remove the CBM_F_QUEUE_DROP flag from the DDR table*/
 		spin_lock_irqsave(&cbm_qidt_lock, sys_flag);
-		for (j = 0; j < q_buff_num; j++) {
-			(flags & CBM_Q_F_DISABLE) ?  : cbm_restore_qmap(1, tmp_q_buff2[j]);
-			/*LOGF_KLOG_INFO(" j: %d\n", j);*/
-		}
+		(flags & CBM_Q_F_DISABLE) ?  : cbm_restore_qmap(1);
 		spin_unlock_irqrestore(&cbm_qidt_lock, sys_flag);
 	break;
 	case 3:
@@ -4017,7 +3859,7 @@ uint32_t flags)
 			//usleep_range(timeout, timeout+100);
 		/* For each queue_id in the CBM Queue map table matched entries (by EP), disable/enable the TMU queue by calling
 		the API of the TMU driver*/
-		pr_info("cbm_queue_sched_mgmt\n");
+		cbm_debug("cbm_queue_sched_mgmt\n");
 		if (cbm_queue_sched_mgmt(tmu_port, qnum, flags) == CBM_FAILURE) {
 			LOGF_KLOG_ERROR("ret failure\n");
 			result = CBM_FAILURE;
@@ -4032,13 +3874,13 @@ uint32_t flags)
 
 		if (qidt_valid == 0) {
 			if ((!cbm_qtable[qnum].refcnt) && !(flags & CBM_Q_F_DISABLE)) {
-				pr_info("guess first time qidt_valid==0\n");
+				cbm_debug("guess first time\n");
 				cbm_qidt_set(&qidt_set,
 				&qidt_mask,
 				qnum);
 			}
 		}
-		/*pr_info("%d\n", cbm_qtable[qnum].refcnt);*/
+		cbm_debug("%d\n", cbm_qtable[qnum].refcnt);
 	break;
 	default:
 	break;

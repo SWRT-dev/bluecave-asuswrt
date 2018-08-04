@@ -54,13 +54,10 @@ static int xrx500_mdio_probe(struct net_device *dev, struct xrx500_port *port);
 static int ltq_gsw_pmac_init(void);
 
 #define LTQ_RXCSUM
+
 #define DRV_MODULE_NAME             "lantiq_eth_drv_xrx500"
 #define DRV_MODULE_VERSION          "1.1"
 
-#ifdef CONFIG_OFFLOAD_FWD_MARK
-#define SWITCH_ID 									12345
-#define SWITCH_ID2 									23456
-#endif
 /* length of time before we decide the hardware is borked,
  * and dev->eth_tx_timeout() should be called to fix the problem
  */
@@ -247,6 +244,25 @@ static int ltq_eth_open(struct net_device *dev)
 			pr_info("p2p channel turned ON !\n");
 	else
 			pr_info("p2p channel already ON !\n");
+
+	if (priv->flags & FLAG_PHY_INIT_DONE) {
+		pr_info("phy init already done !\n");
+	} else {
+		struct phy_device *phydev = NULL;
+		int i;
+
+		for (i = 0; i < priv->num_port; i++)  {
+			phydev = priv->port[i].phydev;
+
+			if (!phydev) {
+				pr_info("no PHY found\n");
+			} else {
+				pr_info("resume phy for device: %s \n", dev->name);
+				genphy_resume(phydev);
+			}
+		}
+		priv->flags |= FLAG_PHY_INIT_DONE;
+	}
     return 0;
 }
 
@@ -286,12 +302,6 @@ static void eth_rx(struct net_device *dev, int len,struct sk_buff* skb)
 	if (dev->features & NETIF_F_RXCSUM) {
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 	}
-#ifdef CONFIG_OFFLOAD_FWD_MARK
-		if(strncmp(dev->name, wan_iface, IFNAMSIZ) == 0)
-			skb->offload_fwd_mark = SWITCH_ID2;
-		else
-			skb->offload_fwd_mark = SWITCH_ID;
-#endif
     pr_debug ("passing to stack: protocol: %x\n", skb->protocol);
     netif_rx(skb);
     priv->stats.rx_packets++;
@@ -786,14 +796,14 @@ static int ltq_gsw_pmac_init(void)
 	regCfg.nData = 0x182;
 	gsw_api_kioctl(gswl, GSW_REGISTER_SET, (unsigned int)&regCfg);
 #endif
-
+#if 0	/* Work Around for IRE steering issue */
 	/* Enable the CPU port MAC address spoofing detection */
 	memset((void *)&regCfg, 0x00, sizeof(regCfg));
 	regCfg.nRegAddr = 0x480;
 	gsw_api_kioctl(gswl, GSW_REGISTER_GET, (unsigned int)&regCfg);
 	regCfg.nData |= 0x4000;
 	gsw_api_kioctl(gswl, GSW_REGISTER_SET, (unsigned int)&regCfg);
-
+#endif
 	/* PMAC control register 2 to disable LCHKS */
 	memset((void *)&regCfg, 0x00, sizeof(regCfg));
 	regCfg.nRegAddr = 0xd05;
@@ -1022,7 +1032,7 @@ static void ltq_eth_drv_eth_addr_setup(struct net_device *dev, int port)
             for ( i = 0; i < 5; i++ )
                 dev->dev_addr[i] = ethaddr[i];
             // dev->dev_addr[5] = ethaddr[i] + port;
-            dev->dev_addr[5] = ethaddr[i];
+			dev->dev_addr[5] = ethaddr[i];
         }
     }
 	return;
@@ -1310,15 +1320,8 @@ static int xrx500_of_iface(struct xrx500_hw *hw, struct device_node *iface)
 	ltq_eth_drv_eth_addr_setup(hw->devs[hw->num_devs], priv->id);
 
 	/* register the actual device */
-	if (!register_netdev(hw->devs[hw->num_devs])){
-#ifdef CONFIG_OFFLOAD_FWD_MARK
-		if(strncmp(hw->devs[hw->num_devs]->name, wan_iface, IFNAMSIZ) == 0)
-			hw->devs[hw->num_devs]->offload_fwd_mark = SWITCH_ID2;
-		else
-			hw->devs[hw->num_devs]->offload_fwd_mark = SWITCH_ID;
-#endif
+	if (!register_netdev(hw->devs[hw->num_devs]))
 		hw->num_devs++;
-	}
 	return 0;
 }
 

@@ -47,7 +47,7 @@
 	\param[in] unBytes Number of bytes to allocate
  	\return On Successful returns number of bytes allocated ptr
 */
-#define HELP_MALLOC(unBytes) help_calloc(1,unBytes,__FILE__,__LINE__);
+#define HELP_MALLOC(unBytes) help_calloc(1,unBytes,(char*)__FILE__,__LINE__);
 
 /*!
 	\brief Allocates memory for given number of bytes
@@ -55,7 +55,7 @@
 	\param[in] unBytes Number of bytes to allocate
  	\return On Successful returns number of bytes allocated ptr
 */
-#define HELP_REALLOC(pSrcPtr, unBytes) help_realloc(pSrcPtr,unBytes,__FILE__,__LINE__);
+#define HELP_REALLOC(pSrcPtr, unBytes) help_realloc(pSrcPtr,unBytes,(char*)__FILE__,__LINE__);
 
 
 /*!
@@ -64,7 +64,7 @@
 	\param[in] unNum Number of elementes to allocate
  	\return On Successful returns number of bytes allocated ptr
 */
-#define HELP_CALLOC(unNum, unBytes) help_calloc(unNum,unBytes,__FILE__,__LINE__);
+#define HELP_CALLOC(unNum, unBytes) help_calloc(unNum,unBytes,(char*)__FILE__,__LINE__);
 
 
 /*!
@@ -96,7 +96,7 @@ static inline void * HELP_CREATE_OBJ(IN uint32_t unSubOper)
 	if (OBJLIST(unSubOper))
 	{ 
 		ObjList *__pxTmpObj; 
-		__pxTmpObj = HELP_MALLOC(sizeof(ObjList));
+		__pxTmpObj = (ObjList *)HELP_MALLOC(sizeof(ObjList));
 		if(!__pxTmpObj)
 		{
 			LOGF_LOG_CRITICAL(" malloc failed\n");
@@ -108,7 +108,7 @@ static inline void * HELP_CREATE_OBJ(IN uint32_t unSubOper)
 	else if (OBJATTRLIST(unSubOper))
 	{
 		ObjAttrList *__pxTmpAttrObj; 
-		__pxTmpAttrObj = HELP_MALLOC(sizeof(ObjAttrList));
+		__pxTmpAttrObj = (ObjAttrList *)HELP_MALLOC(sizeof(ObjAttrList));
 		if(!__pxTmpAttrObj)
 		{
 			LOGF_LOG_CRITICAL(" malloc failed\n");
@@ -121,7 +121,7 @@ static inline void * HELP_CREATE_OBJ(IN uint32_t unSubOper)
 	else if (IS_SOPT_OBJACSATTR(unSubOper))
 	{
 		ObjACSList *__pxTmpAcsObj; 
-		__pxTmpAcsObj = HELP_MALLOC(sizeof(ObjACSList));
+		__pxTmpAcsObj = (ObjACSList *)HELP_MALLOC(sizeof(ObjACSList));
 		if(!__pxTmpAcsObj)
 		{
 			LOGF_LOG_CRITICAL(" malloc failed\n");
@@ -175,7 +175,7 @@ static inline void * HELP_CREATE_PARAM(IN uint32_t unSubOper)
 	if (OBJLIST(unSubOper))
 	{ 
 		ParamList *__pxTmpParam; 
-		__pxTmpParam = HELP_MALLOC(sizeof(ParamList));
+		__pxTmpParam = (ParamList *)HELP_MALLOC(sizeof(ParamList));
 		if(!__pxTmpParam)
 		{
 			LOGF_LOG_CRITICAL(" malloc failed\n");
@@ -213,11 +213,11 @@ static inline OUT void * HELP_OBJECT_GET(IN void *pxObj, IN const char *pcObjNam
 {
 	if(OBJLIST(unSubOper))
 	{
-		return help_addObjList(pxObj,pcObjName,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE);
+		return help_addObjList((ObjList*)pxObj,pcObjName,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE);
 	}
 	else if (OBJATTRLIST(unSubOper))
 	{
-		return help_addObjAttrList(pxObj,pcObjName,NO_ARG_VALUE,NO_ARG_VALUE);
+		return help_addObjAttrList((ObjAttrList*)pxObj,pcObjName,NO_ARG_VALUE,NO_ARG_VALUE);
 	}
 	else
 	{
@@ -238,11 +238,11 @@ static inline void  HELP_PARAM_GET(IN void *pxObj, IN const char *pcParamName, I
 {
 	if(OBJLIST(unSubOper))
 	{
-		help_addParamList(pxObj,pcParamName,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE);
+		help_addParamList((ObjList*)pxObj,pcParamName,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE);
 	}
 	else if (OBJATTRLIST(unSubOper))
 	{
-		help_addParamAttrList(pxObj,pcParamName,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE,
+		help_addParamAttrList((ObjAttrList*)pxObj,pcParamName,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE,
 						  NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE,NO_ARG_VALUE);
 	}
 	else
@@ -261,7 +261,7 @@ static inline void  HELP_PARAM_GET(IN void *pxObj, IN const char *pcParamName, I
 */
 static inline void * HELP_ACS_OBJ_CONSTRUCT(IN void *pxObj, IN const char *pcObjName, IN uint32_t unOper, IN uint32_t unObjFlag)
 {
-	return help_addAcsObjList(pxObj, pcObjName, unOper, unObjFlag);
+	return help_addAcsObjList((ObjACSList*)pxObj, pcObjName, unOper, unObjFlag);
 }	
 
 /*!
@@ -274,7 +274,7 @@ static inline void * HELP_ACS_OBJ_CONSTRUCT(IN void *pxObj, IN const char *pcObj
 */
 static inline void *  HELP_ACS_PARAM_CONSTRUCT(IN void *pxObj, IN const char *pcParamName, IN const char *pcParamValue, IN uint32_t unParamFlag)
 {
-	return help_addAcsParamList(pxObj, pcParamName, pcParamValue, unParamFlag);
+	return help_addAcsParamList((ObjACSList*)pxObj, pcParamName, pcParamValue, unParamFlag);
 }
 
 /*!
@@ -289,7 +289,7 @@ static inline void *  HELP_ACS_PARAM_CONSTRUCT(IN void *pxObj, IN const char *pc
 static inline void * HELP_OBJECT_SET(IN void *pxObj, IN const char *pcObjName, IN uint32_t unSid, IN uint32_t unOper,IN uint32_t unSubOper)
 {
 	(void)unSubOper;
-	return help_addObjList(pxObj,pcObjName,unSid,NO_ARG_VALUE,unOper,NO_ARG_VALUE);
+	return help_addObjList((ObjList*)pxObj,pcObjName,unSid,NO_ARG_VALUE,unOper,NO_ARG_VALUE);
 
 }	
 
@@ -304,7 +304,7 @@ static inline void * HELP_OBJECT_SET(IN void *pxObj, IN const char *pcObjName, I
 static inline void *  HELP_PARAM_SET(IN void *pxObj, IN const char *pcParamName, IN const char *pcParamValue, IN uint32_t unSubOper)
 {
 	(void)unSubOper;
-	return help_addParamList(pxObj,pcParamName,NO_ARG_VALUE,pcParamValue,NO_ARG_VALUE);
+	return help_addParamList((ObjList*)pxObj,pcParamName,NO_ARG_VALUE,pcParamValue,NO_ARG_VALUE);
 }
 
 /*!
@@ -319,7 +319,7 @@ static inline void *  HELP_PARAM_SET(IN void *pxObj, IN const char *pcParamName,
 static inline void  HELP_ONLY_PARAM_SET(IN void *pxParam, IN const char *pcParamName, IN const char *pcParamValue, IN uint32_t unSubOper)
 {
 	(void)unSubOper;
-	help_paramListOnly(pxParam,pcParamName,NO_ARG_VALUE,pcParamValue,NO_ARG_VALUE);
+	help_paramListOnly((ParamList*)pxParam,pcParamName,NO_ARG_VALUE,pcParamValue,NO_ARG_VALUE);
 }
 /*!
 	\brief Copies the objlist from one list to another
@@ -344,7 +344,7 @@ static inline void  HELP_COPY_OBJ(OUT void *pDst, IN void *pSrc, IN uint32_t unS
 */
 static inline void  HELP_COPY_PARAM(OUT void *pDst, IN void *pSrc)
 {
-	help_copyParamList(pDst,pSrc);
+	help_copyParamList((ParamList*)pDst, (ParamList*)pSrc);
 }
 
 /*!
@@ -387,7 +387,7 @@ static inline void  HELP_PRINT_OBJ(IN void *pxObj, IN uint32_t unSubOper)
 static inline void  HELP_PRINT_PARAM(IN void *pxParam, IN uint32_t unSubOper)
 {
 	 (void)unSubOper;
-	 help_printParamList(pxParam);
+	 help_printParamList((ParamList*)pxParam);
 }
 
 /*! \brief  Updates the particular parameter node in the given objlist if param node found, else adds new param node

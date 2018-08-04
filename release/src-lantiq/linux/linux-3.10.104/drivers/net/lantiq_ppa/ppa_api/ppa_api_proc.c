@@ -100,6 +100,19 @@
  * ####################################
  */
 #if defined(CONFIG_LTQ_PPA_GRX500) && CONFIG_LTQ_PPA_GRX500
+// DEBUG CONNECTIVITY ISSUE
+static int proc_read_connectivity_issue_client_mac(struct seq_file *, void *);
+static ssize_t proc_write_connectivity_issue_client_mac(struct file *, const char __user *, size_t, loff_t *);
+static int proc_read_connectivity_issue_client_mac_seq_open(struct inode *, struct file *);
+
+static int proc_read_connectivity_issue_ifname(struct seq_file *, void *);
+static ssize_t proc_write_connectivity_issue_ifname(struct file *, const char __user *, size_t, loff_t *);
+static int proc_read_connectivity_issue_ifname_seq_open(struct inode *, struct file *);
+
+static int proc_read_connectivity_issue_debug(struct seq_file *, void *);
+static ssize_t proc_write_connectivity_issue_debug(struct file *, const char __user *, size_t, loff_t *);
+static int proc_read_connectivity_issue_debug_seq_open(struct inode *, struct file *);
+
 static ssize_t proc_write_classprio_seq(struct file *, const char __user *, size_t, loff_t *);
 static int proc_read_classprio_seq_open(struct inode *, struct file *);
 static int proc_read_classprio(struct seq_file *, void *);
@@ -203,6 +216,54 @@ static int proc_read_classprio_seq_open(struct inode *inode, struct file *file)
     return single_open(file, proc_read_classprio, NULL);
 }
 
+// connectivity issue debug
+extern unsigned char g_ppa_connectivity_issue_client_mac[6];
+extern PPA_IFNAME g_ppa_connectivity_issue_ifname[PPA_IF_NAME_SIZE];
+extern int g_ppa_connectivity_issue_debug;
+static int g_ppa_api_connectivity_issue_proc_dir_flag = 0;
+static struct proc_dir_entry *g_ppa_api_connectivity_issue_proc_dir = NULL;
+
+static struct file_operations g_proc_file_connectivity_issue_client_mac_seq_fops = {
+    .owner      = THIS_MODULE,
+    .open       = proc_read_connectivity_issue_client_mac_seq_open,
+    .read       = seq_read,
+    .write      = proc_write_connectivity_issue_client_mac,
+    .llseek     = seq_lseek,
+    .release    = single_release,
+};
+
+static int proc_read_connectivity_issue_client_mac_seq_open(struct inode *inode, struct file *file)
+{
+    return single_open(file, proc_read_connectivity_issue_client_mac, NULL);
+}
+
+static struct file_operations g_proc_file_connectivity_issue_ifname_seq_fops = {
+    .owner      = THIS_MODULE,
+    .open       = proc_read_connectivity_issue_ifname_seq_open,
+    .read       = seq_read,
+    .write      = proc_write_connectivity_issue_ifname,
+    .llseek     = seq_lseek,
+    .release    = single_release,
+};
+
+static int proc_read_connectivity_issue_ifname_seq_open(struct inode *inode, struct file *file)
+{
+    return single_open(file, proc_read_connectivity_issue_ifname, NULL);
+}
+
+static struct file_operations g_proc_file_connectivity_issue_debug_seq_fops = {
+    .owner      = THIS_MODULE,
+    .open       = proc_read_connectivity_issue_debug_seq_open,
+    .read       = seq_read,
+    .write      = proc_write_connectivity_issue_debug,
+    .llseek     = seq_lseek,
+    .release    = single_release,
+};
+
+static int proc_read_connectivity_issue_debug_seq_open(struct inode *inode, struct file *file)
+{
+    return single_open(file, proc_read_connectivity_issue_debug, NULL);
+}
 #if defined(CONFIG_LTQ_PPA_COC_SUPPORT)
 extern uint64_t g_ppa_dp_thresh;
 extern uint64_t g_ppa_dp_window;
@@ -601,6 +662,121 @@ static ssize_t proc_write_classprio_seq(struct file *file, const char __user *bu
     }
 
     return count;
+}
+
+static int proc_read_connectivity_issue_client_mac(struct seq_file *seq, void *v)
+{
+    seq_printf(seq, "connectivity issue client MAC = %pM\n", g_ppa_connectivity_issue_client_mac);
+}
+
+static int proc_read_connectivity_issue_ifname(struct seq_file *seq, void *v)
+{
+    seq_printf(seq, "connectivity issue ifname = %s\n", g_ppa_connectivity_issue_ifname);
+}
+
+static int proc_read_connectivity_issue_debug(struct seq_file *seq, void *v)
+{
+    seq_printf(seq, "connectivity issue debug = %d\n", g_ppa_connectivity_issue_debug);
+}
+
+static void stomac(char *s,unsigned char mac_addr[])
+{
+    unsigned int mac[PPA_ETH_ALEN];
+
+    sscanf(s,"%2x:%2x:%2x:%2x:%2x:%2x",&mac[0],&mac[1],&mac[2],&mac[3],&mac[4],&mac[5]);
+
+    mac_addr[5] = mac[5];
+    mac_addr[4] = mac[4];
+    mac_addr[3] = mac[3];
+    mac_addr[2] = mac[2];
+    mac_addr[1] = mac[1];
+    mac_addr[0] = mac[0];
+    return;
+}
+
+static ssize_t proc_write_connectivity_issue_client_mac(struct file *file, const char __user *buf, size_t count, loff_t *data)
+{
+    int len;
+    char str[64];
+    char *p;
+
+    len = min(count, (size_t)(sizeof(str) - 1));
+    len -= ppa_copy_from_user(str, buf, len);
+    while ( len && str[len - 1] <= ' ' )
+        len--;
+    str[len] = 0;
+    for ( p = str; *p && *p <= ' '; p++, len-- );
+    if ( !*p )
+        return count;
+    else if ( strincmp(p, "help", 4) == 0 )
+    	printk("<connectivity issue client mac / clear> > /proc/ppa/api/connectivity_issue_debug/client_mac\n");
+    else if ( strincmp(p, "clear", 5) == 0 ) {
+	memset(g_ppa_connectivity_issue_client_mac, 0, sizeof(g_ppa_connectivity_issue_client_mac));
+	goto out;
+    }
+    
+    stomac(p, g_ppa_connectivity_issue_client_mac);
+out:
+    printk("connectivity issue client MAC = %pM\n", g_ppa_connectivity_issue_client_mac);
+    return count ;
+}
+
+
+static ssize_t proc_write_connectivity_issue_ifname(struct file *file, const char __user *buf, size_t count, loff_t *data)
+{
+    int len;
+    char str[64];
+    char *p;
+
+    len = min(count, (size_t)(sizeof(str) - 1));
+    len -= ppa_copy_from_user(str, buf, len);
+    while ( len && str[len - 1] <= ' ' )
+        len--;
+    str[len] = 0;
+    for ( p = str; *p && *p <= ' '; p++, len-- );
+    if ( !*p )
+        return count;
+    else if ( strincmp(p, "help", 4) == 0 )
+    	printk("<connectivity issue ifname / clear> > /proc/ppa/api/connectivity_issue_debug/ifname\n");
+    else if ( strincmp(p, "clear", 5) == 0 ) {
+	memset(g_ppa_connectivity_issue_ifname, 0, sizeof(g_ppa_connectivity_issue_ifname));
+	goto out;
+    }
+    
+    strncpy(g_ppa_connectivity_issue_ifname, p, sizeof(g_ppa_connectivity_issue_ifname));
+out:
+    printk("connectivity issue ifname = %s\n", g_ppa_connectivity_issue_ifname);
+    return count ;
+}
+
+static ssize_t proc_write_connectivity_issue_debug(struct file *file, const char __user *buf, size_t count, loff_t *data)
+{
+    int len;
+    char str[64];
+    char *p;
+
+    len = min(count, (size_t)(sizeof(str) - 1));
+    len -= ppa_copy_from_user(str, buf, len);
+    while ( len && str[len - 1] <= ' ' )
+        len--;
+    str[len] = 0;
+    for ( p = str; *p && *p <= ' '; p++, len-- );
+    if ( !*p )
+        return count;
+    else if ( strincmp(p, "help", 4) == 0 ) {
+    	printk("<disable/all/ifname/clientmac> > /proc/ppa/api/connectivity_issue_debug/debug\n");
+    } else if ( strincmp(p, "all", sizeof("all")) == 0 ) {
+	g_ppa_connectivity_issue_debug = CONNECTIVITY_ISSUE_DEBUG_ALL;
+    } else if ( strincmp(p, "ifname", sizeof("ifname")) == 0 ) {
+	g_ppa_connectivity_issue_debug = CONNECTIVITY_ISSUE_DEBUG_IFNAME;
+    } else if ( strincmp(p, "clientmac", sizeof("clientmac")) == 0 ) {
+	g_ppa_connectivity_issue_debug = CONNECTIVITY_ISSUE_DEBUG_CLIENTMAC;
+    } else {
+	g_ppa_connectivity_issue_debug = CONNECTIVITY_ISSUE_DEBUG_DISABLE;
+    }
+    
+    printk("connectivity issue debug = %d\n", g_ppa_connectivity_issue_debug);
+    return count ;
 }
 
 #if defined(CONFIG_LTQ_PPA_COC_SUPPORT)
@@ -2665,6 +2841,13 @@ void ppa_api_proc_file_create(void)
     g_ppa_api_proc_dir = proc_mkdir("api", g_ppa_proc_dir);
     g_ppa_api_proc_dir_flag = 1;
     
+#if defined(CONFIG_LTQ_PPA_GRX500) && CONFIG_LTQ_PPA_GRX500
+    if(!g_ppa_api_connectivity_issue_proc_dir_flag) {
+	g_ppa_api_connectivity_issue_proc_dir = proc_mkdir("connectivity_issue_dbg", g_ppa_api_proc_dir);
+	g_ppa_api_connectivity_issue_proc_dir_flag = 1;
+    }
+#endif
+
 #ifdef CONFIG_LTQ_PPA_API_DIRECTPATH
 #if defined(CONFIG_LTQ_PPA_GRX500) && CONFIG_LTQ_PPA_GRX500
 #if defined(CONFIG_LTQ_PPA_COC_SUPPORT)
@@ -2723,6 +2906,18 @@ void ppa_api_proc_file_create(void)
 			    &g_proc_file_br_flow_learning);
 #ifdef CONFIG_LTQ_PPA_API_DIRECTPATH
 #if defined(CONFIG_LTQ_PPA_GRX500) && CONFIG_LTQ_PPA_GRX500
+    res = proc_create("client_mac",
+                            S_IRUGO|S_IWUSR,
+                            g_ppa_api_connectivity_issue_proc_dir,
+			    &g_proc_file_connectivity_issue_client_mac_seq_fops);
+    res = proc_create("ifname",
+                            S_IRUGO|S_IWUSR,
+                            g_ppa_api_connectivity_issue_proc_dir,
+			    &g_proc_file_connectivity_issue_ifname_seq_fops);
+    res = proc_create("debug",
+                            S_IRUGO|S_IWUSR,
+                            g_ppa_api_connectivity_issue_proc_dir,
+			    &g_proc_file_connectivity_issue_debug_seq_fops);
 #if defined(CONFIG_LTQ_PPA_COC_SUPPORT)
     res = proc_create("window",
                             S_IRUGO|S_IWUSR,
@@ -2744,6 +2939,19 @@ void ppa_api_proc_file_destroy(void)
     remove_proc_entry("directpath",
                       g_ppa_api_proc_dir);
 #if defined(CONFIG_LTQ_PPA_GRX500) && CONFIG_LTQ_PPA_GRX500
+    remove_proc_entry("client_mac",
+                      g_ppa_api_connectivity_issue_proc_dir);
+    remove_proc_entry("ifname",
+                      g_ppa_api_connectivity_issue_proc_dir);
+    remove_proc_entry("debug",
+                      g_ppa_api_connectivity_issue_proc_dir);
+    if ( g_ppa_api_connectivity_issue_proc_dir_flag )
+    {
+        remove_proc_entry("connectivity_issue_dbg",
+                          g_ppa_api_connectivity_issue_proc_dir);
+        g_ppa_api_connectivity_issue_proc_dir = NULL;
+        g_ppa_api_connectivity_issue_proc_dir_flag = 0;
+    }
 #if defined(CONFIG_LTQ_PPA_COC_SUPPORT)
     remove_proc_entry("window",
                       g_ppa_api_coc_proc_dir);

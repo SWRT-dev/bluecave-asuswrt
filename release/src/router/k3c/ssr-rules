@@ -60,6 +60,59 @@ gen_iplist2() {
 EOF
 }
 
+start_pdnsd() {
+	local usr_dns="8.8.4.4"
+	local usr_port="53"
+  
+	local tcp_dns_list="208.67.222.222"
+	[ -z "$usr_dns" ] && usr_dns="8.8.8.8"
+	[ -z "$usr_port" ] && usr_port="53"
+	mkdir -p /var/etc /var/pdnsd
+	
+  if ! test -f "/var/pdnsd/pdnsd.cache"; then
+	dd if=/dev/zero of="/var/pdnsd/pdnsd.cache" bs=1 count=4 2> /dev/null
+	chown -R nobody.nobody /var/pdnsd
+	fi
+	
+	cat > /var/etc/pdnsd.conf <<EOF
+global {
+	perm_cache=2048;
+	cache_dir="/var/pdnsd";
+	pid_file = /var/run/pdnsd.pid;
+	run_as="nobody";
+	server_ip = 127.0.0.1;
+	server_port = 1053;
+	status_ctl = on;
+	query_method = tcp_only;
+	min_ttl=1h;
+	max_ttl=1w;
+	timeout=10;
+	neg_domain_pol=on;
+	proc_limit=2;
+	procq_limit=8;
+}
+server {
+	label= "ssr-usrdns";
+	ip = $usr_dns;
+	port = $usr_port;
+	timeout=6;
+	uptest=none;
+	interval=10m;
+	purge_cache=off;
+}
+server {
+	label= "ssr-pdnsd";
+	ip = $tcp_dns_list;
+	port = 5353;
+	timeout=6;
+	uptest=none;
+	interval=10m;
+	purge_cache=off;
+}
+EOF
+chmod 644 /var/etc/pdnsd.conf
+/usr/sbin/pdnsd -c /var/etc/pdnsd.conf -d
+}
 
 # Get argument
 server=$1
@@ -87,16 +140,7 @@ udp_enable=`nvram get ssr_udp_enable`
 BEGIN="*nat\n\
 :SHADOWSOCKS - [0:0]\n\
 -I PREROUTING -p tcp -j SHADOWSOCKS\n\
--I OUTPUT 1 -p tcp -j SHADOWSOCKS\n\
 -A SHADOWSOCKS -d $server/32 -j RETURN\n\
--A SHADOWSOCKS -d 0.0.0.0/8 -j RETURN\n\
--A SHADOWSOCKS -d 10.0.0.0/8 -j RETURN\n\
--A SHADOWSOCKS -d 127.0.0.0/8 -j RETURN\n\
--A SHADOWSOCKS -d 169.254.0.0/16 -j RETURN\n\
--A SHADOWSOCKS -d 172.16.0.0/12 -j RETURN\n\
--A SHADOWSOCKS -d 192.168.0.0/16 -j RETURN\n\
--A SHADOWSOCKS -d 224.0.0.0/4 -j RETURN\n\
--A SHADOWSOCKS -d 240.0.0.0/4 -j RETURN\n\
 "
 
 ipset -! create ssr nethash && ipset flush ssr
@@ -111,6 +155,7 @@ if [ "$dns_mode" = "1" ] ;then
 		[ -f "/tmp/etc/dnsmasq.user/gfw_user.conf" ] && rm -f /tmp/etc/dnsmasq.user/gfw_user.conf
   fi
  fi
+start_pdnsd
 else
  cp -f /usr/sbin/ssr/gfw_addr.conf /tmp/etc/dnsmasq.user/gfw_addr.conf
  if [ -f "/jffs/configs/ssr_gfw.txt" ] ;then
@@ -147,26 +192,30 @@ done
 
 if [ "$dns_mode" = "1" ] ;then
 echo -e "$BEGIN\
--A SHADOWSOCKS  -p tcp -m set --match-set ssr dst  -j REDIRECT --to-ports $local_port\n\
--A SHADOWSOCKS  -p tcp -m set --match-set ssr_tg dst  -j REDIRECT --to-ports $local_port\n\
+-A SHADOWSOCKS  -p tcp -m multiport --dports 80,443 -m set --match-set ssr dst  -j REDIRECT --to-ports $local_port\n\
+-A SHADOWSOCKS  -p tcp -m multiport --dports 80,443 -m set --match-set ssr_tg dst  -j REDIRECT --to-ports $local_port\n\
+-I OUTPUT -p tcp -m multiport --dports 80,443 -m set --match-set ssr dst -j REDIRECT --to-ports $local_port\n\
+-I OUTPUT -p tcp -m multiport --dports 80,443 -m set --match-set ssr_tg dst -j REDIRECT --to-ports $local_port\n\
 
 COMMIT" | iptables-restore -n
 else
 echo -e "$BEGIN\
--A SHADOWSOCKS  -p tcp -d 93.46.8.89/32  -j REDIRECT --to-ports $local_port\n\
--A SHADOWSOCKS  -p tcp -m set --match-set ssr_tg dst  -j REDIRECT --to-ports $local_port\n\
+-A SHADOWSOCKS  -p tcp -m multiport --dports 80,443 -d 93.46.8.89/32  -j REDIRECT --to-ports $local_port\n\
+-A SHADOWSOCKS  -p tcp -m multiport --dports 80,443 -m set --match-set ssr_tg dst  -j REDIRECT --to-ports $local_port\n\
+-I OUTPUT -p tcp -m multiport --dports 80,443 -d 93.46.8.89/32 -j REDIRECT --to-ports $local_port\n\
+-I OUTPUT -p tcp -m multiport --dports 80,443 -m set --match-set ssr_tg dst -j REDIRECT --to-ports $local_port\n\
 
 COMMIT" | iptables-restore -n
 fi
 
 if [ -f "$FORCE" ] ;then
-sed "/.*/s/.*/iptables -t nat -A SHADOWSOCKS  -p tcp -d & -j REDIRECT --to-ports $local_port  /" $FORCE  2>/dev/null | sh
+sed "/.*/s/.*/iptables -t nat -A SHADOWSOCKS  -p tcp -m multiport --dports 80,443 -d & -j REDIRECT --to-ports $local_port  /" $FORCE  2>/dev/null | sh
 fi
 
 #udp
 if [ "$udp_enable" == "1" ] ;then
-	ip rule add fwmark 1 table 100
-	ip route add local default dev lo table 100
+	ip rule add fwmark 0x01/0x01 table 100
+	ip route add local 0.0.0.0/0 dev lo table 100
 	iptables -t mangle -N SS_SPEC_TPROXY
 	if [ "$dns_mode" = "1" ] ;then
 	iptables -t mangle -A SS_SPEC_TPROXY -p udp -m set  --match-set ssr dst \
@@ -206,14 +255,13 @@ fi
 
 #udp
 if [ "$udp_enable" == "1" ] ;then
-	ip rule add fwmark 1 table 100
-	ip route add local default dev lo table 100
+	ip rule add fwmark 0x01/0x01 table 100
+	ip route add local 0.0.0.0/0 dev lo table 100
 	iptables -t mangle -N SS_SPEC_TPROXY
 
 	iptables -t mangle -A SS_SPEC_TPROXY -p udp -m set ! --match-set ssr_ignore dst \
 		-j TPROXY --on-port $local_port --tproxy-mark 0x01/0x01
-
-	iptables -t mangle  -I PREROUTING 1 -p udp  -j SS_SPEC_TPROXY
+		iptables -t mangle  -I PREROUTING 1 -p udp  -j SS_SPEC_TPROXY
 fi
 exit 0
 

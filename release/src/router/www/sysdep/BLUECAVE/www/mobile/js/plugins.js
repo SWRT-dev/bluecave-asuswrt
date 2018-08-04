@@ -82,6 +82,20 @@ var htmlEnDeCode = (function() {
 	};
 })();
 
+function getAllWlArray(){
+	var wlArrayRet = [{"title":"2.4GHz", "ifname":"0", "suffix": ""}];
+	
+	if(isSupport("TRIBAND")){
+		wlArrayRet.push({"title":"5GHz-1", "ifname":"1", "suffix": "_5G-1"})
+		wlArrayRet.push({"title":"5GHz-2", "ifname":"2", "suffix": "_5G-2"})
+	}
+	else if(isSupport("DUALBAND")){
+		wlArrayRet.push({"title":"5GHz", "ifname":"1", "suffix": "_5G"})
+	}
+
+	return wlArrayRet;
+}
+
 function checkPasswd($obj){
 	var targetObj = $(this);
 	targetObj.toggleClass("icon_eye_close").toggleClass("icon_eye_open");
@@ -102,11 +116,32 @@ function hasBlank(objArray){
 }
 
 function hadPlugged(deviceType){
-	var usbDeviceList = httpApi.hookGet("show_usb_path")["show_usb_path"][0] || [];
+	var usbDeviceList = httpApi.hookGet("show_usb_path")[0] || [];
 	return (usbDeviceList.join().search(deviceType) != -1)
 }
 
-function Get_Component_Loading(){
+var Get_Component_Header = function(){
+	var tableTr = $("<tr>");
+
+	tableTr
+		.append(
+			$("<td>")
+				.css({"width":"17px"})
+				.append('<div style="margin-right:20px;"><a href="#navigation"><div class="icon_menu"></div></a></div>')
+		)
+		.append(
+			$("<td>").append('<div><div class="icon_logo"></div></div>')
+		)
+		.append(
+			$("<td>").append('<div class="model_welcome"></div>')
+		)
+
+	return $("<table>")
+		.append(tableTr)
+		.css({"width": "100%"})
+}
+
+var Get_Component_Loading = function(){
 	if($(this).find( ".cssload-bell" ).length === 0){
 		var loadContainer = $("<div>").addClass("cssload-bell");
 	
@@ -121,11 +156,17 @@ function Get_Component_Loading(){
 	}
 }
 
+var Get_Component_btnLoading = function(){
+	return $("<img>").attr({
+		"width": "30px",
+		"src": "/images/InternetScan.gif"
+	})
+}
 var Get_Component_WirelessInput = function(wlArray){
 	var container = $("<div>");
 
 	wlArray.forEach(function(wl, idx){
-		var wirelessAP = httpApi.nvramGet(["wl" + wl.ifname + "_ssid", "wl" + wl.ifname + "_wpa_psk"]);
+		var wirelessAP = httpApi.nvramCharToAscii(["wl" + wl.ifname + "_ssid", "wl" + wl.ifname + "_wpa_psk"]);
 		// Do not use default value.
 		if(systemVariable.isDefault){
 			wirelessAP["wl" + wl.ifname + "_ssid"] = "";
@@ -159,7 +200,7 @@ var Get_Component_WirelessInput = function(wlArray){
 						$(".wlInput")[idx*2+1].focus();
 					}
 				})
-				.val(wirelessAP["wl" + wl.ifname + "_ssid"])
+				.val(decodeURIComponent(wirelessAP["wl" + wl.ifname + "_ssid"]))
 			)
 			.appendTo(__container)
 
@@ -194,7 +235,7 @@ var Get_Component_WirelessInput = function(wlArray){
 						}
 					}
 				})
-				.val(wirelessAP["wl" + wl.ifname + "_wpa_psk"])
+				.val(decodeURIComponent(wirelessAP["wl" + wl.ifname + "_wpa_psk"]))
 			)
 			.appendTo(__container);
 
@@ -205,9 +246,10 @@ var Get_Component_WirelessInput = function(wlArray){
 }
 
 function handleSysDep(){
-	$("#welcomeTitle").html($("#welcomeTitle").html().replace("BLUE_CAVE", "BLUE CAVE"))
-	$(".amasSupport").toggle(isSupport("AMAS"));
-	$(".noAmasSupport").toggle(!isSupport("AMAS"));
+	var isNoWAN = (httpApi.detwanGetRet().wanType == 'NOWAN');
+
+	$(".amasSupport").toggle(isSupport("amas"));
+	$(".noAmasSupport").toggle(!isSupport("amas"));
 	$(".tosSupport").toggle(systemVariable.isDefault && isSupport("QISBWDPI"));
 	$(".repeaterSupport").toggle(isSupport("repeater"));
 	$(".pstaSupport").toggle(isSupport("psta"));
@@ -217,10 +259,79 @@ function handleSysDep(){
 	$(".iptv").toggle(isSupport("IPTV"));
 	$(".defaultSupport").toggle(systemVariable.isDefault);
 	$(".configuredSupport").toggle(!systemVariable.isDefault);
-	$(".forceUpgrade").toggle(isSupport("FORCEUPGRADE"));
+	//$(".forceUpgrade").toggle(isSupport("fupgrade")); 
 
 	$("#syncSSID").toggle(!isSupport("SMARTCONNECT") && (isSupport("DUALBAND") || isSupport("TRIBAND")));
 	$("#wireless_sync_checkbox").enableCheckBox(!isSupport("SMARTCONNECT") && (isSupport("DUALBAND") || isSupport("TRIBAND")));
+
+	if(systemVariable.forceChangePw && isSupport("amas")){
+		systemVariable.forceChangePw = false;
+		systemVariable.forceChangePwInTheEnd = true;
+	}
+
+	if(!isNoWAN) $(".amasNoWAN").remove();
+	if(!isSupport("amas")) $(".amasSupport").remove();
+}
+
+function handleModelIcon() {
+	$('#ModelPid_img').attr('src',
+		function() {
+			var ttc = '<% nvram_get("territory_code"); %>';
+			var based_modelid = '<% nvram_get("productid"); %>';
+			var odmpid = '<% nvram_get("odmpid"); %>';
+			var color = '<% nvram_get("color"); %>';
+			color = color.toUpperCase();
+			var LinkCheck = function(url) {
+				var http = new XMLHttpRequest();
+				http.open('HEAD', url, false);
+				http.send();
+				return http.status!="404";
+			};
+
+			var update_color = function() {
+				if(based_modelid == "RT-AC87U") { //MODELDEP: RT-AC87U
+					/* MODELDEP by Territory Code */
+					if(ttc == "JP/02" || ttc == "AP/02" || ttc == "SG/02")
+						return "R";
+					else if(ttc == "JP/02")
+						return "W";
+					else
+						return color;
+				}
+				if(odmpid.length > 0 && odmpid != based_modelid){	//odmpid MODELDEP
+					if(odmpid == "RT-N66W" || odmpid == "RT-AC66W" || odmpid == "RT-AC68W" || odmpid == "RT-AC68RW")
+						return "W";
+					else
+						return color;
+				}
+				else {
+					return color;
+				}
+			};
+			var default_png_path = "/images/Model_product.png";
+			var MP_png_path = "";
+			if(update_color().length > 0) {
+				MP_png_path = "/images/Model_product_"+ update_color() +".png";
+				if(LinkCheck(MP_png_path))
+					return MP_png_path;
+				else
+					return default_png_path;
+			}
+			else if(odmpid.length > 0 && odmpid != based_modelid) {
+				if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1" || odmpid == "RT-AC1900U" || odmpid == "RT-AC67U") {
+					MP_png_path = "/images/RT-AC66U_V2/Model_product.png";
+					if(LinkCheck(MP_png_path))
+						return MP_png_path;
+					else
+						return default_png_path;
+				}
+				else
+					return default_png_path;
+			}
+			else
+				return default_png_path;
+		}
+	);
 }
 
 function setUpTimeZone(){
@@ -253,7 +364,7 @@ var getRestartService = function(){
 	var actionScript = [];
 
 	if(isWANChanged()){
-		actionScript.push("restart_wan");
+		actionScript.push("restart_wan_if 0");
 	}
 
 	if(systemVariable.detwanResult.isIPConflict){
@@ -345,16 +456,14 @@ var isPage = function(page){
 }
 
 var isSupport = function(_ptn){
+	var ui_support = httpApi.hookGet("get_ui_support");
 	var matchingResult = false;
+
 	switch(_ptn){
 		case "ForceBWDPI":
 			matchingResult = false;
 			break;
-		case "AMAS":
-			matchingResult = (systemVariable.rcSupport.search("amas") !== -1) ? true : false;
-			break;
 		case "QISBWDPI":
-			// matchingResult = (systemVariable.rcSupport.search("bwdpi") !== -1) ? true : false;
 			matchingResult = false;
 			break;
 		case "DUALBAND":
@@ -369,14 +478,11 @@ var isSupport = function(_ptn){
 		case "IPTV":
 			matchingResult = (isSku("EU") || isSku("SG") || isSku("AA") || isSku("TW")) ? true : false;
 			break;
-		case "FORCEUPGRADE":
-			matchingResult = (systemVariable.rcSupport.search("fupgrade") !== -1) ? true : false;
-			break;
 		case "SMARTCONNECT":
-			matchingResult = (systemVariable.rcSupport.search("smart_connect") !== -1 || systemVariable.rcSupport.search("bandstr") !== -1) ? true : false;
+			matchingResult = (ui_support["smart_connect"] == 1 || ui_support["bandstr"] == 1) ? true : false;
 			break;
 		default:
-			matchingResult = ((systemVariable.rcSupport.search(_ptn) !== -1) || (systemVariable.productid.search(_ptn) !== -1)) ? true : false;
+			matchingResult = ((ui_support[_ptn] == 1) || (systemVariable.productid.search(_ptn) !== -1)) ? true : false;
 			break;
 	}
 
@@ -405,7 +511,7 @@ var isSdk = function(ver){
 
 var isWlUser = (function(){
 	var isWL = true;
-	var clientList = httpApi.hookGet("get_clientlist").get_clientlist;
+	var clientList = httpApi.hookGet("get_clientlist");
 	Object.keys(clientList).forEach(function(key){
 		if(clientList[key].isLogin == 1){
 			isWL = (clientList[key].isWL != 0) ? true : false;
@@ -414,29 +520,6 @@ var isWlUser = (function(){
 
 	return isWL;
 })()
-
-var isNewFw = function(fwver){
-	var Latest_firmver = fwver.split("_");
-	var originFirmwareVersion = httpApi.nvramGet(["firmver", "buildno", "extendno"]);
-
-	if(Latest_firmver.length > 2){
-		var Latest_firm = parseInt(Latest_firmver[0]);
-		var Latest_buildno = parseInt(Latest_firmver[1]);
-		var Latest_extendno = parseInt(Latest_firmver[2].split("-g")[0]);
-		var current_firm = parseInt(originFirmwareVersion.firmver.replace(/[.]/gi,""));
-		var current_buildno = parseInt(originFirmwareVersion.buildno);
-		var current_extendno = parseInt(originFirmwareVersion.extendno.split("-g")[0]);
-
-		if( current_buildno < Latest_buildno || 
-			current_firm < Latest_firm && current_buildno == Latest_buildno ||
-			current_extendno < Latest_extendno && current_buildno == Latest_buildno && current_firm == Latest_firm
-		){
-			return true;
-		}
-	}
-	
-	return false;
-}
 
 var isWeakString = function(pwd, flag){
 	String.prototype.repeat = function(times){return (new Array(times + 1)).join(this);};
@@ -509,16 +592,77 @@ function startLiveUpdate(){
 	else{
 		httpApi.nvramSet({"action_mode":"apply", "rc_service":"start_webs_update"}, function(){
 			setTimeout(function(){
-				var fwInfo = httpApi.nvramGet(["webs_state_update", "webs_state_info"], true);
+				var fwInfo = httpApi.nvramGet(["webs_state_update", "webs_state_info", "webs_state_flag"], true);
 
 				if(fwInfo.webs_state_update == "0" || fwInfo.webs_state_update == ""){
 					setTimeout(arguments.callee, 1000);
 				}
 				else if(fwInfo.webs_state_info !== ""){
-					systemVariable.isNewFw = isNewFw(fwInfo.webs_state_info);
+					systemVariable.isNewFw = fwInfo.webs_state_flag;
 					systemVariable.newFwVersion = fwInfo.webs_state_info;
 				}
 			}, 1000);
 		});
 	}
 }
+
+validator.hostNameString = function(str){
+	var testResult = {
+		'isError': false,
+		'errReason': "<#JS_validhostname#>"
+	}
+
+	var re = new RegExp("^[a-zA-Z0-9][a-zA-Z0-9\-\_]+$","gi");
+	testResult.isError = re.test(str) ? false : true;
+
+	return testResult;
+};
+
+validator.invalidChar = function(str){
+	var testResult = {
+		'isError': false,
+		'errReason': ''
+	}
+
+	var invalid_char = [];
+	for(var i = 0; i < str.length; ++i){
+		if(str.charAt(i) < ' ' || str.charAt(i) > '~'){
+			invalid_char.push(str.charAt(i));
+		}
+	}
+
+	if(invalid_char.length != 0){
+		testResult.isError = true;
+		testResult.errReason = "<#JS_validstr2#> '" + invalid_char.join('') + "' !";
+	}
+
+	return testResult;
+};
+
+validator.KRSkuPwd = function(str){
+	var testResult = {
+		'isError': false,
+		'errReason': ''
+	}
+
+	if( !/[A-Za-z]/.test(str) || !/[0-9]/.test(str) || str.length < 8 
+		|| !/[\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~]/.test(str)
+	){
+		testResult.isError = true;
+		testResult.errReason = "<#JS_validPWD#>";
+	}
+
+	var invalid_char = [];
+	for(var i = 0; i < str.length; ++i){
+		if(str.charAt(i) < ' ' || str.charAt(i) > '~'){
+			invalid_char.push(str.charAt(i));
+		}
+	}
+
+	if(invalid_char.length != 0){
+		testResult.isError = true;
+		testResult.errReason = "<#JS_validstr2#> '" + invalid_char.join('') + "' !";
+	}
+
+	return testResult;
+};

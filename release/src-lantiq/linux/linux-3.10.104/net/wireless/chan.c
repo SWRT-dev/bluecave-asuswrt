@@ -260,6 +260,7 @@ void cfg80211_set_dfs_state(struct wiphy *wiphy,
 	cfg80211_set_chans_dfs_state(wiphy, chandef->center_freq2,
 				     width, dfs_state);
 }
+EXPORT_SYMBOL(cfg80211_set_dfs_state);
 
 static u32 cfg80211_get_start_freq(u32 center_freq,
 				   u32 bandwidth)

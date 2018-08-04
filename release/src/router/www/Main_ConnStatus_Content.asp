@@ -57,7 +57,7 @@
 								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 								<div class="formfontdesc"><#System_log_connections#></div>
 								<div style="margin-top:8px">   
-									<textarea class="textarea_ssh_table" style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;" cols="63" rows="25" readonly="readonly" wrap=off><% nvram_dump("syscmd.log","../usr/sbin/netstat-nat -r state -xn > /tmp/syscmd.log 2>&1"); %></textarea>
+									<textarea class="textarea_ssh_table" style="width:99%; font-family:'Courier New', Courier, mono; font-size:13px;" cols="63" rows="25" readonly="readonly" wrap=off><% nvram_dump("connect.log",""); %></textarea>
 								</div>
 								<div class="apply_gen">
 									<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen">

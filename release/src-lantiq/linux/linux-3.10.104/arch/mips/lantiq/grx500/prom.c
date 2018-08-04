@@ -301,7 +301,6 @@ void __init ltq_soc_detect(struct ltq_soc_info *i)
 		break;
 	case SOC_ID_GRX3506:
 	case SOC_ID_GRX3508:
-	case SOC_ID_IRX200:
 		i->name = SOC_GRX350;
 		i->type = SOC_TYPE_GRX500;
 		i->compatible = COMP_GRX500;

@@ -19,9 +19,18 @@ insmod /lib/modules/3.10.104/kernel/net/netfilter/xt_TPROXY.ko
 
 /usr/sbin/k3c_webshell.sh &
 /usr/sbin/k3c_xunlei.sh &
-/usr/sbin/k3c_ngrok.sh
-/usr/sbin/k3c_frpc.sh
-/usr/sbin/k3c_ssr.sh
-/usr/sbin/k3c_kms.sh
-/usr/sbin/k3c_adbyby.sh
+/usr/sbin/k3c_ssr.sh &
+/usr/sbin/k3c_kms.sh &
+/usr/sbin/k3c_tools.sh &
+kenable=`nvram get k3c_enable`
+if [ "$kenable" == "1" ];then
+/usr/sbin/k3c_swap.sh &
+/usr/sbin/k3cex-start.sh &
+/usr/sbin/k3c_ngrok.sh &
+/usr/sbin/k3c_frpc.sh &
+/usr/sbin/k3c_adbyby.sh &
+else
+  logger -t "K3C" "K3C扩展设置挂载未开启！"
+fi
+
 

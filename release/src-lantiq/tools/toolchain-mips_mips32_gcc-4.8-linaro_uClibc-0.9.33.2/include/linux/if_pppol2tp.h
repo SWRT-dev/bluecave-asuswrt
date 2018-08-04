@@ -35,7 +35,6 @@ struct pppol2tp_addr {
 /* Structure used to connect() the socket to a particular tunnel UDP
  * socket over IPv6.
  */
-#ifdef _LINUX_IN6_H
 struct pppol2tpin6_addr {
 	__kernel_pid_t	pid;		/* pid that owns the fd.
 					 * 0 => current */
@@ -46,7 +45,6 @@ struct pppol2tpin6_addr {
 
 	struct sockaddr_in6 addr;	/* IP address and port to send to */
 };
-#endif
 
 /* The L2TPv3 protocol changes tunnel and session ids from 16 to 32
  * bits. So we need a different sockaddr structure.
@@ -62,7 +60,6 @@ struct pppol2tpv3_addr {
 	__u32 d_tunnel, d_session;	/* For sending outgoing packets */
 };
 
-#ifdef _LINUX_IN6_H
 struct pppol2tpv3in6_addr {
 	__kernel_pid_t	pid;		/* pid that owns the fd.
 					 * 0 => current */
@@ -73,7 +70,6 @@ struct pppol2tpv3in6_addr {
 
 	struct sockaddr_in6 addr;	/* IP address and port to send to */
 };
-#endif
 
 /* Socket options:
  * DEBUG	- bitmask of debug message categories

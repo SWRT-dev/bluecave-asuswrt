@@ -614,6 +614,12 @@ int cfg80211_mlme_register_mgmt(struct wireless_dev *wdev, u32 snd_portid,
 	nreg->frame_type = cpu_to_le16(frame_type);
 	list_add(&nreg->list, &wdev->mgmt_registrations);
 
+	if (frame_type == IEEE80211_STYPE_PROBE_RESP ||
+		frame_type == IEEE80211_STYPE_BEACON) {
+		wdev->vendor_events_filter = nreg->match;
+		wdev->vendor_events_filter_len = nreg->match_len;
+	}
+
 	if (rdev->ops->mgmt_frame_register)
 		rdev_mgmt_frame_register(rdev, wdev, frame_type, true);
 
@@ -986,3 +992,20 @@ void cfg80211_cac_event_2(struct net_device *netdev,
 	nl80211_radar_notify(rdev, chandef, event, netdev, gfp);
 }
 EXPORT_SYMBOL(cfg80211_cac_event_2);
+
+int cfg80211_rx_vendoer_specific_mgmt(struct wireless_dev *wdev, int freq,
+		      const u8 *buf, size_t len, gfp_t gfp)
+{
+	struct wiphy *wiphy = wdev->wiphy;
+	struct cfg80211_registered_device *rdev = wiphy_to_dev(wiphy);
+	struct cfg80211_mgmt_registration *reg;
+	int res = 0;
+
+	list_for_each_entry(reg, &wdev->mgmt_registrations, list) {
+		res = nl80211_send_mgmt(rdev, wdev, reg->nlportid, freq, 0, buf, len, gfp);
+		break;
+	}
+
+	return res;
+}
+EXPORT_SYMBOL(cfg80211_rx_vendoer_specific_mgmt);

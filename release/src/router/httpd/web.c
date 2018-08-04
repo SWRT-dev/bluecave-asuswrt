@@ -1484,7 +1484,7 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 	//csprintf("Script : %s, File: %s\n", script, file);
 
 	// run scrip first to update some status
-	if (strcmp(script,"")!=0) sys_script(script);
+	if (strcmp(script,"syscmd.sh")==0) sys_script(script);
 
 	if (strcmp(file, "wlan11b.log")==0)
 		return (ej_wl_status(eid, wp, 0, NULL, 0));	/* FIXME */
@@ -1511,17 +1511,7 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 		return wl_wps_info(eid, wp, argc, argv, nvram_get_int("wps_band_x"));
 #endif
 	}
-#if 0
-	else if (strcmp(file, "apselect.log")==0)
-		return (ej_getSiteSurvey(eid, wp, 0, NULL));
-	else if (strcmp(file, "apscan")==0)
-		return (ej_SiteSurvey(eid, wp, 0, NULL));
-	else if (strcmp(file, "urelease")==0)
-		return (ej_urelease(eid, wp, 0, NULL));
-#endif
-
 	ret = 0;
-
 	strcpy(path, get_logfile_path());
 	if (strcmp(file, "syslog.log")==0)
 	{
@@ -1632,11 +1622,31 @@ ej_dump(int eid, webs_t wp, int argc, char_t **argv)
 #endif /* RTCONFIG_DSL */
 #endif /* RTCONFIG_PUSH_EMAIL */
 #ifdef RTCONFIG_IPSEC
-	if (strcmp(file, "ipsec.log")==0) {
+	else if (strcmp(file, "ipsec.log")==0) {
 		sprintf(filename, FILE_PATH_IPSEC_LOG);
 		ret += dump_file(wp, filename);
 	}
 #endif
+	else if (strcmp(file, "connect.log")==0) {
+		sprintf(filename, "/tmp/%s", file);
+		system("/usr/sbin/netstat-nat -r state -xn > /tmp/connect.log 2>&1");
+		ret += dump_file(wp, filename);
+	}
+	else if ( strcmp(file, "syscmd.log")==0
+		|| strcmp(file, "pptp_connected")==0
+		|| strcmp(file, "release_note0.txt")==0
+		|| strcmp(file, "release_note1.txt")==0
+		|| strcmp(file, "release_note.txt")==0
+#ifdef RTCONFIG_DSL
+		|| strcmp(file, "adsl/tc_fw_ver_short.txt")==0
+		|| strcmp(file, "adsl/tc_ras_ver.txt")==0
+		|| strcmp(file, "adsl/tc_fw_ver.txt")==0
+		|| strcmp(file, "adsl/adsllog.log")==0
+#endif
+	){
+		sprintf(filename, "/tmp/%s", file);
+		ret += dump_file(wp, filename);
+	}
 	else {
 		sprintf(filename, "/tmp/%s", file);
 		ret += dump_file(wp, filename);
@@ -4057,23 +4067,22 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 #endif
 
 			if (strlen(action_script) > 0) {
-				char *p1, *p2;
+				char *p1, p2[sizeof(notify_cmd)];
 
-				memset(notify_cmd, 0, sizeof(notify_cmd));
 				if((p1 = strstr(action_script, "_wan_if")))
 				{
-					p1 += 7;
-					strncpy(notify_cmd, action_script, p1 - action_script);
-					p2 = notify_cmd + strlen(notify_cmd);
-					sprintf(p2, " %s%s", wan_unit, p1);
+					p1 += sizeof("_wan_if") - 1;
+					strlcpy(p2, action_script, MIN(p1 - action_script + 1, sizeof(p2)));
+					snprintf(notify_cmd, sizeof(notify_cmd), "%s %s%s", p2, wan_unit, p1);
 				}
 #if defined(RTCONFIG_POWER_SAVE)
 				else if (!strcmp(action_script, "pwrsave")) {
+					notify_cmd[0] = '\0';
 					set_power_save_mode();
 				}
 #endif
 				else
-					strncpy(notify_cmd, action_script, 128);
+					strlcpy(notify_cmd, action_script, sizeof(notify_cmd));
 
 				if(strcmp(action_script, "saveNvram"))
 				{
@@ -4090,7 +4099,6 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 #endif
 						{
 							nvram_set("freeze_duck", "15");
-							_dprintf("Notify_Cmd: [%s]\n", notify_cmd);
 							notify_rc(notify_cmd);
 						}
 					}
@@ -5492,6 +5500,26 @@ static int login_state_hook(int eid, webs_t wp, int argc, char_t **argv){
 
 	return 0;
 }
+
+static int ej_is_logined_hook(int eid, webs_t wp, int argc, char_t **argv){
+	unsigned int ip, login_ip;
+	char ip_str[16], login_ip_str[16];
+	struct in_addr now_ip_addr, login_ip_addr;
+
+	ip = getpeerip(wp);
+	now_ip_addr.s_addr = ip;
+	strlcpy(ip_str, inet_ntoa(now_ip_addr), sizeof(ip_str));
+
+	login_ip = (unsigned int)atoll(nvram_safe_get("login_ip"));
+	login_ip_addr.s_addr = login_ip;
+	strlcpy(login_ip_str, inet_ntoa(login_ip_addr), sizeof(login_ip_str));
+
+	if(strcmp(login_ip_str, "0.0.0.0") && strcmp(login_ip_str, ip_str))
+		return websWrite(wp, "\"0\"");
+	else
+		return websWrite(wp, "\"1\"");
+}
+
 #ifdef RTCONFIG_FANCTRL
 static int get_fanctrl_info(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -9952,8 +9980,8 @@ apply_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			else{
 				_dprintf("[httpd] Invalid SystemCmd!\n");
 				strcpy(SystemCmd, "");
-
 				websRedirect_iframe(wp, current_url);
+				goto APPLY_FINISH;
 			}
 		}
 		if(strstr(system_cmd,"\n") != NULL || strstr(system_cmd,"\r") != NULL){
@@ -11819,20 +11847,13 @@ do_upload_cgi(char *url, FILE *stream)
 #endif
 		sys_upload("/tmp/settings_u.prf");
 #ifdef RTCONFIG_LANTIQ
-		system("killall wave_monitor");
-		nvram_set("wave_CFG", "1");
-		nvram_set("wave_action", "3");
-		system("wave_monitor &");
+		system("rm -f /jffs/db_*.tgz");
 #endif
 		nvram_commit();
 
 #ifdef RTCONFIG_NVRAM_ENCRYPT
 		start_enc_nvram();
 #endif
-		while(nvram_get_int("wave_CFG") == 1){
-			_dprintf("wait wave_CFG to be 0\n");
-			sleep(5);
-		}
 		sys_reboot();
 	}
 	else
@@ -14215,7 +14236,7 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 
 	/* Is this the right user and password? */
 	//if (!authpass_fail && strcmp( nvram_safe_get("http_username"), authinfo ) == 0 && strcmp( nvram_safe_get("http_passwd"), authpass ) == 0)
-	if(!authpass_fail && compare_passwd_in_shadow(authinfo, authpass))
+	if(!authpass_fail && strcmp( nvram_safe_get("http_username"), authinfo ) == 0 && compare_passwd_in_shadow(authinfo, authpass))
 	{
 		if (fromapp_flag == FROM_BROWSER){
 			if(!cur_login_ip_type)
@@ -14229,11 +14250,8 @@ login_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				last_login_timestamp_wan = 0;
 			}
 			set_referer_host();
-		}else if(fromapp_flag == FROM_DUTUtil){
-#if defined(RTCONFIG_AIHOME_TUNNEL)
-			enable_ASUS_EULA();
-#endif
 		}
+
 		generate_token(asus_token, sizeof(asus_token));
 		add_asus_token(asus_token);
 
@@ -14919,6 +14937,7 @@ struct mime_handler mime_handlers[] = {
 	{ "**.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "**.cab", "text/txt", NULL, NULL, do_file, do_auth },
 	{ "**.CFG", "application/force-download", NULL, do_html_post_and_get, do_prf_file, do_auth },
+	{ "**.crt", "application/force-download", NULL, NULL, do_file, do_auth },
 	{ "uploadIconFile.tar", "application/force-download", NULL, NULL, do_uploadIconFile_file, do_auth },
 	{ "networkmap.tar", "application/force-download", NULL, NULL, do_networkmap_file, do_auth },
 	{ "upnp.log", "application/force-download", NULL, NULL, do_upnp_file, do_auth },
@@ -21924,6 +21943,7 @@ struct ej_handler ej_handlers[] = {
 	{ "get_parameter", ej_get_parameter},
 	{ "get_ascii_parameter", ej_get_ascii_parameter},
 	{ "login_state_hook", login_state_hook},
+	{ "is_logined_hook", ej_is_logined_hook},
 #ifdef RTCONFIG_FANCTRL
 	{ "get_fanctrl_info", get_fanctrl_info},
 #endif

@@ -178,13 +178,6 @@ send_unreach(struct net *net, struct sk_buff *skb_in, unsigned char code,
 {
 	if (hooknum == NF_INET_LOCAL_OUT && skb_in->dev == NULL)
 		skb_in->dev = net->loopback_dev;
-       if(code == ICMPV6_POLICY_FAIL_TO_GATEWAY) {
-               struct ipv6hdr *ip6 = ipv6_hdr(skb_in);
-       /* Send the ICMPV6_DEST_UNREACH to the gateway */
-               ip6->saddr = net->ipv6.fib6_main_tbl->tb6_root.leaf->rt6i_gateway;
-               code  = ICMPV6_POLICY_FAIL;
-       }
-
 
 	icmpv6_send(skb_in, ICMPV6_DEST_UNREACH, code, 0);
 }
@@ -221,10 +214,6 @@ reject_tg6(struct sk_buff *skb, const struct xt_action_param *par)
 	case IP6T_ICMP6_POLICY_FAIL:
 		send_unreach(net, skb, ICMPV6_POLICY_FAIL, par->hooknum);
 		break;
-	case IP6T_ICMP6_POLICY_FAIL_TO_GATEWAY:
-               send_unreach(net, skb, ICMPV6_POLICY_FAIL_TO_GATEWAY, par->hooknum);
-               break;
-
 
 	default:
 		net_info_ratelimited("case %u not handled yet\n", reject->with);

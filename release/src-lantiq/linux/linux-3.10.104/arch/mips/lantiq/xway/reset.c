@@ -65,6 +65,19 @@
 #define RCU_GFS_ADD2_XRX330	0x00AC
 #define RCU_GFS_ADD3_XRX330	0x0264
 
+/* usb configure registers */
+#define RCU_USB0_CFG		0x0018
+#define RCU_USB1_CFG		0x0034
+
+/* usb configure register bits */
+#define RCU_RD_HOST_DEV		BIT(11)
+#define RCU_RD_HOST_END		BIT(10)
+#define RCU_RD_DEV_END		BIT(9)
+
+/* bits of RCU_RST_REQ */
+#define RCU_RD_USB0_RESET	BIT(4)
+#define RCU_RD_USB1_RESET	BIT(3)
+
 /* reset cause */
 #define RCU_STAT_SHIFT		26
 /* boot selection */
@@ -235,6 +248,63 @@ void ltq_rcu_w32_mask(uint32_t clr, uint32_t set, uint32_t reg_off)
 	spin_unlock_irqrestore(&ltq_rcu_lock, flags);
 }
 EXPORT_SYMBOL_GPL(ltq_rcu_w32_mask);
+
+void ltq_usb_config(int usb_id, int usb_cfg_state)
+{
+	pr_devel("%s: usb_id %d, usb_cfg_state %d\n", __func__, usb_id, usb_cfg_state);
+
+	if (usb_id == 0)
+	{
+		if (usb_cfg_state == 1)
+		{
+			// set host mode; 0:host, 1:device
+			ltq_rcu_w32_mask(RCU_RD_HOST_DEV, 0, RCU_USB0_CFG);
+
+			// set endian
+			ltq_rcu_w32_mask(0, RCU_RD_HOST_END, RCU_USB0_CFG);
+			mdelay(50);
+			ltq_rcu_w32_mask(RCU_RD_DEV_END, 0, RCU_USB0_CFG);
+			mdelay(50);
+
+			// reset
+			ltq_rcu_w32_mask(0, RCU_RD_USB0_RESET, RCU_RST_REQ);
+			mdelay(50);
+			ltq_rcu_w32_mask(RCU_RD_USB0_RESET, 0, RCU_RST_REQ);
+			mdelay(50);
+		}
+		else
+		{
+			// clear host mode
+			ltq_rcu_w32_mask(RCU_RD_HOST_DEV, RCU_RD_HOST_DEV, RCU_USB0_CFG);
+		}
+	}
+	else
+	{
+		if (usb_cfg_state == 1)
+		{
+			// set host mode; 0:host, 1:device
+			ltq_rcu_w32_mask(RCU_RD_HOST_DEV, 0, RCU_USB1_CFG);
+
+			// set endian
+			ltq_rcu_w32_mask(0, RCU_RD_HOST_END, RCU_USB1_CFG);
+			mdelay(50);
+			ltq_rcu_w32_mask(RCU_RD_DEV_END, 0, RCU_USB1_CFG);
+			mdelay(50);
+
+			// reset
+			ltq_rcu_w32_mask(0, RCU_RD_USB1_RESET, RCU_RST_REQ);
+			mdelay(50);
+			ltq_rcu_w32_mask(RCU_RD_USB1_RESET, 0, RCU_RST_REQ);
+			mdelay(50);
+		}
+		else
+		{
+			// clear host mode
+			ltq_rcu_w32_mask(RCU_RD_HOST_DEV, RCU_RD_HOST_DEV, RCU_USB1_CFG);
+		}
+	}
+}
+EXPORT_SYMBOL_GPL(ltq_usb_config);
 
 void ltq_endian_set(int bitn)
 {

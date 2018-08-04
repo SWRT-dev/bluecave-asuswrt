@@ -457,8 +457,9 @@ static void mcast_helper_five_tuple_br_info(struct sk_buff *skb)
 	struct list_head *gimc_list;
 	IP_Addr_t saddr;
 	IP_Addr_t daddr;
+	const unsigned char *dest = eth_hdr(skb)->h_dest;
 
-	if (skb->protocol == htons(ETH_P_IP)) {
+	if ((skb->protocol == htons(ETH_P_IP)) && (is_multicast_ether_addr(dest))) {
 		struct iphdr *iph = ip_hdr(skb);
 		struct udphdr *udph = (struct udphdr *)((u8 *)iph +(iph->ihl << 2));
 		mcast_helper_init_ipaddr(&saddr, IPV4, &iph->saddr);	
@@ -492,9 +493,9 @@ static void mcast_helper_five_tuple_br_info(struct sk_buff *skb)
 			}
 
 		}
-		else {
-			mch_br_capture_pkt = 0;
-		}
+		//else {
+		//	mch_br_capture_pkt = 0;
+		//}
 	} else if (skb->protocol == htons(ETH_P_IPV6)) {
 		struct ipv6hdr *iph6 = ipv6_hdr(skb);
 		struct udphdr *udph6 = udp_hdr(skb);
@@ -655,6 +656,25 @@ static void mcast_helper_show_gimc_entry()
 	}
 	
 }
+static void mcast_helper_show_mcstream(unsigned int grpidx,MCAST_STREAM_t *mc_stream,unsigned int flag)
+{
+	unsigned int index = 0;
+	printk(KERN_INFO   " mc_stream->num_joined_macs: %d flag%d\n",mc_stream->num_joined_macs,flag);
+	
+	printk(KERN_INFO   "%6s %6s %8s\n", 
+			   "sPort", "dPort","mac addr");
+	printk(KERN_INFO  "%3d %3d ",
+			   mc_stream->sPort,
+		           mc_stream->dPort);
+	for(index =0 ; index < mc_stream->num_joined_macs;index++ ) {
+		printk(KERN_INFO "%02x:%02x:%02x:%02x:%02x:%02x",
+			   mc_stream->macaddr[index][0],mc_stream->macaddr[index][1],mc_stream->macaddr[index][2],mc_stream->macaddr[index][3],mc_stream->macaddr[index][4],mc_stream->macaddr[index][5]);
+		printk(KERN_INFO "::");
+	}
+	
+}
+
+
 #endif
 
 
@@ -692,7 +712,8 @@ static MCAST_GIMC_t * mcast_helper_add_gimc_record(struct net_device *netdev,
 	gimc_rec->oifbitmap = 0;
 	gimc_rec->probeFlag = 0;
 
-	
+	memset(gimc_rec->mc_stream.macaddr,0, MAX_MAC*(sizeof(char)*ETH_ALEN));
+        gimc_rec->mc_stream.num_joined_macs =0 ;	
 	INIT_LIST_HEAD(&gimc_rec->list);
 	INIT_LIST_HEAD(&gimc_rec->mc_mem_list);
 	list_add_tail(&gimc_rec->list,head);
@@ -822,39 +843,81 @@ static MCAST_MEMBER_t *mcast_helper_add_gitxmc_record(unsigned int grpidx,
 
 
 /*=============================================================================
+ * function name : mcast_helper_update_mac_list
+ * description   : function updates the mac list which will be passed to registered call back
+ *		
+ *===========================================================================*/
+
+
+static unsigned int mcast_helper_update_mac_list(MCAST_MEMBER_t *gitxmc_rec,MCAST_GIMC_t *gimc_rec,unsigned char *macaddr,unsigned int action)
+{
+	MCAST_MAC_t *mac_rec = NULL;
+	struct list_head *liter = NULL;
+	struct list_head *tliter = NULL;
+	unsigned int flag = 0;
+	unsigned int index = 0;
+
+	memset(gimc_rec->mc_stream.macaddr,0, MAX_MAC*(sizeof(char)*ETH_ALEN));
+        gimc_rec->mc_stream.num_joined_macs =0 ;	
+
+	if((gitxmc_rec->macaddr_count == 1) && (action == MC_F_DEL)) {
+		if (macaddr != NULL) {
+			memcpy(&(gimc_rec->mc_stream.macaddr[0][0]),macaddr,sizeof(char)*ETH_ALEN);
+			gimc_rec->mc_stream.num_joined_macs = 1;
+		}
+		flag = MC_F_DEL ; 
+
+	}
+	else {
+		list_for_each_safe(liter, tliter, &gitxmc_rec->macaddr_list) {
+			mac_rec = list_entry(liter, MCAST_MAC_t, list);
+              		if(mac_rec) {
+				if(gimc_rec->mc_stream.num_joined_macs < 64 ) {
+					memcpy(&(gimc_rec->mc_stream.macaddr[index][0]),mac_rec->macaddr,sizeof(char)*ETH_ALEN);
+					index ++;
+				}
+			}
+			
+		}
+
+		gimc_rec->mc_stream.num_joined_macs = gitxmc_rec->macaddr_count;
+		flag = action ;
+	}
+	return flag;
+}
+
+
+
+/*=============================================================================
  * Function Name : mcast_helper_delete_gitxmc_record
  * Description	 : Function  which delete the entry in gitxmc record 
  *===========================================================================*/
 
-static void mcast_helper_delete_gitxmc_record(MCAST_MEMBER_t * gitxmc_rec, unsigned char *macaddr)
+static void mcast_helper_delete_gitxmc_record(MCAST_MEMBER_t * gitxmc_rec,MCAST_GIMC_t *gimc_rec,struct net_device *netdev,unsigned char *macaddr, unsigned int action) 
 {
-	MCAST_MAC_t *mac = NULL;
-	struct list_head *liter = NULL;
-        struct list_head *tliter = NULL;
+	unsigned int flag = 0;
 
 	if (gitxmc_rec == NULL)
 	  return;
+	
+	if (gimc_rec->mc_stream.sIP.ipType == IPV4) {
+		if(mch_acl_enabled){
+			if (gitxmc_rec->aclBlocked !=1) {
+				flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,macaddr,action);
+				mcast_helper_invoke_return_callback(gimc_rec->grpIdx,netdev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),flag, gitxmc_rec->macaddr_count);
+			}
+		} else {
+			flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,macaddr,action);
+			mcast_helper_invoke_return_callback(gimc_rec->grpIdx,netdev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),flag, gitxmc_rec->macaddr_count);
 
-	if(macaddr != NULL) {
-		mac = mcast_helper_search_mac_record(gitxmc_rec, macaddr); 
+		}
+		
 	}
+	else if(gimc_rec->mc_stream.sIP.ipType == IPV6) {
+		flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,macaddr,action);
+		mcast_helper_invoke_return_callback(gimc_rec->grpIdx, netdev, (MCAST_STREAM_t *)&(gimc_rec->mc_stream), flag, gitxmc_rec->macaddr_count);
+	} 
 
-	if(mac && gitxmc_rec->macaddr_count <= 1) {
-		list_for_each_safe(liter, tliter, &gitxmc_rec->macaddr_list) {
-                        MCAST_MAC_t *mac_all = list_entry(liter, MCAST_MAC_t, list);
-                        if(mac_all) {
-                                list_del(&mac_all->list);
-                                kfree(mac_all);
-				gitxmc_rec->macaddr_count--;
-                        }
-                }
-		list_del(&gitxmc_rec->list);
-		kfree(gitxmc_rec);
-	} else if (mac) {
-		list_del(&mac->list);
-		kfree(mac);
-		gitxmc_rec->macaddr_count--;
-	}
 }
 
 /*=============================================================================
@@ -1274,7 +1337,11 @@ static int mcast_helper_update_entry(struct net_device *netdev,struct net_device
 	MCAST_GIMC_t *gimc_rec = NULL;
 	MCAST_MEMBER_t *gitxmc_rec = NULL;
 	MCAST_MAC_t *mac_rec = NULL;
+	struct list_head *liter = NULL;
+	struct list_head *tliter = NULL;
+	MCAST_MAC_t *mac = NULL;
 	int ret=0;
+	unsigned int flag = MC_F_UPD ;
 
 	struct list_head *gimc_list = mcast_helper_list_p(mc_rec->groupIP.ipType) ;
 	gimc_rec = mcast_helper_search_gimc_record(&(mc_rec->groupIP),&(mc_rec->srcIP),gimc_list);
@@ -1293,6 +1360,7 @@ static int mcast_helper_update_entry(struct net_device *netdev,struct net_device
 			mac_rec = mcast_helper_update_macaddr_record(gitxmc_rec, mc_rec->macaddr);
 			if (mac_rec == NULL)
 				return FAILURE;
+
 		}
 	}
 
@@ -1322,8 +1390,8 @@ static int mcast_helper_update_entry(struct net_device *netdev,struct net_device
 			return FAILURE;
 	}
       } else {
-		memcpy(gimc_rec->mc_stream.macaddr,mc_rec->macaddr,sizeof(char)*ETH_ALEN);
-		mcast_helper_invoke_return_callback(gimc_rec->grpIdx,netdev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_ADD, gitxmc_rec->macaddr_count);
+		flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,mc_rec->macaddr,flag);
+		mcast_helper_invoke_return_callback(gimc_rec->grpIdx,netdev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),flag, gitxmc_rec->macaddr_count);
 			
 	}
 	
@@ -1343,9 +1411,10 @@ static int mcast_helper_add_entry(struct net_device *netdev,struct net_device *r
 {
 	MCAST_GIMC_t *gimc_rec = NULL;
 	MCAST_MEMBER_t *gitxmc_rec = NULL;
-	int ret=0;
 	struct net_device *upper_dev = NULL;
 	struct list_head *gimc_list = mcast_helper_list_p(mc_rec->groupIP.ipType) ;
+	int ret=0;
+	unsigned int flag = 0;
 	
 	gimc_rec = mcast_helper_search_gimc_record(&(mc_rec->groupIP),&(mc_rec->srcIP),gimc_list);
 	if (gimc_rec == NULL) {
@@ -1396,7 +1465,7 @@ static int mcast_helper_add_entry(struct net_device *netdev,struct net_device *r
 						return FAILURE;
 				}
 			}else {
-				memcpy(gimc_rec->mc_stream.macaddr,mc_rec->macaddr,sizeof(char)*ETH_ALEN);
+				flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,mc_rec->macaddr,MC_F_ADD);
 	        		mcast_helper_invoke_return_callback(gimc_rec->grpIdx,netdev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_ADD, gitxmc_rec->macaddr_count);
 		        }
 		}
@@ -1416,6 +1485,10 @@ static int mcast_helper_delete_entry(struct net_device *netdev,struct net_device
 	MCAST_GIMC_t *gimc_rec = NULL;
 	MCAST_MEMBER_t *gitxmc_rec = NULL;
 	struct list_head *gimc_list = mcast_helper_list_p(mc_mem->groupIP.ipType);
+	MCAST_MAC_t *mac = NULL;
+	struct list_head *liter = NULL;
+        struct list_head *tliter = NULL;
+	unsigned int flag = 0;
 
 	gimc_rec = mcast_helper_search_gimc_record(&(mc_mem->groupIP),&(mc_mem->srcIP),gimc_list);
 	if(gimc_rec == NULL)
@@ -1425,25 +1498,31 @@ static int mcast_helper_delete_entry(struct net_device *netdev,struct net_device
 	gitxmc_rec = mcast_helper_search_gitxmc_record(gimc_rec->grpIdx,netdev,&gimc_rec->mc_mem_list);	
 	if (gitxmc_rec == NULL)
 		return FAILURE;
-
-	if (gimc_rec->mc_stream.sIP.ipType == IPV4) {
-		if(mch_acl_enabled){
-			if (gitxmc_rec->aclBlocked !=1) {
-				memcpy(gimc_rec->mc_stream.macaddr,mc_mem->macaddr,sizeof(char)*ETH_ALEN);
-				mcast_helper_invoke_return_callback(gimc_rec->grpIdx,netdev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_DEL, gitxmc_rec->macaddr_count);
-			}
-		} else{
-			memcpy(gimc_rec->mc_stream.macaddr,mc_mem->macaddr,sizeof(char)*ETH_ALEN);
-			mcast_helper_invoke_return_callback(gimc_rec->grpIdx,netdev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_DEL, gitxmc_rec->macaddr_count);
-		}
-		
-	}
-	else if(gimc_rec->mc_stream.sIP.ipType == IPV6) {
-		memcpy(gimc_rec->mc_stream.macaddr,mc_mem->macaddr,sizeof(char)*ETH_ALEN);
-		mcast_helper_invoke_return_callback(gimc_rec->grpIdx, netdev, (MCAST_STREAM_t *)&(gimc_rec->mc_stream), MC_F_DEL, gitxmc_rec->macaddr_count);
-	} 
-	mcast_helper_delete_gitxmc_record(gitxmc_rec, mc_mem->macaddr);
 	
+	if(mc_mem->macaddr != NULL) {
+		mac = mcast_helper_search_mac_record(gitxmc_rec,mc_mem-> macaddr); 
+	}
+
+	if(mac && gitxmc_rec->macaddr_count <= 1) {
+		mcast_helper_delete_gitxmc_record(gitxmc_rec,gimc_rec,netdev,mc_mem->macaddr,MC_F_DEL);
+		list_for_each_safe(liter, tliter, &gitxmc_rec->macaddr_list) {
+                        MCAST_MAC_t *mac_all = list_entry(liter, MCAST_MAC_t, list);
+                        if(mac_all) {
+                                list_del(&mac_all->list);
+                                kfree(mac_all);
+				gitxmc_rec->macaddr_count--;
+                        }
+                }
+		list_del(&gitxmc_rec->list);
+		kfree(gitxmc_rec);
+	} else if (mac) {
+		list_del(&mac->list);
+		kfree(mac);
+		gitxmc_rec->macaddr_count--;
+		flag = MC_F_DEL_UPD ;
+		mcast_helper_delete_gitxmc_record(gitxmc_rec,gimc_rec,netdev,mc_mem->macaddr,flag);
+	}
+
 	if (list_empty(&gimc_rec->mc_mem_list))
 		mcast_helper_delete_gimc_record(gimc_rec);
 	
@@ -1513,7 +1592,8 @@ static long mcast_helper_ioctl(struct file *f, unsigned int cmd, unsigned long a
 	        	netdev = mcast_helper_dev_get_by_name(&init_net,mcast_mem.memIntrfName);
 	        	rxnetdev = mcast_helper_dev_get_by_name(&init_net,mcast_mem.rxIntrfName);
 		#endif
-
+		if(rxnetdev == NULL || netdev == NULL)
+			return -ENXIO;
 		rtnl_lock();
 		upper_dev = netdev_master_upper_dev_get(rxnetdev);
 		rtnl_unlock();	 
@@ -2038,9 +2118,7 @@ int mcast_helper_sig_check_update_ip(struct sk_buff *skb)
 	struct list_head *gimc_list = mcast_helper_list_p(IPV4) ;
 	MCAST_GIMC_t *gimc_rec = NULL;
 	MCAST_MEMBER_t *gitxmc_rec = NULL;
-	struct list_head *liter = NULL;
-	struct list_head *tliter = NULL;
-	MCAST_MAC_t *mac_rec = NULL;
+	unsigned int flag = 0;
 
 
 	if (ip_hdr(skb)->protocol == IPPROTO_UDP) {
@@ -2060,14 +2138,9 @@ int mcast_helper_sig_check_update_ip(struct sk_buff *skb)
 				gitxmc_rec = mcast_helper_search_gitxmc_record(gimc_rec->grpIdx,skb->dev,&gimc_rec->mc_mem_list);	
 				if (gitxmc_rec != NULL) {
 					gitxmc_rec->aclBlocked=0;
-					list_for_each_safe(liter,tliter,&gitxmc_rec->macaddr_list) {
-						mac_rec = list_entry(liter, MCAST_MAC_t, list);
-						if(mac_rec) {
-							memcpy(gimc_rec->mc_stream.macaddr,mac_rec->macaddr,sizeof(char)*ETH_ALEN);
-							mcast_helper_invoke_return_callback(gimc_rec->grpIdx,skb->dev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_ADD, gitxmc_rec->macaddr_count);
-						}
-					}
-
+					flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,NULL,MC_F_ADD);
+					mcast_helper_invoke_return_callback(gimc_rec->grpIdx,gitxmc_rec->memDev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),flag, gitxmc_rec->macaddr_count);
+	
 				}
 
 			}
@@ -2097,9 +2170,7 @@ int mcast_helper_sig_check_update_ip6(struct sk_buff *skb)
 	struct list_head *gimc_list = mcast_helper_list_p(IPV6) ;
 	MCAST_GIMC_t *gimc_rec = NULL;
 	MCAST_MEMBER_t *gitxmc_rec = NULL;
-  	struct list_head *liter = NULL;
-	struct list_head *tliter = NULL;
-	MCAST_MAC_t *mac_rec = NULL;
+	unsigned int flag = 0;
 
 	data = (unsigned char *)udp_hdr(skb)+UDP_HDR_LEN;
 
@@ -2117,13 +2188,8 @@ int mcast_helper_sig_check_update_ip6(struct sk_buff *skb)
 			gitxmc_rec = mcast_helper_search_gitxmc_record(gimc_rec->grpIdx,skb->dev,&gimc_rec->mc_mem_list);	
 			if (gitxmc_rec != NULL) {
 				gitxmc_rec->aclBlocked=0;
-				list_for_each_safe(liter,tliter,&gitxmc_rec->macaddr_list) {
-                                	mac_rec = list_entry(liter, MCAST_MAC_t, list);
-	                        	if(mac_rec) {
-						memcpy(gimc_rec->mc_stream.macaddr,mac_rec->macaddr,sizeof(char)*ETH_ALEN);
-						mcast_helper_invoke_return_callback(gimc_rec->grpIdx,skb->dev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_ADD, gitxmc_rec->macaddr_count);
-					} 
-				}
+				flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,NULL,MC_F_UPD);
+				mcast_helper_invoke_return_callback(gimc_rec->grpIdx,gitxmc_rec->memDev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),flag, gitxmc_rec->macaddr_count);
 			}
 
 		}
@@ -2186,9 +2252,7 @@ static void mcast_helper_timer_handler(unsigned long data)
 	unsigned int i=0;
 	unsigned int delflag=1;
 	unsigned int oifbitmap=0;
-	struct list_head *liter_mac = NULL;
-	struct list_head *tliter_mac = NULL;
-	MCAST_MAC_t *mac_rec = NULL;
+	unsigned int flag = 0;
 
 	if (mch_iptype == IPV6)
 		gimc_list = mcast_helper_list_p(IPV6) ;
@@ -2213,13 +2277,9 @@ static void mcast_helper_timer_handler(unsigned long data)
         			        if (oifbitmap & 0x1) {
 						if (gitxmc_rec->memDev->ifindex == i) {
 							if (gitxmc_rec->aclBlocked==1) {
-								list_for_each_safe(liter_mac,tliter_mac,&gitxmc_rec->macaddr_list) {
-			                                                mac_rec = list_entry(liter_mac, MCAST_MAC_t, list);
-                        			                        if(mac_rec) {	
-										memcpy(gimc_rec->mc_stream.macaddr,mac_rec->macaddr,sizeof(char)*ETH_ALEN);
-										mcast_helper_invoke_return_callback(gimc_rec->grpIdx,gitxmc_rec->memDev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_ADD, gitxmc_rec->macaddr_count);
-									}
-								}
+
+								flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,NULL,MC_F_ADD);
+								mcast_helper_invoke_return_callback(gimc_rec->grpIdx,gitxmc_rec->memDev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),flag, gitxmc_rec->macaddr_count);
 								gitxmc_rec->aclBlocked=0;
 	
 							}
@@ -2233,13 +2293,9 @@ static void mcast_helper_timer_handler(unsigned long data)
 
 				if (delflag == 1) {
 					/* delete this interface from the gitxmc list and invoke registered call back for this if any */
-					list_for_each_safe(liter_mac,tliter_mac,&gitxmc_rec->macaddr_list) {
-                                        	mac_rec = list_entry(liter_mac, MCAST_MAC_t, list);
-                                                if(mac_rec) {
-							memcpy(gimc_rec->mc_stream.macaddr,mac_rec->macaddr,sizeof(char)*ETH_ALEN);
-							mcast_helper_invoke_return_callback(gimc_rec->grpIdx,gitxmc_rec->memDev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),MC_F_DEL, gitxmc_rec->macaddr_count);
-						}
-					}
+
+					flag = mcast_helper_update_mac_list(gitxmc_rec,gimc_rec,NULL,MC_F_DEL);
+					mcast_helper_invoke_return_callback(gimc_rec->grpIdx,gitxmc_rec->memDev,(MCAST_STREAM_t *)&(gimc_rec->mc_stream),flag, gitxmc_rec->macaddr_count);
 					gitxmc_rec->aclBlocked=1;
 				}
 	

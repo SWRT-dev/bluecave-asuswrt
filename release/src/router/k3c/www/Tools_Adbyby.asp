@@ -1,8 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<html xmlns:v>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
@@ -187,12 +186,13 @@ function reload_Soft_Center() {
 <td style="font-style: italic;font-size: 14px;">
 <span id="desc_title">使用简介：</span>
 <ol>
-<li>adbyby暂时不正常</li>
-<li>winscp下载证书路径为/jffs/koolproxy/data/certs</li>
+<li>adbyby开启需要2分钟左右.</li>
+<li>证书生成需要1分钟左右.</li>
+<li>已知会造成一些网站异常，如需访问可以先关闭去广告.</li>
 </ol>
 <span id="desc_note" style="color:#FC0;">提示：</span>
 <ol style="color:#FC0;margin:-5px 0px 3px -18px;*margin-left:18px;">
-<li>开启时必须联网</li> </ol>
+<li>开启时必须联网.</li> </ol>
 </td>
 </tr>
 </table>
@@ -258,7 +258,7 @@ function reload_Soft_Center() {
 </tr>
 </thead>
 <tr><td colspan="2">
-<textarea cols="63" rows="25" wrap="off" readonly="readonly" id="textarea" style="width:99%;font-family:Courier New, Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;">
+<textarea cols="63" rows="20" wrap="off" readonly="readonly" id="textarea" style="width:99%;font-family:Courier New, Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;">
 <% nvram_dump("adbyby.log",""); %>
 </textarea>
 </td></tr>

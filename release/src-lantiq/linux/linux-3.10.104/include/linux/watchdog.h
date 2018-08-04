@@ -49,6 +49,28 @@ struct watchdog_ops {
 	void (*unref)(struct watchdog_device *);
 	long (*ioctl)(struct watchdog_device *, unsigned int, unsigned long);
 };
+/*
+ * struct watchdog_core_data - watchdog core internal data
+ * @kref:	Reference count.
+ * @cdev:	The watchdog's Character device.
+ * @wdd:	Pointer to watchdog device.
+ * @lock:	Lock for watchdog core.
+ * @status:	Watchdog core internal status bits.
+ */
+struct watchdog_core_data {
+	struct kref kref;
+	struct cdev cdev;
+	struct watchdog_device *wdd;
+	struct mutex lock;
+	unsigned long last_keepalive;
+	unsigned long last_hw_keepalive;
+	struct delayed_work work;
+	unsigned long status;		/* Internal status bits */
+	bool user_call; /* user_space call or wq call for ping */
+#define _WDOG_DEV_OPEN		0	/* Opened ? */
+#define _WDOG_ALLOW_RELEASE	1	/* Did we receive the magic char ? */
+#define _WDOG_KEEPALIVE		2	/* Did we receive a keepalive ? */
+};
 
 /** struct watchdog_device - The structure that defines a watchdog device
  *
@@ -86,8 +108,11 @@ struct watchdog_device {
 	unsigned int timeout;
 	unsigned int min_timeout;
 	unsigned int max_timeout;
+	unsigned int min_hw_heartbeat_ms;
+	unsigned int max_hw_heartbeat_ms;
 	void *driver_data;
 	struct mutex lock;
+	struct watchdog_core_data *wd_data;
 	unsigned long status;
 /* Bit numbers for status flags */
 #define WDOG_ACTIVE		0	/* Is the watchdog running/active */
@@ -95,6 +120,8 @@ struct watchdog_device {
 #define WDOG_ALLOW_RELEASE	2	/* Did we receive the magic char ? */
 #define WDOG_NO_WAY_OUT		3	/* Is 'nowayout' feature set ? */
 #define WDOG_UNREGISTERED	4	/* Has the device been unregistered */
+#define WDOG_HW_RUNNING		5	/* True if HW watchdog running */
+#define WDOG_ID_NOT_REQ		6	/* watchdog id creation from ida not req */
 };
 
 #ifdef CONFIG_WATCHDOG_NOWAYOUT
@@ -111,6 +138,16 @@ static inline bool watchdog_active(struct watchdog_device *wdd)
 	return test_bit(WDOG_ACTIVE, &wdd->status);
 }
 
+/*
+ * Use the following function to check whether or not the hardware watchdog
+ * is running
+ */
+static inline bool watchdog_hw_running(struct watchdog_device *wdd)
+{
+	return test_bit(WDOG_HW_RUNNING, &wdd->status);
+}
+
+
 /* Use the following function to set the nowayout feature */
 static inline void watchdog_set_nowayout(struct watchdog_device *wdd, bool nowayout)
 {
@@ -121,8 +158,20 @@ static inline void watchdog_set_nowayout(struct watchdog_device *wdd, bool noway
 /* Use the following function to check if a timeout value is invalid */
 static inline bool watchdog_timeout_invalid(struct watchdog_device *wdd, unsigned int t)
 {
-	return ((wdd->max_timeout != 0) &&
-		(t < wdd->min_timeout || t > wdd->max_timeout));
+	/*
+	 * The timeout is invalid if
+	 * - the requested value is larger than UINT_MAX / 1000
+	 *   (since internal calculations are done in milli-seconds),
+	 * or
+	 * - the requested value is smaller than the configured minimum timeout,
+	 * or
+	 * - a maximum hardware timeout is not configured, a maximum timeout
+	 *   is configured, and the requested value is larger than the
+	 *   configured maximum timeout.
+	 */
+	return t > UINT_MAX / 1000 || t < wdd->min_timeout ||
+		(!wdd->max_hw_heartbeat_ms && wdd->max_timeout &&
+		 t > wdd->max_timeout);
 }
 
 /* Use the following functions to manipulate watchdog driver specific data */

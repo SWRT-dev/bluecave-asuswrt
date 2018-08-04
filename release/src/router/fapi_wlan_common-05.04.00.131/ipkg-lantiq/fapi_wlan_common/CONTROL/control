@@ -1,0 +1,9 @@
+Package: fapi_wlan_common
+Version: 05.04.00.131-1
+Depends: libc, libssp, libhelper, libncurses, librt
+Source: /media/intel160g/asuswrt-router-3004/UGW-7.2.4.4_05.04.00.131/ugw/feeds_ugw/wlan/fapi_wlan_common
+Section: net
+Maintainer: LANTIQ DEUTSCHLAND GMBH
+Architecture: lantiq
+Installed-Size: 208296
+Description:  Lantiq Common FAPI layer

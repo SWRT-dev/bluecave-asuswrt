@@ -128,11 +128,18 @@ int watchdog_register_device(struct watchdog_device *wdd)
 	 */
 
 	mutex_init(&wdd->lock);
-	id = ida_simple_get(&watchdog_ida, 0, MAX_DOGS, GFP_KERNEL);
-	if (id < 0)
+	/*In case we dont want to over ride, just mark it in ida
+		else the procedure is as usual*/
+	if(test_bit(WDOG_ID_NOT_REQ, &wdd->status))
+	{
+		id = ida_simple_get(&watchdog_ida,wdd->id,wdd->id + 1, GFP_KERNEL);
+	}else{
+		id = ida_simple_get(&watchdog_ida, 0, MAX_DOGS, GFP_KERNEL);
+	}
+
+	if (id < 0 )
 		return id;
 	wdd->id = id;
-
 	ret = watchdog_dev_register(wdd);
 	if (ret) {
 		ida_simple_remove(&watchdog_ida, id);

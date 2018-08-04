@@ -358,6 +358,7 @@ else
 ifneq ($(RTCONFIG_ACCEL_PPTPD), y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/vpnstatus.png
 	rm -rf $(INSTALLDIR)/www/Advanced_VPN_PPTP.asp
+	rm -rf $(INSTALLDIR)/www/ajax_vpnserver_client_status.xml
 endif
 ifneq ($(RTCONFIG_VPNC), y)	
 	rm -rf $(INSTALLDIR)/www/Advanced_VPNClient_Content.asp
@@ -412,11 +413,6 @@ endif
 	rm -rf $(INSTALLDIR)/www/getIPSEvent.asp
 	rm -rf $(INSTALLDIR)/www/getNonIPSChart.asp
 	rm -rf $(INSTALLDIR)/www/tm_eula.htm
-	rm -rf $(INSTALLDIR)/www/JP_tm_eula.htm
-	rm -rf $(INSTALLDIR)/www/tm_eula_TC.htm
-	rm -rf $(INSTALLDIR)/www/tm_eula_SC.htm
-	rm -rf $(INSTALLDIR)/www/tm_eula_FR.htm
-	rm -rf $(INSTALLDIR)/www/tm_eula_RU.htm
 	rm -rf $(INSTALLDIR)/www/js/Chart.js
 	rm -rf $(INSTALLDIR)/www/images/New_ui/HomeProtection.png
 	rm -rf $(INSTALLDIR)/www/images/New_ui/TimeLimits.png

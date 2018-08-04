@@ -4485,7 +4485,6 @@ PPA_IOC_MAXNR                            /*!< NR for PPA_IOC_MAXNR  */
 #define PPA_CMD_SET_SW_SESSION_ENABLE		_IOWR(PPA_IOC_MAGIC, PPA_CMD_SET_SW_SESSION_ENABLE_NR, PPA_CMD_SW_SESSION_ENABLE_INFO)
 #endif /*CONFIG_LTQ_PPA_API_SW_FASTPATH*/
 
-
 /**  PPA Get PPA Hash Summary. Value is manipulated by _IOWR() macro for final value 
    \param PPA_CMD_COUNT_INFO The parameter points to a
           \ref PPA_CMD_COUNT_INFO structure   

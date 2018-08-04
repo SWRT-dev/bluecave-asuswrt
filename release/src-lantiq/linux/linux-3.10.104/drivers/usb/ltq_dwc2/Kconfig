@@ -1,0 +1,36 @@
+#config USB_DWC2_CORE
+#	tristate
+
+config USB_DWC2_COMMON_PORT
+	tristate
+
+config USB_LTQ_DWC2
+	tristate "LTQ DWC2 Core Support"
+	depends on USB
+	select USB_DWC2_COMMON_PORT 
+#	select USB_DWC2_CORE
+	help
+	  Say Y or M here if your system has a Dual Role HighSpeed
+	  USB controller based on the DesignWare HSOTG IP Core.
+
+	  If you choose to build this driver as dynamically linked
+	  modules, the core module will be called dwc2.ko, the
+	  PCI bus interface module (if you have a PCI bus system)
+	  will be called dwc2_pci.ko and the platform interface module
+	  (for controllers directly connected to the CPU) will be called
+	  dwc2_platform.ko.
+
+	  NOTE: This driver at present only implements the Host mode
+	  of the controller. The existing s3c-hsotg driver supports
+	  Peripheral mode, but only for the Samsung S3C platforms.
+	  There are plans to merge the s3c-hsotg driver with this
+	  driver in the near future to create a dual-role driver.
+
+if USB_LTQ_DWC2
+
+config USB_LTQ_DWC2_DEBUG
+	bool "Enable LTQ DWC2 Debugging Messages"
+	help
+	  Say Y here to enable debugging messages in the DWC2 Driver.
+
+endif # USB_LTQ_DWC2

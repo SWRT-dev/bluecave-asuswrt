@@ -9,13 +9,16 @@ killall -q -9 ssr_mon.sh
 
 killall -q -9 ssr-redir
 killall -q -9 ss-redir
- 
+killall -q pdnsd  
+
+[ -f /var/run/ssr-retcp.pid ] && kill -9 `cat /var/run/ssr-retcp.pid` 2>/dev/null && rm -f /var/run/ssr-retcp.pid
 rm -f /tmp/etc/dnsmasq.user/gfw_list.conf 2>/dev/null 
 rm -f /tmp/etc/dnsmasq.user/gfw_addr.conf 2>/dev/null
 rm -f /tmp/etc/dnsmasq.user/gfw_user.conf 2>/dev/null
+
 service restart_dnsmasq 2>/dev/null
-ienable= `nvram get ipv6_service`
-if [ $ienable != "disabled" ] ;then
+ienable=`nvram get ipv6_service`
+if [ "$ienable" != "disabled" ] ;then
 service stop_ipv6_tunnel
 sleep 2
 service start_ipv6_tunnel
@@ -31,7 +34,7 @@ stop
 sleep 2
 fi
 
-sindex=`nvram get ssr_index 2>/dev/null`
+sindex=`nvram get ssr_index`
 
 mcmd="echo \"`nvram get ssr_server_ip`\"|awk -F '>' '{printf \$$sindex}'"
 mip=`echo $mcmd |sh`
@@ -89,9 +92,9 @@ if [ "$mtype" == "SSR" ] ;then
 EOF
 
 if [ "$udp_enable" == "1" ] ;then
-/usr/sbin/ssr-redir  -u -c /tmp/shadowsocksr.json -f /tmp/ssr-retcp.pid
+/usr/sbin/ssr-redir  -u -c /tmp/shadowsocksr.json -f /var/run/ssr-retcp.pid
 else
-/usr/sbin/ssr-redir  -c /tmp/shadowsocksr.json -f /tmp/ssr-retcp.pid
+/usr/sbin/ssr-redir  -c /tmp/shadowsocksr.json -f /var/run/ssr-retcp.pid
 fi
 
 else
@@ -110,12 +113,15 @@ else
 EOF
 
 if [ "$udp_enable" == "1" ] ;then
-/usr/sbin/ss-redir  -u -c /tmp/shadowsocks.json -f /tmp/ssr-retcp.pid
+/usr/sbin/ss-redir  -u -c /tmp/shadowsocks.json -f /var/run/ssr-retcp.pid
 else
-/usr/sbin/ss-redir  -c /tmp/shadowsocks.json -f /tmp/ssr-retcp.pid
+/usr/sbin/ss-redir  -c /tmp/shadowsocks.json -f /var/run/ssr-retcp.pid
 fi
 
 fi
+
+logger -t "SSR" "Starting!"
+
 /usr/sbin/ssr-rules  $mip  1234 &
 /usr/sbin/ssr-state 2>/dev/null || exit 0
 }

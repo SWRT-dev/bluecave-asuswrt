@@ -277,7 +277,7 @@ static int xrx500_gpio_probe(struct platform_device *pdev)
 	struct resource *gpiores, irqres;
 	int ret, size, count;
 /*	static int sso_init_done = 0;*/
-	unsigned int gpio_num;
+	unsigned int gpio_num, offset;
 
 	if (!bank || *bank >= MAX_BANKS)
 		return -ENODEV;
@@ -355,38 +355,43 @@ static int xrx500_gpio_probe(struct platform_device *pdev)
 		sso_init_done++;
 	}
 #else
-		count = of_get_child_count(node);
-		if (count) {
-			int output = -1;
-			struct property *prop;
-			const __be32 *p;
-			LOGF_KLOG_DEBUG("node count %d\r\n", count);
-			for_each_child_of_node(node, child) {
-				if (of_property_read_bool(child, "hog-as-input")) {
-					output = 0;
-				} else if (of_property_read_bool(child, "hog-as-output")) {
-					output = 1;
+	count = of_get_child_count(node);
+	if (count) {
+		int output = -1;
+		struct property *prop;
+		const __be32 *p;
+		LOGF_KLOG_DEBUG("node count %d\r\n", count);
+		for_each_child_of_node(node, child) {
+			if (of_property_read_bool(child, "hog-as-input"))
+				output = 0;
+			else if (of_property_read_bool(child, "hog-as-output"))
+				output = 1;
+
+			of_property_for_each_u32(child, "gpio", prop, p, gpio_num) {
+				offset = gpio_num - gpio_port->gpio_chip.base;
+				if (offset >= PINS_PER_PORT) {
+					dev_err(&pdev->dev, "gpio: %u is out of the gpio chip range:(%u, %u)\n",
+						gpio_num, gpio_port->gpio_chip.base,
+						gpio_port->gpio_chip.base + PINS_PER_PORT);
+					continue;
 				}
-				of_property_for_each_u32(child, "gpio", prop, p, gpio_num)
-				if (output == 1) {
+				if (output == 1){
 					if(gpio_num==6){
-						xrx500_gpio_direction_output(&gpio_port->gpio_chip, gpio_num, 1);
+						xrx500_gpio_direction_output(&gpio_port->gpio_chip, offset, 1);
 					}else if(gpio_num==4){
-						xrx500_gpio_direction_output(&gpio_port->gpio_chip, gpio_num, 0);
+						xrx500_gpio_direction_output(&gpio_port->gpio_chip, offset, 0);
 					}else if(gpio_num==1 || gpio_num==8 ||gpio_num==42){
-						xrx500_gpio_direction_output(&gpio_port->gpio_chip, gpio_num, 0);
-						xrx500_gpio_direction_output(&gpio_port->gpio_chip, 1 /* gpio1 */, 0);
+						xrx500_gpio_direction_output(&gpio_port->gpio_chip, offset, 0);
+						xrx500_gpio_direction_output(&gpio_port->gpio_chip, 1 /* gpio1 */ - gpio_port->gpio_chip.base, 0);
 					}else{
-						xrx500_gpio_direction_output(&gpio_port->gpio_chip, gpio_num, 0);
+						xrx500_gpio_direction_output(&gpio_port->gpio_chip, offset, 0);
 					}
+				}else if (output == 0){
+					xrx500_gpio_direction_input(&gpio_port->gpio_chip, offset);
 				}
-				if (output == 0) {
-						xrx500_gpio_direction_input(&gpio_port->gpio_chip, gpio_num);
-				}
-
-
-				}
+			}
 		}
+	}
 
 #endif
 

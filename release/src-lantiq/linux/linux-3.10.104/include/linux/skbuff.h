@@ -541,9 +541,6 @@ struct sk_buff {
 #ifdef CONFIG_NETWORK_EXTMARK
 	__u32			extmark;
 #endif
-#ifdef CONFIG_OFFLOAD_FWD_MARK
-	__u32 offload_fwd_mark; 
-#endif
 	union {
 		__u32		mark;
 		__u32		dropcount;

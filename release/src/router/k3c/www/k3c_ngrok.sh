@@ -57,8 +57,11 @@ restart() {
   stop
   sleep 1
   menable=`nvram get ngrok_enable`
-  if [ "$menable" == "1" ] ;then
+  kenable=`nvram get k3c_enable`
+  if [ "$menable" == "1" -a "$kenable" == "1" ] ;then
   start
+  else if [ "$menable" == "1" ]
+    logger -t "K3C""K3C扩展设置挂载未开启！"
   fi
 }
 

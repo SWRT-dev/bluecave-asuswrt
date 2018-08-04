@@ -2836,9 +2836,7 @@ int dev_queue_xmit(struct sk_buff *skb)
 	struct Qdisc *q;
 	int rc = -ENOMEM;
 	int ret=0;
-#ifdef CONFIG_OFFLOAD_FWD_MARK
-   	struct iphdr *iph = ip_hdr(skb);
-#endif
+
 	skb_reset_mac_header(skb);
 
 	/* Disable soft irqs for various locks below. Also
@@ -2861,16 +2859,6 @@ int dev_queue_xmit(struct sk_buff *skb)
 
 	skb_update_prio(skb);
 
-#ifdef CONFIG_OFFLOAD_FWD_MARK
- /* Don't forward if offload device already forwarded */
- if (skb->offload_fwd_mark &&
-   (skb->offload_fwd_mark == dev->offload_fwd_mark)&& 
-   (!(iph->frag_off & htons(IP_MF | IP_OFFSET))) && (iph->protocol != IPPROTO_ICMP )) {
-   consume_skb(skb);
-   rc = NET_XMIT_SUCCESS;
-   goto out;
- } 
-#endif
 	txq = netdev_pick_tx(dev, skb);
 	q = rcu_dereference_bh(txq->qdisc);
 

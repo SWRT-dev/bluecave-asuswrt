@@ -633,13 +633,6 @@ static const struct usb_device_id	products [] = {
 	.driver_info = 0,
 },
 
-/* TP-LINK UE300 Change ethx to wwan0 */
-{
-	USB_DEVICE_AND_INTERFACE_INFO(0x2357, 0x0601, USB_CLASS_COMM,
-			USB_CDC_SUBCLASS_ETHERNET, USB_CDC_PROTO_NONE),
-	.driver_info = (unsigned long)&wwan_info,
-},
-
 /* Realtek RTL8152 Based USB 2.0 Ethernet Adapters */
 #if defined(CONFIG_USB_RTL8152) || defined(CONFIG_USB_RTL8152_MODULE)
 {

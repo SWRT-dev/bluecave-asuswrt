@@ -8,7 +8,6 @@
  *
  *  Copyright (C) 2014 Kavitha  Subramanian <s.kavitha.EE@lantiq.com>
  */
-
 #include <linux/gpio.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>
@@ -229,75 +228,6 @@ static struct ltq_mfp_pin xrx500_mfp[] = {
 	MFP_XRX500(GPIO63,	NONE,   NONE,	NONE,  NONE),
 };
 
-static struct ltq_mfp_pin irx200_mfp[] = {
-	/*	pin		f0	f1	f2	f3 */
-	MFP_XRX500(GPIO0,	GPIO,   NONE,	PHY,   NONE),
-	MFP_XRX500(GPIO1,	GPIO,   PHY,	SLIC,   NONE),
-	MFP_XRX500(GPIO2,	GPIO,   PHY,	USB,   NONE),
-	MFP_XRX500(GPIO3,	GPIO,   NONE,	CGU,   NTR),
-	MFP_XRX500(GPIO4,	GPIO,   LEDC,	PHY,  PHY),
-	MFP_XRX500(GPIO5,	GPIO,   LEDC,	PHY,   PHY),
-	MFP_XRX500(GPIO6,	GPIO,   LEDC,	PHY,  PHY),
-	MFP_XRX500(GPIO7,	GPIO,   CGU,	PHY,   USB),
-	MFP_XRX500(GPIO8,	GPIO,   CGU,	NONE,   PHY),
-	MFP_XRX500(GPIO9,	GPIO,   WLAN,	PHY,   NONE),
-	MFP_XRX500(GPIO10,	GPIO,   NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO11,	GPIO,   NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO12,	NONE,   NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO13,	GPIO,   EBU,	NONE,   NONE),
-	MFP_XRX500(GPIO14,	GPIO,   NONE,	SPI1,   PHY),
-	MFP_XRX500(GPIO15,	GPIO,   SPI0,	PHY,   NONE),
-	MFP_XRX500(GPIO16,	GPIO,   SPI0,	NONE,   PHY),
-	MFP_XRX500(GPIO17,	GPIO,	SPI0,	NONE,	PHY),
-	MFP_XRX500(GPIO18,	GPIO,	SPI0,	NONE,	PHY),
-	MFP_XRX500(GPIO19,	GPIO,	SPI1,	NONE,	PHY),
-	MFP_XRX500(GPIO20,	NONE,	NONE,	NONE,	NONE),
-	MFP_XRX500(GPIO21,	GPIO,	I2C,	NONE,	NONE),
-	MFP_XRX500(GPIO22,	GPIO,	I2C,	NONE,	PHY),
-	MFP_XRX500(GPIO23,	GPIO,	EBU,	NONE,	NONE),
-	MFP_XRX500(GPIO24,	GPIO,	EBU,	NONE,	NONE),
-	MFP_XRX500(GPIO25,	NONE,	NONE,	NONE,	NONE),
-	MFP_XRX500(GPIO26,	NONE,	NONE,	NONE,	NONE),
-	MFP_XRX500(GPIO27,	NONE,	NONE,	NONE,	NONE),
-	MFP_XRX500(GPIO28,	GPIO,	MII,	PHY,	TDM),
-	MFP_XRX500(GPIO29,	GPIO,	MII,	PHY,	TDM),
-	MFP_XRX500(GPIO30,	GPIO,	MII,	PHY,	TDM),
-	MFP_XRX500(GPIO31,	GPIO,	MII,	NONE,	TDM),
-
-	MFP_XRX500(GPIO32,	GPIO,   MDIO,	NONE,   NONE),
-	MFP_XRX500(GPIO33,	GPIO,   MDIO,	NONE,   NONE),
-	MFP_XRX500(GPIO34,	GPIO,   NONE,	SLIC,   PHY),
-	MFP_XRX500(GPIO35,	GPIO,   NONE,	SLIC,   PHY),
-	MFP_XRX500(GPIO36,	GPIO,   NONE,	SLIC,  PHY),
-	MFP_XRX500(GPIO37,	NONE,	NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO38,	NONE,	NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO39,	NONE,	NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO40,	NONE,	NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO41,	NONE,	NONE,	NONE,   NONE),
-	MFP_XRX500(GPIO42,	GPIO,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO43,	GPIO,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO44,	NONE,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO45,	NONE,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO46,	NONE,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO47,	NONE,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO48,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO49,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO50,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO51,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO52,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO53,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO54,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO55,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO56,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO57,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO58,	NONE,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO59,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO60,	GPIO,   EBU,	NONE,  NONE),
-	MFP_XRX500(GPIO61,	GPIO,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO62,	NONE,   NONE,	NONE,  NONE),
-	MFP_XRX500(GPIO63,	NONE,   NONE,	NONE,  NONE),
-};
-
 static const unsigned pins_spi0[] = {GPIO16, GPIO17, GPIO18};
 static const unsigned pins_spi0_cs1[] = {GPIO15};
 static const unsigned pins_spi0_cs4[] = {GPIO10};
@@ -359,39 +289,6 @@ static struct ltq_pin_group xrx500_grps[] = {
 	GRP_MUX("clkout0", CGU, pins_clkout0),
 	GRP_MUX("25MHz", CGU, pins_25MHz),
 	GRP_MUX("vcodec", SLIC, pins_vcodec),
-	GRP_MUX("tdm", TDM, pins_tdm),
-};
-
-static struct ltq_pin_group irx200_grps[] = {
-	//GRP_MUX("spi0", SPI0, pins_spi0),
-	//GRP_MUX("spi0_cs1", SPI0, pins_spi0_cs1),
-	//GRP_MUX("spi0_cs4", SPI0, pins_spi0_cs4),
-	//GRP_MUX("spi0_cs6", SPI0, pins_spi0_cs6),
-	GRP_MUX("spi1", SPI1, pins_spi1),
-	GRP_MUX("spi1_cs0", SPI1, pins_spi1_cs0),
-	GRP_MUX("ledc", LEDC, pins_ledc),
-	GRP_MUX("nand ale", EBU, pins_nand_ale),
-	GRP_MUX("i2c", I2C, pins_i2c),
-	GRP_MUX("nand cs1", EBU, pins_nand_cs1),
-	GRP_MUX("nand cle", EBU, pins_nand_cle),
-	GRP_MUX("nand rdy", EBU, pins_nand_rdy),
-	GRP_MUX("nand rd", EBU, pins_nand_rd),
-	GRP_MUX("nand d1", EBU, pins_nand_d1),
-	GRP_MUX("nand d0", EBU, pins_nand_d0),
-	GRP_MUX("nand d2", EBU, pins_nand_d2),
-	GRP_MUX("nand d7", EBU, pins_nand_d7),
-	GRP_MUX("nand d6", EBU, pins_nand_d6),
-	GRP_MUX("nand d5", EBU, pins_nand_d5),
-	GRP_MUX("nand d4", EBU, pins_nand_d4),
-	GRP_MUX("nand d3", EBU, pins_nand_d3),
-	GRP_MUX("nand wr", EBU, pins_nand_wr),
-	GRP_MUX("nand wp", EBU, pins_nand_wp),
-	//GRP_MUX("nand se", EBU, pins_nand_se),
-	//GRP_MUX("mdio_l", MDIO, pins_mdio_l),
-	GRP_MUX("mdio_r", MDIO, pins_mdio_r),
-	GRP_MUX("clkout0", CGU, pins_clkout0),
-	GRP_MUX("25MHz", CGU, pins_25MHz),
-	//GRP_MUX("vcodec", SLIC, pins_vcodec),
 	GRP_MUX("tdm", TDM, pins_tdm),
 };
 
@@ -1268,6 +1165,31 @@ static int pinctrl_sysfs_init(struct device *dev)
 }
 #endif
 
+/* Debug API print pinmux pins initialized before pinctrl driver */
+#ifdef DEBUG
+static void dbg_print_init_pin(struct device *dev,
+			       void __iomem *base, unsigned int pinbase)
+{
+	int i;
+	u32 mux;
+
+	dev_info(dev, "check base: 0x%x, pinbase: %u\n",
+		(u32)base, pinbase);
+
+	for (i = 0; i < PINS; i++) {
+		mux = pad_r32(base, (i << 2));
+		if (mux != 0)
+			dev_info(dev, "pin %u has been set to %u\n",
+				pinbase + i, mux);
+	}
+}
+#else
+static void dbg_print_init_pin(struct device *dev,
+			       void __iomem *base, unsigned int pinbase)
+{
+}
+#endif
+
 /* --------- register the pinctrl layer --------- */
 static int pinctrl_xrx500_probe(struct platform_device *pdev)
 {
@@ -1275,7 +1197,6 @@ static int pinctrl_xrx500_probe(struct platform_device *pdev)
 	int pad_count = 0;
 	int ret = 0, i = 0, j = 0;
 	__be32 *bbspi = NULL;
-	unsigned int soc_id = 0;
 
 	LOGF_KLOG_DEBUG("[%s] .. [%d]\n", __func__, __LINE__);
 
@@ -1315,6 +1236,7 @@ static int pinctrl_xrx500_probe(struct platform_device *pdev)
 		LOGF_KLOG_DEV_DBG(&pdev->dev, "found %s with %d pads\n",
 				res.name, PINS);
 		LOGF_KLOG_DEBUG("found %s with %d pads\n", res.name, PINS);
+		dbg_print_init_pin(&pdev->dev, xrx500_info.membase[*bank], pad_count - PINS);
 		/* Set Registers to default values as the HW doesn't do it */
 		if (!(*bank)) {
 			for (i = 0, j = 0; i < sizeof(default_reg_bank0)/sizeof(uint32_t); j += 4) {
@@ -1351,24 +1273,12 @@ static int pinctrl_xrx500_probe(struct platform_device *pdev)
 	xrx500_pctrl_desc.name	= dev_name(&pdev->dev);
 	xrx500_pctrl_desc.npins	= pad_count;
 
-	soc_id = ltq_get_cpu_id();
-	if (soc_id == SOC_ID_IRX200) {
-		LOGF_KLOG_INFO("SoC id is - %d,IRX200 pinmuxing will used\n",soc_id);
-		xrx500_info.mfp		= irx200_mfp;
-		xrx500_info.num_mfp	= ARRAY_SIZE(irx200_mfp);
-		xrx500_info.grps	= irx200_grps;
-		xrx500_info.num_grps	= ARRAY_SIZE(irx200_grps);
-		xrx500_info.funcs	= xrx500_funcs;
-		xrx500_info.num_funcs	= ARRAY_SIZE(xrx500_funcs);
-	} else {
-		LOGF_KLOG_INFO("SoC id is - %d,default XRX500 pinmuxing will used\n",soc_id);
-		xrx500_info.mfp		= xrx500_mfp;
-		xrx500_info.num_mfp	= ARRAY_SIZE(xrx500_mfp);
-		xrx500_info.grps	= xrx500_grps;
-		xrx500_info.num_grps	= ARRAY_SIZE(xrx500_grps);
-		xrx500_info.funcs	= xrx500_funcs;
-		xrx500_info.num_funcs	= ARRAY_SIZE(xrx500_funcs);
-	}
+	xrx500_info.mfp		= xrx500_mfp;
+	xrx500_info.num_mfp	= ARRAY_SIZE(xrx500_mfp);
+	xrx500_info.grps	= xrx500_grps;
+	xrx500_info.num_grps	= ARRAY_SIZE(xrx500_grps);
+	xrx500_info.funcs	= xrx500_funcs;
+	xrx500_info.num_funcs	= ARRAY_SIZE(xrx500_funcs);
 
 	ret = ltq_pinctrl_register(pdev, &xrx500_info);
 	if (ret) {

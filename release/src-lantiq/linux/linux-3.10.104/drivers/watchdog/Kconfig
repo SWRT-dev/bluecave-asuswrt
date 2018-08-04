@@ -45,6 +45,12 @@ config WATCHDOG_NOWAYOUT
 	  get killed. If you say Y here, the watchdog cannot be stopped once
 	  it has been started.
 
+config WDT_SUPPORT_WORKQUEUE
+	bool "support watchdog for larger timeouts using work queue when HW timeout is less"
+	help
+		support watchdog for larger timeouts using work queue when HW timeout is less
+		say Y if you want to use WQ else say N. 
+
 #
 # General Watchdog drivers
 #
@@ -1123,6 +1129,7 @@ config GRX500_IAP_WDT
         tristate "GRX500 SoC watchdog for InterAptiv core"
         depends on SOC_GRX500
 	select WATCHDOG_CORE
+	select WDT_SUPPORT_WORKQUEUE
         help
           Hardware driver for the GRX500 SoC Watchdog Timer for
 	  InterAptiv core.

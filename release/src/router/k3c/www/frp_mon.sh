@@ -11,8 +11,8 @@ do
    icount=`ps -w|grep frpc|grep -v grep|wc -l`
 
    if [ $icount = 0 -o $icount -gt 1 ] ;then
-   logger -t "frp" "restart frpc!"
-   /usr/toolscript/frpc.sh 2>/dev/null
+   echo "$(date "+%F %T"):""守护发现异常重启进程!" >> /tmp/frpc.log
+   /usr/sbin/k3c_frpc.sh 2>/dev/null
    exit 0
    fi
 

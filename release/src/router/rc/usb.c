@@ -3123,7 +3123,7 @@ start_samba(void)
 #ifdef RTCONFIG_ALPINE
 		cpu_eval(NULL, "3", smbd_cmd, "-D", "-s", "/etc/smb.conf");
 #elif defined(RTCONFIG_LANTIQ)
-		cpu_eval(NULL, "2", smbd_cmd, "-D", "-s", "/etc/smb.conf");
+		cpu_eval(NULL, "1", smbd_cmd, "-D", "-s", "/etc/smb.conf");
 #else
 		xstart(smbd_cmd, "-D", "-s", "/etc/smb.conf");
 #endif
@@ -3624,6 +3624,7 @@ stop_mt_daapd()
 // !!TB - webdav
 
 //#ifdef RTCONFIG_WEBDAV
+#if 0
 void write_webdav_permissions()
 {
 	FILE *fp;
@@ -3688,6 +3689,7 @@ void write_webdav_server_pem()
 		system("cp -f /etc/server.pem /tmp/lighttpd/");
 	}
 }
+#endif
 
 void start_webdav(void)	// added by Vanic
 {
@@ -3735,7 +3737,7 @@ ifdef RTCONFIG_TUNNEL
 	chmod("/tmp/lighttpd/www", 0777);
 
 	/* tmp/lighttpd/permissions */
-	write_webdav_permissions();
+	//write_webdav_permissions();
 
 	/* WebDav SSL support */
 	//write_webdav_server_pem();

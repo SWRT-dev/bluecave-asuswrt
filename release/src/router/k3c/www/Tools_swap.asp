@@ -14,6 +14,8 @@
 <link rel="stylesheet" type="text/css" href="ParentalControl.css">
 <link rel="stylesheet" type="text/css" href="css/icon.css">
 <link rel="stylesheet" type="text/css" href="css/element.css">
+<link rel="stylesheet" type="text/css" href="/device-map/device-map.css">
+<link rel="stylesheet" type="text/css" href="/calendar/fullcalendar.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
@@ -21,7 +23,8 @@
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
-<script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script type="text/javascript" src="/client_function.js"></script>
+<script type="text/javascript" src="/calendar/jquery-ui.js"></script>
 <style>
 .Bar_container{
 	width:85%;
@@ -41,35 +44,60 @@
 }
 #proceeding_img{
  	height:21px;
-	background:#C0D1D3 url(/images/ss_proceding.gif);
-}	
+	background:#C0D1D3 url(/images/svg_th_hover.png);
+}
 </style>
 <script>
+var swap_disk='<% nvram_get("swap_disk"); %>';
+
+var partitions_array = [];
+function show_partition(){
+require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
+var code="";
+var mounted_partition = 0;
+partitions_array = [];
+var usbDevicesList = diskList.list();
+for(var i=0; i < usbDevicesList.length; i++){
+for(var j=0; j < usbDevicesList[i].partition.length; j++){
+partitions_array.push(usbDevicesList[i].partition[j].mountPoint);
+var accessableSize = simpleNum(usbDevicesList[i].partition[j].size-usbDevicesList[i].partition[j].used);
+var totalSize = simpleNum(usbDevicesList[i].partition[j].size);
+if(usbDevicesList[i].partition[j].status == "unmounted")
+continue;
+if(usbDevicesList[i].partition[j].partName==swap_disk)
+code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" selected="selected">'+ usbDevicesList[i].partition[j].partName+'(空闲:'+accessableSize+' GB)</option>';
+else
+code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" >'+ usbDevicesList[i].partition[j].partName+'(空闲:'+accessableSize+' GB)</option>';
+mounted_partition++;
+}
+}
+if(mounted_partition == 0)
+code +='<option value="0">无U盘或移动硬盘</option>';
+document.getElementById("usb_disk_id").innerHTML = code;
+});
+}
 function init() {
 	show_menu();
-    check_usb();
-
+	show_partition();
 }
-function onSubmitCtrl(o, s) {
-	document.form.action_mode.value = s;
+function applyRule() {
 	var mode = document.getElementById("swap_size").value;
 	if (mode == "1"){
 		show_swap_LoadingBar(20);
+	} else if (mode == "2"){
+		show_swap_LoadingBar(40);
+	} else if (mode == "3"){
+		show_swap_LoadingBar(80);
 	}
-	document.form.SystemCmd.value = "swap_load.sh";
-	document.form.submit();
+if(document.getElementById("usb_disk_id").value==0)
+{
+alert("无法启用，请插入U盘或移动硬盘");
+return;
 }
-function check_usb(){
-	document.form.action_mode.value = ' Refresh ';
-    document.form.SystemCmd.value = "swap_check.sh";
-    document.form.submit();
+document.form.submit();
 }
-function unload_swap(){
-	document.form.action_mode.value = ' Refresh ';
-    document.form.SystemCmd.value = "swap_unload.sh";
-    showLoading(5);
-    refreshpage(5);
-    document.form.submit();
+function reload_Soft_Center(){
+location.href = "/Softcenter.asp";
 }
 
 function show_swap_LoadingBar(seconds){
@@ -128,7 +156,7 @@ function show_swap_LoadingBar(seconds){
 function LoadingProgress(seconds){
 	document.getElementById("LoadingBar").style.visibility = "visible";
 	document.getElementById("loading_block3").innerHTML = "正在设置虚拟内存 ..."
-	$j("#loading_block2").html("<li><font color='#ffcc00'>设置虚拟内存需要较长时间，请耐心等待</font></li>");
+	$("#loading_block2").html("<li><font color='#ffcc00'>设置虚拟内存需要较长时间，请耐心等待</font></li>");
 	y = y + progress;
 	if(typeof(seconds) == "number" && seconds >= 0){
 		if(seconds != 0){
@@ -153,9 +181,16 @@ function LoadingProgress(seconds){
 function hideSSLoadingBar(){
 	document.getElementById("LoadingBar").style.visibility = "hidden";
 }
-function reload_Soft_Center(){
-location.href = "/Softcenter.asp";
+$(document).ready(function () {
+$('#radio_swap_enable').iphoneSwitch(document.form.swap_enable.value,
+function(){
+document.form.swap_enable.value = "1";
+},
+function(){
+document.form.swap_enable.value = "0";
 }
+);
+});
 </script>
 </head>
 <body onload="init();">
@@ -177,18 +212,20 @@ location.href = "/Softcenter.asp";
 	</table>
 	</div>
 	<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
-	<form method="POST" name="form" action="/applydb.cgi?p=swap_" target="hidden_frame">
+	<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
 	<input type="hidden" name="current_page" value="Tools_swap.asp"/>
 	<input type="hidden" name="next_page" value="Tools_swap.asp"/>
 	<input type="hidden" name="group_id" value=""/>
 	<input type="hidden" name="modified" value="0"/>
-	<input type="hidden" name="action_mode" value=""/>
-	<input type="hidden" name="action_script" value=""/>
+	<input type="hidden" name="action_mode" value="toolscript"/>
+	<input type="hidden" name="action_script" value="k3c_swap.sh"/>
 	<input type="hidden" name="action_wait" value=""/>
 	<input type="hidden" name="first_time" value=""/>
 	<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>"/>
-	<input type="hidden" name="SystemCmd" onkeydown="onSubmitCtrl(this, ' Refresh ')" value="swap_load.sh"/>
 	<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>"/>
+	<input type="hidden" name="swap_enable" value="<% nvram_get("swap_enable"); %>">
+	<input type="hidden" name="swap_disk" value="<% nvram_get("swap_disk"); %>">
+	<input type="hidden" name="swap_size" value="<% nvram_get("swap_size"); %>">
 	<table class="content" align="center" cellpadding="0" cellspacing="0">
 		<tr>
 			<td width="17">&nbsp;</td>
@@ -222,14 +259,12 @@ location.href = "/Softcenter.asp";
 											<tr>
 												<td colspan="2">创建虚拟内存</td>
 											</tr>
-											</thead>											
-											<tr id="swap_status">
-												<th>
-													<label>状态</label>
-												</th>
-												<td>
- 													<div id="warn" id="cmdDesc"><i>检测状态中 ...</i></div>
-												</td>										
+											</thead>
+											<tr >
+											<th width="30%" style="border-top: 0 none;">启用</th>
+											<td style="border-top: 0 none;">
+											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_swap_enable"></div>
+											</td>
 											</tr>
 											<tr id="swap_usage_tr">
 												<th>虚拟内存使用率</th>
@@ -240,13 +275,33 @@ location.href = "/Softcenter.asp";
 												<td>
 													<select id="swap_size" name="swap_size" style="width:auto;margin:0px 0px 0px 2px;" class="ssconfig input_option">
 														<option value="1">256M</option>
+														<option value="2">512M 推荐</option>
+														<option value="3">1G</option>
 													</select>
 												</td>
 											</tr>
+<tr>
+<th>选择程序运行的磁盘</th>
+<td>
+<select id="usb_disk_id" name="swap_disk" class="input_option input_25_table">
+<option value="0">无U盘或移动硬盘</option>
+</select>
+</td>
+</tr>
+<thead>
+<tr>
+<td colspan="2">日志信息</td>
+</tr>
+</thead>
+<tr><td colspan="2">
+<textarea cols="63" rows="20" wrap="off" readonly="readonly" id="textarea" style="width:99%;font-family:Courier New, Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;">
+<% nvram_dump("swap.log",""); %>
+</textarea>
+</td></tr>
                                     	</table>
 										<div class="apply_gen">
-											<button id="cmdBtn" class="button_gen" onclick="onSubmitCtrl(this, ' Refresh ')">创建swap</button>
-											<button id="cmdBtn1" class="button_gen" onclick="unload_swap()">删除swap</button>
+											<input class="button_gen" onclick="applyRule()" type="button" value="应用设置"/>
+											<input type="button" onClick="location.href=location.href" value="刷新状态" class="button_gen">
 										</div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="KoolshareBottom">

@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <title><#Web_Title#> - App Patrol</title>
 <link rel="shortcut icon" href="images/favicon.png">
-<link rel="stylesheet" type="text/css" href="index_style.css"> 
+<link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="device-map/device-map.css">
 <script type="text/javascript" src="state.js"></script>
@@ -51,7 +51,7 @@ window.onresize = function() {
 	if(document.getElementById("agreement_panel").style.display == "block") {
 		cal_panel_block("agreement_panel", 0.25);
 	}
-} 
+}
 
 var apps_filter = "<% nvram_get("wrs_app_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var wrs_app_filter = "<% nvram_get("wrs_app_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
@@ -60,13 +60,13 @@ var wrs_id_array = [["1,2,3,4,5,6,8", "9,10,14,15,16,25,26", "11"],
 					["24", "51", "53,89", "42", ""],
 					["56,70,71", "57"],
 					["", "69", "23"]];
-				
+
 var apps_id_array = [["0", "6", "21"],
 					 ["1", "3"],
 					 ["4", "8"],
 					 ["5", "7", "17"],
 					 ["9", "10", "20", "23"],
-					 ["11", "13", "24"]];					 
+					 ["11", "13", "24"]];
 
 var curState = '<% nvram_get("wrs_app_enable"); %>';
 
@@ -75,7 +75,7 @@ var group_list = <% pms_devgroup_info(); %>;
 var device_option_array = [
 ["0", ""],["1", "Windows device"], ["2", "Router"], ["3", ""], ["4", "NAS/Server"], ["5", "IP Cam"], ["6", "MacBook"], ["7", "Game Console"], ["8", ""], ["9", "Android Phone"],
 ["10", "iPhone"], ["11", "Apple TV"], ["12", "Set-Top Box"], ["13", ""], ["14", "iMac"], ["15", "ROG"], ["16", ""], ["17", ""], ["18", "Printer"], ["19", "Windows Phone"], ["20", "Android Tablet"],
-["21", "iPad"], ["22", "Linux Device"], ["23", "Smart TV"], ["24", "Repeater"], ["25", "Kindle"], ["26", "Scanner"], ["27", "Chromecast"], ["28", "ASUS Smartphone"], 
+["21", "iPad"], ["22", "Linux Device"], ["23", "Smart TV"], ["24", "Repeater"], ["25", "Kindle"], ["26", "Scanner"], ["27", "Chromecast"], ["28", "ASUS Smartphone"],
 ["29", "ASUS Pad"], ["30", "Windows"], ["31", "Android"], ["32", "Mac OS"]
 ];
 
@@ -84,7 +84,7 @@ for(i=0;i<device_option_array.length;i++){
 	device_type_array.push(device_option_array[i][0]);
 	device_type_array[device_option_array[i][0]] = {
 		number: device_option_array[i][0],
-		name: device_option_array[i][1]	
+		name: device_option_array[i][1]
 	}
 }
 var info = new Object();
@@ -100,7 +100,7 @@ function initial(){
 		showhide("list_table",1);
 	else
 		showhide("list_table",0);
-	
+
 	generate_group_list();
 }
 
@@ -123,7 +123,7 @@ function device_group_object(active, name, description, device_array){
 function collect_info(){
 	info.group = [];
 	info.device = [];
-	
+
 	//collect group info
 	for(i=0;i<group_list.length;i++){
 		var object = group_list[i];
@@ -137,7 +137,7 @@ function collect_info(){
 		info.group.push(group_index);
 		info.group[group_index] = new device_group_object(group_active, group_name, group_description, device_array);
 	}
-	
+
 	//colletc device info
 	for(i=0;i<device_list.length;i++){
 		var object = device_list[i];
@@ -160,9 +160,9 @@ function collect_info(){
 function pullLANIPList(obj){
 	var element = document.getElementById('ClientList_Block_PC');
 	var isMenuopen = element.offsetWidth > 0 || element.offsetHeight > 0;
-	if(isMenuopen == 0){		
+	if(isMenuopen == 0){
 		obj.src = "/images/arrow-top.gif"
-		element.style.display = 'block';		
+		element.style.display = 'block';
 		document.form.PC_devicename.focus();
 	}
 	else
@@ -184,36 +184,36 @@ function show_subCategory(obj){
 	var sub_category_state = obj.className
 	var sub_category = $(obj).siblings()[1];
 	var category_desc = $(obj).siblings()[2];
-	
-	if(sub_category_state == "closed"){	
+
+	if(sub_category_state == "closed"){
 		sub_category.style.display = "";
 		if(category_desc)
 			category_desc.style.display = "none";
-		
+
 		obj.setAttribute("class", "opened");
 		if(previous_obj != ""){		//Hide another category
 			$(previous_obj).siblings()[1].style.display = "none";
 			if($(previous_obj).siblings()[2])
 				$(previous_obj).siblings()[2].style.display = "";
-			
-			previous_obj.setAttribute("class", "closed");	
+
+			previous_obj.setAttribute("class", "closed");
 		}
 
 		previous_obj = obj;
 	}
-	else{		
+	else{
 		sub_category.style.display = "none";
 		if($(previous_obj).siblings()[2])
 			$(previous_obj).siblings()[2].style.display = "";
-		
-		obj.setAttribute("class", "closed");		
+
+		obj.setAttribute("class", "closed");
 		if($(previous_obj).siblings()[1] = sub_category){			//To handle open, close the same category
 			$(previous_obj).siblings()[1] = "";
-			previous_obj = "";	
+			previous_obj = "";
 		}
 	}
 }
-	
+
 function set_category(obj, flag){
 	var checked_flag = 0;
 
@@ -221,20 +221,20 @@ function set_category(obj, flag){
 		var children_length = $(obj).siblings()[1].children.length;
 		if(obj.checked == true){
 			for(i=0; i<children_length; i++){
-				$(obj).siblings()[1].children[i].children[1].checked = true;	
+				$(obj).siblings()[1].children[i].children[1].checked = true;
 			}
 		}
 		else{
 			for(i=0; i<children_length; i++){
-				$(obj).siblings()[1].children[i].children[1].checked = false;	
-			}	
+				$(obj).siblings()[1].children[i].children[1].checked = false;
+			}
 		}
 	}
 	else{
 		var parent_category = $(obj.parentNode.parentNode).siblings()[1];
 		var sibling = $(obj.parentNode).siblings();
 		var sibling_length = $(obj.parentNode).siblings().length;
-		
+
 		if(obj.checked == true){
 			if(parent_category.checked != true)
 				parent_category.checked = true;
@@ -242,33 +242,33 @@ function set_category(obj, flag){
 		else{
 			for(i=0; i<sibling_length; i++){
 				if(sibling[i].children[1].checked == true){
-					checked_flag = 1;			
+					checked_flag = 1;
 				}
 			}
 
 			if(checked_flag == 0){
-				parent_category.checked =false;		
-			}	
+				parent_category.checked =false;
+			}
 		}
-	}	
+	}
 }
 
 function deleteRow_main(obj){
 	 var item_index = obj.parentNode.parentNode.rowIndex;
 		document.getElementById(obj.parentNode.parentNode.parentNode.parentNode.id).deleteRow(item_index);
-	
+
 	var target_mac = obj.parentNode.parentNode.children[1].title;
 	var wrs_app_filter_row = wrs_app_filter.split("<");
 	var wrs_app_filter_temp = "";
 	for(i=0;i<wrs_app_filter_row.length;i++){
-		var wrs_app_filter_col = wrs_app_filter_row[i].split(">");	
+		var wrs_app_filter_col = wrs_app_filter_row[i].split(">");
 			if(wrs_app_filter_col[1] != target_mac){
 				if(wrs_app_filter_temp == ""){
-					wrs_app_filter_temp += wrs_app_filter_row[i];			
+					wrs_app_filter_temp += wrs_app_filter_row[i];
 				}
 				else{
-					wrs_app_filter_temp += "<" + wrs_app_filter_row[i];				
-				}			
+					wrs_app_filter_temp += "<" + wrs_app_filter_row[i];
+				}
 			}
 	}
 
@@ -282,7 +282,7 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		childsel.setAttribute("id","check_mac");
 		childsel.style.color="#FFCC00";
 		obj.parentNode.appendChild(childsel);
-		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";		
+		document.getElementById("check_mac").innerHTML="<#LANHostConfig_ManualDHCPMacaddr_itemdesc#>";
 		document.getElementById("check_mac").style.display = "";
 		return false;
 	}else if(flag ==2){
@@ -292,14 +292,14 @@ function check_macaddr(obj,flag){ //control hint of input mac address
 		obj.parentNode.appendChild(childsel);
 		document.getElementById("check_mac").innerHTML="<#IPConnection_x_illegal_mac#>";
 		document.getElementById("check_mac").style.display = "";
-		return false;		
-	}else{	
+		return false;
+	}else{
 		document.getElementById("check_mac") ? document.getElementById("check_mac").style.display="none" : true;
 		return true;
-	}	
+	}
 }
 
-function addRow_main(obj, length){	
+function addRow_main(obj, length){
 	var category_array = $(obj.parentNode).siblings()[2].children;
 	var subCategory_array;
 	var category_checkbox;
@@ -309,22 +309,22 @@ function addRow_main(obj, length){
 	var blank_category = 0;
 	var wrs_app_filter_row =  wrs_app_filter.split("<");
 	var wrs_app_filter_col = "";
-		
+
 	if(document.form.PC_devicename.value == ""){
 		alert("<#JS_fieldblank#>");
 		document.form.PC_devicename.focus();
 		return false;
 	}
-	
+
 	for(i=0; i < category_array.length;i++){
-		subCategory_array = category_array[i].children[2].children;	
-		for(j=0;j<subCategory_array.length;j++){	
-			category_checkbox = category_array[i].children[2].children[j].children[1];	
+		subCategory_array = category_array[i].children[2].children;
+		for(j=0;j<subCategory_array.length;j++){
+			category_checkbox = category_array[i].children[2].children[j].children[1];
 			if(category_checkbox.checked)
 				blank_category = 1;
 		}
 	}
-	
+
 	for(i=0;i<wrs_app_filter_row.length;i++){
 		if(wrs_app_filter_row[i] != "") {
 			wrs_app_filter_col = wrs_app_filter_row[i].split(">");
@@ -335,7 +335,7 @@ function addRow_main(obj, length){
 			}
 		}
 	}
-	
+
 	if(blank_category == 0){
 		alert("The Content Category can not be empty");
 		return false;
@@ -343,63 +343,63 @@ function addRow_main(obj, length){
 
 	if(wrs_app_filter == ""){
 		wrs_app_filter += enable_checkbox.checked ? 1:0;
-	}	
+	}
 	else{
 		wrs_app_filter += "<";
 		wrs_app_filter += enable_checkbox.checked ? 1:0;
-	}	
+	}
 
 	wrs_app_filter += ">@" + document.form.PC_devicename.value + ">";
 
 	/* To check which checkbox is checked*/
 	for(i=0; i < category_array.length;i++){
 		first_catID = 0;
-		subCategory_array = category_array[i].children[2].children;	
-		for(j=0;j<subCategory_array.length;j++){	
+		subCategory_array = category_array[i].children[2].children;
+		for(j=0;j<subCategory_array.length;j++){
 			category_checkbox = category_array[i].children[2].children[j].children[1];
-			if(first_catID == 0){	
+			if(first_catID == 0){
 				wrs_app_filter += category_checkbox.checked ? 1:0;
-				first_catID = 1;				
+				first_catID = 1;
 			}
-			else{	
+			else{
 				wrs_app_filter += ",";
-				wrs_app_filter += category_checkbox.checked ? 1:0;		
+				wrs_app_filter += category_checkbox.checked ? 1:0;
 			}
-			
+
 			if(category_checkbox.checked)
 				blank_category = 1;
 		}
-		
+
 		if(i != category_array.length -1)
 			wrs_app_filter += ">";
 	}
-	
+
 	document.form.PC_devicename.value = "";
-	genMain_table();	
+	genMain_table();
 }
-					 
+
 function genMain_table(){
 	var category_name = ["<#AiProtection_filter_message#>", "<#AiProtection_filter_p2p#>", "<#AiProtection_filter_stream#>", "Commercial Applications", "Remote Control and Network Management", "Web Service and Surfing"];
 	var sub_category_name = [["<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult4#>", "<#AiProtection_filter_Adult8#>"],
 							 ["<#AiProtection_filter_p2p2#>", "<#AiProtection_filter_p2p1#>"],
 							 ["<#AiProtection_filter_stream2#>", "<#AiProtection_filter_stream1#>"],
-							 ["E-mail and Collaboration", "Database", "Business"],
-							 ["Network Management", "Remote Access Terminals", "Network Protocols", "Private Protocols"],
-							 ["Bypass Proxies and Tunnels", "Web", "Social Network"]];
-	var category_desc = ["<#AiProtection_filter_Adult_desc#>", 
-						 "<#AiProtection_filter_message_desc#>", 
-						 "<#AiProtection_filter_p2p_desc#>", 
+							 ["<#Firewall_App_Patrol_EMail#>", "<#Firewall_App_Patrol_DB#>", "<#Firewall_App_Patrol_Business#>"],
+							 ["<#Firewall_App_Patrol_Net_Manage#>", "<#Firewall_App_Patrol_Remote#>", "<#Firewall_App_Patrol_Net_Protocol#>", "<#Firewall_App_Patrol_Private_Protocol#>"],
+							 ["<#Firewall_App_Patrol_Proxies_Tunnels#>", "<#Firewall_App_Patrol_Web#>", "<#Firewall_App_Patrol_Social_Net#>"]];
+	var category_desc = ["<#AiProtection_filter_Adult_desc#>",
+						 "<#AiProtection_filter_message_desc#>",
+						 "<#AiProtection_filter_p2p_desc#>",
 						 "<#AiProtection_filter_stream_desc#>",
 						 "",
 						 ""];
-				 
+
 	var wrs_app_filter_row = wrs_app_filter.split("<");
-	var code = "";	
+	var code = "";
 	code += '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
 	code += '<thead><tr>';
 	//code += '<td colspan="5"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;16)</td>';
-	code += '<td colspan="5">Rule List&nbsp;(<#List_limit#>&nbsp;16)</td>';/*untranslated*/
-	code += '</tr></thead>';	
+	code += '<td colspan="5"><#PM_Rule_List#>&nbsp;(<#List_limit#>&nbsp;16)</td>';
+	code += '</tr></thead>';
 	code += '<tbody>';
 	code += '<tr>';
 	code += '<th width="5%" height="30px" title="<#select_all#>">';
@@ -409,14 +409,14 @@ function genMain_table(){
 	code += '<th width="40%"><#AiProtection_filter_category#></th>';
 	code += '<th width="10%"><#list_add_delete#></th>';
 	code += '</tr>';
-	code += '<tr id="main_element">';	
+	code += '<tr id="main_element">';
 	code += '<td style="border-bottom:2px solid #000;" title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>">';
 	code += '<input type="checkbox" checked="">';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
 	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" placeholder="ex: Group Name" autocorrect="off" autocapitalize="off">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>">';
-	code += '<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-top:25px;margin-left:10px;"></div>';	
+	code += '<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-top:25px;margin-left:10px;"></div>';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;text-align:left;">';
 	for(i=0;i<category_name.length;i++){
@@ -425,14 +425,14 @@ function genMain_table(){
 		code += '<input type="checkbox" onclick="set_category(this, 0);">'+category_name[i];
 		code += '<div style="display:none;font-size:12px;">';
 		for(j=0;j<sub_category_name[i].length;j++){
-			code += '<div style="margin-left:20px;"><img src="/images/Tree/vert_line_s01.gif"><input type="checkbox" onclick="set_category(this, 1);">' + sub_category_name[i][j] + '</div>';		
+			code += '<div style="margin-left:20px;"><img src="/images/Tree/vert_line_s01.gif"><input type="checkbox" onclick="set_category(this, 1);">' + sub_category_name[i][j] + '</div>';
 		}
-	
+
 		code += '</div>';
 		//code += '<div style="margin-left:25px;color:#FC0;font-style:italic;font-size:12px;font-weight:normal;">'+ category_desc[i] +'</div>';
-		code += '</div>';	
+		code += '</div>';
 	}
-	
+
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;"><input class="add_btn" type="button" onclick="addRow_main(this, 16)" value=""></td>';
 	code += '</tr>';
@@ -466,9 +466,9 @@ function genMain_table(){
 			code += '<td title="<#WLANConfig11b_WirelessCtrl_button1name#>/<#btn_disable#>">';
 			if(wrs_app_filter_col[0] == 1)
 				code += '<input type="checkbox" checked>';
-			else	
+			else
 				code += '<input type="checkbox">';
-							
+
 			code += '</td>';
 
 			code +='<td title="' + clientMac + '">';
@@ -500,7 +500,7 @@ function genMain_table(){
 			code += '<div>' + clientName + '</div>';
 			code += '</td></tr></table>';
 			code +='</td>';
-			
+
 			code += '<td style="text-align:left;">';
 
 			for(i=0;i<category_name.length;i++){
@@ -525,18 +525,18 @@ function genMain_table(){
 						code += '<div style="margin-left:20px;"><img src="/images/Tree/vert_line_s01.gif"><input type="checkbox" onclick="set_category(this, 1);">' + sub_category_name[i][j] + '</div>';
 					}
 				}
-			
+
 				code += '</div>';
 				code += '</div>';
 			}
-			
+
 			code += '</td>';
 			code += '<td><input class="remove_btn" type="button" onclick="deleteRow_main(this);"></td>';
 			code += '</tr>';
 		}
 	}
-	
-	code += '</tbody>';	
+
+	code += '</tbody>';
 	code += '</table>';
 	document.getElementById('mainTable').innerHTML = code;
 	generate_group_list();
@@ -545,7 +545,7 @@ function genMain_table(){
 function edit_table(){
 	var wrs_app_filter_temp = "";
 	var first_element = $('#main_element').siblings();
-	
+
 	for(k=1;k<first_element.length;k++){
 		var enable_checkbox = first_element[k].children[0].children[0].checked ? 1:0;
 		var target_mac = first_element[k].children[1].title;
@@ -554,15 +554,15 @@ function edit_table(){
 		var category_checkbox;
 		var first_catID = 0;
 		var blank_category = 0;
-		
+
 		if(k == 1)
 			wrs_app_filter_temp += enable_checkbox;
 		else{
 			wrs_app_filter_temp += "<" + enable_checkbox;;
 		}
-		
+
 		wrs_app_filter_temp += ">" + target_mac + ">";
-		
+
 		for(i=0; i < category_array.length;i++){
 			first_catID = 0;
 			subCategory_array = category_array[i].children[2].children;
@@ -570,59 +570,59 @@ function edit_table(){
 				category_checkbox = category_array[i].children[2].children[j].children[1];
 				if(category_checkbox.checked)
 					blank_category = 1;
-				
-				if(first_catID == 0){	
-					wrs_app_filter_temp += category_checkbox.checked ? 1:0;	
-					first_catID = 1;				
+
+				if(first_catID == 0){
+					wrs_app_filter_temp += category_checkbox.checked ? 1:0;
+					first_catID = 1;
 				}
-				else{	
+				else{
 					wrs_app_filter_temp += ",";
-					wrs_app_filter_temp += category_checkbox.checked ? 1:0;		
+					wrs_app_filter_temp += category_checkbox.checked ? 1:0;
 				}
-			}			
-			
+			}
+
 			if(i != category_array.length -1)
 				wrs_app_filter_temp += ">";
-		}		
-		
+		}
+
 		if(blank_category == 0){
 			alert("The Content Category can not be empty");
 			return false;
 		}
 	}
-	
+
 	wrs_app_filter = wrs_app_filter_temp;
 	return true;
 }
 
 var ctf_disable = '<% nvram_get("ctf_disable"); %>';
-var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';					
+var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 function applyRule(){
 	var wrs_app_filter_row = "";
 	if(document.form.PC_devicename.value != ""){
 		alert("You must press add icon to add a new rule first.");
 		return false;
 	}
-	
+
 	if(wrs_app_filter != ""){
 		if(edit_table())
 			wrs_app_filter_row =  wrs_app_filter.split("<");
-		else	
+		else
 			return false;
-	}	
+	}
 
 	//var wrs_rulelist = "";
 	var wrs_app_rulelist = "";
 	for(i=0;i<wrs_app_filter_row.length;i++){
 		var wrs_app_filter_col = wrs_app_filter_row[i].split(">");
 		for(j=0;j<wrs_app_filter_col.length;j++){
-			if(j == 0){		
+			if(j == 0){
 				if(wrs_app_rulelist == ""){
 					wrs_app_rulelist += wrs_app_filter_col[j] + ">";
-				}	
-				else{	
-					wrs_app_rulelist += "<" + wrs_app_filter_col[j] + ">";				
-				}	
+				}
+				else{
+					wrs_app_rulelist += "<" + wrs_app_filter_col[j] + ">";
+				}
 			}
 			else if(j == 1){
 				wrs_app_rulelist += wrs_app_filter_col[j] + ">";
@@ -631,8 +631,8 @@ function applyRule(){
 				var cate_id_array = wrs_app_filter_col[j].split(",");
 				var apps_first_cate = 0;
 				for(k=0;k<cate_id_array.length;k++){
-					if(cate_id_array[k] == 1){												
-						if(apps_first_cate == 0){						
+					if(cate_id_array[k] == 1){
+						if(apps_first_cate == 0){
 							if(apps_id_array[j-2][k] != ""){
 								wrs_app_rulelist += apps_id_array[j-2][k];
 								apps_first_cate = 1;
@@ -642,15 +642,15 @@ function applyRule(){
 							if(apps_id_array[j-2][k] != ""){
 								wrs_app_rulelist += "," + apps_id_array[j-2][k];
 							}
-						}		
-					}						
+						}
+					}
 				}
-				
+
 				if(j != wrs_app_filter_col.length-1){
 					wrs_app_rulelist += ">";
 				}
 			}
-		}	
+		}
 	}
 
 	document.form.action_script.value = "restart_wrs;restart_firewall";
@@ -658,11 +658,11 @@ function applyRule(){
 	if(ctf_disable == 0 && ctf_fa_mode == 2){
 		if(!confirm(Untranslated.ctf_fa_hint)){
 			return false;
-		}	
+		}
 		else{
 			document.form.action_script.value = "reboot";
 			document.form.action_wait.value = "<% nvram_get("reboot_time"); %>";
-		}	
+		}
 	}
 
 	if(reset_wan_to_fo(document.form, document.form.wrs_app_enable.value)) {
@@ -676,9 +676,9 @@ function translate_category_id(){
 	var wrs_app_filter_row = "";
 
 	if(wrs_app_filter != ""){
-		wrs_app_filter_row =  wrs_app_filter.split("<");	
+		wrs_app_filter_row =  wrs_app_filter.split("<");
 	}
-	
+
 	var wrs_app_filter_temp = "";
 	for(i=0;i< wrs_app_filter_row.length;i++){
 		var wrs_app_filter_col = wrs_app_filter_row[i].split(">");
@@ -691,27 +691,27 @@ function translate_category_id(){
 					wrs_app_filter_temp += "<" + wrs_app_filter_col[j] + ">";
 			}
 			else if(j == 1){
-				wrs_app_filter_temp += wrs_app_filter_col[j] + ">";	
+				wrs_app_filter_temp += wrs_app_filter_col[j] + ">";
 			}
 			else{
-				for(k=0;k<mapping_array_init[j-2].length;k++){		
-					if(wrs_app_filter_col[j] != ""){							
+				for(k=0;k<mapping_array_init[j-2].length;k++){
+					if(wrs_app_filter_col[j] != ""){
 						if(apps_id_array[j-2][k] != ""){
 							if(apps_id_array[j-2][k] != "" && (wrs_app_filter_col[j].indexOf(apps_id_array[j-2][k]) != -1)){
-								mapping_array_init[j-2][k] = 1;	
-							}	
-						}						
+								mapping_array_init[j-2][k] = 1;
+							}
+						}
 					}
 					else{
 						mapping_array_init[j-2][k] = 0;
 					}
-						
+
 					if(k == 0)
-						wrs_app_filter_temp += mapping_array_init[j-2][k];	
+						wrs_app_filter_temp += mapping_array_init[j-2][k];
 					else
-						wrs_app_filter_temp += "," + mapping_array_init[j-2][k];						
-				}	
-	
+						wrs_app_filter_temp += "," + mapping_array_init[j-2][k];
+				}
+
 				if(j != wrs_app_filter_col.length-1 )
 					wrs_app_filter_temp += ">";
 			}
@@ -724,16 +724,11 @@ function translate_category_id(){
 }
 
 function show_tm_eula(){
-	if(document.form.preferred_lang.value == "JP"){
-		$.get("JP_tm_eula.htm", function(data){
-			document.getElementById('agreement_panel').innerHTML= data;
-		});
-	}
-	else{
-		$.get("tm_eula.htm", function(data){
-			document.getElementById('agreement_panel').innerHTML= data;
-		});
-	}
+	$.get("tm_eula.htm", function(data){
+		document.getElementById('agreement_panel').innerHTML= data;
+		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
+		$("#eula_url").attr("href",url);
+	});
 
 	dr_advise();
 	cal_panel_block("agreement_panel", 0.25);
@@ -749,7 +744,7 @@ function cancel(){
 
 function eula_confirm(){
 	document.form.TM_EULA.value = 1;
-	document.form.wrs_app_enable.value = 1;	
+	document.form.wrs_app_enable.value = 1;
 	applyRule();
 }
 
@@ -800,17 +795,17 @@ function setGroup(name){
 <input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0" >
 	<tr>
-		<td width="17">&nbsp;</td>		
-		<td valign="top" width="202">				
-			<div  id="mainMenu"></div>	
-			<div  id="subMenu"></div>		
-		</td>						
+		<td width="17">&nbsp;</td>
+		<td valign="top" width="202">
+			<div  id="mainMenu"></div>
+			<div  id="subMenu"></div>
+		</td>
 		<td valign="top">
-		<div id="tabMenu" class="submenuBlock"></div>	
-		<!--===================================Beginning of Main Content===========================================-->		
+		<div id="tabMenu" class="submenuBlock"></div>
+		<!--===================================Beginning of Main Content===========================================-->
 		<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0" >
 			<tr>
-				<td valign="top" >	
+				<td valign="top" >
 					<table width="730px" border="0" cellpadding="4" cellspacing="0" class="FormTitle" id="FormTitle">
 						<tr>
 							<td bgcolor="#4D595D" valign="top">
@@ -861,15 +856,15 @@ function setGroup(name){
 															if(document.form.TM_EULA.value == 0){
 																show_tm_eula();
 																return;
-															}	
-																														
+															}
+
 															document.form.wrs_app_enable.value = 1;
 															showhide("list_table",1);
-															
+
 														},
-														function(){										
+														function(){
 															document.form.wrs_app_enable.value = 0;
-															showhide("list_table",0);															
+															showhide("list_table",0);
 															document.form.wrs_app_rulelist.disabled = true;
 															if(document.form.wrs_app_enable_ori.value == 1){
 																applyRule();
@@ -877,13 +872,13 @@ function setGroup(name){
 															else{
 																curState = 0;
 															}
-																														
+
 														}
 													);
-												</script>			
+												</script>
 											</div>
 										</td>
-									</tr>								
+									</tr>
 									<tr style="display:none;">
 										<th>Enable Block Notification page</th>
 										<td>
@@ -892,36 +887,36 @@ function setGroup(name){
 												<script type="text/javascript">
 													$('#block_notification_enable').iphoneSwitch('<% nvram_get(""); %>',
 														function(){
-									
+
 														},
 														function(){
-																					
+
 														}
 													);
-												</script>			
+												</script>
 											</div>
-										</td>			
-									</tr>									
-								</table>				
+										</td>
+									</tr>
+								</table>
 								<table id="list_table" width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="display:none">
 									<tr>
 										<td valign="top" align="center">
-											<div id="mainTable" style="margin-top:10px;"></div> 
+											<div id="mainTable" style="margin-top:10px;"></div>
 											<div id="ctrlBtn" style="text-align:center;margin-top:20px;">
-												<input class="button_gen" type="button" onclick="applyRule();" value="<#CTL_apply#>">											
+												<input class="button_gen" type="button" onclick="applyRule();" value="<#CTL_apply#>">
 												<div style="width:135px;height:55px;position:absolute;bottom:5px;right:5px;background-image:url('images/New_ui/tm_logo_power.png');"></div>
 											</div>
-										</td>	
+										</td>
 									</tr>
 								</table>
 							</td>
 						</tr>
 					</table>
-				</td>         
+				</td>
 			</tr>
-		</table>				
-		<!--===================================Ending of Main Content===========================================-->		
-	</td>		
+		</table>
+		<!--===================================Ending of Main Content===========================================-->
+	</td>
     <td width="10" align="center" valign="top">&nbsp;</td>
 	</tr>
 </table>
@@ -930,4 +925,3 @@ function setGroup(name){
 </form>
 </body>
 </html>
-

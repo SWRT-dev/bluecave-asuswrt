@@ -133,8 +133,6 @@ function initial(){
 	if( !movistarTriple_support ){
 		document.getElementById('movistarOption').outerHTML = "";
 	}
-	if(!nz_isp_support)
-		document.getElementById('sfOption').outerHTML = "";
 }
 
 function load_ISP_profile(){

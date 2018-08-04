@@ -609,7 +609,10 @@ int32_t ppa_form_session_tmpl(PPA_BUF *s_pkt, struct session_list_item *p_item, 
 	swaHdr.new_src_ip.ip6.ip[0] = p_item->src_ip.ip6[3];
 
       } else {
-        swaHdr.new_src_ip.ip4.ip = p_item->nat_ip.ip;
+        if (IsValidNatIP(p_item->flags))
+          swaHdr.new_src_ip.ip4.ip = p_item->nat_ip.ip;
+        else
+          swaHdr.new_src_ip.ip4.ip = p_item->src_ip.ip;
         swaHdr.new_dst_ip.ip4.ip = p_item->dst_ip.ip;
       }
     } else {
@@ -627,7 +630,10 @@ int32_t ppa_form_session_tmpl(PPA_BUF *s_pkt, struct session_list_item *p_item, 
 	swaHdr.new_src_ip.ip6.ip[0] = p_item->src_ip.ip6[3];
       } else {
         swaHdr.new_src_ip.ip4.ip = p_item->src_ip.ip;
-        swaHdr.new_dst_ip.ip4.ip = p_item->nat_ip.ip;
+        if (IsValidNatIP(p_item->flags))
+          swaHdr.new_dst_ip.ip4.ip = p_item->nat_ip.ip;
+        else
+          swaHdr.new_dst_ip.ip4.ip = p_item->dst_ip.ip;
       }
     }
   }

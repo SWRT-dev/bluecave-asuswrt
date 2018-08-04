@@ -1751,6 +1751,7 @@ static  struct net_device *ppa_get_6rd_phyif(struct net_device *dev)
 	struct ip_tunnel *tunnel;
 	struct iphdr *iph;
 	struct rtable *rt = NULL;
+	struct dst_entry *dst = NULL;
 	struct net_device *phydev = NULL;
 
 	tunnel = netdev_priv(dev);
@@ -1764,6 +1765,7 @@ static  struct net_device *ppa_get_6rd_phyif(struct net_device *dev)
 		fl.daddr = iph->daddr;
 		fl.saddr = iph->saddr;
 
+		struct rtable *rt;
 		rt = ip_route_output_key(dev_net(dev), &fl);
 		if (rt) {
 			phydev = rt->dst.dev;

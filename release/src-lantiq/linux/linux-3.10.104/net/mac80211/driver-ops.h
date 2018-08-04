@@ -1043,6 +1043,20 @@ static inline void drv_restart_complete(struct ieee80211_local *local)
 	trace_drv_return_void(local);
 }
 
+static inline int drv_get_connection_alive(struct ieee80211_local *local,
+			      struct ieee80211_sub_if_data *sdata)
+{
+	int ret;
+
+	check_sdata_in_driver(sdata);
+
+	ret = local->ops->get_connection_alive(&local->hw, &sdata->vif);
+
+	trace_drv_return_int(local, ret);
+
+	return ret;
+}
+
 static inline void
 drv_set_default_unicast_key(struct ieee80211_local *local,
 			    struct ieee80211_sub_if_data *sdata,

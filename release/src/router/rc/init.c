@@ -1649,6 +1649,14 @@ misc_defaults(int restore_defaults)
 
 #ifdef RTCONFIG_TUNNEL
 	nvram_set("aae_support", "1");
+#define AAE_ENABLE_AIHOME 2
+#define AAE_EANBLE_AICLOUD 4
+#ifdef RTCONFIG_AIHOME_TUNNEL
+	nvram_set_int("aae_enable", (nvram_get_int("aae_enable") | AAE_ENABLE_AIHOME));
+#endif
+#ifdef RTCONFIG_AICLOUD_TUNNEL
+	nvram_set_int("aae_enable", (nvram_get_int("aae_enable") | AAE_EANBLE_AICLOUD));
+#endif
 #endif
 
 	nvram_unset("wps_reset");
@@ -8053,7 +8061,7 @@ int init_nvram(void)
 		nvram_set("wave_action", "0");
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "eth0_1 eth0_2 eth0_3 eth0_4");
-		nvram_set("ct_max", "5000");
+		nvram_set("ct_max", "16384");
 
 #if 0
 		set_basic_ifname_vars("eth0", "vlan1", "eth1", "eth2", "usb", NULL, "vlan2", "vlan3", 0);
@@ -10388,7 +10396,6 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 #if defined(HND_ROUTER) || defined(BLUECAVE)
 			start_vlan();
 #endif
-			doSystem("Pcap_DNSProxy -c /usr/sbin/pcap-dnsproxy");
 			start_wan();
 #ifdef HND_ROUTER
 			if (is_router_mode()) start_mcpd_proxy();

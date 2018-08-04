@@ -392,7 +392,7 @@ code +='<td align="left" style="color:#FFF">'+ ssr_server_alias_row[s_index] + '
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_type#></th>';
 code +='<td align="left" style="color:#FFF"><select id="Server_type_id" name="Server_type" onchange="hide_ssr(this.value);"></select></td></tr>';
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_ip#></th>';
-code +='<td align="left" style="color:#FFF"><input name=Server_ip onKeyPress="return validator.isIPAddr(this, event);" autocorrect="off" autocapitalize="off" value='+ ssr_server_ip_row[s_index] + '></td></tr>';
+code +='<td align="left" style="color:#FFF"><input name=Server_ip type="text" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" autocorrect="off" autocapitalize="off" value='+ ssr_server_ip_row[s_index] + '></td></tr>';
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_port#></th>';
 code +='<td align="left" style="color:#FFF"><input name=Server_port value='+ ssr_server_port_row[s_index] + '></td></tr>';
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_timeout#></th>';

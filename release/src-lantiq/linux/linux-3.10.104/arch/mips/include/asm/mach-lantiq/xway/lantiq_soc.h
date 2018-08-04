@@ -116,6 +116,8 @@ void ltq_endian_set(int bitn);
 void ltq_endian_clr(int bitn);
 static inline void ltq_pcie_clk_out(int bitn) {};
 
+void ltq_usb_config(int usb_id, int usb_cfg_state);
+
 
 /*
  * during early_printk no ioremap is possible

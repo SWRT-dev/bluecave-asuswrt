@@ -65,14 +65,43 @@ static inline void Enable_WDT_intr(void* wdtirq) {
 	enable_percpu_irq((*(u32 *)wdtirq), 0);
 }
 
+static int grx500wdt_start_other(struct watchdog_device *wdt_dev)
+{
+	uint32_t config0;
+	GICWRITE(GIC_REG(VPE_LOCAL, GIC_VPE_OTHER_ADDR), wdt_dev->id);
+	wmb();	
+	GICREAD(GIC_REG(VPE_OTHER, GIC_VPE_WD_CONFIG0), config0);
+	rmb();
+	GICWRITE(GIC_REG(VPE_OTHER, GIC_VPE_WD_CONFIG0), (config0 | WD_START));
+  wmb();
+
+	return 0;
+}
+
+static int grx500wdt_stop_other(struct watchdog_device *wdt_dev)
+{
+	uint32_t config0;
+	GICWRITE(GIC_REG(VPE_LOCAL, GIC_VPE_OTHER_ADDR), wdt_dev->id);
+	wmb();
+	GICREAD(GIC_REG(VPE_OTHER, GIC_VPE_WD_CONFIG0), config0);
+	rmb();
+	GICWRITE(GIC_REG(VPE_OTHER, GIC_VPE_WD_CONFIG0), (config0 & ~WD_START));
+	wmb();
+
+	return 0;
+}
+
 static int grx500wdt_start(struct watchdog_device *wdt_dev)
 {
 	uint32_t config0;
-
+	if(smp_processor_id() != wdt_dev->id){
+		printk(KERN_ERR "cant start on cpu [%d] rather than cpu [%d]\n", smp_processor_id(), wdt_dev->id);
+		panic("Please set affinity of this process to cpu %d\n",wdt_dev->id);
+	}
 	GICREAD(GIC_REG(VPE_LOCAL, GIC_VPE_WD_CONFIG0), config0);
 	rmb();
 	GICWRITE(GIC_REG(VPE_LOCAL, GIC_VPE_WD_CONFIG0), (config0 | WD_START));
-        wmb();
+  wmb();
 
 	return 0;
 }
@@ -91,18 +120,22 @@ static int grx500wdt_stop(struct watchdog_device *wdt_dev)
 static int grx500wdt_set_timeout(struct watchdog_device *wdt_dev,
 			       unsigned int new_timeout)
 {
-	struct watchdog_device *grx500_wdt;
-	grx500_wdt = &per_cpu(grx500wdt, smp_processor_id());
+	int timeout_cal;
 
-	grx500_wdt->timeout = new_timeout;
-	printk("%s: timeout = %d, cpu = %d, id = %d PERCPUID = %d\n", __func__, new_timeout, smp_processor_id(), wdt_dev->id, grx500_wdt->id);
+	if(wdt_dev->id != smp_processor_id()){
+		printk(KERN_ERR "cant set timeout on cpu [%d] rather than cpu [%d]\n", smp_processor_id(), wdt_dev->id);
+		panic("Please set affinity of this process to cpu %d\n",wdt_dev->id);
+	}
+	wdt_dev->timeout = new_timeout;
+	timeout_cal = (new_timeout > wdt_dev->max_timeout)?wdt_dev->max_timeout:wdt_dev->timeout;
+	printk("%s: timeout = %d, cpu = %d, id = %d \n", __func__, new_timeout, smp_processor_id(), wdt_dev->id);
 
-	grx500wdt_stop(grx500_wdt);
+	grx500wdt_stop(wdt_dev);
 
-	GICWRITE(GIC_REG(VPE_LOCAL, GIC_VPE_WD_INITIAL0), (cpu_clk * grx500_wdt->timeout));
+	GICWRITE(GIC_REG(VPE_LOCAL, GIC_VPE_WD_INITIAL0), (cpu_clk * timeout_cal));
 	wmb();
 
-	grx500wdt_start(grx500_wdt);
+	grx500wdt_start(wdt_dev);
 
 	return 0;
 }
@@ -122,25 +155,39 @@ static uint32_t grx500wdt_get_timeleft(struct watchdog_device *wdt_dev)
 
 static int grx500wdt_ping(struct watchdog_device *wdt_dev)
 {
-        struct watchdog_device *grx500_wdt;
-        grx500_wdt = &per_cpu(grx500wdt, smp_processor_id());
-
-        grx500wdt_stop(grx500_wdt);
-        grx500wdt_start(grx500_wdt);
-
-        /* grx500wdt_get_timeleft(grx500_wdt); */
-
-        return 0;
+	/*ping from anothe cpu is allowed only in case if its coming from wq,
+		for user space call detect it and throw panic
+		For wq it can get scheduled on any CPU and its not a good idea to set affinity
+		for WQ as it looses the granularity of increasing the timeout when the 
+		CPU is really stuck*/
+	if(smp_processor_id() != wdt_dev->id){
+		if(wdt_dev->wd_data->user_call){
+			printk(KERN_ERR "User space ping received from cpu[%d] but  expected from cpu [%d] \n",
+							smp_processor_id(),wdt_dev->id);
+			panic("Please set affinity of this process to cpu %d\n",wdt_dev->id);
+		}else{/*has to work upon another cpu in case of wq from another cpu*/
+   		grx500wdt_stop_other(wdt_dev);
+  		grx500wdt_start_other(wdt_dev);
+		}
+	}else{/*same cpu*/
+   	grx500wdt_stop(wdt_dev);
+  	grx500wdt_start(wdt_dev);
+	}
+	/*reset the user space call flag irrespective of WQ/user call*/
+	wdt_dev->wd_data->user_call = 0;
+	return 0;
 }
 
 static irqreturn_t grx500wdt_irq(int irqno, void *param)
 {
 	struct watchdog_device *grx500_wdt;
 	grx500_wdt = &per_cpu(grx500wdt, smp_processor_id());
-
+	/*stop and start the timer to have longer duration after pre warning ISR*/	
+	grx500wdt_stop(grx500_wdt);
 	WARN_ONCE(1, " IRQ %d triggered as WDT%d Timer Overflow on CPU %d !!!.. \n", irqno, grx500_wdt->id, smp_processor_id());
+	grx500wdt_start(grx500_wdt);
 
-        return IRQ_HANDLED;
+  return IRQ_HANDLED;
 }
 
 struct irqaction grx500wdt_irqaction = {
@@ -207,6 +254,15 @@ static int grx500wdt_probe(struct platform_device *pdev)
 		grx500_wdt->id = cpu;
 		grx500_wdt->info = &grx500wdt_info;
 		grx500_wdt->ops = &grx500wdt_ops; 
+		/*we dont want kernel to override this based on no of cpus present
+			as we want to detect the cpu from the id rather than other means
+			setting this bit will ensure ID is not changed
+			w/o this the behaviour is 
+			core0 Linux - WDT0 
+			core1 legacy- ?
+			core2 Linux -WDT1 instead of WDT2, as kernel is allocating in sequence
+			this check will avoid that */
+		set_bit(WDOG_ID_NOT_REQ, &grx500_wdt->status);
 	}
 	
 	/* Enable WDT reset to RCU for VPEx */  
@@ -224,6 +280,9 @@ static int grx500wdt_probe(struct platform_device *pdev)
 
         	grx500_wdt->min_timeout = 1;
 	        grx500_wdt->max_timeout = (0xffffffff / cpu_clk);
+					/*filling in heartbeat for WQ to kick in in case if its enabled*/
+					grx500_wdt->max_hw_heartbeat_ms = grx500_wdt->max_timeout *1000;
+					grx500_wdt->min_hw_heartbeat_ms = grx500_wdt->min_timeout *1000;
 
 		watchdog_init_timeout(grx500_wdt, timeout , &pdev->dev);
 	        watchdog_set_nowayout(grx500_wdt, nowayout);

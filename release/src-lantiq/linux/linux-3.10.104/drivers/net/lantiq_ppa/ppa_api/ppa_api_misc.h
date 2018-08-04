@@ -45,6 +45,13 @@
  * ####################################
  */
 
+enum {
+	CONNECTIVITY_ISSUE_DEBUG_DISABLE=0,
+	CONNECTIVITY_ISSUE_DEBUG_ALL,
+	CONNECTIVITY_ISSUE_DEBUG_IFNAME,
+	CONNECTIVITY_ISSUE_DEBUG_CLIENTMAC
+};
+
 /*
  *  Compilation Switch
  */

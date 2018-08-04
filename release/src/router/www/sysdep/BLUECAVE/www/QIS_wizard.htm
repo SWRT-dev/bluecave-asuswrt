@@ -24,8 +24,12 @@
 					'content', 'width=' + verge.viewportW() + ', target-densitydpi=device-dpi, initial-scale=' + (0.5*verge.viewportW())/375 + ', maximum-scale=1, user-scalable=no'
 				);
 
+				$("#welcomeTitle").html("<#lyra_welcome_title#>".replace("Lyra", "<#Web_Title2#>").replace("BLUE_CAVE", "BLUE CAVE"));
+				$("#welcome_button").html("<#lyra_welcome_create#>".replace(" Lyra ", ""));
 				$(".secureInput").click(checkPasswd);
 				$("div[data-role='page']").append("<div class='footerPadding'></div>");
+				$(".headerBar").html(Get_Component_Header());
+				handleModelIcon();
 
 				// setup systemVariables
 				setTimeout(function(){
@@ -49,7 +53,7 @@
 					systemVariable.territoryCode = initNvram.territory_code;
 					systemVariable.rebootTime = initNvram.reboot_time;
 					systemVariable.lanIpaddr = initNvram.lan_ipaddr;
-					systemVariable.forceChangePW = (httpApi.hookGet("check_pw").check_pw == '1') ? true : false;
+					systemVariable.forceChangePw = (httpApi.hookGet("check_pw") == '1') ? true : false;
 
 					handleSysDep();
 
@@ -113,31 +117,23 @@
 				</table>
 			</div>
 			<div class="tableContainerIndex">
-				<div id="welcomeTitle">
-					Welcome To <#Web_Title2#>
-				</div>
+				<div id="welcomeTitle"></div>
 				<div class="pageDesc" style="display:none"></div>
 
 				<div class="productIconContainer">
-					<div><img src="./images/Model_product.png"></div>
+					<div><img id="ModelPid_img" src=""></div>
 				</div>
 
-				<div style="text-align:center;margin:50px 0" class="noAmasSupport">
-					<div id="welcome_button" onclick="apply.welcome();">Create A New Network</div>
+				<div style="text-align:center;margin:50px 0">
+					<div id="welcome_button" onclick="apply.welcome();"></div>
 				</div>
 
-				<div style="text-align:center;margin:50px 0" class="amasSupport">
+				<!--div style="text-align:center;margin:50px 0" class="amasSupport">
 					<div id="aimesh_welcome_button" onclick="goTo.amasIntro();">Start</div>
-				</div>
+				</div-->
 	
 				<div style="margin:auto;width:600px;text-align:center;">
-					<a href="#"  class="advSetting" onclick="goTo.advSetting()">Manual Setup</a>
-					<!--div style="text-align:left;color:#FFF;" class="amasSupport">
-						<ul>
-							<li><a href="#" class="advSetting" onclick="goTo.chooseRole()">Sign in to your existing network</a></li>
-							<li><a href="#" class="advSetting" onclick="goTo.advSetting()">Go To Advanced Setting</a></li>
-						</ul>
-					</div-->
+					<a href="#"  class="advSetting" onclick="goTo.advSetting()"><#Manual_Setting_btn#></a>
 				</div>
 		
 				<div class="tos tosSupport">
@@ -152,27 +148,7 @@
 		
 		<!-- Advanced Setting -->
 		<div id="advanced_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -181,15 +157,13 @@
 					</div>
 				</div>
 				<div class="table_td">
-					<div class="amasSupport">
-						<div class="pageDesc">AiMesh combines more than one ASUS routers to form a AiMesh system, provides whole-home coverage and centralized management.</div>
+					<div class="amasSupport amasNoWAN">
+						<div class="pageDesc"><#AiMesh_Desc#></div>
 						<div>
 							<div class="selectorTopContainer">
 								<div class="selectorContainer">
 									<div class="selectorContainerDiv">
-										<div class="selectBar" onclick="goTo.chooseRole()">
-											AiMesh
-										</div>
+										<div class="selectBar" onclick="goTo.asNode()"><#AiMesh_setup_node#></div>
 										<div class="narrowContainer">
 											<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
 										</div>
@@ -199,7 +173,7 @@
 						</div>
 					</div>
 
-					<div style="height: 50px"></div>
+					<div style="height: 50px" class="amasNoWAN"></div>
 
 					<div class="pageDesc"><#OP_desc1#></div>
 					<div>
@@ -207,7 +181,7 @@
 							<div class="selectorContainer">
 								<div class="selectorContainerDiv">
 									<div class="selectBar" onclick="apply.changeOpMode()">
-										<#ASUSGATE_act_change#>
+										Choose operation mode
 									</div>
 									<div class="narrowContainer">
 										<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
@@ -259,32 +233,12 @@
 
 		<!-- Login Page -->	
 		<div id="login_name" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
 						<div class="titleMain"><#CTL_login#></div>
-						<div class="titleSub"><#HSDPAConfig_Username_itemname#>/<#PPPConnection_Password_itemname#></div>
+						<div class="titleSub"><#HSDPAConfig_Username_itemname#> / <#PPPConnection_Password_itemname#></div>
 						<div class="titleSub"><#Settings#></div>
 					</div>
 				</div>
@@ -318,17 +272,17 @@
 						</div>
 						<!-- Action Button -->
 						<div class="footer_desktop">
-							<div class="desktop_abortBtn" onclick='abort.login()'><#CTL_prev#></div>
-							<div class="desktop_applyBtn" onclick="apply.login();"><#CTL_next#></div>
+							<div class="desktop_abortBtn btn_login_abort" onclick='abort.login()'><#CTL_prev#></div>
+							<div class="desktop_applyBtn btn_login_apply" onclick="apply.login();"><#CTL_next#></div>
 						</div>
 						<div class="footer_mobile">
 							<table style="width:100%;" cellpadding="0" cellspacing="0">
 								<tr>
-									<td class="mobileAbort" style="width:50%" onclick='abort.login()'>
+									<td class="mobileAbort btn_login_abort" style="width:50%" onclick='abort.login()'>
 										<div class="mobile_abortBtn"><#CTL_prev#></div>
 									</td>
-									<td class="mobileApply" onclick="apply.login();">
-										<div class="mobile_applyBtn"><#CTL_next#></div>
+									<td class="mobileApply btn_login_apply" onclick="apply.login();">
+										<div class="mobile_applyBtn btn_login_apply"><#CTL_next#></div>
 									</td>
 								</tr>
 							</table>
@@ -340,27 +294,7 @@
 
 		<!-- Reset Modem -->
 		<div id="resetModem_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -400,27 +334,7 @@
 
 		<!-- Detecting -->
 		<div id="waiting_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -472,27 +386,7 @@
 
 		<!-- Operation Mode Page -->
 		<div id="opMode_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -544,16 +438,16 @@
 									</div>
 								</div>
 							</div>
-							<!--div class="selectorContainer amasSupport">
+							<div class="selectorContainer amasSupport">
 								<div class="selectorContainerDiv">
-									<div class="selectBar" onclick="goTo.meshMode()">
+									<div class="selectBar" onclick="goTo.amasIntro()">
 										AiMesh
 									</div>
 									<div class="narrowContainer">
 										<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
 									</div>
 								</div>
-							</div-->
+							</div>
 						</div>
 
 						<!-- Action Button -->
@@ -576,27 +470,7 @@
 
 		<!-- No WAN -->
 		<div id="noWan_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -639,27 +513,7 @@
 
 		<!-- Account prompt -->
 		<div id="accountPrompt_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -717,27 +571,7 @@
 
 		<!-- WAN Setting -->
 		<div id="wan_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -799,6 +633,14 @@
 									</div>
 								</div>
 							</div>
+							<div class="selectorContainer autoIP amasSupport amasNoWAN">
+								<div class="selectorContainerDiv">
+									<div class="selectBar" onclick="goTo.asNode()"><#AiMesh_setup_node#></div>
+									<div class="narrowContainer">
+										<div class="icon_arrow_right" style="width:20px;height:32px;"></div>
+									</div>
+								</div>
+							</div>
 						</div>
 
 						<div class="labelContainer iptv">
@@ -825,27 +667,7 @@
 
 		<!-- Get IP Setting -->
 		<div id="getIp_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -898,27 +720,7 @@
 
 		<!-- PPPoE Setting -->
 		<div id="pppoe_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -979,27 +781,7 @@
 
 		<!-- Static Setting -->
 		<div id="static_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -1074,27 +856,7 @@
 
 		<!-- IPTV Setting -->
 		<div id="iptv_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -1153,10 +915,10 @@
 								</div>
 								<div class="inputContainer">
 									<div class="ui-grid-a">
-										<div class="ui-block-a">
+										<div class="ui-block ui-block-a">
 											VID: <input class="textInput textInputIptv" id="internet_vid" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 										</div>
-										<div class="ui-block-b">
+										<div class="ui-block ui-block-b">
 											PRIO: <input class="textInput textInputIptv" id="internet_prio" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 										</div>
 									</div>
@@ -1168,10 +930,10 @@
 								</div>
 								<div class="inputContainer">
 									<div class="ui-grid-a">
-										<div class="ui-block-a">
+										<div class="ui-block ui-block-a">
 											VID: <input class="textInput textInputIptv" id="stb_vid" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 										</div>
-										<div class="ui-block-b">
+										<div class="ui-block ui-block-b">
 											PRIO: <input class="textInput textInputIptv" id="stb_prio" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 										</div>
 									</div>
@@ -1183,10 +945,10 @@
 								</div>
 								<div class="inputContainer">
 									<div class="ui-grid-a">
-										<div class="ui-block-a">
+										<div class="ui-block ui-block-a">
 											VID: <input class="textInput textInputIptv" id="voip_vid" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 										</div>
-										<div class="ui-block-b">
+										<div class="ui-block ui-block-b">
 											PRIO: <input class="textInput textInputIptv" id="voip_prio" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 										</div>
 									</div>
@@ -1290,27 +1052,7 @@
 
 		<!-- Modem Setting -->
 		<div id="modem_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -1480,27 +1222,7 @@
 
 		<!-- Get LAN IP Setting -->
 		<div id="getLanIp_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -1553,27 +1275,7 @@
 
 		<!-- Static LAN Setting -->
 		<div id="lanStatic_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -1648,27 +1350,7 @@
 
 		<!-- Site Survey Page -->
 		<div id="siteSurvey_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div class="titleMain"><#Internet#></div>
@@ -1682,12 +1364,16 @@
 						<!-- Action Button -->
 						<div class="footer_desktop">
 							<div class="desktop_abortBtn" onclick='abort.siteSurvey()'><#CTL_prev#></div>
+							<div class="desktop_applyBtn" onclick="goTo.wlcKey();"><#Manual_Setting_btn#></div>
 						</div>
 						<div class="footer_mobile">
 							<table style="width:100%;" cellpadding="0" cellspacing="0">
 								<tr>
-									<td class="mobileAbort" style="width:100%;" onclick='abort.siteSurvey()'>
+									<td class="mobileAbort" style="width:50%;" onclick='abort.siteSurvey()'>
 										<div class="mobile_abortBtn"><#CTL_prev#></div>
+									</td>
+									<td class="mobileApply" onclick="goTo.wlcKey();">
+										<div class="mobile_applyBtn"><#Manual_Setting_btn#></div>
 									</td>
 								</tr>
 							</table>
@@ -1699,27 +1385,7 @@
 
 		<!-- WLC key Setting -->
 		<div id="wlcKey_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div class="titleMain"><#Internet#></div>
@@ -1729,7 +1395,37 @@
 					<div class="pageDesc"><#wireless_psk_fillin#></div>
 
 					<div id="wlc_field">
-						<div>
+						<div class="manual_pap_setup" id="manual_pap_setup-band">
+							<div class="inputTitleContainer">
+								<div class="inputTitle"><#Interface#></div>
+							</div>
+							<div class="inputContainer">
+								<select id="wlc_band_manual" class="optionInput"></select>
+							</div>
+						</div>
+
+						<div class="manual_pap_setup" id="manual_pap_setup-ssid">
+							<div class="inputTitleContainer">
+								<div class="inputTitle"><#QIS_finish_wireless_item1#></div>
+							</div>
+							<div class="inputContainer">
+								<input id="wlc_ssid_manual" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true" />
+							</div>
+						</div>
+
+						<div class="manual_pap_setup" id="manual_pap_setup-authmode">
+							<div class="inputTitleContainer">
+								<div class="inputTitle"><#WLANConfig11b_AuthenticationMethod_itemname#></div>
+							</div>
+							<div class="inputContainer">
+								<select id="wlc_auth_mode_manual" class="optionInput">
+									<option value="open">Open System</option>
+									<option value="psk2" selected>WPA2-Personal</option>
+								</select>
+							</div>
+						</div>
+
+						<div id="manual_pap_setup-key">
 							<div class="inputTitleContainer">
 								<div class="inputTitle"><#QIS_finish_wireless_item2#></div>
 								<div class="secureInput icon_eye_close" for="wlc_wifiKey"></div>
@@ -1763,27 +1459,7 @@
 
 		<!-- Wireless SSID/Password Setting -->
 		<div id="wireless_setting" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div class="titleMain"><#menu5_1#></div>
@@ -1794,7 +1470,7 @@
 
 					<div id="wlInputField"></div>
 					<div class="labelContainer dualbandSupport bandStreeringSupport">
-						<label for="wireless_checkbox" class="labelInput">Separate 2.4GHz and 5GHz</label>
+						<label for="wireless_checkbox" class="labelInput"><#qis_wireless_setting_separate#></label>
 		  				<input type="checkbox" id="wireless_checkbox" data-mini="true"/>
 					</div>
 
@@ -1826,27 +1502,7 @@
 
 		<!-- Live Update -->
 		<div id="update_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -1855,7 +1511,7 @@
 				</div>
 				<div class="table_td">
 					<div class="pageDesc"><#exist_new#></div>
-					<div class="pageDesc forceUpgrade"><#FIRM_fupgrade_desc#></div>
+					<!--div class="pageDesc forceUpgrade"><#FIRM_fupgrade_desc#></div-->
 					<div>
 						<div>
 							<div class="inputTitleContainer">
@@ -1869,17 +1525,17 @@
 
 					<!-- Action Button -->
 					<div class="footer_desktop">
-						<div class="desktop_abortBtn" onclick='abort.update();'><#CTL_Cancel#></div>
-						<div class="desktop_applyBtn" onclick="apply.update();"><#CTL_Agree#></div>
+						<div class="desktop_abortBtn" id="desktop_abortBtn_update" onclick='abort.update();'><#CTL_Cancel#></div>
+						<div class="desktop_applyBtn" id="desktop_applyBtn_update" onclick="apply.update();"><#CTL_Agree#></div>
 					</div>
 					<div class="footer_mobile">
 						<table style="width:100%;" cellpadding="0" cellspacing="0">
 							<tr>
 								<td class="mobileAbort" style="width:50%" onclick='abort.update();'>
-									<div class="mobile_abortBtn"><#CTL_Cancel#></div>
+									<div class="mobile_abortBtn" id="mobile_abortBtn_update"><#CTL_Cancel#></div>
 								</td>
 								<td class="mobileApply" onclick="apply.update();">
-									<div class="mobile_applyBtn"><#CTL_Agree#></div>
+									<div class="mobile_applyBtn" id="mobile_applyBtn_update"><#CTL_Agree#></div>
 								</td>
 							</tr>
 						</table>
@@ -1890,27 +1546,7 @@
 
 		<!-- Upgrading -->
 		<div id="upgrading_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -1971,27 +1607,7 @@
 
 		<!-- Uploading -->
 		<div id="uploading_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -2012,27 +1628,7 @@
 
 		<!-- Summary -->
 		<div id="summary_page" data-role="page" class="qisBackground">
-			<div class="headerBar">
-				<table style="width:100%">
-					<tr>
-						<td style="width:17px;">
-							<div style="margin-right:20px;">
-								<a href="#navigation">
-									<div class="icon_menu"></div>
-								</a>
-							</div>
-						</td>
-						<td>
-							<div>
-								<div class="icon_logo"></div>
-							</div>
-						</td>
-						<td>
-							<div class="model_welcome"></div>
-						</td>
-					</tr>
-				</table>
-			</div>
+			<div class="headerBar"></div>
 			<div class="tableContainer">
 				<div class="desktop_left_field">
 					<div>
@@ -2040,7 +1636,7 @@
 					</div>
 				</div>
 				<div class="table_td">
-					<div class="pageDesc"><#Congratulations#>&nbsp;<#QKSet_finish_desc#></div>
+					<div class="pageDesc"><#QKSet_finish_desc#></div> <!-- #Congratulations# &nbsp; -->
 					<div class="pageDesc">
 						<div class="descSteps">Step 1</div>
 						<div><#DrSurf_sweet_advise1#></div>
@@ -2087,6 +1683,47 @@
 
 		<!-- AMAS Restore  -->
 		<div id="amasrestore_page" data-role="page" class="qisBackground aimeshPages"></div>
+
+		<!-- AMAS Bundle  -->
+		<div id="amasbundle_page" data-role="page" class="qisBackground aimeshPages">
+			<div class="headerBar"></div>
+			<div class="tableContainer">
+				<div class="desktop_left_field">
+					<div>
+						<div class="titleMain"><#QIS_finish_Summary#></div>
+					</div>
+				</div>
+				<div class="table_td">
+					<div class="pageDesc">	
+						<#AiMesh_Desc#>
+						<br/>
+						Do you want to add another node?
+
+						<div class="amasIconContainer">
+							<div><img src="images\New_ui\amesh\Amesh_button_light.png"></div>
+						</div>
+					</div>
+						
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick='abort.amasbundle();'>I'm done</div>
+						<div class="desktop_applyBtn" onclick="apply.amasbundle();">Add another node</div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr>
+								<td class="mobileAbort" style="width:50%" onclick='abort.amasbundle();'>
+									<div class="mobile_abortBtn">I'm done</div>
+								</td>
+								<td class="mobileApply" onclick="apply.amasbundle();">
+									<div class="mobile_applyBtn">Add another node</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>			
+		</div>
 
 		<!-- Err: Redirect Fail  -->
 		<div id="amaserr_connrouter_page" data-role="page" class="qisBackground aimeshPages"></div>

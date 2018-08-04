@@ -8501,9 +8501,11 @@ static void QOS_CONTROL()
 
 #ifdef RTCONFIG_LANTIQ
 	if (ppa_support(wan_primary_ifunit()) == 0) {
-		snprintf(ppa_cmd, sizeof(ppa_cmd), "ppacmd delwan -i %s", get_wan_ifname(wan_primary_ifunit()));
+		disable_ppa_wan(get_wan_ifname(wan_primary_ifunit()));
 		_dprintf("%s : remove ppa wan interface: %s\n", __FUNCTION__, ppa_cmd);
-		system(ppa_cmd);
+	}else{
+		enable_ppa_wan(get_wan_ifname(wan_primary_ifunit()));
+		_dprintf("%s : add ppa wan interface: %s\n", __FUNCTION__, ppa_cmd);
 	}
 #endif
 }
@@ -9852,6 +9854,10 @@ script_allnet:
 			stop_lan_port();
 
 			// free memory here
+#ifdef RTCONFIG_LANTIQ
+			/* workaround: stop_nat_rules() is skipped and then redirect IP is not LAN IP */
+			nvram_set_int("nat_state", NAT_STATE_INITIALIZING);
+#endif
 		}
 #ifdef RTCONFIG_LANTIQ
 		if((action & RC_SERVICE_STOP) && (action & RC_SERVICE_START)) {
@@ -12453,6 +12459,9 @@ start_wlcconnect(void)
 
 	if(sw_mode()!=SW_MODE_REPEATER
 #ifdef RTCONFIG_REALTEK
+		&& !mediabridge_mode()
+#endif
+#ifdef RTCONFIG_LANTIQ
 		&& !mediabridge_mode()
 #endif
 	)

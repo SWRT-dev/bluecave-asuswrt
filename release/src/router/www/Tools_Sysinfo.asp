@@ -53,16 +53,6 @@ overlib.isOut = true;
 function initial(){
 	show_menu();
 
-	if (wl_info.band5g_2_support) {
-		document.getElementById("wifi51_clients_th").innerHTML = "Wireless Clients (5 GHz-1)";
-		document.getElementById("wifi5_2_clients_tr").style.display = "";
-        } else if (based_modelid == "RT-AC87U") {
-                document.getElementById("wifi5_clients_tr_qtn").style.display = "";
-                document.getElementById("qtn_version").style.display = "";
-        } else if (band5g_support) {
-                document.getElementById("wifi5_clients_tr").style.display = "";
-        }
-
 	showbootTime();
 
 	if (odmpid != "")
@@ -145,7 +135,7 @@ function hwaccel_state(){
 			code += "Enabled";
 		}
 	} else {
-		if (ctf_dis == "1") {
+		if (ctf_dis_force == "1") {
 			code = "Disabled";
 			if (ctf_dis_force == "1")
 				code += " <i>(by user)</i>";
@@ -162,7 +152,7 @@ function hwaccel_state(){
 				// Trim two trailing chars, either "  " or ", "
 				code = code.slice(0,-2) + "</span></>";
 			}
-		} else if (ctf_dis == "0") {
+		} else if (ctf_dis_force == "0") {
 			code = "<span>Enabled";
 			if (ctf_fa != "") {
 				if (ctf_fa != "0")
@@ -503,22 +493,6 @@ function update_sysinfo(e){
 					<tr>
 						<th>Ethernet Ports</th>
 						<td id="tableContainer" style="margin-top:-10px;"></td>
-					</tr>
-					<tr>
-						<th>Wireless clients (2.4 GHz)</th>
-						<td id="wlc_24_td"></td>
-					</tr>
-					<tr id="wifi5_clients_tr" style="display:none;">
-						<th id="wifi51_clients_th">Wireless clients (5 GHz)</th>
-						<td id="wlc_51_td"></td>
-					</tr>
-					<tr id="wifi5_2_clients_tr" style="display:none;">
-						<th>Wireless clients (5 GHz-2)</th>
-						<td id="wlc_52_td"></td>
-					</tr>
-					<tr id="wifi5_clients_tr_qtn" style="display:none;">
-						<th>Wireless clients (5 GHz)</th>
-						<td id="wlc_5qtn_td"></td>
 					</tr>
 				</table>
 				</td>

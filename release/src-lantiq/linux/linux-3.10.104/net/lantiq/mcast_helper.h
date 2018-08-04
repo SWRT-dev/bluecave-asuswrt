@@ -67,9 +67,11 @@ typedef void (*Mcast_module_callback_t)(unsigned int grpidx,struct net_device *n
 
 #define MC_F_ADD 0x01
 #define MC_F_DEL 0x02
-
+#define MC_F_UPD 0x03
+#define MC_F_DEL_UPD 0x08
 #define FTUPLE_ARR_SIZE 10
 #define IFSIZE 20
+#define MAX_MAC 64
 
 /** Protocol type */
 typedef enum {
@@ -94,8 +96,10 @@ typedef struct  _mcast_stream_t{
 	uint32_t proto; /* Protocol Type */
 	uint32_t sPort; /* Source Port */
 	uint32_t dPort; /* Destination Port */
-	unsigned char macaddr[ETH_ALEN]; /* Lan/wlan Mac Address */
-	unsigned char src_mac[ETH_ALEN];/* source Mac address for grx5xx */
+	unsigned char src_mac[ETH_ALEN];/* LAN/WLAN source Mac address  */
+	uint32_t num_joined_macs; /* Number of Joined MACs */
+	unsigned char macaddr[MAX_MAC][ETH_ALEN]; /* Lan/wlan array of joined Mac Address */
+
 } MCAST_STREAM_t;
 
 typedef struct _mcast_mac_t {

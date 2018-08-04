@@ -511,7 +511,7 @@ int32_t ppa_set_intfid(struct netif_info *pNetIf, const char* ifname)
 	{
 		for(v=0;v<MAX_TC_NUM;v++)
 		{
-		    if(!(tmp_bitmap >> v)& 0x1)
+		    if(!((tmp_bitmap >> v)& 0x1))
 		    {
 			pNetIf->flowId_en = 1;
 		        pNetIf->flowId = v;
@@ -1340,6 +1340,15 @@ void ppa_netif_remove(PPA_IFNAME *ifname, int f_is_lan)
 	ppa_debug(DBG_ENABLE_MASK_DEBUG_PRINT," %s:%d : after reset for DP interface : intf_bitmap = %d \n",intf_bitmap,__FUNCTION__,__LINE__);
 	}
 #endif   
+#if defined(CONFIG_PPA_API_DIRECTCONNECT) && CONFIG_PPA_API_DIRECTCONNECT
+            /* Check whether the netif is directconnect fastpath interface or not */
+            if (ppa_check_if_netif_fastpath_fn && ppa_check_if_netif_fastpath_fn(p_ifinfo->netif, NULL, 0))
+            {
+#if defined(VLAN_VAP_QOS) && VLAN_VAP_QOS
+                ppa_reset_intfid(p_ifinfo,ifname);
+#endif
+            }
+#endif
 #endif
             ppa_netif_remove_item(ifname, NULL);
             if ( (p_ifinfo->flags & NETIF_MAC_ENTRY_CREATED) )

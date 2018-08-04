@@ -164,6 +164,9 @@ document.form.ngrok_rulelist.value = tmp_value;
 showLoading();
 document.form.submit();
 }
+function reload_Soft_Center() {
+	location.href = "/Softcenter.asp";
+}
 </script></head>
 <body onload="initial();" onunload="unload_body();" onselectstart="return false;">
 <div id="TopBanner"></div>
@@ -207,6 +210,9 @@ document.form.submit();
 <tr>
 <td align="left" >
 <div id="content_title" class="formfonttitle" style="width:400px">Ngrok内网穿透服务</div>
+            <div style="float:right; width:15px; height:25px;margin-top:10px">
+             <img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img>
+            </div>
 </td>
 </tr>
 </table>

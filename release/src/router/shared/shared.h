@@ -294,7 +294,7 @@ enum {
 #define GIF_PREFIXLEN  0x0002  /* return prefix length */
 #define GIF_PREFIX     0x0004  /* return prefix, not addr */
 
-#define EXTEND_AIHOME_API_LEVEL		13
+#define EXTEND_AIHOME_API_LEVEL		14
 #define EXTEND_HTTPD_AIHOME_VER		0
 
 #define EXTEND_ASSIA_API_LEVEL		1
@@ -1098,7 +1098,11 @@ static inline int repeater_mode(void) { return 0; }
 #if defined(RTCONFIG_WIRELESSREPEATER) && defined(RTCONFIG_PROXYSTA)
 static inline int __mediabridge_mode(int sw_mode)
 {
+#ifdef RTCONFIG_LANTIQ
+	return (sw_mode == SW_MODE_AP && nvram_get_int("wlc_psta") == 1);
+#else
 	return (sw_mode == SW_MODE_REPEATER && nvram_get_int("wlc_psta") == 1);
+#endif
 }
 static inline int mediabridge_mode(void)
 {
@@ -2210,3 +2214,4 @@ extern int IPTV_ports_cnt(void);
 
 
 #endif	/* !__SHARED_H__ */
+

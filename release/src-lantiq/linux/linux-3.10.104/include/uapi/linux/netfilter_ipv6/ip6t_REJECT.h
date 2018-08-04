@@ -11,8 +11,7 @@ enum ip6t_reject_with {
 	IP6T_ICMP6_PORT_UNREACH,
 	IP6T_ICMP6_ECHOREPLY,
 	IP6T_TCP_RESET,
-	IP6T_ICMP6_POLICY_FAIL,
-	IP6T_ICMP6_POLICY_FAIL_TO_GATEWAY /* case for handling ICMPV6_DEST_UNREACH to gateway */
+	IP6T_ICMP6_POLICY_FAIL
 };
 
 struct ip6t_reject_info {

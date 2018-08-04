@@ -90,6 +90,9 @@
 #include "ppa_api_session_limit.h"
 #endif
 
+#include <linux/etherdevice.h>  /*  eth_type_trans  */
+
+
 /*
  * ####################################
  *              Definition
@@ -2907,7 +2910,6 @@ int32_t ppa_ioctl_get_sw_session_enable(unsigned int cmd, unsigned long arg, PPA
   return res;
 }
 #endif
-
 
 /*
  * ####################################

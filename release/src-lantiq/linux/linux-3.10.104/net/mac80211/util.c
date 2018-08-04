@@ -792,11 +792,26 @@ static u32 ieee802_11_parse_vendor_specific(const u8 *pos, u8 elen,
 		}
 	}
 
+	if (elen >= 4 && elems->vendor_events_filter && elems->vendor_events_filter_len >= 3) {
+		int i = 0, found = 1;
+		for (i = 0; i < elems->vendor_events_filter_len; i++) {
+			if (pos[i] != elems->vendor_events_filter[i]) {
+				found = 0;
+				break;
+			}
+		}
+		if (found) {
+			elems->vendor_ie_to_notify = pos;
+			elems->vendor_ie_to_notify_len = elen;
+		}
+	}
+
 	return crc;
 }
 
 u32 ieee802_11_parse_elems_crc(const u8 *start, size_t len, bool action,
 			       struct ieee802_11_elems *elems,
+				   u8 *vendor_events_filter, u8 vendor_events_filter_len,
 			       u64 filter, u32 crc)
 {
 	size_t left = len;
@@ -809,6 +824,8 @@ u32 ieee802_11_parse_elems_crc(const u8 *start, size_t len, bool action,
 	memset(elems, 0, sizeof(*elems));
 	elems->ie_start = start;
 	elems->total_len = len;
+	elems->vendor_events_filter = vendor_events_filter;
+	elems->vendor_events_filter_len = vendor_events_filter_len;
 
 	while (left >= 2) {
 		u8 id, elen;

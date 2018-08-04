@@ -195,7 +195,6 @@
 #define CBM_Q_F_CKSUM 0x40000000
 #define CBM_Q_F_FLUSH 0x80000000
 #define CBM_Q_F_FORCE_FLUSH 0x00000001
-#define CBM_Q_F_RESTORE_ONLY 0x00000002
 
 /** \addtogroup CBM_Driver_Port_Structures */
 /* @{ */

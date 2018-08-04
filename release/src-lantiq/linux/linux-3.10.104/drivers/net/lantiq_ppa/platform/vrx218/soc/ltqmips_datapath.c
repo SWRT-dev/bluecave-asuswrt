@@ -2372,7 +2372,7 @@ int eth_xmit(struct sk_buff *skb, unsigned int port, int ch, int spid, int class
 
     headroom = sizeof(struct sw_eg_pkt_header);
 
-    if ( skb_headroom(skb) < headroom )
+    if ((skb_headroom(skb) < headroom) || skb_shared(skb) || skb_cloned(skb))
     {
         struct sk_buff *new_skb;
 
@@ -11569,6 +11569,12 @@ static INLINE int stricmp(const char *p1, const char *p2)
 {
     int c1, c2;
 
+    if (p1 == NULL) 
+	return -1;
+
+    if (p2 == NULL) 
+	return *p1;
+
     while ( *p1 && *p2 )
     {
         c1 = *p1 >= 'A' && *p1 <= 'Z' ? *p1 + 'a' - 'A' : *p1;
@@ -11586,6 +11592,12 @@ static INLINE int stricmp(const char *p1, const char *p2)
 static INLINE int strincmp(const char *p1, const char *p2, int n)
 {
     int c1 = 0, c2;
+
+    if (p1 == NULL) 
+	return -1;
+
+    if (p2 == NULL) 
+	return *p1;
 
     while ( n && *p1 && *p2 )
     {

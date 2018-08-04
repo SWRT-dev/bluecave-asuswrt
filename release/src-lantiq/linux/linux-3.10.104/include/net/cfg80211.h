@@ -3073,6 +3073,9 @@ struct wireless_dev {
 	bool cac_started;
 	unsigned long cac_start_time;
 
+	u8 *vendor_events_filter;
+	u8 vendor_events_filter_len;
+
 #ifdef CONFIG_CFG80211_WEXT
 	/* wext data */
 	struct {
@@ -4159,6 +4162,9 @@ void cfg80211_conn_failed(struct net_device *dev, const u8 *mac_addr,
  * driver is responsible for rejecting the frame.
  */
 bool cfg80211_rx_mgmt(struct wireless_dev *wdev, int freq, int sig_dbm,
+		      const u8 *buf, size_t len, gfp_t gfp);
+
+int cfg80211_rx_vendoer_specific_mgmt(struct wireless_dev *wdev, int freq,
 		      const u8 *buf, size_t len, gfp_t gfp);
 
 /**

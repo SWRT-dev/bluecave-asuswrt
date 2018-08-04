@@ -117,7 +117,6 @@ struct icmp6hdr {
 #define ICMPV6_PORT_UNREACH		4
 #define ICMPV6_POLICY_FAIL		5
 #define ICMPV6_REJECT_ROUTE		6
-#define ICMPV6_POLICY_FAIL_TO_GATEWAY   8
 
 /*
  *	Codes for Time Exceeded

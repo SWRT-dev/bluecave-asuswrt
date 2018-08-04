@@ -822,7 +822,7 @@ int ppa_br_fdb_delete(struct net_device *dev, const unsigned char *addr)
 	if (addr)
 		err = __br_fdb_delete(p, addr, 0);
 	else
-		br_fdb_delete_by_port(p->br, p, 0);
+		br_fdb_delete_by_port(p->br, p, 1);
 
 	return err;
 }

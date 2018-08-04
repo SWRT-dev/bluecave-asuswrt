@@ -527,6 +527,7 @@ typedef struct switch_priv {
 #define FLAG_ADV_1000HALF       0x00010000
 #define FLAG_ADV_1000FULL       0x00020000
 #define FLAG_INTERNAL_PHY       0x00100000
+#define FLAG_PHY_INIT_DONE      0x00200000
 }	ltq_switch_priv_t;
 
 /*

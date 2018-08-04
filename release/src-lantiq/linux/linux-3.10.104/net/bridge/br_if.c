@@ -400,6 +400,12 @@ int br_add_if(struct net_bridge *br, struct net_device *dev)
 
 	list_add_rcu(&p->list, &br->port_list);
 
+/*Individual device should set it, not part of bridge
+retain the SG flag at bridge to support the devices with SG*/
+/*	dev->features |= (NETIF_F_SOFT_FEATURES | NETIF_F_SG);*/
+
+	br->dev->features |= (NETIF_F_SOFT_FEATURES | NETIF_F_SG);
+
 	netdev_update_features(br->dev);
 
 	spin_lock_bh(&br->lock);
@@ -422,9 +428,6 @@ int br_add_if(struct net_bridge *br, struct net_device *dev)
 
 	kobject_uevent(&p->kobj, KOBJ_ADD);
 
-#ifdef CONFIG_LTQ_MCAST_SNOOPING
-		br_ifinfo_notify(RTM_NEWLINK, p);
-#endif
 
 	return 0;
 
@@ -470,9 +473,6 @@ int br_del_if(struct net_bridge *br, struct net_device *dev)
 
 	netdev_update_features(br->dev);
 	
-#ifdef CONFIG_LTQ_MCAST_SNOOPING
-	br_ifinfo_notify(RTM_DELLINK, p);
-#endif
 
 	return 0;
 }

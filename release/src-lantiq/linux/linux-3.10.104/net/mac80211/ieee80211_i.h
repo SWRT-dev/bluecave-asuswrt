@@ -1182,6 +1182,8 @@ struct ieee80211_ra_tid {
 struct ieee802_11_elems {
 	const u8 *ie_start;
 	size_t total_len;
+	u8 *vendor_events_filter;
+	u8 vendor_events_filter_len;
 
 	/* pointers to IEs */
 	const u8 *ssid;
@@ -1215,6 +1217,7 @@ struct ieee802_11_elems {
 	const u8 *opmode_notif;
 	const struct ieee80211_sec_chan_offs_ie *sec_chan_offs;
 	const u8 *vendor_vht;
+	const u8 *vendor_ie_to_notify;
 
 	/* length of them, respectively */
 	u8 ssid_len;
@@ -1232,6 +1235,7 @@ struct ieee802_11_elems {
 	u8 perr_len;
 	u8 country_elem_len;
 	u8 vendor_vht_len;
+	u8 vendor_ie_to_notify_len;
 
 	/* whether a parse error occurred while retrieving these elements */
 	bool parse_error;
@@ -1527,12 +1531,13 @@ static inline void ieee80211_tx_skb(struct ieee80211_sub_if_data *sdata,
 
 u32 ieee802_11_parse_elems_crc(const u8 *start, size_t len, bool action,
 			       struct ieee802_11_elems *elems,
+				   u8 *vendor_events_filter, u8 vendor_events_filter_len,
 			       u64 filter, u32 crc);
 static inline void ieee802_11_parse_elems(const u8 *start, size_t len,
 					  bool action,
 					  struct ieee802_11_elems *elems)
 {
-	ieee802_11_parse_elems_crc(start, len, action, elems, 0, 0);
+	ieee802_11_parse_elems_crc(start, len, action, elems, NULL, 0, 0, 0);
 }
 
 u32 ieee80211_mandatory_rates(struct ieee80211_local *local,

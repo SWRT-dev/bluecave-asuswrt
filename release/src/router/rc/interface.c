@@ -185,31 +185,22 @@ int _ifconfig(const char *name, int flags, const char *addr, const char *netmask
 	struct in_addr in_addr, in_netmask, in_broadaddr;
 
 #ifdef RTCONFIG_LANTIQ
-	if(strcmp(name, "wlan0") == 0 ||
-		strcmp(name, "wlan2") == 0){
+	/* wlan0-wlan0.2, wlan2-wlan2.2 */
+	if(strncmp(name, "wlan", 4) == 0){
 		if(flags == 0){
-			_dprintf("[%s][%d]skip name:[%s]\n", __func__, __LINE__, name);
+			_dprintf("[%s][%d]skip ifconfig down:[%s]\n",
+				__func__, __LINE__, name);
 			return -1;
 		}
 		if(flags & IFUP){
-			if(strcmp(name, "wlan0") == 0 && (flags & IFUP)){
-				if(nvram_get_int("wl0_radio") == 0){
-					_dprintf("[%s][%d] wl0_radio=0, skip IFUP wlan0\n", __func__, __LINE__);
-					return -1;
-				}
-			}
-			if(strcmp(name, "wlan2") == 0 && (flags & IFUP)){
-				if(nvram_get_int("wl1_radio") == 0){
-					_dprintf("[%s][%d] wl1_radio=0, skip IFUP wlan2\n", __func__, __LINE__);
-					return -1;
-				}
-			}
+			if(skip_ifconfig_up(name) == -1) return -1;
 		}
 	}
 	if(strcmp(name, "eth0_1") == 0 ||
 		strcmp(name, "eth0_2") == 0 ||
 		strcmp(name, "eth0_3") == 0 ||
-		strcmp(name, "eth0_4") == 0){
+		strcmp(name, "eth0_4") == 0 ||
+		strcmp(name, "eth1") == 0){
 		set_hwaddr(name, get_lan_hwaddr());
 		if(flags == 0) return -1;
 	}
@@ -608,13 +599,13 @@ int start_vlan(void)
 #endif
 
 #if defined(HND_ROUTER)
-	if(!nvram_match("switch_wantag", "") && (nvram_get_int("switch_stb_x") > 0 || nvram_match("switch_wantag", "unifi_biz") || nvram_match("switch_wantag", "manual"))) {
+	if(!nvram_match("switch_wantag", "") && (nvram_get_int("switch_stb_x") > 0 || nvram_match("switch_wantag", "unifi_biz") || nvram_match("switch_wantag", "stuff_fibre") || nvram_match("switch_wantag", "manual"))) {
 		char *wan_base_if = "eth0";
 		ifconfig(wan_base_if, IFUP, NULL, NULL);
 		set_wan_tag(wan_base_if);
 	}
 #elif defined(BLUECAVE)
-	if(!nvram_match("switch_wantag", "") && (nvram_get_int("switch_stb_x") > 0 || nvram_match("switch_wantag", "unifi_biz") || nvram_match("switch_wantag", "manual"))) {
+	if(!nvram_match("switch_wantag", "") && (nvram_get_int("switch_stb_x") > 0 || nvram_match("switch_wantag", "unifi_biz") || nvram_match("switch_wantag", "stuff_fibre") || nvram_match("switch_wantag", "manual"))) {
 		char *wan_base_if = "eth1";
 		ifconfig(wan_base_if, IFUP, NULL, NULL);
 		set_wan_tag(wan_base_if);

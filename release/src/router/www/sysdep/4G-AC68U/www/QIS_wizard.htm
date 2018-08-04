@@ -103,7 +103,6 @@ if(sw_mode == 3 && '<% nvram_get("wlc_psta"); %>' == 2)
 	sw_mode = 2;
 var qisFlag = '<% get_parameter("flag"); %>'.toLowerCase();
 var pppoe_failed_flag = false;
-var nz_isp_support = isSupport("nz_isp");
 if(isMobile() && tmo_support && sw_mode != 2 && qisFlag != "sitesurvey_rep" && qisFlag != "sitesurvey_mb")
 	location.href = "MobileQIS_Login.asp";
 

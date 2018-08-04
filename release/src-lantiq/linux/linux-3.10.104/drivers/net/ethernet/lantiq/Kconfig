@@ -87,12 +87,6 @@ config LTQ_TOE_DRIVER
         default n
         ---help---
         Lantiq TOE (TCP Offload Engine) driver for XRX500 series.
-config OFFLOAD_FWD_MARK
-	bool "Enable offload fwd mark for the packets already forwarded by switch"
-				depends on LTQ_ETH_XRX500
-				default y
-				---help---
-				Lantiq switch offload for broadcast/multicast packets
 
 source "drivers/net/ethernet/lantiq/datapath/Kconfig"
 source "drivers/net/ethernet/lantiq/switch-api/Kconfig"

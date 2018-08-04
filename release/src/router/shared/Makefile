@@ -178,7 +178,7 @@ CFLAGS += -I$(LINUXDIR)/drivers/char/rtl8370mb
 OBJS += rtl8370mb.o mdio.o
 endif
 else ifeq ($(RTCONFIG_LANTIQ),y)
-OBJS += flash_mtd.o api-lantiq.o lantiq.o
+OBJS += flash_mtd.o
 else
 # Broadcom
 OBJS += wl.o wl_linux.o
@@ -302,7 +302,9 @@ else ifeq ($(RTCONFIG_ALPINE),y)
 OBJS += private.o
 vpath %.c sysdeps sysdeps/alpine
 else ifeq ($(RTCONFIG_LANTIQ),y)
-OBJS += private.o
+OBJS	+= $(if $(wildcard sysdeps/lantiq/api-lantiq.c),api-lantiq.o,prebuild/api-lantiq.o)
+OBJS	+= $(if $(wildcard sysdeps/lantiq/lantiq.c),lantiq.o,prebuild/lantiq.o)
+OBJS	+= $(if $(wildcard sysdeps/lantiq/private.c),private.o,prebuild/private.o)
 vpath %.c sysdeps/lantiq
 else ifeq ($(RTCONFIG_QTN),y)
 vpath %.c sysdeps sysdeps/broadcom sysdeps/qtn $(SRCBASE)/shared/ $(SRCBASE)/shared/bcmwifi/src $(WLAN_StdSrcDirsA) $(WLAN_ComponentSrcDirs) $(TOP)/libqcsapi_client/qcsapi_rpc_common/client  $(TOP)/libqcsapi_client/qcsapi_rpc_common/common
@@ -394,3 +396,4 @@ prebuild/%.o:
 	@$(CC) $(CFLAGS) -E $< > $@
 
 -include $(OBJS:%.o=.%.depend)
+

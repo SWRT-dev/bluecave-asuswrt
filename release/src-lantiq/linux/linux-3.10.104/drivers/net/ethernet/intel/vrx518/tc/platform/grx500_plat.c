@@ -231,6 +231,9 @@ static int32_t plat_get_subifid(struct net_device *dev, struct sk_buff *skb,
 
 static void plat_coc_tasklet(unsigned long arg)
 {
+#if IS_ENABLED(CONFIG_LTQ_DATAPATH_CPUFREQ)
+	struct tc_priv *priv;
+#endif
 	/* change state to D0 */
 	if (g_plat_priv->coc.coc_stat == LTQ_CPUFREQ_PS_D0)
 		return;
@@ -238,7 +241,12 @@ static void plat_coc_tasklet(unsigned long arg)
 	g_plat_priv->coc.coc_stat = LTQ_CPUFREQ_PS_D0;
 	/* call datapath to inform about the new state */
 #if IS_ENABLED(CONFIG_LTQ_DATAPATH_CPUFREQ)
-	dp_coc_new_stat_req(LTQ_CPUFREQ_PS_D0, DP_COC_REQ_VRX318);
+/*for safety to avoid calling the coc irq on/off when tc is not in running state*/
+	priv = g_plat_priv->tc_priv;
+	if(priv->tc_stat == TC_RUN )
+		dp_coc_new_stat_req(LTQ_CPUFREQ_PS_D0, DP_COC_REQ_VRX318);
+	else
+		tc_dbg(priv, MSG_COC, "cant trigger CoC in this %d tc state\n",priv->tc_stat);
 #endif
 }
 
@@ -891,11 +899,3 @@ void platform_dsl_exit(void)
 {
 	plat_dsl_ops_exit();
 	cancel_work_sync(&g_plat_priv->req_work.work);
-}
-
-void platform_exit(void)
-{
-	tasklet_kill(&g_plat_priv->coc.coc_task);
-	plat_dp_exit(g_plat_priv);
-	g_plat_priv = NULL;
-}

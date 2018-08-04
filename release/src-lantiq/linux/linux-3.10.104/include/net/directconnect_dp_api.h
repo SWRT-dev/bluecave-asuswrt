@@ -477,6 +477,25 @@ typedef int32_t(*dp_get_mib_fn_t)(struct dp_subif *subif, struct dp_drv_mib *mib
 #define DC_DP_F_DEREGISTER_LITEPATH 0x00000200
 
 /**
+ * @brief disconn_if flags; client disconnected (3addr) - remove from acceleration (by mac or netif)
+ */
+#define DC_DP_F_CLIENT_DISCONNECT		0x00000000
+
+/**
+ * @brief disconn_if flags; client connected - remove from
+ *  	  acceleration (by mac or netif) and trigger fake arp
+ *  	  type 1
+ */
+#define DC_DP_F_CLIENT_CONNECT			0x00000001
+
+/**
+ * @brief disconn_if flags; extender connected - remove from
+ *  	  acceleration (by mac or netif) and trigger fake arp
+ *  	  type 2
+ */
+#define DC_DP_F_CLIENT_CONNECT_EXTENDER	0x00000010
+
+/**
   \brief Specify it as dc_dp_xmit() flags value if xmit to litepath
 */
 #define DC_DP_F_XMIT_LITEPATH		0x01
@@ -547,14 +566,9 @@ typedef int32_t(*dp_get_mib_fn_t)(struct dp_subif *subif, struct dp_drv_mib *mib
 #define DC_DP_F_MC_DEREGISTER			0x02
 
 /**
-  \brief Multicast module cleanup request (if applicable to peripheral driver).
+  \brief  Multicast module register update MACs request
 */
-#define DC_DP_F_MC_FW_RESET			0x10
-
-/**
-  \brief Multicast module re-learning request (if applicable to peripheral driver).
-*/
-#define DC_DP_F_MC_NEW_STA			0x20
+#define DC_DP_F_MC_UPDATE_MAC_ADDR		0x08
 
 /**
   \brief A new multicast group membership add request.
@@ -565,6 +579,16 @@ typedef int32_t(*dp_get_mib_fn_t)(struct dp_subif *subif, struct dp_drv_mib *mib
   \brief An existing multicast group membership delete request
 */
 #define DC_DP_MC_F_DEL				0x02
+
+/**
+   \brief An existing multicast group membership update request
+*/
+#define DC_DP_MC_F_UPD				0x03
+
+/**
+   \brief Maximum number of mac address
+*/
+#define DC_DP_MAX_MAC				64
 
 /**
   \brief Number of Device QoS class/WiFi WMM Class/TID
@@ -840,9 +864,10 @@ typedef int32_t (*dc_dp_get_recovery_stats_fn_t)(struct net_device *netif, int32
 /** \brief  Multicast module callback to add/delete a mcast group membership to/from a DirectConnect interface.
    \param[in] grp_id  Multicast group id.
    \param[in] dev  Registered net device.
-   \param[in] mc_stream  Multicast stream information (5-tuple flow).
+   \param[in] mc_stream  Multicast stream information.
    \param[in] flags  :
        DC_DP_MC_F_ADD - Add a new mcast group membership to a DirectConnect interface.
+       DC_DP_MC_F_UPD - Update an existing mcast group membership to a DirectConnect interface.
        DC_DP_MC_F_DEL - Delete an existing mcast group membership from a DirectConnect interface.
    \return none
    \note Group Identifier is allocated and managed by Multicast Subsystem.
@@ -868,9 +893,14 @@ struct dc_dp_mcast_stream {
 	struct dc_dp_ip_addr src_ip; /*!< Source ip : can be ipv4 or ipv6 */
 	struct dc_dp_ip_addr dst_ip; /*!< Destination ip - GA : can be ipv4 or ipv6 */
 	uint32_t proto;	/*!< Protocol type : Mostly UDP for Multicast */
-	uint32_t src_port; /*!< Source UDP port */
-	uint32_t dst_port; /*!< Destination UDP port */
-	uint8_t mac_addr[MAX_ETH_ALEN]; /*!< Member MAC address */
+	uint32_t src_port; /*!< Source port */
+	uint32_t dst_port; /*!< Destination port */
+	union {
+		unsigned char mac_addr[MAX_ETH_ALEN]; /*!< LAN/WLAN Mac address */
+		unsigned char src_mac[MAX_ETH_ALEN]; /*!< LAN/WLAN source Mac address */
+	};
+	uint32_t num_joined_macs; /*!< Number of Joined MACs */
+	unsigned char macaddr[DC_DP_MAX_MAC][MAX_ETH_ALEN]; /*!< Lan/wlan array of joined Mac Address */
 };
 
 /**
@@ -1483,8 +1513,7 @@ dc_dp_disconn_if (
    \param[in] flags  :
        DC_DP_F_MC_REGISTER - Register a DirectConnect interface.
        DC_DP_F_MC_DEREGISTER - De-register already registered DirectConnect interface.
-       DC_DP_F_MC_FW_RESET - Cleanup request on already learned entries on the registered DirectConnect interface.
-       DC_DP_F_MC_NEW_STA - Re-learn request on the registered DirectConnect interface.
+       DC_DP_F_MC_UPDATE_MAC_ADDR - Register a DirectConnect interface to get mcast SSM support.
    \return 0 if OK / -1 if error
    \note It can be skipped for specific peripheral driver if there is no notion
    of host connect/disconnect on the peripheral network/interface.

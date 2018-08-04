@@ -1,4 +1,8 @@
-﻿.qisBackgroundIndex{
+﻿option{
+	background-color: #FFF;
+	color: #000;
+}
+.qisBackgroundIndex{
 	background:url('qis_background.png') #FFF no-repeat;
 	background-size: cover;
 }
@@ -102,6 +106,9 @@
 	box-shadow: inset 0px 0px 10px rgba(0,122,255,0.15);
 }
 .ap_ssid{
+	color: #888;
+}
+.ap_band{
 	color: #888;
 }
 .icon_wifi_1{

@@ -9,7 +9,7 @@
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
 <title><#Web_Title#> - <#Adaptive_History#></title>
-<link rel="stylesheet" type="text/css" href="index_style.css"> 
+<link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="usp_style.css">
 <link rel="stylesheet" type="text/css" href="css/element.css">
@@ -42,9 +42,9 @@ function initial(){
 		getWebHistory();
 		genClientListOption();
 	}
-	else{	
+	else{
 		document.getElementById("log_field").style.display = "none";
-	}	
+	}
 }
 
 var htmlEnDeCode = (function() {
@@ -116,14 +116,14 @@ function parsingAjaxResult(rawData){
 			if((data_array[j][0] == thisRawData[0])
 			&& (data_array[j][1] == thisRawData[1])
 			&& (data_array[j][2].toUpperCase() == thisRawData[2].toUpperCase())){
-				match = 1;				
+				match = 1;
 				break;
-			}	
+			}
 		}
-				
+
 		if(match == 0)
 			data_array.push(thisRawData);
-		
+
 		match = 0;
 	}
 
@@ -133,7 +133,7 @@ function parsingAjaxResult(rawData){
 	code += "<th style='width:30%;text-align:left'><#PPPConnection_x_MacAddressForISP_itemname#> / <#Client_Name#></th>";
 	code += "<th style='width:50%;text-align:left'>Domain Name</th>";
 	code += "</tr>";
-	for(var i=0; i<data_array.length; i++){	
+	for(var i=0; i<data_array.length; i++){
 		var thisLog = {
 			macAddr: data_array[i][0],
 			timeStamp: data_array[i][1],
@@ -148,11 +148,11 @@ function parsingAjaxResult(rawData){
 		}
 		else
 			code += "<td>" + thisLog.macAddr + "</td>";
-		
-		code += "<td>" + thisLog.hostName + "</td>";	
+
+		code += "<td>" + thisLog.hostName + "</td>";
 		code += "</tr>";
 	}
-	
+
 	document.getElementById('log_table').innerHTML = code;
 	data_array = [];
 }
@@ -163,9 +163,9 @@ function convertTime(t){
 	time.setTime(t*1000);
 
 	time_string = time.getFullYear() + "-" + (time.getMonth() + 1) + "-";
-	time_string += transform_time_format(time.getDate());	  
+	time_string += transform_time_format(time.getDate());
 	time_string += "&nbsp&nbsp" + transform_time_format(time.getHours()) + ":" + transform_time_format(time.getMinutes()) + ":" + transform_time_format(time.getSeconds());
-	
+
 	return time_string;
 }
 
@@ -175,18 +175,18 @@ function transform_time_format(time){
 		string += "0" + time;
 	else
 		string += time;
-		
+
 	return string;
 }
 
 var history_array = new Array();
 function getWebHistory(mac, page){
-	var page_count = page ? page : "1";
-	var client = mac ? ("?client=" + mac) : ("?page=" + page_count); 
+	var page_count = page;
+	var client = "?client=" + mac + "&page=" + page_count;
 
 	$.ajax({
 		url: '/getWebHistory.asp' + client,
-		dataType: 'script',	
+		dataType: 'script',
 		error: function(xhr){
 			setTimeout("getWebHistory();", 1000);
 		},
@@ -197,21 +197,21 @@ function getWebHistory(mac, page){
 				document.getElementById('previous_button').style.visibility = "hidden";
 			}
 			else{
-				document.getElementById('previous_button').style.visibility = "visible";		
+				document.getElementById('previous_button').style.visibility = "visible";
 			}
 			
-			if(history_array.length < 50 || document.getElementById('clientListOption').value  != ""){
+			if(history_array.length < 50){
 				document.getElementById('next_button').style.visibility = "hidden";
 			}
 			else{
-				document.getElementById('next_button').style.visibility = "visible";			
+				document.getElementById('next_button').style.visibility = "visible";
 			}
-			
-			if(document.getElementById('clientListOption').value  == "" && page_count == "1" && history_array.length < 50){
-				document.getElementById('current_page').style.visibility = "hidden";			
+
+			if(page_count == "1" && history_array.length < 50){
+				document.getElementById('current_page').style.visibility = "hidden";
 			}
 			else{
-				document.getElementById('current_page').style.visibility = "visible";			
+				document.getElementById('current_page').style.visibility = "visible";
 			}
 					
 			if(document.getElementById('clientListOption').value  != ""){			
@@ -241,7 +241,7 @@ function genClientListOption(){
 
 		var clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
 		var newItem = new Option(clientName, clientObj.mac);
-		document.getElementById("clientListOption").options.add(newItem); 
+		document.getElementById("clientListOption").options.add(newItem);
 	}
 }
 
@@ -256,8 +256,8 @@ function change_page(flag){
 		page = parseInt(current_page) - 1;
 		if(page < 1)
 			page = 1;
-	
-		getWebHistory("", page);
+
+		getWebHistory(target, page);
 	}
 }
 function eula_confirm(){
@@ -287,18 +287,18 @@ function cal_panel_block(obj){
 		winWidth = window.innerWidth;
 	else if ((document.body) && (document.body.clientWidth))
 		winWidth = document.body.clientWidth;
-		
+
 	if (document.documentElement  && document.documentElement.clientHeight && document.documentElement.clientWidth){
 		winWidth = document.documentElement.clientWidth;
 	}
 
-	if(winWidth >1050){	
-		winPadding = (winWidth-1050)/2;	
+	if(winWidth >1050){
+		winPadding = (winWidth-1050)/2;
 		winWidth = 1105;
 		blockmarginLeft= (winWidth*0.2)+winPadding;
 	}
 	else if(winWidth <=1050){
-		blockmarginLeft= (winWidth)*0.2 + document.body.scrollLeft;	
+		blockmarginLeft= (winWidth)*0.2 + document.body.scrollLeft;
 	}
 
 	if(obj == "demo_background")
@@ -340,13 +340,13 @@ function updateWebHistory() {
 		<td valign="top" width="202">
 			<div id="mainMenu"></div>
 			<div id="subMenu"></div>
-		</td>	
+		</td>
 		<td valign="top">
-			<div id="tabMenu" class="submenuBlock"></div>		
+			<div id="tabMenu" class="submenuBlock"></div>
 			<table width="98%" border="0" align="left" cellpadding="0" cellspacing="0">
 				<tr>
-					<td align="left" valign="top">				
-						<table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">		
+					<td align="left" valign="top">
+						<table width="760px" border="0" cellpadding="5" cellspacing="0" bordercolor="#6b8fa3"  class="FormTitle" id="FormTitle">
 							<tr>
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
@@ -375,42 +375,14 @@ function updateWebHistory() {
 																					document.getElementById("tm_eula_content").style.height = (tm_eula_content_height - Math.abs(tm_eula_visiable_height) - 20) + "px"; //content height - overflow height - margin top and margin bottom
 																				}
 																			};
-																			if(document.form.preferred_lang.value == "JP"){
-																				$.get("JP_tm_eula.htm", function(data){
-																					document.getElementById('agreement_panel').innerHTML= data;
-																					adjust_TM_eula_height("agreement_panel");
-																				});
-																			}
-																			else if(document.form.preferred_lang.value == "TW"){
-																				$.get("tm_eula_TC.htm", function(data){
-																					document.getElementById('agreement_panel').innerHTML= data;
-																					adjust_TM_eula_height("agreement_panel");
-																				});
-																			}
-																			else if(document.form.preferred_lang.value == "CN"){
-																				$.get("tm_eula_SC.htm", function(data){
-																					document.getElementById('agreement_panel').innerHTML= data;
-																					adjust_TM_eula_height("agreement_panel");
-																				});
-																			}
-																			else if(document.form.preferred_lang.value == "FR"){
-																				$.get("tm_eula_FR.htm", function(data){
-																					document.getElementById('agreement_panel').innerHTML= data;
-																					adjust_TM_eula_height("agreement_panel");
-																				});
-																			}
-																			else if(document.form.preferred_lang.value == "RU"){
-																				$.get("tm_eula_RU.htm", function(data){
-																					document.getElementById('agreement_panel').innerHTML= data;
-																					adjust_TM_eula_height("agreement_panel");
-																				});
-																			}																			
-																			else{
-																				$.get("tm_eula.htm", function(data){
-																					document.getElementById('agreement_panel').innerHTML= data;
-																					adjust_TM_eula_height("agreement_panel");
-																				});
-																			}	
+
+																			$.get("tm_eula.htm", function(data){
+																				document.getElementById('agreement_panel').innerHTML= data;
+																				var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
+																				$("#eula_url").attr("href",url);
+																				adjust_TM_eula_height("agreement_panel");
+																			});
+
 																			dr_advise();
 																			cal_panel_block("agreement_panel", 0.25);
 																			$("#agreement_panel").fadeIn(300);
@@ -459,11 +431,11 @@ function updateWebHistory() {
 								</td>
 							</tr>
 						</table>
-					</td>  
+					</td>
 				</tr>
 			</table>
 			<!--===================================End of Main Content===========================================-->
-		</td>		
+		</td>
 	</tr>
 </table>
 </form>

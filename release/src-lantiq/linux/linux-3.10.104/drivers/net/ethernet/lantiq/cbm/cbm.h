@@ -695,7 +695,7 @@ struct cbm_pmac_port_map **prev);
 int delete_from_list(
 int32_t pmac, uint32_t flags);
 int get_budget(void);
-void cbm_restore_qmap(int enable, int qid);
+void cbm_restore_qmap(int enable);
 
 #endif /* __CBM_COMMON_H__ */
 

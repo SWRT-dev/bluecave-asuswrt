@@ -44,6 +44,7 @@
  *  PPA Specific Head File
  */
 #include <linux/swap.h>
+#include <linux/etherdevice.h>
 #include <net/ppa_api.h>
 #if defined(CONFIG_LTQ_DATAPATH) && CONFIG_LTQ_DATAPATH
 #include <net/datapath_api.h>
@@ -2935,10 +2936,8 @@ int32_t ppa_add_session( PPA_BUF *ppa_buf,
   uint32_t is_reply = (flags & PPA_F_SESSION_REPLY_DIR) ? 1 : 0;
     
   struct netif_info *rx_ifinfo;
-  int32_t hdr_offset=0, flg2=0; 
+  int32_t hdr_offset; 
   uint16_t hdrlen =0;
-  PPA_NETIF *base_netif = NULL;
-  PPA_IFNAME underlying_intname[PPA_IF_NAME_SIZE];
 
 
   if( sys_mem_check_flag )  {        
@@ -2954,42 +2953,25 @@ int32_t ppa_add_session( PPA_BUF *ppa_buf,
   }
 
   ppa_session_list_lock();
-  base_netif = ppa_get_pkt_src_if(ppa_buf);
-  
-#if defined(CONFIG_PPA_TCP_LITEPATH) && CONFIG_PPA_TCP_LITEPATH
-// local tcp traffic originated from CPE.
-// we need to mark this session item as SESSION_FLAG2_CPU_BOUND as that it can be checked later for taking actions
-  if ( ppa_is_pkt_host_output(ppa_buf) && (ppa_get_pkt_ip_proto(ppa_buf) == PPA_IPPROTO_TCP ) ) { 
-    	flg2 |= SESSION_FLAG2_CPU_BOUND | SESSION_FLAG2_ADD_HW_FAIL;   // this is a local session which cant be LRO accelerated
-  } else 
-#endif // CONFIG_PPA_TCP_LITEPATH
-  if(base_netif) {
-    if( PPA_SUCCESS != 
-	ppa_netif_lookup(ppa_get_netif_name(base_netif), &rx_ifinfo) ) {
     
-	ppa_debug(DBG_ENABLE_MASK_DEBUG_PRINT,
-          "failed in getting info structure of rx_if (%s)\n", 
-          ppa_get_netif_name(base_netif));
-	ret = PPA_ENOTPOSSIBLE;
-	goto __ADD_SESSION_DONE;
-    }
+  if( p_session ) 
+    ret = __ppa_session_find_by_ct(p_session, is_reply, pp_item);
+  else
+    ret = __ppa_find_session_from_skb(ppa_buf,0, pp_item);
 
-    if(rx_ifinfo->netif == NULL)
-    {
-       // ppa_debug(DBG_ENABLE_MASK_ERR,"failed in fetch interface\n");
-       ppa_netif_put(rx_ifinfo);
-       goto __ADD_SESSION_DONE;
-    } 
+    
+  if( PPA_SESSION_EXISTS == ret ) {
+    ret = PPA_SUCCESS;
+        goto __ADD_SESSION_DONE;
   }
 
   p_item = ppa_session_alloc_item();
   if( !p_item ) {
     ret = PPA_ENOMEM;
     ppa_debug(DBG_ENABLE_MASK_ERR,"failed in memory allocation\n");
-    ppa_netif_put(rx_ifinfo);
     goto __ADD_SESSION_DONE;
   }
-  /* dump_list_item(p_item, "ppa_add_session (after init)"); */
+  dump_list_item(p_item, "ppa_add_session (after init)");
     
   p_item->session = p_session;
   if ( (flags & PPA_F_SESSION_REPLY_DIR) )
@@ -3011,12 +2993,10 @@ int32_t ppa_add_session( PPA_BUF *ppa_buf,
     p_item->src_port      = ppa_get_pkt_src_port(ppa_buf);
     ppa_get_pkt_dst_ip(&p_item->dst_ip, ppa_buf);
     p_item->dst_port      = ppa_get_pkt_dst_port(ppa_buf);
-    p_item->rx_if         = base_netif; 
+    p_item->rx_if         = ppa_get_pkt_src_if(ppa_buf);
     p_item->timeout       = ppa_get_default_session_timeout();
     p_item->last_hit_time = ppa_get_time_in_sec();
 
-    p_item->flag2 |= flg2;   
- 
   //TODO: getting hash value need to be changed
   if( p_session ) 
     p_item->hash = ppa_get_hash_from_ct(p_session, is_reply?1:0,&tuple);
@@ -3031,7 +3011,38 @@ int32_t ppa_add_session( PPA_BUF *ppa_buf,
     
 //printk(KERN_INFO"in %s %d rxif=%s txif=%s\n",__FUNCTION__, __LINE__, (p_item->rx_if ? p_item->rx_if->name : "NULL"), (p_item->tx_if ? p_item->tx_if->name : "NULL"));
 
-if(p_item->rx_if) {
+#if defined(CONFIG_LTQ_PPA_TCP_LITEPATH) && CONFIG_LTQ_PPA_TCP_LITEPATH
+// local tcp traffic originated from CPE.
+// we need to mark this session item as SESSION_FLAG2_CPU_BOUND as that it can be checked later for taking actions
+  if ( ppa_is_pkt_host_output(ppa_buf) && (ppa_get_pkt_ip_proto(ppa_buf) == PPA_IPPROTO_TCP ) ) { 
+    p_item->flag2 |= SESSION_FLAG2_CPU_BOUND | SESSION_FLAG2_ADD_HW_FAIL;   // this is a local session which cant be LRO accelerated
+//printk(KERN_INFO"in %s %d\n",__FUNCTION__, __LINE__);
+  } else 
+#endif // CONFIG_LTQ_PPA_TCP_LITEPATH
+  if(p_item->rx_if) {
+    if( PPA_SUCCESS != 
+	ppa_netif_lookup(ppa_get_netif_name(p_item->rx_if), &rx_ifinfo) ) {
+    
+	ppa_debug(DBG_ENABLE_MASK_DEBUG_PRINT,
+          "failed in getting info structure of rx_if (%s)\n", 
+          ppa_get_netif_name(p_item->rx_if));
+	SET_DBG_FLAG(p_item, SESSION_DBG_RX_IF_NOT_IN_IF_LIST);
+	ppa_session_list_free_item(p_item);
+	ret = PPA_ENOTPOSSIBLE;
+	goto __ADD_SESSION_DONE;
+    }
+
+    if(rx_ifinfo->netif == NULL)
+    {
+       //interface is added but not updated completely, this happens when the interface is added which doesn't exist 
+       //and receives the frist packet for acceleration
+       if (ppa_netif_update(NULL,rx_ifinfo->name) != PPA_SUCCESS)
+       {
+           ppa_debug(DBG_ENABLE_MASK_ERR,"failed in update interface\n");
+           goto __ADD_SESSION_DONE;
+       }
+    } 
+
     hdr_offset = PPA_ETH_HLEN; 
 
     if( rx_ifinfo->flags & (NETIF_WAN_IF) ) {
@@ -3088,7 +3099,8 @@ if(p_item->rx_if) {
         
         //hdr_offset += rx_ifinfo->greInfo.tnl_hdrlen; 
 
-	base_netif = p_item->rx_if;
+	PPA_NETIF *base_netif = p_item->rx_if;
+        PPA_IFNAME underlying_intname[PPA_IF_NAME_SIZE];
 
 
         if( ppa_if_is_vlan_if(p_item->rx_if, NULL))
@@ -6945,6 +6957,33 @@ EXPORT_SYMBOL(ppa_bridging_session_stop_iteration);
 /*
  *  bridging session hardware/firmware operation
  */
+#if defined(CONFIG_LTQ_PPA_GRX500) && CONFIG_LTQ_PPA_GRX500
+unsigned char g_ppa_connectivity_issue_client_mac[6] = {0};
+PPA_IFNAME g_ppa_connectivity_issue_ifname[PPA_IF_NAME_SIZE] = "wlan2";
+int g_ppa_connectivity_issue_debug = 0;
+EXPORT_SYMBOL(g_ppa_connectivity_issue_client_mac);
+EXPORT_SYMBOL(g_ppa_connectivity_issue_ifname);
+EXPORT_SYMBOL(g_ppa_connectivity_issue_debug);
+
+static inline int connectivity_issue_debug(struct bridging_session_list_item *p_item)
+{
+	switch (g_ppa_connectivity_issue_debug) {
+	case CONNECTIVITY_ISSUE_DEBUG_ALL:
+		return 1;
+	case CONNECTIVITY_ISSUE_DEBUG_IFNAME:
+		return !strncmp(p_item->netif->name, g_ppa_connectivity_issue_ifname, PPA_IF_NAME_SIZE);
+	case CONNECTIVITY_ISSUE_DEBUG_CLIENTMAC:
+		return ether_addr_equal(g_ppa_connectivity_issue_client_mac, p_item->mac);
+	}
+	return 0;
+}
+
+#define CONNECTIVITY_ISSUE_DEBUG(p_item) \
+do {\
+	if (connectivity_issue_debug(p_item))\
+		ppa_debug(DBG_ENABLE_MASK_ERR,"%s:%d: netif=%s, port=%x, mac=%pM, sta_id=%x\n", __func__, __LINE__, p_item->netif->name, p_item->dest_ifid, p_item->mac, p_item->sub_ifid);\
+} while (0);
+#endif
 
 int32_t ppa_bridging_hw_add_session(struct bridging_session_list_item *p_item)
 {
@@ -6967,6 +7006,7 @@ int32_t ppa_bridging_hw_add_session(struct bridging_session_list_item *p_item)
     }
     br_mac.fid = p_item->fid;
     br_mac.sub_ifid = 	p_item->sub_ifid;
+    CONNECTIVITY_ISSUE_DEBUG(p_item);
 #endif
     if ( ppa_drv_add_bridging_entry(&br_mac, 0) == PPA_SUCCESS )
     {
@@ -6986,6 +7026,7 @@ void ppa_bridging_hw_del_session(struct bridging_session_list_item *p_item)
 #if defined(CONFIG_LTQ_PPA_GRX500) && CONFIG_LTQ_PPA_GRX500
     	ppa_memcpy(br_mac.mac, p_item->mac, PPA_ETH_ALEN);
     	br_mac.fid = p_item->fid;
+	CONNECTIVITY_ISSUE_DEBUG(p_item);
 #else
         br_mac.p_entry = p_item->bridging_entry;
 #endif

@@ -3798,10 +3798,30 @@ int ppa_support(int wan_unit)
 	if(strcmp(wan_proto, "l2tp") == 0) ret = 0;
 	if(strcmp(nvram_safe_get(strcat_r(prefix, "hwaddr_x", tmp)), "")) ret = 0;
 
-	if(ret == 0) nvram_set_int("ppa_running", 0);
-	else nvram_set_int("ppa_running", 1);
-
 	return ret;
+}
+
+int disable_ppa_wan(char *wan_ifname)
+{
+	char ppa_cmd[255] = {0};
+
+	if(!client_mode()){
+		system("ppacmd setppefp -f 0");
+	}
+	snprintf(ppa_cmd, sizeof(ppa_cmd), "ppacmd delwan -i %s", wan_ifname);
+	_dprintf("[%s][%d] %s\n", __func__, __LINE__, ppa_cmd);
+	system(ppa_cmd);
+	nvram_set("ctf_disable", "1");
+}
+
+int enable_ppa_wan(char *wan_ifname)
+{
+	char ppa_cmd[255] = {0};
+	snprintf(ppa_cmd, sizeof(ppa_cmd), "ppacmd addwan -i %s", wan_ifname);
+	_dprintf("[%s][%d] %s\n", __func__, __LINE__, ppa_cmd);
+	system(ppa_cmd);
+	system("ppacmd setppefp -f 1");
+	nvram_set("ctf_disable", "0");
 }
 #endif
 

@@ -51,6 +51,7 @@
 #define MC_F_DEREGISTER 0x02
 #define MC_F_DIRECTPATH 0x04
 #define PPA_MCAST_DEBUG 1
+#define MAX_MAC	64
 /* mcast stream data structure */
 
 typedef enum {
@@ -68,15 +69,15 @@ typedef struct _ip_addr_t{
 } ip_addr_t;
 
 typedef struct _mcast_stream_t{
-
-struct net_device *rx_dev;/* Rx Netdevice */
-ip_addr_t src_ip;/* Source ip : can be ipv4 or ipv6 */
-ip_addr_t dst_ip;/* Destination ip - GA : can be ipv4 of ipv6 */
-uint32_t proto;/* Protocol type : Mostly UDP for Multicast */
-uint32_t src_port;/* Source port */
-uint32_t dst_port;/* Destination port */
-unsigned char macaddr[ETH_ALEN];/* Mac address */
-unsigned char src_mac[ETH_ALEN];/* source Mac address for grx5xx */
+	struct net_device *rx_dev;/* Rx Netdevice */
+	ip_addr_t src_ip;/* Source ip : can be ipv4 or ipv6 */
+	ip_addr_t dst_ip;/* Destination ip - GA : can be ipv4 of ipv6 */
+	uint32_t proto;/* Protocol type : Mostly UDP for Multicast */
+	uint32_t src_port;/* Source port */
+	uint32_t dst_port;/* Destination port */
+	unsigned char src_mac[ETH_ALEN];/* source Mac address for grx5xx */
+	uint32_t num_joined_macs; /* Number of Joined MACs */
+	unsigned char macaddr[MAX_MAC][ETH_ALEN]; /* Lan/wlan array of joined Mac Address */
 }mcast_stream_t;
 
 

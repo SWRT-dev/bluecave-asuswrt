@@ -2877,6 +2877,9 @@ struct ieee80211_ops {
 
 	void (*restart_complete)(struct ieee80211_hw *hw);
 
+	int (*get_connection_alive)(struct ieee80211_hw *hw,
+				struct ieee80211_vif *vif);
+
 #if IS_ENABLED(CONFIG_IPV6)
 	void (*ipv6_addr_change)(struct ieee80211_hw *hw,
 				 struct ieee80211_vif *vif,

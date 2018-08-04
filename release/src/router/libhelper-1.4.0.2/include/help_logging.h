@@ -133,9 +133,9 @@ static inline void LOGF_TYPE(int log_type) {
 #define LOGF_LOG_NOTICE(args...)	    PRINTF(NOTICE, ##args)		/*!< Macro to define notice level  */ 
 #define LOGF_LOG_INFO(args...)		    PRINTF(INFO, ##args)		/*!< Macro to define info level  */ 
 #define LOGF_LOG_DEBUG(args...)       PRINTF(DEBUG, ##args)			/*!< Macro to define debug level  */ 
-#define LOGF_LOG(LEVEL, fmt, args...) SYSLOG_##LEVEL(PACKAGE_ID"{%s, %d}:"fmt, __func__, __LINE__, ##args) /*!< PRINTF Macro */ 
+#define LOGF_LOG(LEVEL, fmt, args...) SYSLOG_##LEVEL(PACKAGE_ID "{%s, %d}:" fmt, __func__, __LINE__, ##args) /*!< PRINTF Macro */ 
 
-#define PRINTF(LEVEL, fmt, args...)   SYSLOG_##LEVEL(PACKAGE_ID"{%s, %d}:"fmt, __func__, __LINE__, ##args) /*!< PRINTF Macro */ 
+#define PRINTF(LEVEL, fmt, args...)   SYSLOG_##LEVEL(PACKAGE_ID "{%s, %d}:" fmt, __func__, __LINE__, ##args) /*!< PRINTF Macro */ 
 
 #ifdef SYS_LOG_EMERG  // level 0
 #define SYSLOG_EMERG(fmt, args...) \

@@ -394,7 +394,8 @@ void sta_set_rate_info_tx(struct sta_info *sta,
 		struct ieee80211_supported_band *sband;
 		sband = sta->local->hw.wiphy->bands[
 				ieee80211_get_sdata_band(sta->sdata)];
-		rinfo->legacy = sband->bitrates[rate->idx].bitrate;
+                if (sband)
+		    rinfo->legacy = sband->bitrates[rate->idx].bitrate;
 	}
 	if (rate->flags & IEEE80211_TX_RC_40_MHZ_WIDTH)
 		rinfo->flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
@@ -422,7 +423,8 @@ void sta_set_rate_info_rx(struct sta_info *sta, struct rate_info *rinfo)
 
 		sband = sta->local->hw.wiphy->bands[
 				ieee80211_get_sdata_band(sta->sdata)];
-		rinfo->legacy =
+                if (sband)
+		    rinfo->legacy =
 			sband->bitrates[sta->last_rx_rate_idx].bitrate;
 	}
 
@@ -1189,6 +1191,8 @@ static int sta_apply_parameters(struct ieee80211_local *local,
 	u32 mask, set;
 
 	sband = local->hw.wiphy->bands[band];
+        if (!sband)
+            return -EINVAL;
 
 	mask = params->sta_flags_mask;
 	set = params->sta_flags_set;
@@ -1907,6 +1911,7 @@ static int ieee80211_change_bss(struct wiphy *wiphy,
 				struct bss_parameters *params)
 {
 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+        struct ieee80211_supported_band *sband;
 	enum ieee80211_band band;
 	u32 changed = 0;
 
@@ -1914,6 +1919,9 @@ static int ieee80211_change_bss(struct wiphy *wiphy,
 		return -ENOENT;
 
 	band = ieee80211_get_sdata_band(sdata);
+        sband = wiphy->bands[band];
+        if (!sband)
+            return -EINVAL;
 
 	if (params->use_cts_prot >= 0) {
 		sdata->vif.bss_conf.use_cts_prot = params->use_cts_prot;
@@ -1940,7 +1948,6 @@ static int ieee80211_change_bss(struct wiphy *wiphy,
 	if (params->basic_rates) {
 		int i, j;
 		u32 rates = 0;
-		struct ieee80211_supported_band *sband = wiphy->bands[band];
 
 		for (i = 0; i < params->basic_rates_len; i++) {
 			int rate = (params->basic_rates[i] & 0x7f) * 5;

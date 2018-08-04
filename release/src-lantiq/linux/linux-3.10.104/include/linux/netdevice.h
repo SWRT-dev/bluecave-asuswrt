@@ -1243,10 +1243,6 @@ struct net_device {
 	struct cpu_rmap		*rx_cpu_rmap;
 #endif
 
-#ifdef CONFIG_OFFLOAD_FWD_MARK
-	u32 offload_fwd_mark; 
-#endif
-
 	/* These may be needed for future network-power-down code. */
 
 	/*
@@ -1347,7 +1343,6 @@ struct net_device {
 	int group;
 
 	struct pm_qos_request	pm_qos_req;
-
 };
 #define to_net_dev(d) container_of(d, struct net_device, dev)
 

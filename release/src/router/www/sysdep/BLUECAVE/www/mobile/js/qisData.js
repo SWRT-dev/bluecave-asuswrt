@@ -175,13 +175,13 @@ var modemObj = {
 
 var systemVariable = {
 	"originWanType": "", /* ToDo: Secondary WAN support */
-	"manualWanType": false,
+	"manualWanSetup": false,
 	"wanDnsenable": "",
 	"detwanResult": {
 		"wanType": "",
 		"isIPConflict": false,
 	},
-	"isNewFw": false,
+	"isNewFw": 0,
 	"newFwVersion": "",
 	"papList": [],
 	"selectedAP": {},
@@ -193,7 +193,8 @@ var systemVariable = {
 	"uiLanguage": "",
 	"territoryCode": "",
 	"default_http_passwd": "admin",
-	"forceChangePW": "",
+	"forceChangePw": false,
+	"forceChangePwInTheEnd": false,
 	"rebootTime": ""
 }
 

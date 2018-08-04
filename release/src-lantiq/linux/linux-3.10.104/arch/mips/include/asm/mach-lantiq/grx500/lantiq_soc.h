@@ -31,7 +31,6 @@
 #define SOC_ID_GRX585		0x025
 #define SOC_ID_GRX3506		0x026
 #define SOC_ID_GRX3508		0x028
-#define SOC_ID_IRX200		0x02F
 
 /* SoC Types */
 #define SOC_TYPE_GRX500		0x09

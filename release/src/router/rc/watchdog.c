@@ -5017,16 +5017,74 @@ void httpd_check()
 }
 
 #ifdef RTCONFIG_LANTIQ
+int need_to_restart_wifi(void)
+{
+	static int not_ready_count = 0;
+
+	if (nvram_get_int("wave_ready") == 1){
+		if(!pids("wave_monitor")){
+			return 1;
+		}
+
+		if( mediabridge_mode()){
+		}else{
+			if(nvram_get_int("wl0_radio") == 1 &&
+					is_if_up("wlan0") != 1){
+				return 1;
+			}
+			if(nvram_get_int("wl1_radio") == 1 &&
+				is_if_up("wlan2") != 1){
+				return 1;
+			}
+		}
+	}
+
+	if(nvram_get_int("check_wave_ready") == -1){
+		nvram_unset("check_wave_ready");
+		return 1;
+	}
+
+	if(nvram_get_int("wave_ready") == 0){
+		if(!pids("wave_monitor")){
+			/* wave_ready = 0 and cannot trigger restart_wireless case */
+			if(not_ready_count > 10){
+				_dprintf("[%s][%d] count down to reload_mtlk:[%d]\n",
+					__func__, __LINE__, not_ready_count);
+				not_ready_count = 0;
+				return 1;
+			}else{
+				not_ready_count++;
+			}
+		}else{
+			not_ready_count = 0;
+		}
+		if(nvram_get_int("wave_action_cur") == 0){
+			return 1;
+		}
+	}
+
+	not_ready_count = 0;
+	return 0;
+}
+
 void wave_monitor_check()
 {
 	static int drop_caches_check = 0;
 
-	if (!pids("wave_monitor")){
-		nvram_set("wave_action", "3");
-		nvram_set("wave_CFG", "1");
+	if (need_to_restart_wifi()){
+		while(pidof("wave_monitor") > 0){
+			system("kill -9 `pidof wave_monitor`");
+		}
+		unload_mtlk();
 		logmessage("watchdog", "restart wave_monitor");
-		killall_tk("wave_monitor");
+		nvram_set("wave_unload_mtlk", "1");
+		nvram_unset("wave_CFG");
+		_dprintf("[%s][%d] start to unload_mtlk\n", __func__, __LINE__);
+		sleep(1);
 		start_wave_monitor();
+		sleep(5);
+		nvram_unset("wave_unload_mtlk");
+		_dprintf("[%s][%d] unload_mtlk finished\n", __func__, __LINE__);
 	}
 	if(drop_caches_check < 4){
 		f_write_string("/proc/sys/vm/drop_caches", "1", 0, 0);

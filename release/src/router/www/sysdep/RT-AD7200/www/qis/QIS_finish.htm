@@ -259,6 +259,9 @@ function doLiveUpdate(_do){
 
 function showCancel(){
 	document.getElementById("newFWCancel").style.display = "";
+	if(parent.new_FW_type==2){
+		document.getElementById("newFWCancelDesc").innerHTML = "<#exist_new_force#>";
+	}
  	document.getElementById("newFWDetected").style.display = "none";
 }
 
@@ -428,6 +431,10 @@ function checkIsNewFirmware(){
 
 		document.getElementById("QISmain").style.display = "none";
 		document.getElementById("liveUpdate_div").style.display = "";
+		if(parent.new_FW_type==2){
+			document.getElementById("liveUpdate_div_leftbutton").value = "<#CTL_UpgradeNight#>";
+			document.getElementById("liveUpdate_div_rightbutton").value = "<#CTL_UpgradeNow#>";
+		}
 
 		//force_upgrade_support : rc_support with "fupgrade"
 		if(!parent.is_CN && parent.force_upgrade_support){
@@ -1433,6 +1440,10 @@ function QKfinish_load_body(){
 		if(parent.new_FW){
 			document.getElementById("mainDiv_finish").style.display = "none";
 			document.getElementById("liveUpdate_div").style.display = "";
+			if(parent.new_FW_type==2){
+				document.getElementById("liveUpdate_div_leftbutton").value = "<#CTL_UpgradeNight#>";
+				document.getElementById("liveUpdate_div_rightbutton").value = "<#CTL_UpgradeNow#>";
+			}
 			document.getElementById("liveUpdateTitle").style.display = "none";
 			$("#currentFW")[0].innerHTML = parent.exist_firmver + "_" + parent.current_buildno + "_" + parent.current_extendno;
 			$("#latestFW")[0].innerHTML = "" 
@@ -1799,8 +1810,8 @@ var startQuery = function(){
 		<br>
 		<br>
 		<div class="apply_gen" style="margin-top:5px">
-			<input type="button" value="<#CTL_Cancel#>" onclick="showCancel();" class="button_gen">
-			<input type="button" value="<#checkbox_Yes#>" onclick="doLiveUpdate(true);" class="button_gen">
+			<input type="button" id="liveUpdate_div_leftbutton" value="<#CTL_Cancel#>" onclick="showCancel();" class="button_gen">
+			<input type="button" id="liveUpdate_div_rightbutton" value="<#checkbox_Yes#>" onclick="doLiveUpdate(true);" class="button_gen">
 		</div>
 	</div>
 		

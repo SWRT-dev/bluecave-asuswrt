@@ -3450,6 +3450,8 @@ static void atm_ppe_exit(struct atm_priv *priv)
 
 	atm_datapath_exit(priv);
 
+	/* Kill all tasklets */
+	tasklet_kill(&g_oam_tasklet);
 
 	/* free ptm pre-allocated memory */
 	atm_free_mem(priv);
@@ -3610,5 +3612,3 @@ void atm_exit(void)
 	kfree(priv);
 	g_atm_tc = NULL;
 
-	pr_info("ATM TC exit!\n");
-}

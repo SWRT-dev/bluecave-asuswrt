@@ -115,7 +115,6 @@ if(isMobile() && (based_modelid == "RT-AC88U" || based_modelid == "RT-AC3100" ||
 }
 	
 var parent_macaddr = '<% nvram_get("lan_hwaddr"); %>';
-var nz_isp_support = isSupport("nz_isp");
 var isRepeater = true;
 var reduced_internet_type = "disable";
 var targeturl = "/index.htm";
@@ -146,6 +145,7 @@ var current_buildno = "";
 var current_extendno = "";
 var liveUpdateFinish = false;
 var new_FW = false;
+var new_FW_type = 0;
 var retry = 0;
 var isStatic = false;
 var staticIP = false;
@@ -256,7 +256,8 @@ function detect_firmware(){
 			}
 			else{
 				if(webs_state_error == 0){
-					if(isNewFW(webs_state_info, current_firmware_path, current_firmware_path) && exist_firmver[0] != 9){
+					new_FW_type = webs_state_flag;
+					if(webs_state_flag==1 || webs_state_flag==2){	// && exist_firmver[0] != 9
 						new_FW = true;
 					}
 				}

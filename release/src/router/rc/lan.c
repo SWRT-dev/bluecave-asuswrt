@@ -4126,6 +4126,9 @@ lan_up(char *lan_ifname)
 #ifdef RTCONFIG_REALTEK
 /* [MUST]: Need to discuss to add new mode for Media Bridge  */
 	if((repeater_mode() || mediabridge_mode()) && nvram_get_int("wlc_mode") == 1)
+#elif defined RTCONFIG_LANTIQ
+	if((sw_mode() == SW_MODE_REPEATER || mediabridge_mode())
+		&& nvram_get_int("wlc_mode") == 1)
 #else
 	if(sw_mode() == SW_MODE_REPEATER && nvram_get_int("wlc_mode") == 1)
 #endif
@@ -5428,8 +5431,7 @@ void restart_wireless(void)
 	}
 #endif
 	_dprintf("[%s][%d] call wave_monitor()-04\n", __func__, __LINE__);
-	nvram_set("wave_action", "3");
-	kill_pidfile_s("/var/run/wave_monitor.pid", SIGUSR1);
+	trigger_wave_monitor(__func__, 3);
 	_dprintf("[%s][%d] call wave_monitor()-05\n", __func__, __LINE__);
 #endif
 #ifdef RTCONFIG_BCMWL6
