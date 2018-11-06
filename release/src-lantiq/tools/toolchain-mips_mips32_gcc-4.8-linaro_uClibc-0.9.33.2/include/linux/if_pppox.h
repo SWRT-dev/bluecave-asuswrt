@@ -81,7 +81,9 @@ struct sockaddr_pppol2tp {
 struct sockaddr_pppol2tpin6 {
 	__kernel_sa_family_t sa_family; /* address family, AF_PPPOX */
 	unsigned int    sa_protocol;    /* protocol identifier */
+#ifdef _LINUX_IN6_H
 	struct pppol2tpin6_addr pppol2tp;
+#endif
 } __attribute__((packed));
 
 /* The L2TPv3 protocol changes tunnel and session ids from 16 to 32
@@ -96,7 +98,9 @@ struct sockaddr_pppol2tpv3 {
 struct sockaddr_pppol2tpv3in6 {
 	__kernel_sa_family_t sa_family; /* address family, AF_PPPOX */
 	unsigned int    sa_protocol;    /* protocol identifier */
+#ifdef _LINUX_IN6_H
 	struct pppol2tpv3in6_addr pppol2tp;
+#endif
 } __attribute__((packed));
 
 /*********************************************************************

@@ -3079,7 +3079,6 @@ start_ddns(void)
 		service = "dnsomatic";
 	else if (strcmp(server, "WWW.TUNNELBROKER.NET")==0) {
 		service = "heipv6tb";
-		eval("iptables", "-t", "filter", "-D", "INPUT", "-p", "icmp", "-s", "66.220.2.74", "-j", "ACCEPT");
 		eval("iptables", "-t", "filter", "-I", "INPUT", "1", "-p", "icmp", "-s", "66.220.2.74", "-j", "ACCEPT");
 		nvram_set("ddns_tunbkrnet", "1");
 	}
@@ -3165,7 +3164,7 @@ start_ddns(void)
 		_eval(argv, NULL, 0, &pid);
 	} else {	// Custom DDNS
 		// Block until it completes and updates the DDNS update results in nvram
-		run_custom_script_blocking("ddns-start", wan_ip);
+		run_custom_script_blocking("ddns-start", wan_ip, NULL);
 		return 0;
 
 	}
@@ -7494,7 +7493,7 @@ start_services(void)
 #endif /* RTCONFIG_DBLOG */
 #endif /* RTCONFIG_PUSH_EMAIL */
 
-	doSystem("/usr/sbin/k3c-init.sh");
+	doSystem("/usr/sbin/softcenter-init.sh");
 	run_custom_script("services-start", NULL);
 	
 	return 0;

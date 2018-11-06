@@ -253,26 +253,6 @@ function show_etherstate() {
 function show_connstate(){
 	document.getElementById("conn_td").innerHTML = conn_stats_arr[0] + " / <% sysinfo("conn.max"); %>&nbsp;&nbsp;-&nbsp;&nbsp;" + conn_stats_arr[1] + " active";
 
-	document.getElementById("wlc_24_td").innerHTML = "Associated: <span>" + wlc_24_arr[0] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
-	                                                 "Authorized: <span>" + wlc_24_arr[1] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
-	                                                 "Authenticated: <span>" + wlc_24_arr[2] + "</span>";
-
-	if (band5g_support) {
-		if (based_modelid == "RT-AC87U") {
-			document.getElementById("wlc_5qtn_td").innerHTML = "Associated: <span>" +wlc_51_arr[0] + "</span>";
-		} else {
-			document.getElementById("wlc_51_td").innerHTML = "Associated: <span>" + wlc_51_arr[0] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
-			                                                 "Authorized: <span>" + wlc_51_arr[1] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
-			                                                 "Authenticated: <span>" + wlc_51_arr[2] + "</span>";
-		}
-	}
-
-	if (wl_info.band5g_2_support) {
-		document.getElementById("wlc_52_td").innerHTML = "Associated: <span>" + wlc_52_arr[0] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
-		                                                 "Authorized: <span>" + wlc_52_arr[1] + "</span>&nbsp;&nbsp;-&nbsp;&nbsp;" +
-		                                                 "Authenticated: <span>" + wlc_52_arr[2] + "</span>";
-	}
-
 }
 
 

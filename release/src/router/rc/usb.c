@@ -1639,6 +1639,11 @@ _dprintf("%s: stop_cloudsync.\n", __func__);
 		stop_usb_swap(mnt->mnt_dir);
 #endif	
 
+	run_custom_script_blocking("unmount", mnt->mnt_dir, NULL);
+
+	sync();
+	sleep(1);       // Give some time for buffers to be physically written to disk
+
 	for (count = 0; count < 35; count++) {
 		sync();
 		ret = umount(mnt->mnt_dir);
@@ -1818,6 +1823,8 @@ int mount_partition(char *dev_name, int host_num, char *dsc_name, char *pt_name,
 		return 0;
 
 	find_label_or_uuid(dev_name, the_label, uuid);
+
+	run_custom_script_blocking("pre-mount", dev_name, NULL);
 
 	if (f_exists("/etc/fstab")) {
 		if (strcmp(type, "swap") == 0) {
@@ -2001,6 +2008,8 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 
 		if (nvram_get_int("usb_automount"))
 			run_nvscript("script_usbmount", mountpoint, 3);
+
+		run_custom_script_blocking("post-mount", mountpoint, NULL);
 
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
 		char word[PATH_MAX], *next_word;
@@ -2546,7 +2555,11 @@ void write_ftpd_conf()
 		fprintf(fp, "xferlog_file=/var/log/vsftpd.log\n");
 	}
 
+	append_custom_config("vsftpd.conf", fp);
 	fclose(fp);
+
+	use_custom_config("vsftpd.conf", "/etc/vsftpd.conf");
+	run_postconf("vsftpd", "/etc/vsftpd.conf");
 }
 
 /*
@@ -3409,6 +3422,8 @@ void start_dms(void)
 				serial,
 				rt_version, rt_serialno, rt_rcno?"rc":"", rt_rcno?:"");
 
+			append_custom_config(MEDIA_SERVER_APP".conf",f);
+
 			fclose(f);
 		}
 
@@ -3419,6 +3434,8 @@ void start_dms(void)
 		if (nvram_get_int("dms_web"))
 			argv[index++] = "-W";
 #endif
+		use_custom_config(MEDIA_SERVER_APP".conf","/etc/"MEDIA_SERVER_APP".conf");
+		run_postconf(MEDIA_SERVER_APP, "/etc/"MEDIA_SERVER_APP".conf");
 
 		/* start media server if it's not already running */
 		if (pidof(MEDIA_SERVER_APP) <= 0) {

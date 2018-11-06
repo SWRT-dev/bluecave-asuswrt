@@ -741,7 +741,7 @@ obj-$(RTCONFIG_OPENVPN) += libvpn
 obj-y += rc
 obj-y += rom
 obj-y += others
-obj-y += k3c
+obj-y += softcenter libev-4.22 skipdbv2 dbus-1.8.8
 obj-y += readline-6.2
 obj-y += libpasswd
 obj-y += httpd json-c
@@ -3178,26 +3178,6 @@ libdaemon-install: libdaemon
 libdaemon-clean:
 	-@$(MAKE) -C libdaemon distclean
 	@rm -f libdaemon/stamp-h1
-
-lsof: lsof/Makefile
-	@$(SEP)
-	$(MAKE) -C $@
-
-lsof/Makefile:
-	( cd lsof ; \
-		LSOF_CC=$(CC) \
-		LSOF_INCLUDE=$(TOOLCHAIN)/include \
-		LSOF_VSTR="asuswrt" \
-		./Configure -n linux \
-	)
-
-lsof-install:
-	install -D lsof/lsof $(INSTALLDIR)/lsof/usr/sbin/lsof
-	$(STRIP) $(INSTALLDIR)/lsof/usr/sbin/lsof
-
-lsof-clean:
-	( cd lsof ; ./Configure -clean )
-	@rm -f lsof/Makefile
 
 mtd-utils: e2fsprogs lzo zlib
 ifeq ($(ALPINE)$(LANTIQ),y)
@@ -5700,7 +5680,7 @@ tuxera-install:
 	@[ ! -d tuxera ] || $(MAKE) -C tuxera install INSTALLDIR=$(INSTALLDIR)/tuxera
 
 netstat-nat-clean:
-	-@$(MAKE) -C netstat-nat clean
+	-@$(MAKE) -C netstat-nat distclean
 	@rm -f netstat-nat/Makefile
 	@rm -f netstat-nat/stamp-h1
 
@@ -6145,7 +6125,7 @@ wget/Makefile.in: wget/Makefile.am
 
 wget/Makefile: wget/Makefile.in
 	cd wget && $(CONFIGURE) \
-		--with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl \
+		--with-ssl=openssl --with-libssl-prefix=$(TOP)/openssl --sysconfdir=/etc \
 		--disable-opie --disable-ntlm --disable-debug --disable-nls --disable-rpath \
 		$(if $(RTCONFIG_IPV6),,--disable-ipv6) --disable-iri --without-included-regex  \
 		--disable-dependency-tracking \
@@ -6570,7 +6550,7 @@ bluez-5.41: libiconv-1.14 glib-2.37.7 udev-173 libical-2.0.0 readline-6.2 bluez-
 	$(MAKE) -C $@ && $(MAKE) $@-stage
 
 bluez-5.41-clean:
-	[ ! -f bluez-5.41/Makefile ] || $(MAKE) -C bluez-5.41 distclean
+	[ ! -f bluez-5.41/Makefile ] || $(MAKE) -C bluez-5.41 clean
 	@rm -f bluez-5.41/stamp-h1
 
 bluez-5.41-install: btconfig bluez-5.41
@@ -6727,6 +6707,51 @@ udev-173-install: udev-173
 		ln -sf libudev.so.0.12.0 libudev.so.0 && \
 		ln -sf libudev.so.0.12.0 libudev.so
 
+libev-4.22/configure:
+	cd libev-4.22 && ./autogen.sh
+
+libev-4.22/Makefile: libev-4.22/configure
+	cd libev-4.22 && $(CONFIGURE)\
+		--target=mips-openwrt-linux --host=mips-openwrt-linux --build=x86_64-linux-gnu --program-prefix= --program-suffix= \
+		--prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib --sysconfdir=/etc \
+		--datadir=/usr/share --localstatedir=/var --mandir=/usr/man --infodir=/usr/info --disable-nls --enable-shared --enable-static
+
+libev-4.22: libev-4.22/Makefile
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+libev-4.22-clean:
+	[ ! -f libev-4.22/Makefile ] || $(MAKE) -C libev-4.22 distclean
+
+libev-4.22-install:
+	install -D $(STAGEDIR)/usr/lib/libev.so.4.0.0 $(INSTALLDIR)/libev-4.22/usr/lib/libev.so.4.0.0
+	$(STRIP) $(INSTALLDIR)/libev-4.22/usr/lib/libev.so.4.0.0
+	cd $(INSTALLDIR)/libev-4.22/usr/lib && \
+		ln -sf libev.so.4.0.0 libev.so.4 && \
+		ln -sf libev.so.4.0.0 libev.so
+
+skipdbv2/Makefile: skipdbv2/CMakeLists.txt
+	cd skipdbv2 && cmake -DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_EXE_LINKER_FLAGS="-L$(STAGEDIR)/usr/lib -lev" 
+
+skipdbv2: libev-4.22 skipdbv2/Makefile
+	$(MAKE) -C $@
+
+skipdbv2-clean:
+	[ ! -f skipdbv2/Makefile ] || $(MAKE) -C skipdbv2 clean
+	@rm -rf skipdbv2/bin
+	@rm -rf skipdbv2/lib
+	@rm -rf skipdbv2/CMakeFiles
+	@rm -f skipdbv2/CMakeCache.txt
+	@rm -f skipdbv2/cmake_install.cmake
+	@rm -f skipdbv2/Makefile
+
+skipdbv2-install: skipdbv2
+	install -D skipdbv2/bin/skipd $(INSTALLDIR)/skipdbv2/usr/sbin/skipd
+	install -D skipdbv2/bin/dbus $(INSTALLDIR)/skipdbv2/usr/sbin/dbus
+	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/skipd
+	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/dbus
+
 libical-2.0.0/Makefile: libical-2.0.0/CMakeLists.txt
 	cd libical-2.0.0 && cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_BUILD_TYPE=Release \
@@ -6736,7 +6761,7 @@ libical-2.0.0: libical-2.0.0/Makefile
 	$(MAKE) -C $@ && $(MAKE) $@-stage
 
 libical-2.0.0-clean:
-	[ ! -f libical-2.0.0/Makefile ] || $(MAKE) -C libical-2.0.0 distclean
+	[ ! -f libical-2.0.0/Makefile ] || $(MAKE) -C libical-2.0.0 clean
 
 libical-2.0.0-install:
 	install -D libical-2.0.0/lib/libical_cxx.so.2.0.0 $(INSTALLDIR)/libical-2.0.0/usr/lib/libical_cxx.so.2.0.0
@@ -7645,5 +7670,4 @@ $(obj-y) $(obj-n) $(obj-clean) $(obj-install): dummy
 .PHONY: all clean distclean mrproper install package image
 .PHONY: conf mconf oldconf kconf kmconf config menuconfig oldconfig
 .PHONY: dummy libnet libpcap
-
 
