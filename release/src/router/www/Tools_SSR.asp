@@ -122,7 +122,7 @@ function gen_server_list(){
 var code = "";
 if(ssr_server_alias=="")
 {
-code +='<option value="0">无服务器配置</option>';
+code +='<option value="0">none</option>';
 document.getElementById("ssr_index_id").innerHTML = code;
 return;
 }
@@ -290,11 +290,11 @@ code +='<th width="50%"><#SSR_servername#></th>';/*untranslated*/
 code +='<th width="20%"><#SSR_config#></th>';
 code +='<th width="20%"><#SSR_edit#></th></tr>';
 code +='<tr><td style="border-bottom:2px solid #000;" title="<#CTL_Enabled#>/<#btn_disable#>"><input type=\"checkbox\" id="newrule_Enable" checked></td>';
-code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" style="margin-left:0px;width:255px;" class="input_20_table" name="Server_alias" autocorrect="off" autocapitalize="off" placeholder="请输入一个服务器别名"></td>';
+code +='<td style="border-bottom:2px solid #000;"><input type="text" maxlength="17" style="margin-left:0px;width:255px;" class="input_20_table" name="Server_alias" autocorrect="off" autocapitalize="off" placeholder="name"></td>';
 code +='<td style="border-bottom:2px solid #000;">--</td>';
-code +='<td style="border-bottom:2px solid #000;"><input class="url_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
+code +='<td style="border-bottom:2px solid #000;"><input class="add_btn" type="button" onClick="addRow_main(16)" value=""></td></tr>';
 if(ssr_server_alias == "")
-code +='<tr><td style="color:#FFCC00;" colspan="4">目前没有数据</td>';
+code +='<tr><td style="color:#FFCC00;" colspan="4">no data</td>';
 else{
 var dispName;
 for(var i=0; i<ssr_server_alias_row.length; i++){
@@ -392,7 +392,7 @@ code +='<td align="left" style="color:#FFF">'+ ssr_server_alias_row[s_index] + '
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_type#></th>';
 code +='<td align="left" style="color:#FFF"><select id="Server_type_id" name="Server_type" onchange="hide_ssr(this.value);"></select></td></tr>';
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_ip#></th>';
-code +='<td align="left" style="color:#FFF"><input name=Server_ip type="text" onKeyPress="return validator.isIPAddr(this, event);" maxlength="15" autocorrect="off" autocapitalize="off" value='+ ssr_server_ip_row[s_index] + '></td></tr>';
+code +='<td align="left" style="color:#FFF"><input name=Server_ip value='+ ssr_server_ip_row[s_index] + '></td></tr>';
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_port#></th>';
 code +='<td align="left" style="color:#FFF"><input name=Server_port value='+ ssr_server_port_row[s_index] + '></td></tr>';
 code +='<tr><th style="height:20px;" align="right"><#SSR_server_timeout#></th>';
@@ -423,11 +423,11 @@ function addRow_main(upper){
 var invalid_char = "";
 var rule_num = document.getElementById('mainTable_table').rows.length - 3; // remove tbody
 if(rule_num >= upper){
-alert("服务器数目超过最大限制： " + upper + " ！");
+alert("too more： " + upper + " ！");
 return false;
 }
 if(document.form.Server_alias.value == ""){
-alert("请输入服务器别名，可以使用中文");
+alert("Server name");
 document.form.Server_alias.focus();
 return false;
 }
@@ -668,7 +668,7 @@ function reload_Soft_Center() {
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="2">
 <input type="hidden" name="action_mode" value="toolscript">
-<input type="hidden" name="action_script" value="/usr/sbin/k3c_ssr.sh">
+<input type="hidden" name="action_script" value="/usr/sbin/softcenter_ssr.sh">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="ssr_enable" value="<% nvram_get("ssr_enable"); %>">

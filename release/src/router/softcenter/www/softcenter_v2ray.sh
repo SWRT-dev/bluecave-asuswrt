@@ -52,7 +52,7 @@ download_v2ray(){
 	Tmpv2ctl=v2ctl
 	tarfile=v2ray-linux-mips.zip
 	v2ray_bin=https://github.com/v2ray/v2ray-core/releases/download/"$PKG_VERSION"/$tarfile
-	v2ray_bin2=http://k3c.paldier.com/tools/$tarfile
+	v2ray_bin2=https://k3c.paldier.com/tools/$tarfile
 	d_rule() {
 		wget --no-check-certificate --timeout=10 --tries=3 -qO $1 $2
 	}
@@ -60,7 +60,7 @@ download_v2ray(){
 	echo "$(date "+%F %T") 本地版本: $V2RA_VER" >> /tmp/v2ray.log
 	logger -t "【v2ray】" "在线版本 $PKG_VERSION"
 	logger -t "【v2ray】" "本地版本 $V2RA_VER"
-	if [ "$V2RA_VER" != "$PKG_VERSION" ]; then
+	if [ "v$V2RA_VER" != "$PKG_VERSION" ]; then
 		logger -t "【v2ray】" "本地版本与在线版本不同，下载 $PKG_VERSION ......"
 		echo "$(date "+%F %T"): 本地版本与在线版本不同，下载 $PKG_VERSION ......" >> /tmp/v2ray.log
 		cd /tmp
