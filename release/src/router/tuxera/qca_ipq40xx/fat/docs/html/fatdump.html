@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.21 -->
-<!-- CreationDate: Fri Jun 10 14:58:41 2016 -->
+<!-- CreationDate: Mon Mar 12 08:44:48 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -26,6 +26,7 @@
 <a href="#OPTIONS">OPTIONS</a><br>
 <a href="#EXIT CODES">EXIT CODES</a><br>
 <a href="#EXAMPLES">EXAMPLES</a><br>
+<a href="#PLEASE NOTE">PLEASE NOTE</a><br>
 <a href="#KNOWN ISSUES">KNOWN ISSUES</a><br>
 <a href="#AUTHORS">AUTHORS</a><br>
 <a href="#AVAILABILITY">AVAILABILITY</a><br>
@@ -78,7 +79,18 @@ summary of all the options that <b>fatdump</b> accepts.
 Nearly all options have two equivalent names. The short name
 is preceded by <b>&minus;</b> and the long name is preceded
 by <b>&minus;&minus; . <br>
-&minus;m</b>, <b>&minus;&minus;metadata</b></p>
+&minus;d</b>, <b>&minus;&minus;dirmetadata</b></p>
+
+<p style="margin-left:22%;">Clone <b>ONLY METADATA</b> (for
+FAT experts). This command is similar to the
+<b>&minus;m</b>/<b>&minus;&minus;metadata</b> option but
+uses an exclusive rather than inclusive algorithm, which may
+reduce image size on corrupted volumes with a lot of
+unreachable data, but will then omit data that could
+possibly be useful for debugging.</p>
+
+<p style="margin-left:11%;"><b>&minus;m</b>,
+<b>&minus;&minus;metadata</b></p>
 
 <p style="margin-left:22%;">Clone <b>ONLY METADATA</b> (for
 FAT experts). A metadata dump contains all of the FAT volume
@@ -144,6 +156,14 @@ ask for a password!</p>
 /dev/sda1 | bzip2 | ssh host &rsquo;cat &gt;
 sda1.img.bzip2&rsquo;</b></p>
 
+<h2>PLEASE NOTE
+<a name="PLEASE NOTE"></a>
+</h2>
+
+
+<p style="margin-left:11%; margin-top: 1em"><b>fatdump</b>
+currently does not support FAT12 volumes.</p>
+
 <h2>KNOWN ISSUES
 <a name="KNOWN ISSUES"></a>
 </h2>
@@ -160,7 +180,10 @@ fat-support@tuxera.com.</p>
 
 
 <p style="margin-left:11%; margin-top: 1em"><b>fatdump</b>
-was written by Sougata Santra, Tuxera Inc.</p>
+was written by</p>
+
+<p style="margin-left:23%;">Erik Larsson, Tuxera Inc. <br>
+Sougata Santra, Tuxera Inc.</p>
 
 <h2>AVAILABILITY
 <a name="AVAILABILITY"></a>

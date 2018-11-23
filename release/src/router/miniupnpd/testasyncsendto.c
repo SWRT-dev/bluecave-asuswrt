@@ -20,6 +20,8 @@
 #include "asyncsendto.h"
 
 struct lan_addr_list lan_addrs;
+int runtime_flags = 0;
+time_t startup_time = 0;
 
 #define DEST_IP "239.255.255.250"
 #define DEST_PORT 1900

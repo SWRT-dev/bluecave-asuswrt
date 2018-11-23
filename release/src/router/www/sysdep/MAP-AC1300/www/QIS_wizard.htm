@@ -70,7 +70,17 @@
 				"wan_dns2_x": '<% nvram_get("wan_dns2_x"); %>',
 				"wan_heartbeat_x": '<% nvram_get("wan_heartbeat_x"); %>',
 				"vpn_enable": '<% nvram_get("vpn_enable"); %>',
-			
+
+				/* iptv */
+				"switch_stb_x": '<% nvram_get("switch_stb_x"); %>',
+				"switch_wantag": '<% nvram_get("switch_wantag"); %>',
+				"switch_wan0tagid": '<% nvram_get("switch_wan0tagid"); %>',
+				"switch_wan0prio": '<% nvram_get("switch_wan0prio"); %>',
+				"switch_wan1tagid": '<% nvram_get("switch_wan1tagid"); %>',
+				"switch_wan1prio": '<% nvram_get("switch_wan1prio"); %>',
+				"switch_wan2tagid": '<% nvram_get("switch_wan2tagid"); %>',
+				"switch_wan2prio": '<% nvram_get("switch_wan2prio"); %>',
+
 				/* bwdpi */
 				"wrs_protect_enable": '<% nvram_get("wrs_protect_enable"); %>',
 				"wrs_mals_t": '<% nvram_get("wrs_mals_t"); %>',
@@ -123,6 +133,16 @@
 				"wan_dns2_x": '<% nvram_get("wan_dns2_x"); %>',
 				"wan_heartbeat_x": '<% nvram_get("wan_heartbeat_x"); %>',
 				"vpn_enable": '<% nvram_get("vpn_enable"); %>',
+
+				/* iptv */
+				"switch_stb_x": '<% nvram_get("switch_stb_x"); %>',
+				"switch_wantag": '<% nvram_get("switch_wantag"); %>',
+				"switch_wan0tagid": '<% nvram_get("switch_wan0tagid"); %>',
+				"switch_wan0prio": '<% nvram_get("switch_wan0prio"); %>',
+				"switch_wan1tagid": '<% nvram_get("switch_wan1tagid"); %>',
+				"switch_wan1prio": '<% nvram_get("switch_wan1prio"); %>',
+				"switch_wan2tagid": '<% nvram_get("switch_wan2tagid"); %>',
+				"switch_wan2prio": '<% nvram_get("switch_wan2prio"); %>',
 				
 				/* bwdpi */
 				"wrs_protect_enable": '1',
@@ -145,6 +165,14 @@
 
 			var forceChangePW = ('<% check_pw(); %>' == '1') ? true : false;
 			var wanType = "";
+			var based_modelid = '<% nvram_get("productid"); %>';
+			var lyraGoodimage = new Image(); //Add for preload image
+			lyraGoodimage.src = '../images/qis/asus_hive_good.png';
+
+			var portName = {
+				"voip": "Primary Node LAN Port",
+				"iptv": "Primary Node LAN Port"
+			}
 
 			$(document).ready(function(){
 				document.querySelector("meta[name=viewport]").setAttribute(
@@ -250,7 +278,22 @@
 
 				patchUntranslatedString();
 
-				if(!isWLclient()) goTo.wiredHint()
+				if(isSku("CN") || isSku("US") || isSku("CA")){
+					$("#iptvCheckboxContainer").hide();
+					$("#iptvCheckboxContainer_PPPoE").hide();
+				}
+				else if(isSku("TW")){
+					$("#iptvCheckboxContainer label").text("Hinet MOD");
+					$("#iptvCheckboxContainer_PPPoE label").text("Hinet MOD");
+				}
+
+				if(based_modelid == "MAP-AC1750"){
+					if($("#iptvDesc").hasClass("lyra_iptv"))
+						$("#iptvDesc").removeClass("lyra_iptv").addClass("lyraTrio_iptv");
+					$("#iptvDescTitle").text("Please connect your ISP modem LAN port to the port label \"LAN/WAN\".");
+				}
+
+				if(!isWLclient() && based_modelid != "MAP-AC1750") goTo.wiredHint();
 			});
 			
 			function patchUntranslatedString(){	
@@ -505,6 +548,12 @@
 				"login": function(){
 					if(hasBlank([$("#http_username"), $("#http_passwd"), $("#http_passwd_confirm")])) return false;
 
+					if(based_modelid == "MAP-AC1750"){
+						qisPostData.wrs_protect_enable = qisOriginData.wrs_protect_enable;
+						qisPostData.bwdpi_db_enable = qisOriginData.bwdpi_db_enable;
+						qisPostData.apps_analysis = qisOriginData.apps_analysis;
+					}
+
 					var validForm = function(){
 						if($("#http_username").val() == 0){
 							$("#http_username").showTextHint("<#File_Pop_content_alert_desc1#>");
@@ -600,7 +649,11 @@
 					qisPostData.wan_dhcpenable_x = "1";
 					qisPostData.wan_dnsenable_x = "1";
 
-					$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
+					if($("#iptv_checkbox").is(":checked")){
+						$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: false});
+					}
+					else
+						$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
 				},
 			
 				"pppoe": function(){
@@ -619,7 +672,11 @@
 						qisPostData.wan_pppoe_username = $("#wan_pppoe_username").val();
 						qisPostData.wan_pppoe_passwd = $("#wan_pppoe_passwd").val();
 				
-						$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
+						if($("#iptv_checkbox").is(":checked") || $("#iptv_checkbox_pppoe").is(":checked")){
+							$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: false});
+						}
+						else
+							$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
 					}
 				},
 			
@@ -639,8 +696,12 @@
 					qisPostData.wan_dnsenable_x = "0";
 					qisPostData.wan_dns1_x = $("#pap_ip_advance_setting_dns1").val();
 					qisPostData.wan_dns2_x = $("#pap_ip_advance_setting_dns2").val();
-			
-					$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
+
+					if($("#iptv_checkbox").is(":checked")){
+						$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: false});
+					}
+					else
+						$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
 				},
 			
 				"wireless": function(){
@@ -707,6 +768,28 @@
 				"checkAddMore": function(){
 					$('.backToFinish').hide();
 					goTo.WPS();
+				},
+
+				"iptv_desc": function(){
+					goTo.iptv();
+				},
+
+				"iptv": function(){
+					 if(qisPostData.switch_wantag == "manual"){
+						if(hasBlank([
+							$("#internet_vid"),
+							$("#internet_prio"),
+							$("#stb_vid"),
+							$("#stb_prio"),
+						])) return false;
+
+						qisPostData.switch_wan0tagid = $("#internet_vid").val();
+						qisPostData.switch_wan0prio = $("#internet_prio").val();
+						qisPostData.switch_wan1tagid = $("#stb_vid").val();
+						qisPostData.switch_wan1prio = $("#stb_prio").val();
+					}
+
+					$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false, reverse: false});
 				}
 			};
 			
@@ -815,13 +898,25 @@
 							$.mobile.changePage("#login_name", {transition: "slide", changeHash: false, reverse: true});
 					}
 					else if(qisPostData.wan_proto == "pppoe"){
-						$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: true});
+						if($("#iptv_checkbox").is(":checked") || $("#iptv_checkbox_pppoe").is(":checked")){
+							$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: true});
+						}
+						else
+							$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: true});
 					}
 					else if(qisPostData.wan_proto == "static"){
-						$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: true});
+						if($("#iptv_checkbox").is(":checked")){
+							$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: true});
+						}
+						else
+							$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: true});
 					}
 					else{
-						$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false, reverse: true});
+						if($("#iptv_checkbox").is(":checked")){
+							$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: true});
+						}
+						else
+							$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false, reverse: true});
 					}
 				},
 
@@ -829,7 +924,10 @@
 					$.mobile.changePage("#wps_page", {transition: "slide", changeHash: false, reverse: true});	
 					$(".flashingColor").removeClass("blue");
 					window.flashTimer = setInterval(function(){
-						$(".flashingColor").toggleClass("green");
+						if(based_modelid == "MAP-AC1750")
+							$(".flashingColor").toggleClass("blue");
+						else
+							$(".flashingColor").toggleClass("green");
 					}, 500);
 				},
 
@@ -848,7 +946,31 @@
 					setTimeout(function(){
 						$(".flashingColor").removeClass("green").addClass("blue")
 					}, 300);
-				}
+				},
+
+				"iptv_desc": function(){
+					if(qisPostData.wan_proto == "pppoe" || qisPostData.wan_proto == "pptp" || qisPostData.wan_proto == "l2tp"){
+						$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else if(qisPostData.wan_proto == "static"){
+						$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+					else{
+						$.mobile.changePage("#wan_setting", {transition: "slide", changeHash: false, reverse: true});
+					}
+				},
+
+				"iptv": function(){
+					qisPostData.switch_wantag = qisOriginData.switch_wantag;
+					qisPostData.switch_stb_x = qisOriginData.switch_stb_x;
+					qisPostData.switch_wan0tagid = qisOriginData.switch_wan0tagid;
+					qisPostData.switch_wan0prio = qisOriginData.switch_wan0prio;
+					qisPostData.switch_wan1tagid = qisOriginData.switch_wan1tagid;
+					qisPostData.switch_wan1prio = qisOriginData.switch_wan1prio;
+					qisPostData.switch_wan2tagid = qisOriginData.switch_wan2tagid;
+					qisPostData.switch_wan2prio = qisOriginData.switch_wan2prio;
+					$.mobile.changePage("#iptv_desc", {transition: "slide", changeHash: false, reverse: true});
+				},
 			};
 			
 			var goTo = {
@@ -884,11 +1006,13 @@
 				"PPPoE": function(){
 					qisPostData.wan_proto = "pppoe";
 					$.mobile.changePage("#pppoe_setting", {transition: "slide", changeHash: false, reverse: false});
+					if(wanType != "PPPoE" || isSku("CN") || isSku("US") || isSku("CA"))
+						$("#iptvCheckboxContainer_PPPoE").hide();
 				},
 
 				"Static": function(){
 					qisPostData.wan_proto = "static";
-					$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: false});		
+					$.mobile.changePage("#static_setting", {transition: "slide", changeHash: false, reverse: false});
 				},
 
 				"PPTP": function(){
@@ -923,7 +1047,10 @@
 					$.mobile.changePage("#wps_page", {transition: "slide", changeHash: false, reverse: false});
 					$(".flashingColor").removeClass("blue");
 					window.flashTimer = setInterval(function(){
-						$(".flashingColor").toggleClass("green");
+						if(based_modelid == "MAP-AC1750")
+							$(".flashingColor").toggleClass("blue");
+						else
+							$(".flashingColor").toggleClass("green");
 					}, 500);
 				},
 
@@ -978,6 +1105,312 @@
 
 				"TMToS": function(){
 					$.mobile.changePage("#tmtos_page", {transition: "slide", changeHash: false, reverse: false});	
+				},
+
+				"iptv": function(){
+					$("#switch_wantag")
+						.change(function(){
+							var isp = $("#switch_wantag").val();
+							switch(isp){
+								case "none":
+									qisPostData.switch_wantag = "none";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "unifi_home":
+									qisPostData.switch_wantag = "unifi_home";
+									qisPostData.switch_stb_x = "4";
+									qisPostData.switch_wan0tagid = "500";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "600";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "unifi_biz":
+									qisPostData.switch_wantag = "unifi_biz";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "500";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "singtel_others":
+									qisPostData.switch_wantag = "singtel_others";
+									qisPostData.switch_stb_x = "4";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "20";
+									qisPostData.switch_wan1prio = "4";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "m1_fiber":
+									qisPostData.switch_wantag = "m1_fiber";
+									qisPostData.switch_stb_x = "3";
+									qisPostData.switch_wan0tagid = "1103";
+									qisPostData.switch_wan0prio = "1";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "1107";
+									qisPostData.switch_wan2prio = "1";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").show();
+									$("#iptv_manual").hide();
+									break;
+								case "maxis_fiber":
+									qisPostData.switch_wantag = "maxis_fiber";
+									qisPostData.switch_stb_x = "3";
+									qisPostData.switch_wan0tagid = "621";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "821";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").show();
+									$("#iptv_manual").hide();
+									break;
+								case "maxis_fiber_sp":
+									qisPostData.switch_wantag = "maxis_fiber_sp";
+									qisPostData.switch_stb_x = "3";
+									qisPostData.switch_wan0tagid = "11";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "14";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").hide();
+									$("#iptv_voip").show();
+									$("#iptv_manual").hide();
+									break;
+								case "hinet":
+									qisPostData.switch_wantag = "hinet";
+									qisPostData.switch_stb_x = "4";
+									qisPostData.switch_wan0tagid = "";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "stuff_fibre":
+									qisPostData.switch_wantag = "stuff_fibre";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "spark":
+									qisPostData.switch_wantag = "spark";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "2degrees":
+									qisPostData.switch_wantag = "2degrees";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "slingshot":
+									qisPostData.switch_wantag = "slingshot";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "orcon":
+									qisPostData.switch_wantag = "orcon";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "voda_nz":
+									qisPostData.switch_wantag = "voda_nz";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "tpg":
+									qisPostData.switch_wantag = "tpg";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "2";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "iinet":
+									qisPostData.switch_wantag = "iinet";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "10";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "aapt":
+									qisPostData.switch_wantag = "aapt";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "2";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "intronode":
+									qisPostData.switch_wantag = "intronode";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "2";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "amaysim":
+									qisPostData.switch_wantag = "amaysim";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "100";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "dodo":
+									qisPostData.switch_wantag = "dodo";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "100";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "iprimus":
+									qisPostData.switch_wantag = "iprimus";
+									qisPostData.switch_stb_x = "0";
+									qisPostData.switch_wan0tagid = "100";
+									qisPostData.switch_wan0prio = "0";
+									qisPostData.switch_wan1tagid = "";
+									qisPostData.switch_wan1prio = "0";
+									qisPostData.switch_wan2tagid = "";
+									qisPostData.switch_wan2prio = "0";
+									$("#iptv_stb").hide();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").hide();
+									break;
+								case "manual":
+									qisPostData.switch_wantag = "manual";
+
+									$("#iptv_stb").show();
+									$("#iptv_voip").hide();
+									$("#iptv_manual").show();
+									break;
+							}
+						})
+					.trigger("change");
+
+					if(isSku("TW")){
+						$("#switch_wantag")
+							.val("hinet")
+							.trigger("change")
+					}
+
+					$.mobile.changePage("#iptv_setting", {transition: "slide", changeHash: false, reverse: false});
 				}
 			};
 		</script>
@@ -1025,9 +1458,9 @@
 				<div class="tos">
 					<input id="tosCheckbox" type="checkbox">
 					<span id="tosTitle"><#lyra_welcome_agree#></span>
-					<a href="#" onclick="goTo.AsusPP()">ASUS Privacy Policy</a>, 
-					<a href="#" onclick="goTo.AsusToS()">ASUS Terms of Use</a>, 
-					<a href="#" onclick="goTo.TMToS()">Trend Micro End User License Agreement</a>.
+					<a href="#" onclick="goTo.AsusPP()"><#lyra_privacy_policy#></a>,
+					<a href="#" onclick="goTo.AsusToS()"><#lyra_tos#></a>,
+					<a href="#" onclick="goTo.TMToS()"><#lyra_TrendMicro_agreement#></a>.
 				</div>
 				<script>
 					$("#tosTitle").click(function(){
@@ -1115,7 +1548,7 @@
 				<div id="login_field">
 					<div style="margin-left:17px;">
 						<div style="display:table;margin:18px 0 19px 30px;width:100%">
-							<div class="inputTitle"><#Router_Login_Name#></div>
+							<div class="inputTitle"><#HSDPAConfig_Username_itemname#></div>
 						</div>
 						<div class="inputContainer">
 							<input id="http_username" type="text" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
@@ -1435,7 +1868,10 @@
 							</div>
 						</div>
 					</div>
-
+					<div id="iptvCheckboxContainer" style="margin-left:25px; margin-top:10px; color:#888;">
+						<label for="iptv_checkbox" class="labelInput"><#PPPConnection_x_HostNameForISP_sectionname#></label>
+						<input type="checkbox" id="iptv_checkbox" style="margin-top: 6px;" value="1" data-mini="true" />						
+					</div>
 					<!-- Action Button -->
 					<div class="footer_desktop" style="color:#FFF;text-align:center;margin-top:30px;">
 						<div class="desktop_abortBtn" onclick='abort.wan()'><#CTL_prev#></div>
@@ -1560,7 +1996,7 @@
 				<div id="pppoe_field">
 					<div style="margin-left:17px;">
 						<div style="display:table;margin:18px 0 19px 30px;width:100%">
-							<div class="inputTitle"><#PPPConnection_UserName_itemname#></div>
+							<div class="inputTitle"><#Username#></div>
 						</div>
 						<div class="inputContainer">
 							<input id="wan_pppoe_username" type="text" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
@@ -1583,6 +2019,10 @@
 						<div class="inputContainer">
 							<input id="wan_heartbeat_x" type="text" maxlength="64" class="textInput" data-role="none" value="" data-clear-btn="true"></input>
 						</div>
+					</div>
+					<div id="iptvCheckboxContainer_PPPoE" style="margin-left:35px; margin-top:-80px; color:#888;">
+						<label for="iptv_checkbox_pppoe" class="labelInput"><#PPPConnection_x_HostNameForISP_sectionname#></label>
+						<input type="checkbox" id="iptv_checkbox_pppoe" style="margin-top: 6px;" value="1" data-mini="true" />	
 					</div>
 					<!-- Action Button -->
 					<div class="footer_desktop">
@@ -1690,6 +2130,199 @@
 								</td>
 								<td style="width:50%;background:#27D1A4" onclick="apply.static();">
 									<div  class="mobile_applyBtn"><#CTL_next#></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- IPTV Setting -->
+		<div id="iptv_desc" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px;">Tips</div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc">
+					<div id="iptvDescTitle">
+						Please connect your ISP modem LAN port to LAN port next to power socket.
+					</div>
+				</div>
+
+				<div style="margin-left:17px;">
+					<div id="iptvDesc" class="lyra_iptv"></div>
+				</div>
+				<!-- Action Button -->
+				<div class="footer_desktop">
+					<div class="desktop_abortBtn" onclick='abort.iptv_desc()'><#CTL_prev#></div>
+					<div class="desktop_applyBtn" onclick="apply.iptv_desc();"><#CTL_next#></div>
+				</div>
+				<div class="footer_mobile">
+					<table style="width:100%;" cellpadding="0" cellspacing="0">
+						<tr style="height:102px;text-align:center">
+							<td style="width:50%" onclick='abort.iptv_desc()'>
+								<div class="mobile_abortBtn"><#CTL_prev#></div>
+							</td>
+							<td style="width:50%;background:#27D1A4" onclick="apply.iptv_desc();">
+								<div class="mobile_applyBtn"
+								><#CTL_next#></div>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div id="iptv_setting" data-role="page" class="qisBackground">
+			<div style="margin:30px 0 0 30px;">
+				<table style="width:100%">
+					<tr>
+						<td style="padding:0;width:17px;">
+							<div style="margin-right:20px;">
+								<a href="#navigation">
+									<div class="icon_menu" style="width:17px;height:17px;display:none"></div>
+								</a>
+							</div>
+						</td>
+						<td style="padding:0;width:130px;">
+							<div>
+								<div class="icon_logo"></div>
+							</div>
+						</td>
+						<td style="padding:0;">
+							<div class="model_welcome"></div>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="desktop_left_field">
+				<div id="login_title">
+					<div style="font-size:60px;"><#Internet#></div>
+					<div style="font-size:32px;"><#QKSet_ISP_head#></div>
+				</div>
+			</div>
+			<div class="table_td">
+				<div class="pageDesc"><#PPPConnection_x_HostNameForISP_sectionname#></div>
+				<div>
+					<div style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle"><#Select_ISPfile#></div>
+						</div>
+						<div class="inputContainer">
+							<select id="switch_wantag" class="optionInput">
+								<option value="none"><#wl_securitylevel_0#></option>
+								<option value="unifi_home">Unifi-Home</option>
+								<option value="unifi_biz">Unifi-Business</option>
+								<option value="singtel_others">Singtel-Others</option>
+								<option value="m1_fiber">M1-Fiber</option>
+								<option value="maxis_fiber">Maxis-Fiber</option>
+								<option value="maxis_fiber_sp">Maxis-Fiber-Special</option>
+								<option value="hinet">Hinet MOD</option>
+								<option value="stuff_fibre">Stuff-Fibre</option>
+								<option value="spark">Spark</option>
+								<option value="2degrees">2degrees</option>
+								<option value="slingshot">Slingshot</option>
+								<option value="orcon">Orcon</option>
+								<option value="voda_nz">Vodafone(New Zealand)</option>
+								<option value="tpg">TPG</option>
+								<option value="iinet">iiNET</option>
+								<option value="aapt">AAPT</option>
+								<option value="intronode">Intronode</option>
+								<option value="amaysim">Amaysim</option>
+								<option value="dodo">Dodo</option>
+								<option value="iprimus">Iprimus</option>
+								<option value="manual"><#Manual_Setting_btn#></option>
+							</select>
+						</div>
+					</div>
+					<div id="iptv_voip" style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle" id="iptv_voip_title">VoIP Port</div>
+						</div>
+						<div class="inputContainer">
+							<input class="textInput" id="iptv_voip" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="Primary Node LAN Port" disabled />
+						</div>
+					</div>
+
+					<div id="iptv_stb" style="margin-left:17px;">
+						<div style="display:table;margin:18px 0 19px 30px;width:100%">
+							<div class="inputTitle" id="iptv_stb_title">IPTV STB Port</div>
+						</div>
+						<div class="inputContainer">
+							<input class="textInput" id="iptv_stb" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="Primary Node LAN Port" disabled />
+						</div>
+					</div>
+
+					<div id="iptv_manual" style="margin-left:17px;">
+						<div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle"><#Internet#></div>
+							</div>
+							<div class="inputContainer">
+								<div>
+									<div class="ui-block-a">
+										VID: <input class="textInput textInputIptv" id="internet_vid" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+									<div class="ui-block-b">
+										PRIO: <input class="textInput textInputIptv" id="internet_prio" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+								</div>
+							</div>
+						</div>
+						<div>
+							<div style="display:table;margin:18px 0 19px 30px;width:100%">
+								<div class="inputTitle">Primary Node LAN Port</div>
+							</div>
+							<div class="inputContainer">
+								<div class="ui-grid-a">
+									<div class="ui-block-a">
+										VID: <input class="textInput textInputIptv" id="stb_vid" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+									<div class="ui-block-b">
+										PRIO: <input class="textInput textInputIptv" id="stb_prio" data-role="none" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Action Button -->
+					<div class="footer_desktop">
+						<div class="desktop_abortBtn" onclick='abort.iptv()'><#CTL_prev#></div>
+						<div class="desktop_applyBtn" onclick="apply.iptv();"><#CTL_next#></div>
+					</div>
+					<div class="footer_mobile">
+						<table style="width:100%;" cellpadding="0" cellspacing="0">
+							<tr style="height:102px;text-align:center">
+								<td style="width:50%" onclick='abort.iptv()'>
+									<div class="mobile_abortBtn"><#CTL_prev#></div>
+								</td>
+								<td style="width:50%;background:#27D1A4" onclick="apply.iptv();">
+									<div class="mobile_applyBtn"
+									><#CTL_next#></div>
 								</td>
 							</tr>
 						</table>

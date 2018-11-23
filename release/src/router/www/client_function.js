@@ -48,89 +48,23 @@ var isJsonChanged = function(objNew, objOld){
 			}
 		}
 		else if( i == "fromNetworkmapd"){
-			if(objNew[i] != objOld[i])
+			if(JSON.stringify(objNew[i]) != JSON.stringify(objOld[i]))
 				return true;
 		}
 		else{
-			if(typeof objNew[i] == "undefined" || objOld[i] != objNew[i]){
-				return true;				
-			}
+			if(typeof objNew[i] == "undefined" || JSON.stringify(objOld[i]) != JSON.stringify(objNew[i]))
+				return true;
 		}
 	}
 
     return false;
 };
 
-/**
- * Implements cookie-less JavaScript session variables
- * v1.0
- *
- * By Craig Buckler, Optimalworks.net
- *
- * As featured on SitePoint.com
- * Please use as you wish at your own risk.
-*
- * Usage:
- *
- * // store a session value/object
- * Session.set(name, object);
- *
- * // retreive a session value/object
- * Session.get(name);
- *
- * // clear all session data
- * Session.clear();
- *
- * // dump session data
- * Session.dump();
- */
- 
- if (JSON && JSON.stringify && JSON.parse) var Session = Session || (function() {
- 
-	// window object
-	var win = window.top || window;
-	
-	// session store
-	var store = (win.name ? JSON.parse(win.name) : {});
-	
-	// save store on page unload
-	function Save() {
-		win.name = JSON.stringify(store);
-	};
-	
-	// page unload event
-	if (window.addEventListener) window.addEventListener("unload", Save, false);
-	else if (window.attachEvent) window.attachEvent("onunload", Save);
-	else window.onunload = Save;
-
-	// public methods
-	return {
-	
-		// set a session variable
-		set: function(name, value) {
-			store[name] = value;
-		},
-		
-		// get a session value
-		get: function(name) {
-			return (store[name] ? store[name] : undefined);
-		},
-		
-		// clear session
-		clear: function() { store = {}; },
-		
-		// dump session data
-		dump: function() { return JSON.stringify(store); }
- 
-	};
- 
- })();
-
 var ipState = new Array();
-ipState["Static"] =  "<#BOP_ctype_title5#>";
-ipState["DHCP"] =  "<#BOP_ctype_title1#>";
-ipState["Manual"] =  "MAC-IP Binding";
-ipState["OffLine"] =  "Client is disconnected";
+ipState["Static"] = "<#BOP_ctype_title5#>";
+ipState["DHCP"] = "<#BOP_ctype_title1#>";
+ipState["Manual"] = "<#Clientlist_IPMAC_Binding#>";
+ipState["OffLine"] = "<#Clientlist_OffLine_Hint#>";
 
 var venderArrayRE = /(adobe|amazon|apple|asus|belkin|bizlink|buffalo|dell|d-link|fujitsu|google|hon hai|htc|huawei|ibm|lenovo|nec|microsoft|panasonic|pioneer|ralink|samsung|sony|synology|toshiba|tp-link|vmware)/;
 
@@ -189,6 +123,7 @@ var setClientAttr = function(){
 	this.wlInterface = "";
 	this.amesh_isRe = false;
 	this.amesh_isReClient = false;
+	this.amesh_papMac = "";
 }
 
 var clientList = new Array(0);
@@ -296,6 +231,7 @@ function genClientList(){
 					if(thisClient.amesh_papMac != undefined) {
 						if(clientList[thisClient.amesh_papMac] != undefined)
 							clientList[thisClientMacAddr].amesh_isReClient = (thisClient.amesh_isReClient == "1") ? true : false;
+							clientList[thisClientMacAddr].amesh_papMac = thisClient.amesh_papMac;
 					}
 				}
 			}
@@ -319,6 +255,7 @@ function genClientList(){
 				var thisClientDefaultType = (typeof thisClient.defaultType == "undefined") ? thisClientType : thisClient.defaultType;
 				var thisClientName = (typeof thisClient.name == "undefined") ? thisClientMacAddr : (thisClient.name.trim() == "") ? thisClientMacAddr : thisClient.name.trim();
 				var thisClientNickName = (typeof thisClient.nickName == "undefined") ? "" : (thisClient.nickName.trim() == "") ? "" : thisClient.nickName.trim();
+				var thisClientReNode = (typeof thisClient.amesh_isRe == "undefined") ? false : ((thisClient.amesh_isRe == "1") ? true : false);
 
 				clientList.push(thisClientMacAddr);
 				clientList[thisClientMacAddr] = new setClientAttr();
@@ -331,6 +268,8 @@ function genClientList(){
 				clientList[thisClientMacAddr].name = thisClientName;
 				clientList[thisClientMacAddr].nickName = thisClientNickName;
 				clientList[thisClientMacAddr].vendor = thisClient.vendor.trim();
+				if(amesh_support)
+					clientList[thisClientMacAddr].amesh_isRe = thisClientReNode;
 				nmpCount++;
 			}
 			else if(!clientList[thisClientMacAddr].isOnline) {
@@ -438,7 +377,12 @@ function card_closeClientListView() {
 var card_firstTimeOpenBlock = false;
 var card_custom_usericon_del = "";
 var userIconBase64 = "NoIcon";
-function popClientListEditTable(mac, obj, name, ip, callBack) {
+function popClientListEditTable(event) {
+	var mac = event.data.mac;
+	var obj = event.data.obj;
+	var name = event.data.name;
+	var ip = event.data.ip;
+	var callBack = event.data.callBack;
 	if(mac != "") {
 		var isMacAddr = mac.split(":");
 		if(isMacAddr.length != 6)
@@ -716,18 +660,18 @@ function popClientListEditTable(mac, obj, name, ip, callBack) {
 	}
 	else {
 		document.getElementById("card_client_ipMethod").style.display = "";
-		document.getElementById("card_client_ipMethod").innerHTML = "Off Line"; /*untranslated*/
+		document.getElementById("card_client_ipMethod").innerHTML = "<#Clientlist_OffLine#>";
 		document.getElementById("card_client_ipMethod").onmouseover = function() {return overlib(ipState["OffLine"]);};
 		document.getElementById("card_client_ipMethod").onmouseout = function() {nd();};
 		document.getElementById("card_client_interface").style.display = "none";
 	}
 	if(clientInfo.isLogin) {
 		document.getElementById("card_client_login").style.display = "";
-		document.getElementById("card_client_login").innerHTML = "logged-in-user"; /*untranslated*/
+		document.getElementById("card_client_login").innerHTML = "<#Clientlist_Logged_In_User#>";
 	}
 	if(clientInfo.isPrinter) {
 		document.getElementById("card_client_printer").style.display = "";
-		document.getElementById("card_client_printer").innerHTML = "Printer"; /*untranslated*/
+		document.getElementById("card_client_printer").innerHTML = "<#Clientlist_Printer#>";
 	}
 	if(clientInfo.isITunes) {
 		document.getElementById("card_client_iTunes").style.display = "";
@@ -1054,6 +998,10 @@ function card_confirm(callBack) {
 							case "WTFast" :
 								showDropdownClientList('setClientmac', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 								show_rulelist();
+								break;
+							case "RoamingBlock" :
+								showDropdownClientList('setClientmac', 'mac', 'wl', 'WL_MAC_List_Block', 'pull_arrow', 'all');
+								show_wl_maclist_x();
 								break;
 							default :
 								refreshpage();
@@ -1400,7 +1348,7 @@ function slideUp(objnmae, speed) {
 }
 
 function registerIframeClick(iframeName, action) {
-	var iframe = document.getElementById(iframeName);
+	var iframe = document.getElementById(iframeName) || top.document.getElementById(iframeName);
 	if(iframe != null) {
 		var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
@@ -1414,7 +1362,7 @@ function registerIframeClick(iframeName, action) {
 }
 
 function removeIframeClick(iframeName, action) {
-	var iframe = document.getElementById(iframeName);
+	var iframe = document.getElementById(iframeName) || top.document.getElementById(iframeName);
 	if(iframe != null) {
 		var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
@@ -1682,11 +1630,10 @@ function pop_clientlist_listview() {
 	clientlist_view_hide_flag = false;
 
 	create_clientlist_listview();
-	updateClientListBackground();
+	setTimeout("updateClientListBackground();", 5000);//avoiding no data when open the view list
 	setTimeout("sorterClientList();updateClientListView();", 500);
-	
-	registerIframeClick("statusframe", hide_clientlist_view_block);
 
+	registerIframeClick("statusframe", hide_clientlist_view_block);
 }
 
 function exportClientListLog() {
@@ -1842,8 +1789,8 @@ function create_clientlist_listview() {
 	switch (clienlistViewMode) {
 		case "All" :
 			code += "<table width='100%' border='1' align='center' cellpadding='0' cellspacing='0' class='FormTable_table' style='margin-top:15px;'>";
-			code += "<thead><tr height='28px'><td id='td_all_list_title' colspan='" + wl_colspan + "'>All list";/*untranslated*/
-			code += "<a id='all_expander'class='clientlist_expander' onclick='showHideContent(\"clientlist_all_list_Block\", this);'>[ Hide ]</a>";/*untranslated*/
+			code += "<thead><tr height='28px'><td id='td_all_list_title' colspan='" + wl_colspan + "'><#Clientlist_All_List#>";
+			code += "<a id='all_expander'class='clientlist_expander' onclick='showHideContent(\"clientlist_all_list_Block\", this);'>[ <#Clientlist_Hide#> ]</a>";
 			code += "</td></tr></thead>";
 			code += "<tr id='tr_all_title' height='40px'>";
 			code += "<th class='IE8HACK' width=" + obj_width[0] + "><#Internet#></th>";
@@ -1865,7 +1812,7 @@ function create_clientlist_listview() {
 		case "ByInterface" :
 			code += "<table width='100%' border='1' align='center' cellpadding='0' cellspacing='0' class='FormTable_table' style='margin-top:15px;'>";
 			code += "<thead><tr height='28px'><td colspan='" + wl_colspan + "'><#tm_wired#>";
-			code += "<a id='wired_expander' class='clientlist_expander' onclick='showHideContent(\"clientlist_wired_list_Block\", this);'>[ Hide ]</a>";/*untranslated*/
+			code += "<a id='wired_expander' class='clientlist_expander' onclick='showHideContent(\"clientlist_wired_list_Block\", this);'>[ <#Clientlist_Hide#> ]</a>";
 			code += "</td></tr></thead>";
 			code += "<tr id='tr_wired_title' height='40px'>";
 			code += "<th class='IE8HACK' width=" + obj_width[0] + "><#Internet#></th>";
@@ -1889,7 +1836,7 @@ function create_clientlist_listview() {
 			for(var i = 0; i < wl_nband_title.length; i += 1) {
 				code += "<table width='100%' border='1' align='center' cellpadding='0' cellspacing='0' class='FormTable_table' style='margin-top:15px;'>";
 				code += "<thead><tr height='23px'><td colspan='" + wl_colspan + "'>" + wl_nband_title[i];
-				code += "<a id='wl" + wl_map[wl_nband_title[i]] + "_expander' class='clientlist_expander' onclick='showHideContent(\"clientlist_wl" + wl_map[wl_nband_title[i]] + "_list_Block\", this);'>[ Hide ]</a>";/*untranslated*/
+				code += "<a id='wl" + wl_map[wl_nband_title[i]] + "_expander' class='clientlist_expander' onclick='showHideContent(\"clientlist_wl" + wl_map[wl_nband_title[i]] + "_list_Block\", this);'>[ <#Clientlist_Hide#> ]</a>";
 				code += "</td></tr></thead>";
 				code += "<tr id='tr_wl" + wl_map[wl_nband_title[i]] + "_title' height='40px'>";
 				code += "<th class='IE8HACK' width=" + obj_width[0] + "><#Internet#></th>";
@@ -1975,25 +1922,25 @@ function create_clientlist_listview() {
 	if(clienlistViewMode == "All") {
 		if(!sorter.all_display) {
 			document.getElementById("clientlist_all_list_Block").style.display = "none";
-			document.getElementById("all_expander").innerHTML = "[ Show ]";/*untranslated*/
+			document.getElementById("all_expander").innerHTML = "[ <#Clientlist_Show#> ]";
 		}
 	}
 	else {
 		if(!sorter.wired_display) {
 			document.getElementById("clientlist_wired_list_Block").style.display = "none";
-			document.getElementById("wired_expander").innerHTML = "[ Show ]";/*untranslated*/
+			document.getElementById("wired_expander").innerHTML = "[ <#Clientlist_Show#> ]";
 		}
 		if(!sorter.wl1_display) {
 			document.getElementById("clientlist_wl1_list_Block").style.display = "none";
-			document.getElementById("wl1_expander").innerHTML = "[ Show ]";/*untranslated*/
+			document.getElementById("wl1_expander").innerHTML = "[ <#Clientlist_Show#> ]";
 		}
 		if(!sorter.wl2_display) {
 			document.getElementById("clientlist_wl2_list_Block").style.display = "none";
-			document.getElementById("wl2_expander").innerHTML = "[ Show ]";/*untranslated*/
+			document.getElementById("wl2_expander").innerHTML = "[ <#Clientlist_Show#> ]";
 		}
 		if(!sorter.wl3_display) {
 			document.getElementById("clientlist_wl3_list_Block").style.display = "none";
-			document.getElementById("wl3_expander").innerHTML = "[ Show ]";/*untranslated*/
+			document.getElementById("wl3_expander").innerHTML = "[ <#Clientlist_Show#> ]";
 		}
 	}
 }
@@ -2213,7 +2160,7 @@ function showHideContent(objnmae, thisObj) {
 			}
 			slideFlag = true;
 			slideDown(objnmae, 200);
-			thisObj.innerHTML = "[ Hide ]";
+			thisObj.innerHTML = "[ <#Clientlist_Hide#> ]";
 		}
 		else {
 			if(clienlistViewMode == "All")
@@ -2236,7 +2183,7 @@ function showHideContent(objnmae, thisObj) {
 			}
 			slideFlag = true;
 			slideUp(objnmae, 200);
-			thisObj.innerHTML = "[ Show ]";
+			thisObj.innerHTML = "[ <#Clientlist_Show#> ]";
 		}
 	}
 }
@@ -2563,6 +2510,8 @@ function showDropdownClientList(_callBackFun, _callBackFunParam, _interfaceMode,
 
 	for(var i = 0; i < clientList.length; i +=1 ) {
 		var clientObj = clientList[clientList[i]];
+		if(clientObj.amesh_isRe)
+			continue;
 		switch(_clientState) {
 			case "all" :
 				if(_interfaceMode == "wl" && (clientList[clientList[i]].isWL == 0)) {

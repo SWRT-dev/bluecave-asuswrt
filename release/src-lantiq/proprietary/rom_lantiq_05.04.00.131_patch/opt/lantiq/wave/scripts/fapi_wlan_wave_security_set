@@ -248,7 +248,7 @@ then
 	auth_server_port="$server_port"
 	auth_server_shared_secret="$server_shared_secret"
 	acct_server_addr="$server_addr"
-	acct_server_port=$((server_port+1))
+	acct_server_port="$server_port"
 	acct_server_shared_secret="$server_shared_secret"
 
 	eap_reauth_period=`db2fapi_convert regular RekeyingInterval $interface_index`
@@ -329,7 +329,7 @@ then
 		auth_server_port="$sec_server_port"
 		auth_server_shared_secret="$sec_server_shared_secret"
 		acct_server_addr="$sec_server_addr"
-		acct_server_port=$((sec_server_port+1))
+		acct_server_port="$sec_server_port"
 		acct_server_shared_secret="$server_shared_secret"
 		set_conf_param hostapd_vap regular no_otf $pid $interface_name auth_server_addr "$auth_server_addr"
 		set_conf_param hostapd_vap regular no_otf $pid $interface_name auth_server_port "$auth_server_port"

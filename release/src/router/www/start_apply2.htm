@@ -208,7 +208,12 @@ function showWlHint(updateFlag){
 			if(smart_connect_nvram == 1){
 				// Tri band steering
 				wlObj.length = 1;
-				wlObj[0].band = "Tri-band Smart Connect";
+				if(based_modelid == "RT-AC88U" || based_modelid == "RT-AC86U" || based_modelid == "AC2900" || based_modelid == "RT-AC3100" || based_modelid == "BLUECAVE"){
+					wlObj[0].band = "Dual-Band Smart Connect";
+				}
+				else{
+					wlObj[0].band = "Tri-Band Smart Connect";
+				}
 			}
 			else if(smart_connect_nvram == 2){
 				// 5GHz band steering
@@ -219,7 +224,12 @@ function showWlHint(updateFlag){
 		else if(applyParam.smartConnect == 1){
 			// Tri band steering
 			wlObj.length = 1;
-			wlObj[0].band = "Tri-band Smart Connect";
+			if(parent.based_modelid == "RT-AC88U" || parent.based_modelid == "RT-AC86U" || parent.based_modelid == "AC2900" || parent.based_modelid == "RT-AC3100" || parent.based_modelid == "BLUECAVE"){
+				wlObj[0].band = "Dual-Band Smart Connect";
+			}
+			else{
+				wlObj[0].band = "Tri-Band Smart Connect";
+			}
 		}
 		else if(applyParam.smartConnect == 2){
 			// 5GHz band steering
@@ -262,7 +272,6 @@ function showWlHint(updateFlag){
 		wlHintCss += "width: 480px;";
 		wlHintCss += "border: 0;";
 		wlHintCss += "color:#fff;";
-		wlHintCss += "color:#000\9;"; /* IE6 IE7 IE8 */
 		wlHintCss += "font-size:16pt;";
 		wlHintCss += "}.div_table{";
 		wlHintCss += "display:table;";
@@ -366,7 +375,7 @@ function showdr_advise(setting){
 		}
 
 		makeRequest.start('/httpd_check.xml', function(xhr){
-			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "<% abs_index_page(); %>";
+			if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/";
 
 			var httpds = xhr.responseXML.getElementsByTagName("httpd");
 			if (httpds !== null && httpds[0] !== null) {
@@ -503,7 +512,7 @@ function initial(){
 				showWlHint();
 				return;
 			}
-			if(current_page.indexOf("<% abs_index_page(); %>") >= 0){
+			if(current_page.indexOf(parent.ABS_INDEXPAGE) >= 0){
 				parent.showLoading(restart_time, "waiting");
 			}
 		}

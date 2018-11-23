@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
-<title><#Web_Title#> - App Patrol</title>
+<title><#Web_Title#> - <#Firewall_App_Patrol#></title>
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
@@ -20,6 +20,8 @@
 <script type="text/javascript" src="form.js"></script>
 <script type="text/javascript" src="switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="client_function.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style>
 #switch_menu{
 	text-align:right
@@ -47,12 +49,6 @@
 }
 </style>
 <script>
-window.onresize = function() {
-	if(document.getElementById("agreement_panel").style.display == "block") {
-		cal_panel_block("agreement_panel", 0.25);
-	}
-}
-
 var apps_filter = "<% nvram_get("wrs_app_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var wrs_app_filter = "<% nvram_get("wrs_app_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 
@@ -379,7 +375,7 @@ function addRow_main(obj, length){
 }
 
 function genMain_table(){
-	var category_name = ["<#AiProtection_filter_message#>", "<#AiProtection_filter_p2p#>", "<#AiProtection_filter_stream#>", "Commercial Applications", "Remote Control and Network Management", "Web Service and Surfing"];
+	var category_name = ["<#AiProtection_filter_message#>", "<#AiProtection_filter_p2p#>", "<#AiProtection_filter_stream#>", "<#Firewall_App_Patrol_Com_App#>", "<#Firewall_App_Patrol_Remote_Net#>", "<#Firewall_App_Patrol_Web_Surfing#>"];
 	var sub_category_name = [["<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult4#>", "<#AiProtection_filter_Adult8#>"],
 							 ["<#AiProtection_filter_p2p2#>", "<#AiProtection_filter_p2p1#>"],
 							 ["<#AiProtection_filter_stream2#>", "<#AiProtection_filter_stream1#>"],
@@ -405,7 +401,7 @@ function genMain_table(){
 	code += '<th width="5%" height="30px" title="<#select_all#>">';
 	code += '<input id="selAll" type="checkbox" onclick="selectAll(this, 0);" value="">';
 	code += '</th>';
-	code += '<th width="40%">Group Name</th>';/*untranslated*/
+	code += '<th width="40%"><#PM_Group_Name#></th>';
 	code += '<th width="40%"><#AiProtection_filter_category#></th>';
 	code += '<th width="10%"><#list_add_delete#></th>';
 	code += '</tr>';
@@ -414,7 +410,7 @@ function genMain_table(){
 	code += '<input type="checkbox" checked="">';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" placeholder="ex: Group Name" autocorrect="off" autocapitalize="off">';
+	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" placeholder="ex: <#PM_Group_Name#>" autocorrect="off" autocapitalize="off">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>">';
 	code += '<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-top:25px;margin-left:10px;"></div>';
 	code += '</td>';
@@ -723,23 +719,9 @@ function translate_category_id(){
 	wrs_app_filter = wrs_app_filter_temp;
 }
 
-function show_tm_eula(){
-	$.get("tm_eula.htm", function(data){
-		document.getElementById('agreement_panel').innerHTML= data;
-		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
-		$("#eula_url").attr("href",url);
-	});
-
-	dr_advise();
-	cal_panel_block("agreement_panel", 0.25);
-	$("#agreement_panel").fadeIn(300);
-}
-
 function cancel(){
-	$("#agreement_panel").fadeOut(100);
 	$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 	curState = 0;
-	document.getElementById("hiddenMask").style.visibility = "hidden";
 }
 
 function eula_confirm(){
@@ -769,10 +751,9 @@ function setGroup(name){
 </script>
 </head>
 
-<body onload="initial();" onunload="unload_body();" onselectstart="return false;">
+<body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="panel_folder" style="margin-top: -100px;"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -815,28 +796,17 @@ function setGroup(name){
 									<table width="730px">
 										<tr>
 											<td align="left">
-												<div class="formfonttitle" style="width:400px"><#menu5_5#> - App Patrol</div>
+												<div class="formfonttitle" style="width:400px"><#menu5_5#> - <#Firewall_App_Patrol#></div>
 											</td>
 										</tr>
 									</table>
 								</div>
-								<div style="margin:0px 0px 10px 5px;"><img src="/images/New_ui/export/line_export.png"></div>
+								<div style="margin: 0 0 10px 5px" class="splitLine"></div>
 								<div id="PC_desc">
 									<table width="700px" style="margin-left:25px;">
 										<tr>
-											<!--td>
-												<img id="guest_image" src="/images/New_ui/Web_Apps_Restriction.png">
-											</td>
-											<td>&nbsp;&nbsp;</td-->
 											<td style="font-style: italic;font-size: 14px;">
-												<span>App Patrol allows you to block access to unwanted apps.</span>
-												<!--ol>
-													<li><#AiProtection_filter_desc2#></li>
-													<li><#AiProtection_filter_desc3#></li>
-													<li><#AiProtection_filter_desc4#></li>
-												</ol>
-												<span><#AiProtection_filter_note#></span-->
-												<!--div><a style="text-decoration:underline;" href="http://www.asus.com/us/support/FAQ/1008720/" target="_blank"><#Parental_Control#> FAQ</a></div-->
+												<span><#Firewall_App_Patrol_Desc#></span>
 											</td>
 										</tr>
 									</table>
@@ -845,7 +815,7 @@ function setGroup(name){
 			<!--=====Beginning of Main Content=====-->
 								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									<tr>
-										<th>Enable App Patrol</th>
+										<th><#Firewall_App_Patrol_Enable#></th>
 										<td>
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_web_restrict_enable"></div>
 											<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -853,14 +823,12 @@ function setGroup(name){
 													$('#radio_web_restrict_enable').iphoneSwitch('<% nvram_get("wrs_app_enable"); %>',
 														function(){
 															curState = 1;
-															if(document.form.TM_EULA.value == 0){
-																show_tm_eula();
-																return;
+															ASUS_EULA.config(eula_confirm, cancel);
+
+															if(ASUS_EULA.check("tm")){
+																document.form.wrs_app_enable.value = 1;
+																showhide("list_table",1);
 															}
-
-															document.form.wrs_app_enable.value = 1;
-															showhide("list_table",1);
-
 														},
 														function(){
 															document.form.wrs_app_enable.value = 0;

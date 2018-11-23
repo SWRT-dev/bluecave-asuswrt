@@ -17,6 +17,7 @@
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/disk_functions.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <style>
 #Aidisk_png{
   background: url(images/New_ui/USBExt/APP_list.png);
@@ -101,6 +102,10 @@ var wan_unit_orig = '<% nvram_get("wan_unit"); %>';
 
 function initial(){
 	show_menu();
+	//	http://www.asus.com/support/FAQ/1009773/
+	httpApi.faqURL("faq", "1009773", "https://www.asus.com", "/support/FAQ/");
+	//	http://www.asus.com/support/FAQ/1016385/
+	httpApi.faqURL("faq2", "1016385", "https://www.asus.com", "/support/FAQ/");
 
 	default_apps_array = [["AiDisk", "aidisk.asp", "<#AiDiskWelcome_desp1#>", "Aidisk_png", ""],
 			["<#Servers_Center#>", "mediaserver.asp", "<#UPnPMediaServer_Help#>", "server_png", ""],
@@ -513,7 +518,7 @@ function show_apps(){
 		else
 			htmlcode += '<div class="app_name"><a style="text-decoration: underline;" href="' + default_apps_array[i][1] + '">' + default_apps_array[i][0] + '</a></div>\n';
 		if(i ==3){
-			htmlcode += '<div class="app_desc">' + default_apps_array[i][2] + ' <a href="http://www.asus.com/event/networks_3G4G_support/" target="_blank" style="text-decoration:underline;">Support</a></div>\n';
+			htmlcode += '<div class="app_desc">' + default_apps_array[i][2] + ' <a href="http://www.asus.com/event/networks_3G4G_support/" target="_blank" style="text-decoration:underline;"><#Support#></a></div>\n';
 		}
 		else{
 			htmlcode += '<div class="app_desc">' + default_apps_array[i][2] + '</div>\n';
@@ -654,9 +659,9 @@ function show_apps(){
 		else{
 			
 			if(apps_array[i][0] == "downloadmaster" || apps_array[i][0] == "mediaserver" || apps_array[i][0] == "aicloud" || apps_array[i][0] == "mediaserver2")
-				htmlcode += '<span class="app_action" onclick="_appname=\''+apps_array[i][0]+'\';divdisplayctrl(\'none\', \'\', \'none\', \'none\');location.href=\'#\';">Install</span>\n';		/* untranslated */
+				htmlcode += '<span class="app_action" onclick="_appname=\''+apps_array[i][0]+'\';divdisplayctrl(\'none\', \'\', \'none\', \'none\');location.href=\'#\';"><#Excute#></span>\n';		/* untranslated */
 			else
-				htmlcode += '<span class="app_action" onclick="apps_form(\'install\',\''+ apps_array[i][0] +'\',\''+ partitions_array[i] +'\');">Install</span>\n';		/* untranslated */
+				htmlcode += '<span class="app_action" onclick="apps_form(\'install\',\''+ apps_array[i][0] +'\',\''+ partitions_array[i] +'\');"><#Excute#></span>\n';		/* untranslated */
 		}
 		
 		htmlcode += '</div><br/><br/></td></tr>\n';
@@ -842,7 +847,7 @@ function go_modem_page(usb_unit_flag){
 
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0" scrolling="no"></iframe>
 <form method="post" name="app_form" action="/APP_Installation.asp">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>" disabled>
 <input type="hidden" name="apps_action" value="">
 <input type="hidden" name="apps_path" value="">
@@ -891,7 +896,7 @@ function go_modem_page(usb_unit_flag){
 		</td>
   </tr> 
   <tr>
-  	<td class="line_export"><img src="images/New_ui/export/line_export.png" /></td>
+  	<td><div class="splitLine"></div></td>
   </tr>
   <tr>
 		<td>
@@ -922,7 +927,7 @@ function go_modem_page(usb_unit_flag){
 					</tr>		
 				</table>
 			<br/>
-			<div><img src="images/New_ui/export/line_export.png" /></div>
+			<div class="splitLine"></div>
 			<table class="" cellspacing="0" cellpadding="0">
 				<tbody>
 					<tr valign="top">
@@ -930,10 +935,10 @@ function go_modem_page(usb_unit_flag){
 						<ul style="margin-left:10px;">
 							<br>
 							<li>
-								<a id="faq" href="http://www.asus.com/support/FAQ/1009773/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master FAQ</a>
+								<a id="faq" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#DM_title#> FAQ</a>
 							</li>
 							<li style="margin-top:10px;">
-								<a id="faq2" href="http://www.asus.com/support/FAQ/1016385/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master Tool FAQ</a>
+								<a id="faq2" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF">Download Master Tool FAQ</a>
 							</li>
 							<li style="margin-top:10px;">
 								<a id="DMUtilityLink" href="http://dlcdnet.asus.com/pub/ASUS/wireless/RT-AC5300/UT_Download_Master_2228_Win.zip" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#DM_Download_Tool#></a>

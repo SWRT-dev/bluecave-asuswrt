@@ -257,6 +257,11 @@ AC_ARG_ENABLE(sixaxis, AC_HELP_STRING([--enable-sixaxis],
 AM_CONDITIONAL(SIXAXIS, test "${enable_sixaxis}" = "yes" &&
 					 test "${enable_udev}" != "no")
 
+AC_ARG_ENABLE(extaqis, AC_HELP_STRING([--enable-extaqis],
+			[enable extaqis plugins (SAP, NFC, ...)]),
+					[enable_extaqis=${enableval}])
+AM_CONDITIONAL(EXTAQIS, test "${enable_extaqis}" = "yes")
+
 if (test "${prefix}" = "NONE"); then
 	dnl no prefix and no localstatedir, so default to /var
 	if (test "$localstatedir" = '${prefix}/var'); then

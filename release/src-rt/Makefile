@@ -67,7 +67,7 @@ export SRCBASEDIR := $(shell pwd | sed 's/.*release\///g')
 RELEASEDIR := $(shell (cd $(SRC_ROOT)/.. && pwd -P))
 export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 
-export MERLINVER := R7
+export MERLINVER := R8
 # tmp depend on busybox
 E2FSPROGS := $(if $(filter $(BUSYBOX),busybox-1.17.4),n,y)
 
@@ -87,9 +87,16 @@ export BRANCH := $(shell git branch)
 
 ifneq ($(RCNO),)
 RCSTRING="rc$(RCNO)"
+RC_EXT_NO1=$(shell expr $(RCNO) + 1)
+RC_EXT_NO=$(shell expr $(RC_EXT_NO1) \* 10000)
+
+# At runtime, set the tag of RCNO.
+export RUN_TAG=$(shell git tag -fa asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)$(RCSTRING) -m "Released $(RCSTRING)" HEAD)
 else
 RCSTRING=""
+RC_EXT_NO=0
 endif
+EXTENDNO1=$(shell git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)..HEAD | wc -l)
 
 ifeq ($(BRANCH),)
 include ./router/extendno.conf
@@ -97,7 +104,7 @@ else
 ifneq ($(EXTENDTYPE),)
 EXSTRING="-$(EXTENDTYPE)"
 else
-EXSTRING=""
+EXSTRING=
 endif
 export EXTENDNO := $(MERLINVER)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")$(EXSTRING)
 endif
@@ -208,9 +215,9 @@ KERN_SIZE_OPT ?= y
 endif
 
 ifeq ($(FAKEID),y)
-export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)rc$(FORCE_RN)_$(SWPJVER)$(FORCE_EN)
+export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)_$(SWPJVER)$(FORCE_EN)
 else
-export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)$(RCSTRING)_$(SWPJVER)$(EXTENDNO)
+export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)
 endif
 
 ifeq ($(BUILD_NAME),DSL-AC68U)
@@ -223,7 +230,7 @@ DSLIMGNAME=$(IMGNAME)_Annex_B
 endif
 
 ifeq ($(PBDIR),)
-export PBDIR   := ../../../asuswrt.prebuilt/$(BUILD_NAME).$(KERNEL_VER).$(FS_VER).$(SERIALNO)$(RCSTRING).$(EXTENDNO)
+export PBDIR   := ../../../asuswrt.prebuilt/$(BUILD_NAME).$(KERNEL_VER).$(FS_VER).$(SERIALNO).$(EXTENDNO)
 endif
 
 # If platform specific software packages exist, PLATFORM_ROUTER should be defined in platform.mak
@@ -240,21 +247,23 @@ $(if $(CONFIG_UBOOT_CONFIG_LTQ_IMAGE_EXTRA_CHECKS), \
 )
 endef
 
+LANTIQ_LINUX_DIR=linux/linux-3.10.104
+
 define build_bluecave_image
-	mips-openwrt-linux-uclibc-objcopy -O binary -R .reginfo -R .notes -R .note -R .comment -R .mdebug -R .note.gnu.build-id -S linux/linux-3.10.104/vmlinux ./vmlinux
-	mips-openwrt-linux-uclibc-objcopy -R .reginfo -R .notes -R .note -R .comment -R .mdebug -R .note.gnu.build-id -S linux/linux-3.10.104/vmlinux ./vmlinux.elf
-	cp -fpR linux/linux-3.10.104/vmlinux ./vmlinux.debug
+	mips-openwrt-linux-uclibc-objcopy -O binary -R .reginfo -R .notes -R .note -R .comment -R .mdebug -R .note.gnu.build-id -S $(LANTIQ_LINUX_DIR)/vmlinux ./vmlinux
+	mips-openwrt-linux-uclibc-objcopy -R .reginfo -R .notes -R .note -R .comment -R .mdebug -R .note.gnu.build-id -S $(LANTIQ_LINUX_DIR)/vmlinux ./vmlinux.elf
+	cp -fpR $(LANTIQ_LINUX_DIR)/vmlinux ./vmlinux.debug
 	cp ./vmlinux ./vmlinux-easy350_anywan_router_800m
 	tools/dtc -O dtb -o ./easy350_anywan_router_800m.dtb ./proprietary/dts/easy350_anywan_router_800m.dts
 	tools/host/bin/patch-dtb ./vmlinux-easy350_anywan_router_800m ./easy350_anywan_router_800m.dtb 32768
 	tools/host/bin/lzma e ./vmlinux-easy350_anywan_router_800m ./vmlinux-easy350_anywan_router_800m.lzma
 	mv ./vmlinux-easy350_anywan_router_800m.lzma ./vmlinux.lzma
-	tools/u-boot-2010.06/tools/mkimage -A mips -O linux -T kernel -a 0x80002000 -C lzma -e 0x80002000 -n 'MIPS OpenWrt Linux-3.10.104' -d ./vmlinux.lzma ./uImage
+	tools/u-boot-2010.06/tools/mkimage -A mips -O linux -T kernel -a 0x80002000 -C lzma -e 0x80002000 -n 'MIPS OpenWrt $(LANTIQ_LINUX_DIR)' -d ./vmlinux.lzma ./uImage
 	len2=`wc -c ./vmlinux.lzma | awk '{ printf $$1 }'` ; \
 	echo "Raymond: $$len2"
 	len=`wc -c ./vmlinux.lzma | awk '{ printf $$1 }'`; pad=`expr  131072 - $$len %  131072`; pad=`expr $$pad %  131072`; pad=`expr $$pad -  64`; [ $$pad -lt 0 ] && pad=0; echo pad is $$pad; echo len is $$len; cat ./vmlinux.lzma > ./vmlinux.lzma.padded; dd if=/dev/zero of=./vmlinux.lzma.padded bs=1 count=$$pad seek=$$len
-	load_addr=0x$(shell grep -w _text linux/linux-3.10.104/System.map 2>/dev/null| awk '{ printf "%s", $$1 }'); \
-	entry_addr=0x$(shell grep -w kernel_entry linux/linux-3.10.104/System.map 2>/dev/null| awk '{ printf "%s", $$1 }'); \
+	load_addr=0x$(shell grep -w _text $(LANTIQ_LINUX_DIR)/System.map 2>/dev/null| awk '{ printf "%s", $$1 }'); \
+	entry_addr=0x$(shell grep -w kernel_entry $(LANTIQ_LINUX_DIR)/System.map 2>/dev/null| awk '{ printf "%s", $$1 }'); \
 	tools/u-boot-2010.06/tools/mkimage -A mips -O linux -T kernel \
 		-a $(s_load_addr) -C $(compression_type) -e $(s_entry_addr) \
 	-n '$(image_header)' $(call bluecave_mkimage_extra_checks) \
@@ -297,13 +306,13 @@ define build_bluecave_image
 	chmod 644 $$ONEIMAGE;
 	cp proprietary/gphy_firmware.img image/
 	cp proprietary/uImage_bootcore image/
-	cp proprietary/u-boot-nand.bin image/
+	#cp proprietary/u-boot-nand.bin image/
 	rm -f vmlinux*
 	rm -f uImage*
 	rm -f easy350_anywan_router_800m.dtb
 	dd if=/dev/zero count=1 bs=128 | tr "\000" "\145" > ./eof.txt
 	rm -f image/tmp-linux.trx; ctools/trx -o image/tmp-linux.trx image/fullimage.img ./eof.txt
-	ctools/trx_asus -i image/tmp-linux.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),$(SERIALNO)$(RCSTRING),$(EXTENDNO),image/$(IMGNAME).trx
+	ctools/trx_asus -i image/tmp-linux.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),$(SERIALNO),$(EXTENDNO),image/$(IMGNAME).trx
 	rm -f ./eof.txt
 endef
 
@@ -381,16 +390,24 @@ endif
 	@echo '#define RT_BUILD_NAME "$(BUILD_NAME)"' >> router/shared/version.h
 	@echo '#define RT_BUILD_INFO "$(BUILD_TIME) $(BUILD_USER)@$(BUILD_INFO)"' >> router/shared/version.h
 	@echo '#endif' >> router/shared/version.h
+ifneq ($(NVRAM_ENCRYPT),$(filter $(NVRAM_ENCRYPT),n))
+	@echo '#ifdef RTCONFIG_NVRAM_ENCRYPT' >> router/shared/version.h
+ifeq ($(NVRAM_ENCRYPT),y)
+	@echo '#define ENC_SP_EXTENDNO "39937"' >> router/shared/version.h
+else
+	@echo '#define ENC_SP_EXTENDNO "$(NVRAM_ENCRYPT)"' >> router/shared/version.h
+endif
+	@echo '#endif' >> router/shared/version.h
+endif
 	@echo '$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER) $(BUILD_TIME)' > router/shared/version
 	@echo 'EXTENDNO=$(EXTENDNO)' > router/extendno.conf
-
 
 rt_ver_ntools:
 	-@rm -f ntools/version
 ifeq ($(FAKEID),y)
-	-@echo 'KERNEL_IMAGE = $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)rc$(FORCE_RN)_$(FORCE_EN).trx' >> ntools/version
+	-@echo 'KERNEL_IMAGE = $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)_$(FORCE_EN).trx' >> ntools/version
 else
-	-@echo 'KERNEL_IMAGE = $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)$(RCSTRING)_$(EXTENDNO).trx' >> ntools/version
+	-@echo 'KERNEL_IMAGE = $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(EXTENDNO).trx' >> ntools/version
 endif
 
 ifeq ($(HND_ROUTER),y)
@@ -405,7 +422,7 @@ ifeq ($(RTCONFIG_REALTEK),y)
 	@echo "" > $(SRCBASE)/build.log
 endif
 	echo ""
-	echo "Building $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)$(RCSTRING).trx"
+	echo "Building $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx"
 	echo ""
 	echo ""
 
@@ -471,7 +488,7 @@ image:
 		exit 1; \
 	fi
 
-	@rm -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)$(RCSTRING).trx
+	@rm -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
 ifeq ($(RTCONFIG_REALTEK),y)
 	@$(MAKE) rtk_clean_img
 	@$(MAKE) rtk_img_tool
@@ -517,13 +534,13 @@ ifeq ($(CONFIG_RALINK),y)
 	PAD2=`expr $${ISIZE} - $${KSIZE} - $${RSIZE}` ; \
 	RFSOFFSET=`expr 64 + $${KSIZE} + $${PAD2}` ; \
 	echo "PAD2: $${PAD2}" ; \
-	if [ "$(BUILD_NAME)" = "RT-N56UB1" ] || [ "$(BUILD_NAME)" = "RT-N56UB2" ] || [ "$(BUILD_NAME)" = "RT-AC1200GA1" ] || [ "$(BUILD_NAME)" = "RT-AC1200GU" ] || [ "$(BUILD_NAME)" = "RP-AC56" ] || [ "$(BUILD_NAME)" = "RP-AC87" ] || [ "$(BUILD_NAME)" = "RT-AC85U" ] || [ "$(BUILD_NAME)" = "RT-AC65U" ] ; then \
+	if [ "$(BUILD_NAME)" = "RT-N56UB1" ] || [ "$(BUILD_NAME)" = "RT-N56UB2" ] || [ "$(BUILD_NAME)" = "RT-AC1200GA1" ] || [ "$(BUILD_NAME)" = "RT-AC1200GU" ] || [ "$(BUILD_NAME)" = "RP-AC56" ] || [ "$(BUILD_NAME)" = "RP-AC87" ] || [ "$(BUILD_NAME)" = "RT-AC85U" ] || [ "$(BUILD_NAME)" = "RT-AC65U" ] || [ "$(BUILD_NAME)" = "RT-N800HP" ]; then \
 		asustools/mkimage -A mips -O linux -T kernel -C lzma -a 80001000 -e $${ENTRY} -r $${RFSOFFSET} \
-		-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)"  "$(SERIALNO)$(RCSTRING)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0"  \
+		-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)"  "$(SERIALNO)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0"  \
 		-d $(PLATFORMDIR)/zImage.img image/$(IMGNAME).trx ; \
 	else \
 		asustools/mkimage -A mips -O linux -T kernel -C lzma -a 80000000 -e $${ENTRY} -r $${RFSOFFSET} \
-		-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)$(RCSTRING)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" \
+		-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" \
 		-d $(PLATFORMDIR)/zImage.img image/$(IMGNAME).trx ; \
 	fi ; \
 	if [ "`grep -c \"^CONFIG_RALINK_MT7620\>\" $(LINUXDIR)/.config`" -gt 0 ]; then \
@@ -578,7 +595,7 @@ ifeq ($(IPQ40XX),y)
 		RFSOFFSET=`expr 64 + $${KSIZE} + $${PAD2}` ; \
 		echo "PAD2: $${PAD2}" ; \
 	asustools/mkimage -A $(ARCH) -O linux -T kernel -C lzma -a $(LOADADDR) -e $(ENTRYADDR) -r $${RFSOFFSET} \
-			-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)$(RCSTRING)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" \
+			-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" \
 			-d image/$(IMGNAME).img image/$(IMGNAME).trx
 else
 	@rm -rf $(PLATFORMDIR)/zImage.lzma ; \
@@ -598,7 +615,7 @@ else
 		RFSOFFSET=`expr 64 + $${KSIZE} + $${PAD2}` ; \
 		echo "PAD2: $${PAD2}" ; \
 		asustools/mkimage -A $(ARCH) -O linux -T kernel -C lzma -a $(LOADADDR) -e $(ENTRYADDR) -r $${RFSOFFSET} \
-			-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)$(RCSTRING)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" \
+			-n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" \
 			-d $(PLATFORMDIR)/zImage.img image/$(IMGNAME).trx
 endif
 else ifeq ($(RTCONFIG_REALTEK),y)
@@ -635,7 +652,7 @@ else ifeq ($(ALPINE),y)
 	@proprietary/gen_uimage
 	dd if=/dev/zero count=1 bs=128 | tr "\000" "\145" > ./eof.txt
 	rm -f image/tmp-linux.trx; ctools/trx -o image/tmp-linux.trx $(PLATFORMDIR)/uImage.final $(PLATFORMDIR)/target.image ./eof.txt
-	ctools/trx_asus -i image/tmp-linux.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),$(SERIALNO)$(RCSTRING),$(EXTENDNO),image/$(IMGNAME).trx
+	ctools/trx_asus -i image/tmp-linux.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),$(SERIALNO),$(EXTENDNO),image/$(IMGNAME).trx
 	rm -f ./eof.txt
 else ifeq ($(LANTIQ),y)
 	$(MAKE) -C ctools clean
@@ -679,7 +696,7 @@ else
 	ctools/trx -o image/linux-lzma.trx lzma-loader/loader.gz $(PLATFORMDIR)/vmlinuz-lzma $(PLATFORMDIR)/target.image
 endif
 ifneq ($(CONFIG_BCMWL5),)
-	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),$(SERIALNO)$(RCSTRING),$(EXTENDNO),image/$(IMGNAME).trx
+	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),$(SERIALNO),$(EXTENDNO),image/$(IMGNAME).trx
 else
 	ctools/trx_asus -i image/linux-lzma.trx -r $(BUILD_NAME),$(KERNEL_VER).$(FS_VER),image/$(IMGNAME).trx
 endif
@@ -688,7 +705,7 @@ endif
 
 ifeq ($(RTCONFIG_REALTEK),y)
 	ENTRY=`LANG=en_US readelf -h linux/rtl819x/linux-3.10/vmlinux | grep "Entry" | awk '{print $$4}'` ; \
-	asustools/mkimage -A mips -O linux -T kernel -C lzma -a 80c00000 -e $${ENTRY} -n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)$(RCSTRING)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" -d $(RSDKDIR)/image/fw.bin image/$(IMGNAME).trx
+	asustools/mkimage -A mips -O linux -T kernel -C lzma -a 80c00000 -e $${ENTRY} -n $(BUILD_NAME) -V "$(KERNEL_VER)" "$(FS_VER)" "$(SERIALNO)" "$(EXTENDNO)" "0" "0" "0" "0" "0" "0" -d $(RSDKDIR)/image/fw.bin image/$(IMGNAME).trx
 	#@asustools/mkimage -A mips -O linux -d $(RSDKDIR)/image/fw.bin image/$(IMGNAME).trx
 endif
 	md5sum image/$(IMGNAME).trx > image/$(IMGNAME).md5
@@ -722,7 +739,7 @@ endif
 
 export_config:
 	@-mkdir image/log
-	sh $(SRCBASE)/../../buildtools/parseconfig.sh $(SRCBASE)/../.. $(KERNEL_VER).$(FS_VER)_$(SERIALNO)$(RCSTRING)_$(EXTENDNO) $(SRCBASE)/image $(BUILD_NAME)
+	sh $(SRCBASE)/../../buildtools/parseconfig.sh $(SRCBASE)/../.. $(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(EXTENDNO) $(SRCBASE)/image $(BUILD_NAME)
 
 kernel_patch:
 ifeq ($(CONFIG_LANTIQ),y)
@@ -849,7 +866,7 @@ cleankernel:
 	$(MAKE) distclean || true; \
 	cp -p save-config .config || true
 
-kernel:	
+kernel:
 	$(MAKE) -C router kernel
 	@[ ! -e $(KERNEL_BINARY) ] || ls -l $(KERNEL_BINARY)
 
@@ -1146,10 +1163,6 @@ define RouterOptions
 		sed -i "/RTCONFIG_NEW_APP_ARM/d" $(1); \
 		echo "RTCONFIG_NEW_APP_ARM=y" >>$(1); \
 	fi; \
-	if [ "$(NEWSSID_REV2)" = "y" ]; then \
-		sed -i "/RTCONFIG_NEWSSID_REV2/d" $(1); \
-		echo "RTCONFIG_NEWSSID_REV2=y" >>$(1); \
-	fi; \
 	if [ "$(FINDASUS)" = "y" ]; then \
 		sed -i "/RTCONFIG_FINDASUS/d" $(1); \
 		echo "RTCONFIG_FINDASUS=y" >>$(1); \
@@ -1332,6 +1345,9 @@ define RouterOptions
 	if [ "$(SYSSTATE)" = "y" ]; then \
 		sed -i "/RTCONFIG_SYSSTATE/d" $(1); \
 		echo "RTCONFIG_SYSSTATE=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_SYSSTATE/d" $(1); \
+		echo "# RTCONFIG_SYSSTATE is not set" >>$(1); \
 	fi; \
 	if [ "$(USER_LOW_RSSI)" = "y" ]; then \
 		sed -i "/RTCONFIG_USER_LOW_RSSI/d" $(1); \
@@ -1360,10 +1376,10 @@ define RouterOptions
 			sed -i "/RTCONFIG_EXT4FS/d" $(1); \
 			echo "RTCONFIG_EXT4FS=y" >>$(1); \
 		fi; \
-		if [ "$(TFAT)" != "" ]; then \
+		if [ "$(TFAT)" = "y" ] || [ "$(findstring open, $(TFAT))" = "open" ]; then \
 			sed -i "/RTCONFIG_TFAT/d" $(1); \
 			echo "RTCONFIG_TFAT=y" >>$(1); \
-			if [ "$(findstring open, $(TFAT))" = "open" ]; then \
+			if [ "$(TFAT)" != "y" ]; then \
 				sed -i "/RTCONFIG_OPENPLUS_TFAT/d" $(1); \
 				echo "RTCONFIG_OPENPLUS_TFAT=y" >>$(1); \
 			fi; \
@@ -1576,6 +1592,8 @@ define RouterOptions
 		echo "# RTCONFIG_FTP is not set" >>$(1); \
 	fi; \
 	if [ "$(NO_USBSTORAGE)" = "y" ]; then \
+		sed -i "/RTCONFIG_NO_USBPORT/d" $(1); \
+		echo "RTCONFIG_NO_USBPORT=y" >>$(1); \
 		sed -i "/RTCONFIG_SAMBASRV/d" $(1); \
 		echo "# RTCONFIG_SAMBASRV is not set" >>$(1); \
 		sed -i "/RTCONFIG_FTP/d" $(1); \
@@ -2235,6 +2253,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_AIHOME_TUNNEL/d" $(1); \
 		echo "RTCONFIG_AIHOME_TUNNEL=y" >>$(1); \
 	fi; \
+	if [ "$(UTF8_SSID)" = "y" ]; then \
+		sed -i "/RTCONFIG_UTF8_SSID/d" $(1); \
+		echo "RTCONFIG_UTF8_SSID=y" >>$(1); \
+	fi; \
 	if [ "$(REBOOT_SCHEDULE)" = "y" ]; then \
 		sed -i "/RTCONFIG_REBOOT_SCHEDULE/d" $(1); \
 		echo "RTCONFIG_REBOOT_SCHEDULE=y" >>$(1); \
@@ -2401,6 +2423,18 @@ define RouterOptions
 	if [ "$(LAN50)" = "y" ]; then \
 		sed -i "/RTCONFIG_DEFLAN50/d" $(1); \
 		echo "RTCONFIG_DEFLAN50=y" >>$(1); \
+		sed -i "/RTCONFIG_ALL_DEF_LAN50/d" $(1); \
+		echo "# RTCONFIG_ALL_DEF_LAN50 is not set" >>$(1); \
+	elif [ "$(LAN50)" = "all" ] ; then \
+		sed -i "/RTCONFIG_DEFLAN50/d" $(1); \
+		echo "# RTCONFIG_DEFLAN50 is not set" >>$(1); \
+		sed -i "/RTCONFIG_ALL_DEF_LAN50/d" $(1); \
+		echo "RTCONFIG_ALL_DEF_LAN50=y" >>$(1); \
+	else \
+		sed -i "/RTCONFIG_DEFLAN50/d" $(1); \
+		echo "# RTCONFIG_DEFLAN50 is not set" >>$(1); \
+		sed -i "/RTCONFIG_ALL_DEF_LAN50/d" $(1); \
+		echo "# RTCONFIG_ALL_DEF_LAN50 is not set" >>$(1); \
 	fi; \
 	if [ "$(PERMISSION_MANAGEMENT)" = "y" ]; then \
 		sed -i "/RTCONFIG_PERMISSION_MANAGEMENT/d" $(1); \
@@ -2493,10 +2527,6 @@ define RouterOptions
 	if [ "$(AMAS)" = "y" ]; then \
 		sed -i "/RTCONFIG_AMAS/d" $(1); \
 		echo "RTCONFIG_AMAS=y" >>$(1); \
-		if [ "$(LANTIQ)" != "y" ]; then \
-			sed -i "/RTCONFIG_DPSTA/d" $(1); \
-			echo "RTCONFIG_DPSTA=y" >>$(1); \
-		fi; \
 		if [ "$(DISABLE_REPEATER_UI)" = "y" ] ; then \
 			sed -i "/RTCONFIG_DISABLE_REPEATER_UI/d" $(1); \
 			echo "# RTCONFIG_DISABLE_REPEATER_UI is not set" >>$(1); \
@@ -2507,8 +2537,22 @@ define RouterOptions
 		echo "RTCONFIG_MASTER_DET=y" >>$(1); \
 		sed -i "/RTCONFIG_ADV_RAST/d" $(1); \
 		echo "RTCONFIG_ADV_RAST=y" >>$(1); \
-		sed -i "/RTCONFIG_WLCEVENTD/d" $(1); \
-		echo "RTCONFIG_WLCEVENTD=y" >>$(1); \
+		if [ "$(LANTIQ)" = "y" ]; then \
+			sed -i "/RTCONFIG_HAPDEVENT/d" $(1); \
+			echo "RTCONFIG_HAPDEVENT=y" >>$(1); \
+			sed -i "/RTCONFIG_WPS_ENROLLEE/d" $(1); \
+			echo "RTCONFIG_WPS_ENROLLEE=y" >>$(1); \
+		elif [ "$(QCA)" = "y" ]; then \
+			sed -i "/RTCONFIG_HAPDEVENT/d" $(1); \
+			echo "RTCONFIG_HAPDEVENT=y" >>$(1); \
+			sed -i "/RTCONFIG_WPS_ENROLLEE/d" $(1); \
+			echo "RTCONFIG_WPS_ENROLLEE=y" >>$(1); \
+		else \
+			sed -i "/RTCONFIG_WLCEVENTD/d" $(1); \
+			echo "RTCONFIG_WLCEVENTD=y" >>$(1); \
+			sed -i "/RTCONFIG_DPSTA/d" $(1); \
+			echo "RTCONFIG_DPSTA=y" >>$(1); \
+		fi; \
 		sed -i "/RTCONFIG_LIBASUSLOG/d" $(1); \
 		echo "RTCONFIG_LIBASUSLOG=y" >>$(1); \
 	fi; \
@@ -2531,7 +2575,7 @@ define RouterOptions
 		sed -i "/RTCONFIG_LYRA_HIDE/d" $(1); \
 		echo "RTCONFIG_LYRA_HIDE=y" >>$(1); \
 	fi; \
-	if [ "$(NVRAM_ENCRYPT)" = "y" ]; then \
+	if [ "$(NVRAM_ENCRYPT)" != "n" ] && [ "$(NVRAM_ENCRYPT)" != "" ]; then \
 		sed -i "/RTCONFIG_NVRAM_ENCRYPT/d" $(1); \
 		echo "RTCONFIG_NVRAM_ENCRYPT=y" >>$(1); \
 	fi; \
@@ -2558,6 +2602,14 @@ define RouterOptions
 	if [ "$(LIBASUSLOG)" = "y" ]; then \
 		sed -i "/RTCONFIG_LIBASUSLOG\>/d" $(1); \
 		echo "RTCONFIG_LIBASUSLOG=y" >>$(1); \
+	fi; \
+	if [ "$(PORT2_DEVICE)" = "y" ]; then \
+		sed -i "/RTCONFIG_PORT2_DEVICE/d" $(1); \
+		echo "RTCONFIG_PORT2_DEVICE=y" >>$(1); \
+	fi; \
+	if [ "$(ETHOBD)" = "y" ]; then \
+		sed -i "/RTCONFIG_ETHOBD/d" $(1); \
+		echo "RTCONFIG_ETHOBD=y" >>$(1); \
 	fi; \
 	)
 	$(call platformRouterOptions, $(1))
@@ -2984,6 +3036,10 @@ if [ "$(TUNEK)" != "n" ]; then \
 		echo "# CONFIG_FAT_FS is not set" >>$(1); \
 		sed -i "/CONFIG_VFAT_FS/d" $(1); \
 		echo "# CONFIG_VFAT_FS is not set" >>$(1); \
+		sed -i "/CONFIG_HFS_FS/d" $(1); \
+		echo "# CONFIG_HFS_FS is not set" >>$(1); \
+		sed -i "/CONFIG_HFSPLUS_FS/d" $(1); \
+		echo "# CONFIG_HFSPLUS_FS is not set" >>$(1); \
 		sed -i "/CONFIG_REISERFS_FS/d" $(1); \
 		echo "# CONFIG_REISERFS_FS is not set" >>$(1); \
 		sed -i "/CONFIG_JFFS2_FS/d" $(1); \
@@ -3028,6 +3084,10 @@ if [ "$(TUNEK)" != "n" ]; then \
 		echo "# CONFIG_FAT_FS is not set" >>$(1); \
 		sed -i "/CONFIG_VFAT_FS/d" $(1); \
 		echo "# CONFIG_VFAT_FS is not set" >>$(1); \
+		sed -i "/CONFIG_HFS_FS/d" $(1); \
+		echo "# CONFIG_HFS_FS is not set" >>$(1); \
+		sed -i "/CONFIG_HFSPLUS_FS/d" $(1); \
+		echo "# CONFIG_HFSPLUS_FS is not set" >>$(1); \
 		sed -i "/CONFIG_REISERFS_FS/d" $(1); \
 		echo "# CONFIG_REISERFS_FS is not set" >>$(1); \
 		sed -i "/CONFIG_JFFS2_FS/d" $(1); \
@@ -3241,6 +3301,8 @@ fi; \
 		echo "# CONFIG_MSDOS_PARTITION is not set" >>$(1); \
 		sed -i "/CONFIG_EFI_PARTITION/d" $(1); \
 		echo "# CONFIG_EFI_PARTITION is not set" >>$(1); \
+		sed -i "/CONFIG_MAC_PARTITION/d" $(1); \
+		echo "# CONFIG_MAC_PARTITION is not set" >>$(1); \
 	else \
 		if [ "$(PRINTER)" != "y" ]; then \
 			sed -i "/CONFIG_USB_PRINTER/d" $(1); \
@@ -3467,10 +3529,10 @@ fi; \
 	fi; \
 	sed -i "/CONFIG_JFFS_NVRAM/d" $(1); \
 	if [ "$(JFFS_NVRAM)" = "y" ]; then \
-                echo "CONFIG_JFFS_NVRAM=y" >>$(1); \
+		echo "CONFIG_JFFS_NVRAM=y" >>$(1); \
 	else \
 		echo "# CONFIG_JFFS_NVRAM is not set" >>$(1); \
-        fi; \
+	fi; \
 	sed -i "/CONFIG_RTAC3200/d" $(1); \
 	if [ "$(BUILD_NAME)" = "RT-AC3200" ]; then \
 		echo "CONFIG_RTAC3200=y" >>$(1); \
@@ -3488,6 +3550,12 @@ fi; \
 		echo "CONFIG_RTAC88U=y" >>$(1); \
 	else \
 		echo "# CONFIG_RTAC88U is not set" >>$(1); \
+	fi; \
+	sed -i "/CONFIG_RTN53/d" $(1); \
+	if [ "$(BUILD_NAME)" = "RT-N53" ]; then \
+		echo "CONFIG_RTN53=y" >>$(1); \
+	else \
+		echo "# CONFIG_RTN53 is not set" >>$(1); \
 	fi; \
 	if [ "$(GMAC3)" = "y" ]; then \
 		sed -i "/CONFIG_BCM_GMAC3/d" $(1); \
@@ -3584,13 +3652,11 @@ fi; \
 		sed -i "/CONFIG_VFAT_FS/d" $(1); \
 		echo "# CONFIG_VFAT_FS is not set" >>$(1); \
 	fi; \
-	if [ "$(HFS)" = "open" ]; then \
+	if [ "$(HFS)" = "paragon" ] || [ "$(HFS)" = "tuxera" ]; then \
 		sed -i "/CONFIG_HFS_FS/d" $(1); \
-		echo "CONFIG_HFS_FS=y" >>$(1); \
+		echo "# CONFIG_HFS_FS is not set" >>$(1); \
 		sed -i "/CONFIG_HFSPLUS_FS/d" $(1); \
-		echo "CONFIG_HFSPLUS_FS=y" >>$(1); \
-		sed -i "/CONFIG_MAC_PARTITION/d" $(1); \
-		echo "CONFIG_MAC_PARTITION=y" >>$(1); \
+		echo "# CONFIG_HFSPLUS_FS is not set" >>$(1); \
 	fi; \
 	if [ "$(BLINK_LED)" = "y" ]; then \
 		sed -i "/CONFIG_USB_BUS_STATS/d" $(1); \
@@ -3770,6 +3836,10 @@ fi; \
 		echo "CCONFIG_NETFILTER_XTABLES=y" >>$(1); \
 		sed -i "/CONFIG_NETFILTER_XT_MATCH_POLICY is not set/d" $(1); \
 		echo "CONFIG_NETFILTER_XT_MATCH_POLICY=y" >>$(1); \
+		echo "# CONFIG_XFRM_SUB_POLICY is not set" >>$(1); \
+		echo "# CONFIG_XFRM_MIGRATE is not set" >>$(1); \
+		echo "# CONFIG_XFRM_STATISTICS is not set" >>$(1); \
+		echo "# CONFIG_NET_KEY_MIGRATE is not set" >>$(1); \
 		if [ "$(IPV6SUPP)" = "y" ]; then \
 			sed -i "/CONFIG_INET6_AH is not set/d" $(1); \
 			echo "CONFIG_INET6_AH=y" >>$(1); \
@@ -4179,7 +4249,9 @@ endif
 
 get_extendno:
 	@if [ "$(ID)" == "" ]; then echo "No ID is assigned"; exit 1; fi
-	git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)$(RCSTRING)..$(ID) | wc -l
+	git log --pretty=oneline asuswrt_$(KERNEL_VER).$(FS_VER).$(SERIALNO)..$(ID) | wc -l
+	@echo $(RC_EXT_NO)
+	@echo $(EXTENDNO)
 
 .PHONY: all clean distclean cleanimage cleantools cleankernel prepk what setprofile libc help image default bin_file
 .PHONY: a b c d m Makefile allversions

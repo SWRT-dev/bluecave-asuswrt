@@ -708,7 +708,7 @@ static int CreatePCPPeer_NAT(pcp_info_t *pcp_msg_info)
 	uint16_t eport = pcp_msg_info->ext_port;  /* public port */
 
 	char peerip_s[INET6_ADDRSTRLEN], extip_s[INET6_ADDRSTRLEN];
-	time_t timestamp = time(NULL) + pcp_msg_info->lifetime;
+	time_t timestamp = upnp_time() + pcp_msg_info->lifetime;
 	int r;
 
 	FillSA((struct sockaddr*)&intip, pcp_msg_info->mapped_ip,
@@ -913,7 +913,7 @@ static int CreatePCPMap_NAT(pcp_info_t *pcp_msg_info)
 	char iaddr_old[INET6_ADDRSTRLEN];
 	uint16_t iport_old, eport_first = 0;
 	int any_eport_allowed = 0;
-	unsigned int timestamp = time(NULL) + pcp_msg_info->lifetime;
+	unsigned int timestamp = upnp_time() + pcp_msg_info->lifetime;
 
 	if (pcp_msg_info->ext_port == 0) {
 		pcp_msg_info->ext_port = pcp_msg_info->int_port;
@@ -1467,7 +1467,7 @@ static void createPCPResponse(unsigned char *response, pcp_info_t *pcp_msg_info)
 
 	resp->r_opcode |= 0x80;
 	resp->result_code = pcp_msg_info->result_code;
-	resp->epochtime = htonl(time(NULL) - startup_time);
+	resp->epochtime = htonl(upnp_time() - startup_time);
 	switch (pcp_msg_info->result_code) {
 	/*long lifetime errors*/
 	case PCP_ERR_UNSUPP_VERSION:

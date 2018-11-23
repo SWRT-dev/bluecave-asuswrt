@@ -13,6 +13,7 @@ if(band5g_11ac_support){
 }
 
 var _chanspecs_5g =  JSON.parse('<% chanspecs_5g(); %>');
+
 for(i=0;i<_chanspecs_5g.length;i++){
 	if(_chanspecs_5g[i].indexOf("/80") != -1){
 		wl1.channel_80m.push(_chanspecs_5g[i]);
@@ -105,7 +106,7 @@ function wl_chanspec_list_change(){
 					document.getElementById('wl_nctrlsb_field').style.display = "";
 		loop_auto: for(i=0; i<wl_channel_list_5g.length; i++){
 						var _cur_channel = parseInt(wl_channel_list_5g[i]);
-						if(band5g_11ac_support){
+						if(band5g_11ac_support && document.form.wl_nmode_x.value != 1){
 							for(j=0;j<wl1.channel_80m.length;j++){
 								if(wl1.channel_80m[j].indexOf(_cur_channel) != -1){
 									wl_channel_list_5g[i] = _cur_channel + "/80";
@@ -161,8 +162,7 @@ function wl_chanspec_list_change(){
 									_wl_channel.push(wlextchannel_fourty(_cur_channel));
 								}
 							}
-						}
-						
+						}	
 					}
 
 					wl_channel_list_5g = _wl_channel;						
@@ -274,9 +274,10 @@ function wl_chanspec_list_change(){
 
 			if(bw_cap == "0"){	// 20/40/80 MHz (auto)
 				document.getElementById('wl_nctrlsb_field').style.display = "";
+
 	 loop_auto: for(i=0; i<wl_channel_list_5g_2.length; i++){
 					var _cur_channel = parseInt(wl_channel_list_5g_2[i]);
-					if(band5g_11ac_support){
+					if(band5g_11ac_support && document.form.wl_nmode_x.value != 1){
 						for(j=0;j<wl2.channel_80m.length;j++){
 							if(wl2.channel_80m[j].indexOf(_cur_channel) != -1){
 								wl_channel_list_5g_2[i] = _cur_channel + "/80";
@@ -484,6 +485,16 @@ function change_channel(obj){
 					document.getElementById('dfs_checkbox').style.display = "none";
 					document.form.acs_dfs.disabled = true;
 				}				
+			}
+		}
+		else if(country == "US" && dfs_US_support){
+			if(document.form.wl_channel.value  == 0){
+				document.getElementById('dfs_checkbox').style.display = "";
+				document.form.acs_dfs.disabled = false;
+			}	
+			else{
+				document.getElementById('dfs_checkbox').style.display = "none";
+				document.form.acs_dfs.disabled = true;
 			}
 		}
 		else if(country == "US" || country == "SG"){			//for acs band1 channel

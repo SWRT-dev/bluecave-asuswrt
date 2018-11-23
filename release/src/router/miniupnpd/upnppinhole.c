@@ -115,7 +115,7 @@ upnp_add_inboundpinhole(const char * raddr,
 		       AF_INET6, iaddr, &address);
 		return -4;
 	}
-	current = time(NULL);
+	current = upnp_time();
 	timestamp = current + leasetime;
 	r = 0;
 
@@ -241,7 +241,7 @@ upnp_get_pinhole_info(unsigned short uid,
 	if(r >= 0) {
 		if(leasetime) {
 			time_t current_time;
-			current_time = time(NULL);
+			current_time = upnp_time();
 			if(timestamp > (unsigned int)current_time)
 				*leasetime = timestamp - current_time;
 			else
@@ -278,7 +278,7 @@ upnp_update_inboundpinhole(unsigned short uid, unsigned int leasetime)
 #if defined(USE_PF) || defined(USE_NETFILTER)
 	unsigned int timestamp;
 
-	timestamp = time(NULL) + leasetime;
+	timestamp = upnp_time() + leasetime;
 	return update_pinhole(uid, timestamp);
 #else
 	UNUSED(uid); UNUSED(leasetime);
@@ -320,7 +320,7 @@ upnp_check_pinhole_working(const char * uid,
 	/* TODO : to be implemented */
 #if 0
 	FILE * fd;
-	time_t expire = time(NULL);
+	time_t expire = upnp_time();
 	char buf[1024], filename[] = "/var/log/kern.log", expire_time[32]="";
 	int res = -4, str_len;
 

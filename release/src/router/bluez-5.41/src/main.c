@@ -60,7 +60,10 @@
 #include "agent.h"
 #include "profile.h"
 #include "systemd.h"
-#include "bleencrypt/blepack.h"
+#define TYPEDEF_BOOL
+#include <bcmnvram.h>
+#include <bcmparams.h>
+#include <shared.h>
 #include <shutils.h>
 
 #define BLUEZ_NAME "org.bluez"

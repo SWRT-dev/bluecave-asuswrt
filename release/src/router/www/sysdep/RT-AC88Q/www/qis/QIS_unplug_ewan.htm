@@ -147,7 +147,9 @@ function update_wan_info(flag){
 						</tr>
 					</table>
 				</div>
-				<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+				<div style="margin:5px;" id="splitLine">
+					<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+				</div>
 		</div>
 		<p class="QISGeneralFont"><#QIS_unplug_desc21#></p></br>
 		<p class="QISGeneralFont"><#QIS_unplug_desc22#></p>
@@ -170,7 +172,7 @@ function update_wan_info(flag){
 
 		<div class='apply_gen'>
 			<div id="fresharea">
-				<input type="button" id="detectAgain" class="button_gen_long" onclick="update_wan_info();" value="<#CTL_Detect_Again#>">
+				<input type="button" id="detectAgain" class="button_gen" onclick="update_wan_info();" value="<#CTL_Detect_Again#>">
 				<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 				<input type="button" id="skipButton" value="<#CTL_Skip#>" onclick="redirect_page('wireless');" class="button_gen">
 			</div>

@@ -92,6 +92,17 @@ a{
 .inputContainer{
 	margin: 0px 55px 50px 30px;
 }
+.optionInput{
+    text-align: left;
+    font-size: 1.875em;
+    color: rgb(84, 84, 84);
+}
+.ui-page-theme-a .ui-btn{
+	background-color: 	#fff /*{a-bhover-background-color}*/;
+}
+.ui-page-theme-a .ui-btn:hover,{
+	background-color: 	#fff /*{a-bhover-background-color}*/;
+}
 .ui-input-text input, .ui-input-search input{
 	background-color: #FFF;
 	border-color: #0ECDA4;
@@ -318,6 +329,25 @@ a{
 }
 .summaryNetwork{
 	margin-top: -200px;
+}
+.labelInput{
+	border: 0px #FFF !important;
+	font-size: 2em !important;
+}
+#iptvDesc{
+	width: 95%;
+	height: 300px;
+	margin: auto;
+}
+.lyra_iptv{
+	background:url('../../images/qis/lyra_io.png') no-repeat;
+	background-size:350px;
+	background-position:center;
+}
+.lyraTrio_iptv{
+	background: url('../../images/qis/trio_io.png') no-repeat;
+	background-size:350px;
+	background-position:center;
 }
 /*for Desktop*/
 @media screen and (min-width: 1000px){

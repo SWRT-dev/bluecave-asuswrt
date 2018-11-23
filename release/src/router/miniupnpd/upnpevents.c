@@ -136,7 +136,7 @@ upnpevents_addSubscriber(const char * eventurl,
 	if(!tmp)
 		return NULL;
 	if(timeout)
-		tmp->timeout = time(NULL) + timeout;
+		tmp->timeout = upnp_time() + timeout;
 	LIST_INSERT_HEAD(&subscriberlist, tmp, entries);
 	upnp_event_create_notify(tmp);
 	return tmp->uuid;
@@ -151,10 +151,10 @@ renewSubscription(const char * sid, int sidlen, int timeout)
 		if((sidlen == 41) && (memcmp(sid, sub->uuid, 41) == 0)) {
 #ifdef UPNP_STRICT
 			/* check if the subscription already timeouted */
-			if(sub->timeout && time(NULL) > sub->timeout)
+			if(sub->timeout && upnp_time() > sub->timeout)
 				continue;
 #endif
-			sub->timeout = (timeout ? time(NULL) + timeout : 0);
+			sub->timeout = (timeout ? upnp_time() + timeout : 0);
 			return 0;
 		}
 	}
@@ -563,7 +563,7 @@ void upnpevents_processfds(fd_set *readset, fd_set *writeset)
 		obj = next;
 	}
 	/* remove timeouted subscribers */
-	curtime = time(NULL);
+	curtime = upnp_time();
 	for(sub = subscriberlist.lh_first; sub != NULL; ) {
 		subnext = sub->entries.le_next;
 		if(sub->timeout && curtime > sub->timeout && sub->notify == NULL) {

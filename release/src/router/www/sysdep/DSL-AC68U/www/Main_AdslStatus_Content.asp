@@ -350,12 +350,12 @@ function showadslbootTime(){
 					<td bgcolor="#4D595D" height="400px" colspan="3" valign="top">
 						<div>&nbsp;</div>
 						<div class="formfonttitle"><#System_Log#> - <#menu_dsl_log#></div>
-						<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-						<div class="formfontdesc">This page shows the detailed DSL status.</div>
+						<div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
+						<div class="formfontdesc"><#DSL_Log_Desc#></div>
 						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_log">
 							<thead>
 							<tr>
-								<th colspan="2">DSL Information</th>
+								<th colspan="2"><#DSL_info#></th>
 							</tr>
 							</thead>
 							<tr>
@@ -402,7 +402,7 @@ function showadslbootTime(){
 								</td>
 							</tr>
 							<tr id="tr_VDSL_CurrentProfile">
-								<th>Current Profile</th>
+								<th><#DSL_profile#></th>
 								<td colspan="2">
 									<div id="div_VDSL_CurrentProfile"><% nvram_get("dsllog_vdslcurrentprofile"); %></div>
 								</td>
@@ -453,7 +453,7 @@ function showadslbootTime(){
 								</td>
 							</tr>
 							<tr>
-								<th>SNR</th>
+								<th><#DSL_SNR_Margin#></th>
 								<td>
 									<div id="div_SNRMarginDown"><% nvram_get("dsllog_snrmargindown"); %></div>
 								</td>
@@ -462,7 +462,7 @@ function showadslbootTime(){
 								</td>
 							</tr>
 							<tr>
-								<th>Line Attenuation</th>
+								<th><#DSL_Line_Attenuation#></th>
 								<td>
 									<div id="div_AttenDown"><% nvram_get("dsllog_attendown"); %></div>
 								</td>
@@ -489,7 +489,7 @@ function showadslbootTime(){
 								</td>
 							</tr>
 							<tr>
-								<th>Data Rate</th>
+								<th><#DSL_Data_Rate#></th>
 								<td>
 									<div id="div_DataRateDown"><% nvram_get("dsllog_dataratedown"); %></div>
 								</td>
@@ -498,7 +498,7 @@ function showadslbootTime(){
 								</td>
 							</tr>
 							<tr>
-								<th>MAX Rate</th>
+								<th><#DSL_Data_Rate_Max#></th>
 								<td>
 									<div id="div_AttainDown"><% nvram_get("dsllog_attaindown"); %></div>
 								</td>
@@ -507,7 +507,7 @@ function showadslbootTime(){
 								</td>
 							</tr>
 							<tr>
-								<th>POWER</th>
+								<th><#DSL_Power#></th>
 								<td>
 									<div id="div_PowerDown"><% nvram_get("dsllog_powerdown"); %></div>
 								</td>
@@ -562,7 +562,7 @@ function showadslbootTime(){
 						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable_log">
 							<thead>
 							<tr>
-								<th colspan="10">VDSL Band Status</th>
+								<th colspan="10"><#DSL_VDSL_status#></th>
 							</tr>
 
 							<tr>
@@ -579,7 +579,7 @@ function showadslbootTime(){
 							</tr>
 							</thead>
 							<tr>
-								<th>Line Attenuation (dB)</th>
+								<th><#DSL_Line_Attenuation#> (dB)</th>
 								<td style="color:#3CF;">
 									<div id="div_VDSLBAND_LATNUp0"></div>
 								</td>
@@ -610,7 +610,7 @@ function showadslbootTime(){
 							</tr>
 
 							<tr>
-								<th>Signal Attenuation (dB)</th>
+								<th><#DSL_Signal_Attenuation#> (dB)</th>
 								<td style="color:#3CF;">
 									<div id="div_VDSLBAND_SATNUp0"></div>
 								</td>
@@ -641,7 +641,7 @@ function showadslbootTime(){
 							</tr>
 
 							<tr>
-								<th>SNR Margin (dB)</th>
+								<th><#DSL_SNR_Margin#> (dB)</th>
 								<td style="color:#3CF;">
 									<div id="div_VDSLBAND_SNRMarginUp0"></div>
 								</td>

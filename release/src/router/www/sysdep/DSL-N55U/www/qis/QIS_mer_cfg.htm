@@ -79,6 +79,13 @@ function QKfinish_load_body(){
 		ISP_List_IPTV = RAW_ISP_PTM_List_IPTV;
 	}
 
+	if( document.form.dslx_transmode.value != document.form.dsltmp_transmode.value )
+	{
+		document.form.dslx_transmode.value = document.form.dsltmp_transmode.value;
+		parent.restartDSLSetting = true;
+		document.form.action_script.value = "restart_dsl_setting;".concat(document.form.action_script.value);
+	}
+
 	showHideIPTVList(false);
 	if(haveIPTVService()) {
 		showhide("iptv_manual_setting", 1);
@@ -87,6 +94,7 @@ function QKfinish_load_body(){
 		showhide("iptv_manual_setting", 0);
 	}
 	showhide("STBPortMsg", 0);
+
 }
 
 function submitForm(){
@@ -108,6 +116,7 @@ function submitForm(){
 		document.form.dslx_dhcp_clientid.value = "";
 		document.form.dslx_dhcp_hostname.value = "";
 	}
+
 	document.form.next_page.value = "/qis/QIS_wireless.htm";
 	if(document.form.dsltmp_cfg_iptv_enable.value == "1"){
 		if(valid_ISP())
@@ -303,7 +312,7 @@ function gotoHome() {
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
-		parent.location.href = "<% abs_index_page(); %>";
+		parent.location.href = "/";
 	}
 }
 
@@ -351,6 +360,7 @@ function gotoHome() {
 <input type="hidden" name="dslx_dhcp_hostname" value="">
 <input type="hidden" name="dsltmp_qis_pppoe_relay" value="0">
 <input type="hidden" name="dsltmp_transmode" value="">
+<input type="hidden" name="dslx_transmode" value="<% nvram_get("dslx_transmode"); %>">
 <div class="QISmain">
 	<table width="730px">
 		<tr>
@@ -359,7 +369,7 @@ function gotoHome() {
 			</td>
 		</tr>
 	</table>
-	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><div style="width: 700px; height: 2px;" class="splitLine"></div></div>
 	<br/>
 
 <table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
@@ -370,27 +380,6 @@ function gotoHome() {
     </td> 
   </tr>
 </table>
-
-<!-- Renjie: Remove this field, we will use Option 61 and 12 for UK Sky.
-<table style="margin-left:50px;">
-  <tr>
-	<th width="120" class="test_css"><span id="ppp_username1" style="display:none;">SKY <#HSDPAConfig_Username_itemname#>:</span></th>
-	<td>
-	  <span id="ppp_username2" style="display:none;">
-	  <input type="text" name="ppp_username" class="input_25_table" value="" maxlength="32" autocorrect="off" autocapitalize="off">
-	  </span>
-	</td>
-  </tr>
-  <tr>
-	<th width="120" class="test_css"><span id="ppp_password1" style="display:none;">SKY <#HSDPAConfig_Password_itemname#>:</span></th>
-	<td>
-	  <span id="ppp_password2" style="display:none;">
-	  <input type="text" name="ppp_password" class="input_25_table" value="" maxlength="32" autocorrect="off" autocapitalize="off">
-	  </span>
-	</td>
-  </tr>
-</table>
--->
 	<div>
 	<table id="iptv_manual_setting" width="92%" border="0" align="left" cellpadding="3" cellspacing="0" style="margin-left:8%;">
 			<tr>
@@ -425,11 +414,8 @@ function gotoHome() {
 	</div>
 
 	<div class="apply_gen" style="margin-top:20px">
-		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" onclick="gotoprev(document.form);" class="button_gen_long" >
-<!--
-		<input type="button" id="nextButton" value="Ethernet WAN" onclick="redirect_page('internet_type');" class="button_gen" >
--->
-		<input type="button" id="nextButton" value="<#CTL_next#>" onclick="submitForm();" class="button_gen_long">
+		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" onclick="gotoprev(document.form);" class="button_gen" >
+		<input type="button" id="nextButton" value="<#CTL_next#>" onclick="submitForm();" class="button_gen">
 	</div>
 
 </div>

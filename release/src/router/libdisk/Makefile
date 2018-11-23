@@ -25,16 +25,13 @@ LDFLAGS_SO += -lgcc_s
 endif
 LDFLAGS += $(LDFLAGS_SO) -L. -ldisk
 ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DTYPEDEF_FLOAT_T
 CFLAGS += -I$(SRCBASE)/common/include
 LDFLAGS += -lgcc_s
 endif
 
 ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
-endif
-
-ifeq ($(RTCONFIG_AMAS),y)
-LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
 endif
 
 ifeq ($(RTCONFIG_QCA),y)

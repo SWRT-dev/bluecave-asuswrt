@@ -38,6 +38,14 @@
 #include <shutils.h>
 #include <shared.h>
 
+#ifdef RTCONFIG_ODMPID
+struct REPLACE_ODMPID_S replace_odmpid_t[] =
+{
+	{"LYRA_VOICE", "LYRA VOICE"},
+	{NULL, NULL}
+};
+#endif
+
 static char * get_arg(char *args, char **next);
 static void call(char *func, FILE *stream);
 
@@ -136,6 +144,21 @@ process_asp (char *s, char *e, FILE *f)
 	return end;
 }
 
+#ifdef RTCONFIG_ODMPID
+static void replace_odmpid(char *ODM_PID_STR, char *RP_ODM_PID_STR, int len){
+
+	struct REPLACE_ODMPID_S *p;
+
+	for(p = &replace_odmpid_t[0]; p->org_name; p++){
+		if(!strcmp(ODM_PID_STR, p->org_name)){
+			strlcpy(RP_ODM_PID_STR, p->replace_name, len);
+			return;
+		}
+	}
+	strlcpy(RP_ODM_PID_STR, ODM_PID_STR, len);
+}
+#endif
+
 // Call this function if and only if we can read whole <#....#> pattern.
 static char *
 translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
@@ -157,6 +180,7 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 		if (desc != NULL) {
 #ifdef RTCONFIG_ODMPID
 			static char pattern1[2048];
+			char RP_ODM_PID_STR[32];
 			char *p_PID_STR = NULL;
 			char *PID_STR = nvram_safe_get("productid");
 			char *ODM_PID_STR = nvram_safe_get("odmpid");
@@ -167,6 +191,9 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 			odm_len = strlen(ODM_PID_STR);
 
 			if (odm_len && strcmp(PID_STR, ODM_PID_STR) != 0) {
+
+				replace_odmpid(ODM_PID_STR, RP_ODM_PID_STR, sizeof(RP_ODM_PID_STR));
+				odm_len = strlen(RP_ODM_PID_STR);
 				pSrc  = desc;
 				pDest = pattern1;
 				while((p_PID_STR = strstr(pSrc, PID_STR)))
@@ -175,7 +202,7 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 					pDest += (p_PID_STR - pSrc);
 					pSrc   =  p_PID_STR + pid_len;
 
-					memcpy(pDest, ODM_PID_STR, odm_len);
+					memcpy(pDest, RP_ODM_PID_STR, odm_len);
 					pDest += odm_len;
 				}
 				if(pDest != pattern1)
@@ -221,27 +248,16 @@ do_ej(char *path, FILE *stream)
 
 	if (!(fp = fopen(path, "r")))
 		return;
+
 #ifdef TRANSLATE_ON_FLY
 	// Load dictionary file
-
-	// If the router is restored to default, using browser's language setting to display ALL pages
-	if (is_firsttime () && Accept_Language[0] != '\0' && nvram_match("ui_Setting", "0")) {
-		lang = Accept_Language;
-		nvram_set("ui_Setting" , "1");
-	} else {
-		lang = nvram_safe_get("preferred_lang");
-		if (!check_lang_support(lang)) {
-			nvram_set("preferred_lang", "EN");
-			lang = "EN";
-		}
+	lang = nvram_safe_get("preferred_lang");
+	if(!check_lang_support(lang)){
+		lang = nvram_default_get("preferred_lang");
+		nvram_set("preferred_lang", lang);
 	}
 
-	if(!strncmp(nvram_safe_get("territory_code"), "JP", 2) && strcmp(nvram_safe_get(ATE_FACTORY_MODE_STR()), "1")){
-		nvram_set("preferred_lang", "JP");
-		lang = "JP";	
-	}
-
-	if (load_dictionary (lang, &kw))	{
+	if (load_dictionary (lang, &kw)){
 		no_translate = 0;
 	}
 #endif  //defined TRANSLATE_ON_FLY

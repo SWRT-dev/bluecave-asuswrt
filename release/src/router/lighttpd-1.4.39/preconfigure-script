@@ -11,6 +11,7 @@ sqlite_inc=$sqlite_dir
 sqlite_lib=$sqlite_dir/.libs
 user=`echo $HOME`								### /home/XXXXX
 echo $cur_dir
+echo $SRCBASE
 
 PCRE_VER=8.31
 
@@ -28,17 +29,16 @@ else
 	XML_LIBS+=" -lm"
 fi
 
-AMAS=`cat ../.config |grep "RTCONFIG_AMAS=y"`
-if [ -n "$AMAS" ]; then
-	LIBS+=" -L$router_dir/json-c/.libs -ljson-c"
-fi
-
 PMS=`cat ../.config |grep "RTCONFIG_PERMISSION_MANAGEMENT=y"`
 if [ -n "$PMS" ]; then
 	CFLAGS+=" -I$router_dir/sqlCipher -I$router_dir/PMS_DBapis"
 	LDFLAGS+=" -L$router_dir/sqlCipher/.libs -lsqlcipher -L$router_dir/PMS_DBapis -lpms_sql"
 fi
 
+BCMARM=`cat ../.config |grep "RTCONFIG_BCMARM=y"`
+if [ -n "$BCMARM" ]; then
+	CFLAGS+=" -I$srcbase_dir/shared/bcmwifi/include"
+fi
 
 ####	Set compiler variable ####
 export CFLAGS="$CFLAGS"

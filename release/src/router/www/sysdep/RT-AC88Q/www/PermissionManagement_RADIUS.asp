@@ -82,9 +82,9 @@ function collect_info(){
 function generate_client_table(){
 	var code = "";
 	code += '<tr>';
-	code += '<th style="width:60px;"><div>Active</div></th>';
-	code += '<th style="width:50%;">Name</th>';
-	code += '<th style="width:150px">IP</th>';
+	code += '<th style="width:60px;"><div><#Status_Active#></div></th>';
+	code += '<th style="width:50%;"><#Clientlist_name#></th>';
+	code += '<th style="width:150px"><#IPConnection_ExternalIPAddress_itemname#></th>';
 	code += '<th style="width:60px;"><#CTL_modify#></th>';
 	code += '<th style="width:60px;"><#CTL_del#></th>';
 	code += '</tr>';
@@ -290,7 +290,7 @@ function check_active(obj){
 		<table width="97%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" style="margin: 20px 10px;">
 			<thead>
 				<tr>
-					<td colspan="6">Create a new RADIUS client</td>
+					<td colspan="6"><#PM_RADIUS_Create#></td>
 				</tr>
 			</thead>		  
 			<tr>
@@ -303,25 +303,25 @@ function check_active(obj){
 				</td>
 			</tr>		
 			<tr>
-				<th width="30%" style="font-family: Calibri;font-weight: bolder;">Name</th>			
+				<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#Clientlist_name#></th>
 				<td>
 					<input id="name" type="text" maxlength="32"class="input_32_table" style="height: 23px;" value="" autocorrect="off" autocapitalize="off">
 				</td>
 			</tr>
 			<tr>
-				<th width="30%" style="font-family: Calibri;font-weight: bolder;">Password</th>			
+				<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#PPPConnection_Password_itemname#></th>
 				<td>
 					<input id="password" type="text" maxlength="32"class="input_32_table" style="height: 23px;" value="" autocorrect="off" autocapitalize="off">
 				</td>
 			</tr>
 			<tr>
-				<th width="30%" style="font-family: Calibri;font-weight: bolder;">Confirm Password</th>			
+				<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#PM_Confirm_Pwd#></th>
 				<td>
 					<input id="confirm_password" type="text" maxlength="32"class="input_32_table" style="height: 23px;" value="" autocorrect="off" autocapitalize="off">
 				</td>
 			</tr>
 			<tr>
-				<th width="30%" style="font-family: Calibri;font-weight: bolder;">IP Address</th>			
+				<th width="30%" style="font-family: Calibri;font-weight: bolder;"><#IPConnection_ExternalIPAddress_itemname#></th>
 				<td>
 					<input id="ip_address" type="text" maxlength="15" class="input_15_table" style="height: 23px;" onkeypress="return validator.isIPAddr(this, event)" value="" autocorrect="off" autocapitalize="off">
 				</td>
@@ -353,13 +353,13 @@ function check_active(obj){
 								<td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#Permission_Management#> - <#Permission_Management_RADIUS#></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin: 10px 0 10px 5px" class="splitLine"></div>
 									<div class="formfontdesc"><#PM_RADIUS_desc#></div>
 									<div>
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 											<tr>
 												<th style="width:200px;">
-													<div>Enable RADIUS Server</div>
+													<div><#PM_Enable_RADIUS#></div>
 												</th>								
 												<td>
 													<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radius_server_enable"></div>
@@ -391,7 +391,7 @@ function check_active(obj){
 									
 									<div style="margin-top:20px;">
 										<div style="display:flex">
-											<div style="font-weight:900;padding-left:10px;line-height:34px;">RADIUS Clients (<#List_limit#>&nbsp;16)</div>
+											<div style="font-weight:900;padding-left:10px;line-height:34px;"><#PM_RADIUS_Clients#> (<#List_limit#>&nbsp;16)</div>
 											<div style="margin-left:10px;">
 												<div class="createAccountBtn_add" onclick="show_addTable('group', 'new');"></div>
 											</div>										

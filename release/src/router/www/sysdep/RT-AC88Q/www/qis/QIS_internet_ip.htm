@@ -102,8 +102,6 @@ function QKInternet_load_body(){
 	else{
 		parent.set_step("t2");		
 		hideLinkTag();
-		flash_button();
-
 		if(now_flag.length <= 0)
 			showtext(document.getElementById("page_title"), "<#QKSet_ISP_desc#>");
 		else if(DHCPClient == "1")
@@ -608,48 +606,6 @@ function valid_IP(obj_name, obj_flag){
 		}
 }
 
-// test if WAN IP & Gateway & DNS IP is a valid IP
-// DNS IP allows to input nothing
-function valid_IP(obj_name, obj_flag){
-		// A : 1.0.0.0~126.255.255.255
-		// B : 127.0.0.0~127.255.255.255 (forbidden)
-		// C : 128.0.0.0~255.255.255.254
-		var A_class_start = inet_network("1.0.0.0");
-		var A_class_end = inet_network("126.255.255.255");
-		var B_class_start = inet_network("127.0.0.0");
-		var B_class_end = inet_network("127.255.255.255");
-		var C_class_start = inet_network("128.0.0.0");
-		var C_class_end = inet_network("255.255.255.255");
-		
-		var ip_obj = obj_name;
-		var ip_num = inet_network(ip_obj.value);
-
-		if(obj_flag == "DNS" && ip_num == -1){ //DNS allows to input nothing
-			return true;
-		}
-		
-		if(obj_flag == "GW" && ip_num == -1){ //GW allows to input nothing
-			return true;
-		}
-		
-		if(ip_num > A_class_start && ip_num < A_class_end)
-			return true;
-		else if(ip_num > B_class_start && ip_num < B_class_end){
-			alert(ip_obj.value+" <#JS_validip#>");
-			ip_obj.focus();
-			ip_obj.select();
-			return false;
-		}
-		else if(ip_num > C_class_start && ip_num < C_class_end)
-			return true;
-		else{
-			alert(ip_obj.value+" <#JS_validip#>");
-			ip_obj.focus();
-			ip_obj.select();
-			return false;
-		}
-}
-
 function validate_ip(){
 	if(document.form.wan_dhcpenable_x != null && document.form.wan_dhcpenable_x[0].checked){
 		if(!valid_IP(document.form.wan_ipaddr_x, "")) return false;  //WAN IP
@@ -1025,13 +981,10 @@ function displayDNSCtrl(){
 					<td align="left">
 						<div class="description_down" id="page_title"></div>
 					</td>
-					<!--td align="right">
-						<img style="cursor:pointer;" onclick="parent.gotoIndex();" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-					</td-->
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
 		
 <div id="showserver" style="width:730px; display:none">
   <fieldset id="ifVPNfield">
@@ -1193,7 +1146,7 @@ function displayDNSCtrl(){
 			</th>
 			<td class="QISformtd">
 				<input type="text" name="wan_hwaddr_x" tabindex="13" onkeypress="return validator.isHWAddr(this,event);" style="height:25px;" class="input_20_table" size="36" maxlength="17" value="" autocorrect="off" autocapitalize="off">
-				<input type="button" class="button_gen_long" tabindex="14" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
+				<input type="button" class="button_gen" tabindex="14" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 			</td>
 		</tr>
 	</table>

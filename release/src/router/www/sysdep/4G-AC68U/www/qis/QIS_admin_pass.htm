@@ -389,7 +389,6 @@ function submitForm(){
 	else if(parent.flag_manual == "modem")
 		document.form.action = "/qis/QIS_modem.htm";
 	else if(parent.document.QKform.sw_mode.value == "1"){
-		//document.form.action = "/qis/QIS_detect.htm";
 		if(!parent.dual_ewan){
 			if(parent.gobi_support){
 				getDualWANState();
@@ -409,15 +408,27 @@ function submitForm(){
 
 			if(autodet_state == "6" || autodet_auxstate == "6"){
 				if((wanstate  == 2 && wansbstate == 0 && wanauxstate == 0) && (link_internet == "2" || wan0_realip_state == "2" || wan1_realip_state == "2")){
-					if(parent.gobi_support && parent.dualwan_enabled && !(wan_wanstate  == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0)){
-						if(parent.ewan_index == 0)
-							parent.document.QKform.wan0_proto.value = "pppoe";
-						else
-							parent.document.QKform.wan1_proto.value = "pppoe";
-						document.form.action = "/qis/QIS_internet_account.htm";
+					if(parent.gobi_support && parent.dualwan_enabled){
+						if(wan_wanstate  == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0){
+							if(parent.isFirst)
+								document.form.action = "/qis/QIS_internet_type.htm";
+							else
+								document.form.action = "/qis/QIS_wireless.htm";
+						}
+						else{
+							if(parent.ewan_index == 0)
+								parent.document.QKform.wan0_proto.value = "pppoe";
+							else
+								parent.document.QKform.wan1_proto.value = "pppoe";
+							document.form.action = "/qis/QIS_internet_account.htm";
+						}
 					}
-					else
-						document.form.action = "/qis/QIS_wireless.htm";
+					else{
+						if(parent.isFirst)
+							document.form.action = "/qis/QIS_internet_type.htm";
+						else
+							document.form.action = "/qis/QIS_wireless.htm";
+					}
 				}
 				else{
 					parent.changeSubnet = false;
@@ -432,18 +443,18 @@ function submitForm(){
 					document.form.action = "/qis/QIS_internet_account.htm";
 				}
 			}
-			else if(wanstate  == 2 && wansbstate == 0 && wanauxstate == 0){
+			else if(wanstate  == 2 && wansbstate == 0 && wanauxstate != 1){
 				if(parent.gobi_support)
 				{
 					if((wan_wanstate == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0) &&
-					   (usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0)){
+					   (usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate != 1)){
 						document.form.action = "/qis/QIS_wireless.htm";
 					}
 					else if((wan_wanstate == 2 && wan_wansbstate == 0 && wan_wanauxstate == 0) && 
-						     parent.hadPlugged("modem")){
+						     parent.hadModem()){
 						document.form.action = "/qis/QIS_detect.htm";
 					}
-					else if((usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate == 0) &&
+					else if((usb_wanstate == 2 && usb_wansbstate == 0 && usb_wanauxstate != 1) &&
 							(autodet_state == "2" || autodet_state == "6") && wan_wanauxstate != "1"){
 						if(autodet_state == "6")
 							document.form.action = "/qis/QIS_internet_account.htm";
@@ -461,7 +472,7 @@ function submitForm(){
 				parent.changeSubnet = true;
 				document.form.action = "/qis/QIS_wireless.htm";
 			}
-			else if(autodet_state == "4" && parent.hadPlugged("modem")){ // ethernet did not plug
+			else if(autodet_state == "4" && parent.hadModem()){ // ethernet did not plug
 				if(parent.gobi_support){
 					document.form.action = "/qis/QIS_detect.htm";
 				}
@@ -631,7 +642,9 @@ function paste_password(){
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;" id="splitLine">
+			<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+		</div>
 <br/>
 
 <div style="margin-top:-10px;margin-left:30px;" id="mainDiv">

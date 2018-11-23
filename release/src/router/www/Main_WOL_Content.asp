@@ -21,8 +21,9 @@
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
-var wollist_array = '<% nvram_get("wollist"); %>';
+var wollist_array = decodeURIComponent('<% nvram_char_to_ascii("", "wollist"); %>').replace(/>/g, "&#62").replace(/</g, "&#60");
 var manually_wol_list_array = new Array();
 Object.prototype.getKey = function(value) {
 	for(var key in this) {
@@ -34,6 +35,8 @@ Object.prototype.getKey = function(value) {
 };
 function initial(){
 	show_menu();
+	//	http://www.asus.com/support/FAQ/1009775
+	httpApi.faqURL("faq3", "1009775", "https://www.asus.com", "/support/FAQ/");	// id in #smart_access3#
 
 	var wollist_row = wollist_array.split('&#60');
 	for(var i = 1; i < wollist_row.length; i += 1) {
@@ -116,10 +119,10 @@ function checkCmdRet(){
 
 function showwollist(){
 	var code = "";
-
-	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="wollist_table">';
+	var clientListEventData = [];
+	code += '<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="wollist_table">';
 	if(Object.keys(manually_wol_list_array).length == 0)
-		code +='<tr><td style="color:#FFCC00;" colspan="6"><#IPConnection_VSList_Norule#></td></tr>';
+		code += '<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
 		//user icon
 		var userIconBase64 = "NoIcon";
@@ -131,8 +134,9 @@ function showwollist(){
 				manually_wol_list_array[key] = clientName;
 			}
 			var clientMac = key.toUpperCase();
-			code +='<tr>';
-			code +='<td width="80%" align="center">';
+			var clientIconID = "clientIcon_" + clientMac.replace(/\:/g, "");
+			code += '<tr>';
+			code += '<td width="80%" align="center">';
 			if(clientList[clientMac]) {
 				deviceType = clientList[clientMac].type;
 				deviceVender = clientList[clientMac].vendor;
@@ -143,25 +147,25 @@ function showwollist(){
 			}
 			code += '<table style="width:100%;"><tr><td style="width:40%;height:56px;border:0px;float:right;">';	
 			if(clientList[clientMac] == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'\', \'WOL\')"></div>';
+				code += '<div id="' + clientIconID + '" class="clientIcon type0"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'\', \'WOL\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div id="' + clientIconID + '" style="text-align:center;"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'\', \'WOL\')"></div>';
+					code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "" && !downsize_4m_support) {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'\', \'WOL\')"></div>';
+						code += '<div id="' + clientIconID + '" class="venderIcon ' + venderIconClassName + '"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'\', \'WOL\')"></div>';
+						code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 					}
 				}
 			}
@@ -169,14 +173,22 @@ function showwollist(){
 			code += '<div>' + clientName + '</div>';
 			code += '<div style="font-weight:bold;cursor:pointer;text-decoration:underline;font-family:Lucida Console;" onclick="document.form.destIP.value=this.innerHTML;">' + clientMac + '</div>';
 			code += '</td></tr></table>';
-			code +='</td>';
-			code +='<td width="20%">';
-			code +='<input class="remove_btn" onclick="del_Row(this, \'' + clientMac + '\');" value=""/></td></tr>';
+			code += '</td>';
+			code += '<td width="20%">';
+			code += '<input class="remove_btn" onclick="del_Row(this, \'' + clientMac + '\');" value=""/></td></tr>';
+			clientListEventData.push({"mac" : clientMac, "name" : "", "ip" : "", "callBack" : "WOL"});
 		});
 	}
 
-  	code +='</table>';
+	code += '</table>';
 	document.getElementById("wollist_Block").innerHTML = code;
+	for(var i = 0; i < clientListEventData.length; i += 1) {
+		var clientIconID = "clientIcon_" + clientListEventData[i].mac.replace(/\:/g, "");
+		var clientIconObj = $("#wollist_Block").children("#wollist_table").find("#" + clientIconID + "")[0];
+		var paramData = JSON.parse(JSON.stringify(clientListEventData[i]));
+		paramData["obj"] = clientIconObj;
+		$("#wollist_Block").children("#wollist_table").find("#" + clientIconID + "").click(paramData, popClientListEditTable);
+	}
 }
 
 function addRow_Group(upper){
@@ -325,7 +337,7 @@ function applyRule(){
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#Network_Tools#> - <#NetworkTools_WOL#></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div class="formfontdesc"><#smart_access2#></div>	
 									<div class="formfontdesc"><#smart_access3#></div>	
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">

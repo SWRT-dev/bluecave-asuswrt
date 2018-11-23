@@ -168,10 +168,9 @@ int check_existed_share(const char *string)
 	if(string == NULL || strlen(string) <= 0)
 		return 0;
 
-	memset(target, 0, 256);
-	sprintf(target, "[%s]", string);
+	snprintf(target, sizeof(target), "[%s]", string);
 
-	memset(buf, 0, PATH_MAX);
+	memset(buf, 0, sizeof(buf));
 	while(fgets(buf, sizeof(buf), tp) != NULL){
 		if(strstr(buf, target)){
 			fclose(tp);
@@ -316,7 +315,7 @@ int main(int argc, char *argv[])
 		fprintf(fp, "max connections = %s\n", nvram_safe_get("st_max_user"));
 
 	if(!nvram_get_int("stop_samba_speedup")){
-#if defined(RTCONFIG_SAMBA36X) || defined(RTCONFIG_SOC_IPQ8064)
+#if defined(RTCONFIG_SOC_IPQ8064)
 		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE\n");
 #elif defined(RTCONFIG_ALPINE)
 		fprintf(fp, "socket options = TCP_NODELAY IPTOS_LOWDELAY IPTOS_THROUGHPUT SO_RCVBUF=5048576 SO_SNDBUF=5048576\n");
@@ -344,18 +343,18 @@ int main(int argc, char *argv[])
 	char pptpd_subnet[16];
 	char openvpn_subnet[32];
 
-	memset(pptpd_subnet, 0 , sizeof(pptpd_subnet));
-	memset(openvpn_subnet, 0 , sizeof(openvpn_subnet));
+	memset(pptpd_subnet, 0, sizeof(pptpd_subnet));
+	memset(openvpn_subnet, 0, sizeof(openvpn_subnet));
 	if (is_routing_enabled()) {
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 		if (nvram_get_int("pptpd_enable")) {
 			sscanf(nvram_safe_get("pptpd_clients"), "%d.%d.%d.%d-%d", &ip[0], &ip[1], &ip[2], &ip[3], &ip[4]);
-			sprintf(pptpd_subnet, "%d.%d.%d.", ip[0], ip[1], ip[2]);
+			snprintf(pptpd_subnet, sizeof(pptpd_subnet), "%d.%d.%d.", ip[0], ip[1], ip[2]);
 		}
 #endif
 #ifdef RTCONFIG_OPENVPN
 		if (nvram_get_int("VPNServer_enable") && strstr(nvram_safe_get("vpn_server1_if"), "tun") && nvram_get_int("vpn_server1_plan"))
-			sprintf(openvpn_subnet, "%s/%s", nvram_safe_get("vpn_server1_sn"), nvram_safe_get("vpn_server1_nm"));
+			snprintf(openvpn_subnet, sizeof(openvpn_subnet), "%s/%s", nvram_safe_get("vpn_server1_sn"), nvram_safe_get("vpn_server1_nm"));
 #endif
 	}
 	fprintf(fp, "hosts allow = 127.0.0.1 %s/%s %s %s\n", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"), pptpd_subnet, openvpn_subnet);
@@ -391,24 +390,6 @@ int main(int argc, char *argv[])
 #endif
 	fprintf(fp, "hosts deny = 0.0.0.0/0\n");
 
-#if defined(RTCONFIG_SAMBA36X)
-	fprintf(fp, "enable core files = no\n");
-	fprintf(fp, "deadtime = 30\n");
-	fprintf(fp, "local master = yes\n");
-	fprintf(fp, "preferred master = yes\n");
-	fprintf(fp, "load printers = no\n");
-	fprintf(fp, "printable = no\n");
-	fprintf(fp, "max protocol = SMB2\n");
-	fprintf(fp, "smb encrypt = disabled\n");
-	fprintf(fp, "min receivefile size = 16384\n");
-	fprintf(fp, "passdb backend = smbpasswd\n");
-	fprintf(fp, "smb passwd file = /etc/samba/smbpasswd\n");
-
-	/* CVE-2016-2118 */
-	// fprintf(fp, "server signing = mandatory\n");	/* heavy impact on the file server performance */
-	// fprintf(fp, "ntlm auth = no\n");
-#endif
-
 	disks_info = read_disk_data();
 	if(disks_info == NULL){
 		usb_dbg("Couldn't get disk list when writing smb.conf!\n");
@@ -427,11 +408,11 @@ int main(int argc, char *argv[])
 				if(follow_partition->mount_point == NULL)
 					continue;
 				
-				strcpy(unique_share_name, follow_partition->mount_point);
+				snprintf(unique_share_name, sizeof(unique_share_name), "%s", follow_partition->mount_point);
 				do {
 					dup = check_mount_point_icase(disks_info, follow_partition, follow_disk, follow_partition->partition_order, unique_share_name);
 					if(dup)
-						sprintf(unique_share_name, "%s(%d)", follow_partition->mount_point, ++same_m_pt);
+						snprintf(unique_share_name, sizeof(unique_share_name), "%s(%d)", follow_partition->mount_point, ++same_m_pt);
 				} while(dup);
 				mount_folder = strrchr(unique_share_name, '/')+1;
 
@@ -455,11 +436,11 @@ int main(int argc, char *argv[])
 				if(follow_partition->mount_point == NULL)
 					continue;
 
-				strcpy(unique_share_name, follow_partition->mount_point);
+				snprintf(unique_share_name, sizeof(unique_share_name), "%s", follow_partition->mount_point);
 				do {
 					dup = check_mount_point_icase(disks_info, follow_partition, follow_disk, follow_partition->partition_order, unique_share_name);
 					if(dup)
-						sprintf(unique_share_name, "%s(%d)", follow_partition->mount_point, ++same_m_pt);
+						snprintf(unique_share_name, sizeof(unique_share_name), "%s(%d)", follow_partition->mount_point, ++same_m_pt);
 				} while(dup);
 				mount_folder = strrchr(unique_share_name, '/')+1;
 

@@ -1,5 +1,5 @@
 <!-- Creator     : groff version 1.21 -->
-<!-- CreationDate: Fri Jun 10 14:58:48 2016 -->
+<!-- CreationDate: Mon Mar 12 08:44:47 2018 -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -79,7 +79,10 @@ unique prefix of their name. <b><br>
 to be in need of a repair. This options makes <b>ntfsck</b>
 exit immediately if the volume appears to be in order (no
 dirty flag set, logfile clean, no hibernated Windows
-session, ...), but otherwise a full repair is performed.</p>
+session, ...), but otherwise a full repair is performed.
+Note that volume is considered dirty if either one or more
+of follwing is true a) dirty flag set b) logfile clean c)
+hibernated windows volume.</p>
 
 <p style="margin-left:11%;"><b>&minus;c</b>,
 <b>&minus;&minus;fast&minus;check</b></p>
@@ -89,7 +92,9 @@ exit. If the volume is dirty then the exit value will be
 100. If used with
 <b>&minus;m</b>/<b>&minus;&minus;mount&minus;check-only</b>
 then also repairs any issues which prevent volume from being
-mounted.</p>
+mounted. Read the definition of dirty volume from
+<b>&minus;a</b>/<b>&minus;&minus;automatic&minus;repair</b>
+option.</p>
 
 <p style="margin-left:11%;"><b>&minus;m</b>,
 <b>&minus;&minus;mount&minus;check&minus;only</b></p>
@@ -129,12 +134,6 @@ option with caution.</p>
 <p style="margin-left:22%;">Don&rsquo;t check for orphaned
 files. This option speeds up <b>ntfsck.</b></p>
 
-<p style="margin-left:11%;"><b>&minus;M</b>,
-<b>&minus;&minus;no&minus;mft&minus;scan</b></p>
-
-<p style="margin-left:22%;">Don&rsquo;t scan $MFT. This
-option typically slows down <b>ntfsck.</b></p>
-
 <p style="margin-left:11%;"><b>&minus;S</b>,
 <b>&minus;&minus;no&minus;sync</b></p>
 
@@ -162,7 +161,10 @@ its children.</p>
 ntfsck will abort the volume check/repair. If specified,
 this sets an upper limit on the execution time of ntfsck.
 After the timeout occurs, ntfsck will clear all its pending
-tasks and return as soon as possible.</p>
+tasks and return as soon as possible. <br>
+As a special case, a timeout value of 0 means that there is
+no timeout, i.e. it is equivalent to not specifying the
+timeout option at all.</p>
 
 <p style="margin-left:11%;"><b>&minus;f</b>,
 <b>&minus;&minus;force</b></p>
@@ -195,12 +197,6 @@ run periodically then it can be switched on.</p>
 case ntfsck cannot resolve them by moving to empty
 space.</p>
 
-<p style="margin-left:11%;"><b>&minus;n</b>,
-<b>&minus;&minus;check-duplicate-names</b></p>
-
-<p style="margin-left:22%;">Enable duplicate name detection
-check.</p>
-
 <p style="margin-left:11%;"><b>&minus;w</b>,
 <b>&minus;&minus;mem</b> NUMBER</p>
 
@@ -229,9 +225,29 @@ this option also has similar limitations as mentioned in
 <b>&minus;&minus;playlog</b></p>
 
 <p style="margin-left:22%;">Play NTFS Journal if volume is
-dirty and $LogFile isn&rsquo;t corrupt. In case $LogFile is
-corrupt reset it or if we encounter specification changes or
-un-supported actions then also reset it.</p>
+dirty, needs a journal replay and $LogFile isn&rsquo;t
+corrupt. In case $LogFile is corrupt reset it or if we
+encounter specification changes or un-supported actions then
+also reset it.</p>
+
+<p style="margin-left:11%;"><b>&minus;r</b>,
+<b>&minus;&minus;replay</b></p>
+
+<p style="margin-left:22%;">Same as &minus;&minus;playlog
+but doesn&rsquo;t invoke fsck run after journal has been
+played.</p>
+
+<p style="margin-left:11%;"><b>&minus;B</b>,
+<b>&minus;&minus;progress-fd</b></p>
+
+<p style="margin-left:22%;">This option is similar to
+&rsquo;-C fd&rsquo; in e2fsck. It causes fsck to write
+progress of ntfsck to specified file descriptor. If file
+descriptor is negative, then progress is suppressed and can
+only be enabled by sending SIGUSR1 signal. Once this signal
+arrives absolute value of input is used as file descriptor.
+SIGUSR2 signal can be used to stop progress information
+being written to file descriptor.</p>
 
 <p style="margin-left:11%;"><b>&minus;h</b>,
 <b>&minus;&minus;help</b></p>

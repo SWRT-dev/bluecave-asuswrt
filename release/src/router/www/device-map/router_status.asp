@@ -23,11 +23,6 @@
 	margin-bottom:5px;
 }
 
-.line_image{
-	margin:5px 0px 0px 10px; 
-	*margin-top:-10px;
-}
-
 .ram_table{
 	height:30px;
 	text-align:center;
@@ -128,27 +123,27 @@ function initial(){
 	else
 		document.form.wl_subunit.value = -1;
 
-	if(lyra_hide_support){
+	if(parent.lyra_hide_support){
 		document.getElementById("t0").style.display = "";
 		document.getElementById("span0").innerHTML = "<#tm_wireless#>";
 	}
 	else{
-		if(band5g_support){
+		if(parent.band5g_support){
 			document.getElementById("t0").style.display = "";
 			document.getElementById("t1").style.display = "";
 
-			if(wl_info.band5g_2_support)
+			if(parent.wl_info.band5g_2_support)
 				tab_reset(0);
 
-			if(wl_info.band60g_support)
+			if(parent.wl_info.band60g_support)
 				tab_reset(0);
 
-			if(smart_connect_support && (parent.isSwMode("rt") || parent.isSwMode("ap")))
+			if(parent.smart_connect_support && (parent.isSwMode("rt") || parent.isSwMode("ap")))
 				change_smart_connect('<% nvram_get("smart_connect_x"); %>');
 			
 			// disallow to use the other band as a wireless AP
 			if(parent.sw_mode == 4 && !localAP_support){
-				for(var x=0; x<wl_info.wl_if_total;x++){
+				for(var x=0; x<parent.wl_info.wl_if_total;x++){
 					if(x != '<% nvram_get("wlc_band"); %>')
 						document.getElementById('t'+parseInt(x)).style.display = 'none';
 				}
@@ -168,7 +163,29 @@ function initial(){
 
 	detect_CPU_RAM();
 	get_ethernet_ports();
-	set_NM_height();
+
+	var table_height = document.getElementById("rt_table").clientHeight;
+	if(table_height != "0" || table_height != "")
+		set_NM_height(table_height);
+	else {
+		document.body.style.overflow = "hidden";
+		var errorCount = 0;
+		var readyStateCheckInterval = setInterval(function() {
+			table_height = document.getElementById("rt_table").clientHeight;
+			if (table_height != "0" || table_height != "") {
+				clearInterval(readyStateCheckInterval);
+				set_NM_height(table_height);
+			}
+			else {
+				if(errorCount > 5) {
+					clearInterval(readyStateCheckInterval);
+					table_height = parent.document.getElementById("NM_table").style.height;
+					set_NM_height(table_height);
+				}
+				errorCount++;
+			}
+		}, 10);
+	}
 }
 
 function tabclickhandler(wl_unit){
@@ -273,7 +290,7 @@ function detect_CPU_RAM(){
 function tab_reset(v){
 	var tab_array1 = document.getElementsByClassName("tab_NW");
 	var tab_array2 = document.getElementsByClassName("tabclick_NW");
-	var tab_width = Math.floor(270/(wl_info.wl_if_total+1));
+	var tab_width = Math.floor(270/(parent.wl_info.wl_if_total+1));
 	var i = 0;
 	while(i < tab_array1.length){
 		tab_array1[i].style.width=tab_width+'px';
@@ -288,7 +305,7 @@ function tab_reset(v){
 	
 	if(v == 0){
 		document.getElementById("span0").innerHTML = "2.4GHz";
-		if(wl_info.band5g_2_support){
+		if(parent.wl_info.band5g_2_support){
 			document.getElementById("span1").innerHTML = "5GHz-1";
 			document.getElementById("span2").innerHTML = "5GHz-2";
 		}else{
@@ -296,7 +313,7 @@ function tab_reset(v){
 			document.getElementById("t2").style.display = "none";
 		}
 
-		if(!wl_info.band60g_support){
+		if(!parent.wl_info.band60g_support){
 			document.getElementById("t3").style.display = "none";
 		}		
 	}else if(v == 1){	//Smart Connect
@@ -308,7 +325,7 @@ function tab_reset(v){
 		document.getElementById("t1").style.display = "none";
 		document.getElementById("t2").style.display = "none";				
 		document.getElementById("t3").style.display = "none";
-		document.getElementById("t0").style.width = (tab_width*wl_info.wl_if_total+10) +'px';
+		document.getElementById("t0").style.width = (tab_width*parent.wl_info.wl_if_total+10) +'px';
 	}
 	else if(v == 2){ //5GHz Smart Connect
 		document.getElementById("span0").innerHTML = "2.4GHz";
@@ -358,7 +375,7 @@ function generate_cpu_field(){
 		document.getElementById('cpu'+i+'_graph').style.display = "";
 	}
 
-	if(getBrowser_info().ie == "9.0" || getBrowser_info().ie == "8.0")
+	if(parent.getBrowser_info().ie == "9.0" || parent.getBrowser_info().ie == "8.0")
 		document.getElementById('cpu_field').outerHTML = code;
 	else
 		document.getElementById('cpu_field').innerHTML = code;
@@ -409,14 +426,14 @@ function get_ethernet_ports() {
 			var tableStruct = {
 				data: parseStrToArray(wanLanStatus),
 				container: "tableContainer",
-				title: "Ethernet Ports", /*untranslated*/
+				title: "<#Status_Ethernet_Ports#>",
 				header: [ 
 					{
-						"title" : "Port", /*untranslated*/
+						"title" : "<#Status_Ports#>",
 						"width" : "50%"
 					},
 					{
-						"title" : "Link State", /*untranslated*/
+						"title" : "<#Status_Str#>",
 						"width" : "50%"
 					}
 				]
@@ -484,8 +501,8 @@ function get_ethernet_ports() {
 		<table width="96%" border="1" align="center" cellpadding="4" cellspacing="0" class="table1px" id="cpu" style="margin: 0px 8px;">
 			<tr>
 				<td >
-					<div class="title">CPU</div>
-					<img class="line_image" src="/images/New_ui/networkmap/linetwo2.png">
+					<div class="title"><#Status_CPU#></div>
+					<div style="margin-top: 5px;*margin-top:-70px;" class="line_horizontal"></div>
 				</td>
 			</tr >
 			<tr>
@@ -543,21 +560,21 @@ function get_ethernet_ports() {
 			<table width="96%" border="1" align="center" cellpadding="4" cellspacing="0" class="table1px" style="margin: 0px 8px;">	
 			<tr>
 				<td colspan="3">		
-					<div class="title">RAM</div>
-					<img class="line_image" src="/images/New_ui/networkmap/linetwo2.png">
+					<div class="title"><#Status_RAM#></div>
+					<div style="margin-top: 5px;*margin-top:-70px;" class="line_horizontal"></div>
 				</td>
 			</tr>
 			<tr class="ram_table">
 				<td>
-					<div>Used</div>	  			
+					<div><#Status_Used#></div>	  			
 					<div id="ram_used_info"></div>	
 				</td>
 				<td>
-					<div>Free</div>
+					<div><#Status_Free#></div>
 					<div id="ram_free_info"></div>	  			
 				</td>
 				<td>
-					<div>Total</div>	  			
+					<div><#Status_Total#></div>	  			
 					<div id="ram_total_info"></div>	  			
 				</td>
 			</tr>  
@@ -630,8 +647,8 @@ function get_ethernet_ports() {
 				</tr>
 				<tr>
 					<td>
-						<div class="title">Ethernet Ports<!--untranslated--></div>
-						<img class="line_image" src="/images/New_ui/networkmap/linetwo2.png">
+						<div class="title"><#Status_Ethernet_Ports#></div>
+						<div style="margin-top: 5px;*margin-top:-70px;" class="line_horizontal"></div>
 					</td>
 				</tr>
 				<tr>

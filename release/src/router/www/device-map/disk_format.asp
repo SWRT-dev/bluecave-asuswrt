@@ -14,8 +14,9 @@
 	margin-top:5px;
 	height:30px;
 	width:97%;
-	background:url(/images/quotabar_bg_progress.gif);
-	background-repeat: repeat-x;
+	background: #596E74;
+	border-top: 1px solid #929EA1;
+	border-bottom: 1px solid #929eA1;
 }
 </style>
 <script type="text/javascript" src="../require/require.min.js"></script>
@@ -53,7 +54,7 @@ function initial(){
 }
 function disk_scan_status() {
 	require(['/require/modules/diskList.js'], function(diskList){
-	 	diskList.update(function(){
+		diskList.list(function(){
 	 		$.each(parent.usbPorts, function(i, curPort){
 		 		$.each(diskList.list(), function(j, usbDevice){
 	 				if(curPort.node == usbDevice.node)
@@ -126,7 +127,7 @@ function update_deviceDec(device) {
 		percentbar = simpleNum2((device.totalSize - device.totalUsed)/device.totalSize*100);
 		percentbar = Math.round(100 - percentbar);	
 		dec_html_code += '<div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
-		dec_html_code += '<img src="images/quotabar.gif" width="' + percentbar + '" height="13">';
+		dec_html_code += '<div class="quotabar" style="width:' + percentbar + ';height:13px;"></div>';
 		dec_html_code += '</div>\n';
 	}
 	else{
@@ -231,7 +232,12 @@ function show_loadingBar_field(){
 
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.display = "";
 	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/backgroud_move_8P_2.0.gif)";
-	parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '-1px -1px';
+	if(parent.based_modelid == "GT-AC5300" || parent.based_modelid == "GT-AC9600"){
+		parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundRepeat = "no-repeat";
+		parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '32px -3px';
+	}
+	else
+		parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '-1px -1px';
 }
 function showLoadingUpdate(){
 	$.ajax({
@@ -278,9 +284,11 @@ function showLoadingUpdate(){
 				document.getElementById("updateProgress").style.width = progressBar + "%";
 				document.getElementById('progress_bar_no').innerHTML = progressBar + "%";
 				document.getElementById('scan_message').innerHTML = "Disk format error!";
-				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
-				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0px -184px';
-				parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '1px -206px';
+				if(parent.based_modelid != "GT-AC5300" && parent.based_modelid != "GT-AC9600") {
+					parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
+					parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0px -184px';
+					parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '1px -206px';
+				}
 				document.getElementById('btn_format').disabled = false;
 				$('#textarea_disk0').html($(xml).find('disk_log').text());
 				return false;
@@ -293,9 +301,17 @@ function showLoadingUpdate(){
 				document.getElementById('progressBar').style.display = "none";
 				document.getElementById('scan_status_field').style.display = "";
 				document.getElementById('btn_format').disabled = false;
-				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
-				parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 0%';
-				parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '1px -105px';
+				if(parent.based_modelid != "GT-AC5300" && parent.based_modelid != "GT-AC9600") {
+					parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "url(/images/New_ui/networkmap/white_04.gif)";
+					parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundPosition = '0% 0%';
+				}
+				else
+					parent.document.getElementById('ring_USBdisk_'+diskOrder).style.backgroundImage = "";
+
+				if(parent.based_modelid == "GT-AC5300" || parent.based_modelid == "GT-AC9600")
+					parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '1px -95px';
+				else
+					parent.document.getElementById('iconUSBdisk_'+diskOrder).style.backgroundPosition = '1px -105px';
 				disk_scan_status();
 				return false;
 			}
@@ -327,7 +343,7 @@ function showLoadingUpdate(){
 <div id="diskTab" class='tab_table'></div>
 <table width="95%" align="center" cellspacing="0">
   <tr >
-    <td style="background-color:#4D595D">
+    <td class="list_bg">
 		<div id="scan_status_field" style="margin-top:10px;margin-left:10px;">
 			<table>
 				<tr>
@@ -340,11 +356,11 @@ function showLoadingUpdate(){
 			<div id="updateProgress_bg">
 				<div>
 					<span id="progress_bar_no" style="position:absolute;margin-left:130px;margin-top:7px;" ></span>
-					<img id="updateProgress" src="/images/quotabar.gif" height="30px;" style="width:0%">
+					<div id="updateProgress" class="quotabar" style="width:0%;height:30px;"></div>
 				</div>
 			</div>
 		</div>
-		<img style="margin-top:5px;margin-left:9px; *margin-top:-10px; width:283px;" src="/images/New_ui/networkmap/linetwo2.png">
+		<div style="margin-top:5px;*margin-top:-10px;width:283px;" class="line_horizontal"></div>
 		<div style="padding:7px;">
 			<div class="formfonttitle_nwm"><#DiskLabel#> :</div>
 			<div>
@@ -352,7 +368,7 @@ function showLoadingUpdate(){
 			</div>
 			
 		</div>
-		<img style="margin-top:5px;margin-left:9px; *margin-top:-10px; width:283px;" src="/images/New_ui/networkmap/linetwo2.png">
+		<div style="margin-top:5px;*margin-top:-10px;width:283px;" class="line_horizontal"></div>
 		<div style="padding:7px;">
 			<div class="formfonttitle_nwm"><#format_type#> :</div>
 			<div>
@@ -363,10 +379,10 @@ function showLoadingUpdate(){
 				</select>
 			</div>
 		</div>
-		<img style="margin-top:5px;margin-left:9px; *margin-top:-10px; width:283px;" src="/images/New_ui/networkmap/linetwo2.png">
+		<div style="margin-top:5px;*margin-top:-10px;width:283px;" class="line_horizontal"></div>
 		<div class="formfonttitle_nwm" style="margin-left:10px;margin-bottom:5px;margin-top:10px;"><#format_results#></div>
 		<span id="log_field" >
-			<textarea cols="15" rows="13" readonly="readonly" id="textarea_disk0" style="resize:none;display:;width:93%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;margin-left:8px;"></textarea>
+			<textarea cols="15" rows="13" readonly="readonly" id="textarea_disk0" class="textarea_bg" style="resize:none;display:;width:93%; font-family:'Courier New', Courier, mono; font-size:11px;margin-left:8px;color:#FFFFFF;"></textarea>
 		</span>
 		<div style="margin-top:20px;margin-bottom:10px;"align="center">
 			<input id="btn_format" type="button" class="button_gen" onclick="go_format();" value="<#CTL_format#>">

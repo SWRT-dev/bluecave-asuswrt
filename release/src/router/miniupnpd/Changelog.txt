@@ -1,5 +1,11 @@
 $Id: Changelog.txt,v 1.398 2015/04/26 14:43:27 nanard Exp $
 
+2018/05/02:
+  option to store remaining time in leasefile
+
+2018/03/13:
+  Use monotonic clock for timeouts, etc.
+
 2015/04/30:
   Adding linux/nftables support
 

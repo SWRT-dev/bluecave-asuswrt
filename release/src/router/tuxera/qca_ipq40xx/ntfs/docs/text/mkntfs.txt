@@ -112,6 +112,16 @@ OPTIONS
        -U, --with-uuid
               Generate a random volume UUID.
 
+       -l, --large-file-records
+              Format with large file records.
+
+       -N, --enable-short-filenames
+              Enable short filenames. By default they are disabled.
+
+       -b, --show-progress
+              Show approximate progress (Only available  for  platforms  using
+              linux kernel > 2.6.22 and glibc).
+
        -F, --force
               Force mkntfs to run, even if the specified device is not a block
               special device, or is entire device, or appears to be mounted.
@@ -125,8 +135,8 @@ OPTIONS
               Verbose execution.
 
        --debug
-              Really verbose execution; includes the verbose output  from  the
-              -v  option  as  well  as  additional output useful for debugging
+              Really  verbose  execution; includes the verbose output from the
+              -v option as well as  additional  output  useful  for  debugging
               mkntfs.
 
    Help options
@@ -137,12 +147,12 @@ OPTIONS
               Show a list of options with a brief description of each one.
 
 BUGS
-       If you find a bug please send an email describing the problem to  ntfs-
+       If  you find a bug please send an email describing the problem to ntfs-
        support@tuxera.com.
 
 AUTHORS
        mkntfs was written by Anton Altaparmakov, Richard Russon, Szabolcs Sza‐
-       kacsits, Jean-Pierre Andre, Tuxera Inc.  It was ported  to  ntfs-3g  by
+       kacsits,  Jean-Pierre  Andre,  Tuxera Inc.  It was ported to ntfs-3g by
        Erik Larsson and Jean-Pierre Andre.
 
 AVAILABILITY
@@ -150,4 +160,4 @@ AVAILABILITY
 
 
 
-Tuxera NTFS Utilities 3016.5.3     Sept 2011                         MKNTFS(8)
+Tuxera NTFS Utilities 3017.7.18.4  Sept 2011                         MKNTFS(8)

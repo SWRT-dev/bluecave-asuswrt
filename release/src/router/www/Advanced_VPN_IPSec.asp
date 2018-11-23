@@ -20,6 +20,7 @@
 <script language="JavaScript" type="text/javascript" src="form.js"></script>
 <script language="JavaScript" type="text/javascript" src="validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <style type="text/css">
 .ipsec_view_log_panel {
 	width: 720px;
@@ -171,10 +172,14 @@ function initial(){
 	setTimeout("show_warning_message();", 100);
 
 	//set FAQ URL
-	set_FAQ_link("faq_windows", "1033576", "IPSec");
-	set_FAQ_link("faq_macOS", "1033575", "IPSec");
-	set_FAQ_link("faq_iPhone", "1033574", "IPSec");
-	set_FAQ_link("faq_android", "1033572", "IPSec");
+	//	https://www.asus.com/support/FAQ/1033576
+	httpApi.faqURL("faq_windows", "1033576", "https://www.asus.com", "/support/FAQ/");
+	//	https://www.asus.com/support/FAQ/1033575
+	httpApi.faqURL("faq_macOS", "1033575", "https://www.asus.com", "/support/FAQ/");
+	//	https://www.asus.com/support/FAQ/1033574
+	httpApi.faqURL("faq_iPhone", "1033574", "https://www.asus.com", "/support/FAQ/");
+	//	https://www.asus.com/support/FAQ/1033572
+	httpApi.faqURL("faq_android", "1033572", "https://www.asus.com", "/support/FAQ/");
 }
 
 var MAX_RETRY_NUM = 5;
@@ -192,7 +197,8 @@ function show_warning_message(){
 				document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>";
 				document.getElementById("privateIP_notes").style.display = "";
 				$(".general_server_addr").html("-");
-				set_FAQ_link("faq_port_forwarding", "1033906", "privateIP");//this id is include in string : #vpn_privateIP_hint#
+				//	http://www.asus.com/support/FAQ/1033906
+				httpApi.faqURL("faq_port_forwarding", "1033906", "https://www.asus.com", "/support/FAQ/");	//this id is include in string : #vpn_privateIP_hint#
 			}
 			else {
 				if(ddns_enable_x == "1" && ddns_hostname_x != "") {
@@ -208,7 +214,8 @@ function show_warning_message(){
 				document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>";
 				document.getElementById("privateIP_notes").style.display = "";
 				$(".general_server_addr").html("-");
-				set_FAQ_link("faq_port_forwarding", "1033906", "privateIP");//this id is include in string : #vpn_privateIP_hint#
+				//	http://www.asus.com/support/FAQ/1033906
+				httpApi.faqURL("faq_port_forwarding", "1033906", "https://www.asus.com", "/support/FAQ/");	//this id is include in string : #vpn_privateIP_hint#
 			}
 			else {
 				if(ddns_enable_x == "1" && ddns_hostname_x != "") {
@@ -224,7 +231,8 @@ function show_warning_message(){
 		document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>";
 		document.getElementById("privateIP_notes").style.display = "";
 		$(".general_server_addr").html("-");
-		set_FAQ_link("faq_port_forwarding", "1033906", "privateIP");//this id is include in string : #vpn_privateIP_hint#
+		//	http://www.asus.com/support/FAQ/1033906
+		httpApi.faqURL("faq_port_forwarding", "1033906", "https://www.asus.com", "/support/FAQ/");	//this id is include in string : #vpn_privateIP_hint#
 	}
 	else {
 		if(ddns_enable_x == "1" && ddns_hostname_x != "") {
@@ -352,7 +360,7 @@ function addRow_Group(upper) {
 			valid_password.focus();
 			return false;
 		}
-		else if(!Block_chars(valid_password, ["<", ">", "&"])) {
+		else if(!Block_chars(valid_password, ["<", ">", "&", "\""])) {
 			return false;
 		}
 		else if(valid_password.value.length > 0 && valid_password.value.length < 5) {
@@ -456,7 +464,7 @@ function validForm() {
 	if(ipsec_server_enable == "1") {
 		if(!validator.isEmpty(document.form.ipsec_preshared_key))
 			return false;
-		if(!Block_chars(document.form.ipsec_preshared_key, [">", "<", "#", "null"]))
+		if(!Block_chars(document.form.ipsec_preshared_key, [">", "<", "&", "\"", "null"]))
 			return false;
 		if(is_KR_sku){
 			if(!validator.psk_KR(document.form.ipsec_preshared_key))
@@ -763,7 +771,7 @@ function showIPSecClients(profileName, e) {
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#BOP_isp_heart_item#> - IPSec VPN<!--untranslated--></div>
 									<div id="divSwitchMenu" style="margin-top:-40px;float:right;"></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div id="privateIP_notes" class="formfontdesc" style="display:none;color:#FFCC00;"></div>
 									<div class="formfontdesc">
 										<span style="color:#FC0">Note: On iOS or MacOS system, please select "Cisco IPSec". On Android system, please select "IPSec / Xauth PSK".<!--untranslated--></span>
@@ -816,10 +824,10 @@ function showIPSecClients(profileName, e) {
 											How to setup IPSec VPN client
 											<br>
 											<ol>
-												<li><a id="faq_windows" href="https://www.asus.com/support/FAQ/1033576" target="_blank" style="text-decoration:underline;">Windows</a></li>
-												<li><a id="faq_macOS" href="https://www.asus.com/support/FAQ/1033575" target="_blank" style="text-decoration:underline;">Mac OS</a></li>
-												<li><a id="faq_iPhone" href="https://www.asus.com/support/FAQ/1033574" target="_blank" style="text-decoration:underline;">iOS</a></li>
-												<li><a id="faq_android" href="https://www.asus.com/support/FAQ/1033572" target="_blank" style="text-decoration:underline;">Android</a></li>
+												<li><a id="faq_windows" href="" target="_blank" style="text-decoration:underline;">Windows</a></li>
+												<li><a id="faq_macOS" href="" target="_blank" style="text-decoration:underline;">Mac OS</a></li>
+												<li><a id="faq_iPhone" href="" target="_blank" style="text-decoration:underline;">iOS</a></li>
+												<li><a id="faq_android" href="" target="_blank" style="text-decoration:underline;">Android</a></li>
 											<ol>
 										</div>
 										<!-- Quick Select table start-->
@@ -845,11 +853,11 @@ function showIPSecClients(profileName, e) {
 												</td>
 											</tr>
 											<tr class="tr_advanced">
-												<th>IKE / ISAKMP Port<!--untranslated--></th>
+												<th><#vpn_ipsec_IKE_ISAKMP_Port#></th>
 												<td>500</td>
 											</tr>
 											<tr class="tr_advanced">
-												<th>IKE / ISAKMP NAT-T Port<!--untranslated--></th>
+												<th><#vpn_ipsec_IKE_ISAKMP_NAT_Port#></th>
 												<td>4500</td>
 											</tr>
 											<tr class="tr_advanced">
@@ -903,7 +911,7 @@ function showIPSecClients(profileName, e) {
 											</tr>
 											</thead>
 											<tr>
-												<th><#HSDPAConfig_Username_itemname#></th>
+												<th><#Username#></th>
 												<th><#HSDPAConfig_Password_itemname#></th>
 												<th><#list_add_delete#></th>
 											</tr>
@@ -986,7 +994,7 @@ function showIPSecClients(profileName, e) {
 <input type="hidden" name="action_wait" value="">
 <input type="hidden" name="first_time" value="">
 <input type="hidden" name="action_script" value="">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="clear_file_name" value="ipsec">
 </form>

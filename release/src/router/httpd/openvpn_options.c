@@ -347,6 +347,9 @@ add_custom(int unit, char *p[])
 
 	while(p[i]) {
 		size += strlen(p[i]) + 1;
+		if(strchr(p[i], ' ')) {
+			size += 2;
+		}
 		i++;
 	}
 
@@ -358,12 +361,22 @@ add_custom(int unit, char *p[])
 
 	i = 0;
 	while(p[i]) {
+		//_dprintf("p[%d]: [%s]\n", i, p[i]);
 		if(*param)
 			strlcat(param, " ", sizeParam);
 
-		strlcat(param, p[i], sizeParam);
+		if(strchr(p[i], ' ')) {
+			strlcat(param, "\"", sizeParam);
+			strlcat(param, p[i], sizeParam);
+			strlcat(param, "\"", sizeParam);
+		}
+		else {
+			strlcat(param, p[i], sizeParam);
+		}
+
 		i++;
 	}
+	_dprintf("add [%s]\n", param);
 
 	snprintf(nv, sizeof(nv), "vpn_client%d_custom", unit);
 	custom = nvram_safe_get(nv);
@@ -534,6 +547,8 @@ add_option (char *p[], int line, int unit)
 			|| streq (p[0], "nobind")
 			|| streq (p[0], "persist-key")
 			|| streq (p[0], "persist-tun")
+			|| streq (p[0], "user")
+			|| streq (p[0], "group")
 		) {
 			;//ignore
 		}
@@ -655,7 +670,7 @@ void parse_openvpn_status(int unit){
 				break;
 			}
 		}
-		fclose(fpi);
-		fclose(fpo);
+		if(fpi) fclose(fpi);
+		if(fpo) fclose(fpo);
 	}
 }

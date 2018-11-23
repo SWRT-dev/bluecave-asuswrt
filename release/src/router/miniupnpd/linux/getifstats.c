@@ -13,6 +13,7 @@
 
 #include "../config.h"
 #include "../getifstats.h"
+#include "../upnputils.h"
 
 #ifdef GET_WIRELESS_STATS
 #include <unistd.h>
@@ -48,7 +49,7 @@ getifstats(const char * ifname, struct ifdata * data)
 	if(!ifname || ifname[0]=='\0')
 		return -1;
 #ifdef ENABLE_GETIFSTATS_CACHING
-	current_time = time(NULL);
+	current_time = upnp_time();
 	if(current_time == ((time_t)-1)) {
 		syslog(LOG_ERR, "getifstats() : time() error : %m");
 	} else {

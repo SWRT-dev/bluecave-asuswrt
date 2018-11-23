@@ -299,7 +299,7 @@ var validator = {
 	},
 
 	hostName: function (obj){
-		var re = new RegExp("^[a-zA-Z0-9][a-zA-Z0-9\-\_]+$","gi");
+		var re = new RegExp(/^[a-z0-9][a-z0-9-_]+$/i);
 		if(re.test(obj.value)){
 			return "";
 		}
@@ -322,7 +322,7 @@ var validator = {
 	},
 
 	domainName: function (obj) { //support a-z, 0-9, "-", "_" , "."", The first character cannot be dash "-" or under line "_"
-		var re = new RegExp(/^(?:[a-z0-9](?:[a-z0-9-_]{0,61}[a-z0-9])?\.)*[a-z0-9][a-z0-9-_]{0,61}[a-z0-9]$/);
+		var re = new RegExp(/^(?:[a-z0-9](?:[a-z0-9-_]{0,61}[a-z0-9])?\.)*[a-z0-9][a-z0-9-_]{0,61}[a-z0-9]$/i);
 		if(re.test(obj.value)){
 			return "";
 		}
@@ -1287,19 +1287,25 @@ var validator = {
 		
 		if(v == 'wan_ipaddr_x'){
 			if(o.value.length == 0){    /*Blank.*/
+				if(document.getElementById(o.name+"_div")){
+					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				}
 				alert(o.title+"<#JS_fieldblank#>");
-				document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
 				document.form.wan_ipaddr_x1.focus();
 				return false;
 			}
 			else if(o.value.indexOf("0") == 0){ /*首字不能為0*/
-				document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				if(document.getElementById(o.name+"_div")){
+					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				}
 				alert(document.form.wan_ipaddr_x.value + " <#JS_validip#>");
 				document.form.wan_ipaddr_x1.focus();
 				return false;
 			}		
 			else if(!(IP_Validate(o))){ /*IP格式錯誤*/
-				document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				if(document.getElementById(o.name+"_div")){
+					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				}
 				alert(document.form.wan_ipaddr_x.value + " <#JS_validip#>");
 				document.form.wan_ipaddr_x4.focus();
 				return false;
@@ -1326,7 +1332,9 @@ var validator = {
 			var wan_ipaddr_x1 = document.form.wan_ipaddr_x1.value;
 			if(o.value.length == 0){    /*Blank.*/
 
-				document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				if(document.getElementById(o.name+"_div")){
+					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				}
 				
 				if(confirm(o.title+"<#JS_fieldblank#>\n<#JS_field_fulfillSubmask#>")){
 					if((wan_ipaddr_x1 > 0) && (wan_ipaddr_x1 < 127)) o.value = "255.0.0.0";
@@ -1339,7 +1347,9 @@ var validator = {
 				return false;
 			}
 			else if(!(IP_Validate(o))){ /*IP格式錯誤*/
-				document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				if(document.getElementById(o.name+"_div")){
+					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				}
 				alert(o.value + " <#JS_validip#>");
 				return false;
 			}
@@ -1347,8 +1357,10 @@ var validator = {
 				if(this.requireWANIP(v) && (
 				(this.matchSubnet2(document.form.wan_ipaddr_x.value, o, document.form.lan_ipaddr.value, document.form.lan_netmask))
 				)){
+					if(document.getElementById(o.name+"_div")){
+						document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+					}
 					alert(o.value + " <#JS_validip#>");
-					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
 					return false;
 				}
 				else{
@@ -1359,13 +1371,17 @@ var validator = {
 		else if(v == 'wan_gateway_x'){
 			if(o.value.length > 0){
 				if(!(IP_Validate(o))){ /* IP格式錯誤*/
-					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+					if(document.getElementById(o.name+"_div")){
+						document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+					}
 					alert(o.value + " <#JS_validip#>");
 					return false;
 				}
 				else if(o.value == document.form.wan_ipaddr_x.value){
+					if(document.getElementById(o.name+"_div")){
+						document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+					}
 					alert("<#IPConnection_warning_WANIPEQUALGatewayIP#>");
-					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
 					return false;			
 				}
 			}
@@ -1376,8 +1392,10 @@ var validator = {
 			
 			var split_IP = o.value.split(".");
 			
-			if(!(IP_Validate(o))){ 
-				document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+			if(!(IP_Validate(o))){
+				if(document.getElementById(o.name+"_div")){
+					document.getElementById(o.name+"_div").style.border = "2px solid #CE1E1E";
+				}
 				alert(o.value + " <#JS_validip#>");
 				return false;
 			}
@@ -1753,6 +1771,12 @@ var validator = {
         return true;
 	},
 
+	lengthInUtf8: function(str) {
+		var asciiLength = str.match(/[\u0000-\u007f]/g) ? str.match(/[\u0000-\u007f]/g).length : 0;
+		var multiByteLength = encodeURI(str.replace(/[\u0000-\u007f]/g)).match(/%/g) ? encodeURI(str.replace(/[\u0000-\u007f]/g, '')).match(/%/g).length : 0;
+		return asciiLength + multiByteLength;
+	},
+
 	ssidChar: function(ch){
 		if(ch >= 32 && ch <= 126)
 			return false;
@@ -1847,31 +1871,45 @@ var validator = {
 	},
 
 	stringSSID: function(o){
+		var rc_support = '<% nvram_get("rc_support"); %>';
+		var utf8_ssid_support = (rc_support.split(" ").indexOf("utf8_ssid") == -1) ? false : true;
 		var c;	// character code
 		var flag=0; // notify valid characters of SSID except space
 		
-		if(o.value==""){      // to limit null SSID
+		if(o.value==""){	// to limit null SSID
 			alert('<#JS_fieldblank#>');
 			o.focus();
 			return false;
 		}	
-		
-		for(var i = 0; i < o.value.length; ++i){
+
+		len = this.lengthInUtf8(o.value);
+
+		if(len > 32){
+			alert("SSID length is over 32 characters");
+			o.value = "";
+			o.focus();
+			o.select();
+			return false;
+		}
+
+		for(var i = 0; i < len; ++i){
+
 			c = o.value.charCodeAt(i);
-			
-			if(this.ssidChar(c)){
-				alert('<#JS_validSSID1#> '+o.value.charAt(i)+' <#JS_validSSID2#>');
-				o.value = "";
-				o.focus();
-				o.select();
-				return false;
+			if(!utf8_ssid_support){
+				if(this.ssidChar(c)){
+					alert('<#JS_validSSID1#> '+o.value.charAt(i)+' <#JS_validSSID2#>');
+					o.value = "";
+					o.focus();
+					o.select();
+					return false;
+				}
 			}
 			
 			if(c != 32)
 				flag ++;
 		}
-		
-		if(flag ==0){     // to limit SSID only include space
+
+		if(flag ==0){	// to limit SSID only include space
 			alert('<#JS_fieldblank#>');
 			return false;
 		}

@@ -55,6 +55,7 @@ define(function(){
 					{url: "ParentalControl.asp", tabName: "__INHERIT__"},
 					{url: "AiProtection_AdBlock.asp", tabName: "Ad Blocking"},
 					{url: "AiProtection_Key_Guard.asp", tabName: "Key Guard"},
+					{url: "YandexDNS.asp", tabName: "<#YandexDNS#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
@@ -65,7 +66,7 @@ define(function(){
 					{url: "GameBoost_ROG.asp", tabName: "<#Game_Boost#>"},
 					{url: "QoS_EZQoS.asp", tabName: "<#menu5_3_2#>"},
 					{url: "AdaptiveQoS_WebHistory.asp", tabName: "<#Adaptive_History#>"},
-					{url: "Main_Spectrum_Content.asp", tabName: "Spectrum"},
+					{url: "Main_Spectrum_Content.asp", tabName: "<#Spectrum_title#>"},
 					{url: "Advanced_QOSUserPrio_Content.asp", tabName: "__INHERIT__"},
 					{url: "Advanced_QOSUserRules_Content.asp", tabName: "__INHERIT__"},
 					{url: "AdaptiveQoS_Adaptive.asp", tabName: "__INHERIT__"},
@@ -155,7 +156,8 @@ define(function(){
 					{url: "Advanced_ACL_Content.asp", tabName: "<#menu5_1_4#>"},
 					{url: "Advanced_WSecurity_Content.asp", tabName: "<#menu5_1_5#>"},
 					{url: "Advanced_WAdvanced_Content.asp", tabName: "<#menu5_1_6#>"},
-					{url: "Advanced_WProxy_Content.asp", tabName: "Wi-Fi Proxy"},
+					{url: "Advanced_WProxy_Content.asp", tabName: "<#WiFi_Proxy_item#>"},
+					{url: "Advanced_Roaming_Block_Content.asp", tabName: "Roaming Block List"},/* untranslated */
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
@@ -270,6 +272,7 @@ define(function(){
 					{url: "Advanced_SNMP_Content.asp", tabName: "SNMP"},
 					{url: "Advanced_TR069_Content.asp", tabName: "TR-069"},
 					{url: "Advanced_Notification_Content.asp", tabName: "Notification"},
+					{url: "Advanced_Privacy.asp", tabName: "<#menu_privacy#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			},
@@ -376,6 +379,10 @@ define(function(){
 					if(wlc_express != 0){
 						retArray.push("menu_Wireless");
 					}
+
+					if(ifttt_support || alexa_support){
+						retArray.push("menu_Alexa_IFTTT");
+					}
 				}
 				else if(isSwMode("ap")){
 					retArray.push("menu_GameBoost");
@@ -391,6 +398,10 @@ define(function(){
 					retArray.push("menu_VPN");
 					retArray.push("menu_VLAN");
 					retArray.push("menu_Firewall");
+
+					if(ifttt_support || alexa_support){
+						retArray.push("menu_Alexa_IFTTT");
+					}
 				}
 				else if(isSwMode("mb")){
 					retArray.push("menu_GameBoost");
@@ -408,6 +419,10 @@ define(function(){
 					retArray.push("menu_VPN");
 					retArray.push("menu_VLAN");
 					retArray.push("menu_Firewall");
+
+					if(ifttt_support || alexa_support){
+						retArray.push("menu_Alexa_IFTTT");
+					}
 				}
 
 				return retArray;
@@ -600,6 +615,9 @@ define(function(){
 				if(!rrsut_support)
 					retArray.push("cloud_router_sync.asp");
 
+				if(!amesh_support)
+					retArray.push("Advanced_Roaming_Block_Content.asp");
+
 				/* Operation Mode */
 				if(isSwMode("re")){
 					retArray.push("GameBoost_ROG.asp");
@@ -661,6 +679,9 @@ define(function(){
 					retArray.push("Main_ConnStatus_Content.asp");
 					retArray.push("Advanced_Smart_Connect.asp");
 				}
+
+				if(amesh_support && (!isSwMode("rt") && !isSwMode("ap")))
+					retArray.push("Advanced_Roaming_Block_Content.asp");
 
 				/* System Status Changed */
 				// --

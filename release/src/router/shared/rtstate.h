@@ -120,8 +120,7 @@ enum {
 	LAN_STOPPED_REASON_SYSTEM_ERR
 };
 
-#if defined(CONFIG_BCMWL5) || (defined(RTCONFIG_RALINK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_QCA) \
-		 || (defined(RTCONFIG_REALTEK) && defined(RTCONFIG_WIRELESSREPEATER)) || defined(RTCONFIG_ALPINE) || defined(RTCONFIG_LANTIQ)
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA) || defined(RTCONFIG_REALTEK) || defined(RTCONFIG_ALPINE) || defined(RTCONFIG_LANTIQ)
 enum { 
 	WLC_STATE_INITIALIZING=0,
 	WLC_STATE_CONNECTING,
@@ -129,19 +128,20 @@ enum {
 	WLC_STATE_STOPPED
 };
 
-enum { 
+enum {
 	WLC_STOPPED_REASON_NONE=0,
 	WLC_STOPPED_REASON_NO_SIGNAL,
 	WLC_STOPPED_REASON_AUTH_FAIL,
 	WLC_STOPPED_REASON_MANUAL
 };
 
-enum { 
-	WLCSCAN_STATE_INITIALIZING=0,
+enum {
+	WLCSCAN_STATE_STOPPED=0,
+	WLCSCAN_STATE_INITIALIZING,
 	WLCSCAN_STATE_2G,
 	WLCSCAN_STATE_5G,
+	WLCSCAN_STATE_5G_2,
 	WLCSCAN_STATE_FINISHED,
-	WLCSCAN_STATE_STOPPED
 };
 #endif
 
@@ -383,5 +383,7 @@ extern int get_modemunit_by_dev(const char *dev);
 extern int get_modemunit_by_node(const char *usb_node);
 extern int get_modemunit_by_type(int wan_type);
 extern int get_wantype_by_modemunit(int modem_unit);
+
+extern char *get_userdns_r(const char *prefix, char *buf, size_t buflen);
 
 #endif	/* !__RTSTATE_H__ */

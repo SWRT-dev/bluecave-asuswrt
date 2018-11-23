@@ -24,6 +24,13 @@ OPTIONS
        options have two equivalent names.  The short name is preceded by - and
        the long name is preceded by -- .
 
+       -d, --dirmetadata
+              Clone  ONLY  METADATA (for FAT experts). This command is similar
+              to the -m/--metadata option but uses an  exclusive  rather  than
+              inclusive  algorithm,  which  may reduce image size on corrupted
+              volumes with a lot of unreachable data, but will then omit  data
+              that could possibly be useful for debugging.
+
        -m, --metadata
               Clone  ONLY METADATA (for FAT experts). A metadata dump contains
               all of the FAT volume structures but none of the user data, i.e.
@@ -63,13 +70,18 @@ EXAMPLES
               fatdump /dev/sda1 | bzip2 | ssh host 'cat > sda1.img.bzip2'
 
 
+PLEASE NOTE
+       fatdump currently does not support FAT12 volumes.
+
 KNOWN ISSUES
        There  are no known problems with fatdump.  If you think you have found
        a problem then please send an email describing it  to  fat-support@tux‐
        era.com.
 
 AUTHORS
-       fatdump was written by Sougata Santra, Tuxera Inc.
+       fatdump was written by
+               Erik Larsson, Tuxera Inc.
+               Sougata Santra, Tuxera Inc.
 
 AVAILABILITY
        fatdump is part of the Tuxera FAT package.
@@ -79,4 +91,4 @@ SEE ALSO
 
 
 
-Tuxera TFATprogs 3014.9.11         June 2013                        FATDUMP(8)
+Tuxera TFATprogs 3017.7.17.3       June 2013                        FATDUMP(8)

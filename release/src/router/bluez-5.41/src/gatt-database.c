@@ -45,7 +45,6 @@
 #include "dbus-common.h"
 #include "profile.h"
 #include "service.h"
-#include "bleencrypt/gatt-amap.h"
 
 #ifndef ATT_CID
 #define ATT_CID 4
@@ -429,9 +428,6 @@ static void gatt_database_free(void *data)
 
 	if (database->gap_handle)
 		adapter_service_remove(database->adapter, database->gap_handle);
-
-	if (database->amap_handle)
-		adapter_service_remove(database->adapter, database->amap_handle);
 
 	/* TODO: Persistently store CCC states before freeing them */
 	gatt_db_unregister(database->db, database->db_id);
@@ -863,7 +859,6 @@ static void register_core_services(struct btd_gatt_database *database)
 {
 	populate_gap_service(database);
 	populate_gatt_service(database);
-	amap_gatt_service(database);
 }
 
 struct notify {
@@ -1485,12 +1480,6 @@ static bool parse_uuid(GDBusProxy *proxy, bt_uuid_t *uuid)
 	}
 
 	bt_uuid16_create(&tmp, UUID_GATT);
-	if (!bt_uuid_cmp(&tmp, uuid)) {
-		error("GATT service must be handled by BlueZ");
-		return false;
-	}
-
-	bt_uuid16_create(&tmp, UUID_AMAP);
 	if (!bt_uuid_cmp(&tmp, uuid)) {
 		error("GATT service must be handled by BlueZ");
 		return false;

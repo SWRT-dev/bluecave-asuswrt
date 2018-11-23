@@ -121,8 +121,8 @@ function replace_ContentAnnex(oldMod, newMod){
 		  		<td bgcolor="#4D595D" colspan="3" valign="top">
 		  			<div>&nbsp;</div>
 		  			<div class="formfonttitle"><#System_Log#> - <#menu_dsl_log#></div>
-		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-		  			<div class="formfontdesc">This page shows the detailed DSL status.</div>
+		  			<div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
+		  			<div class="formfontdesc"><#DSL_Log_Desc#></div>
 						<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 							<tr>
 								<th width="20%"><#adsl_fw_ver_itemname#></th>

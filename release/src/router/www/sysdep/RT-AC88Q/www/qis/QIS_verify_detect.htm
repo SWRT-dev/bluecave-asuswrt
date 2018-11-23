@@ -153,7 +153,7 @@ function getWANStatus(){
 							getWANStatus();
 						}
 						else{
-							if(parent.hadPlugged("modem")){
+							if(parent.hadModem()){
 								redirect_page("modem");
 							}	
 							else{
@@ -206,7 +206,7 @@ function getWANStatus(){
 								}
 							}
 							else{
-								if(parent.hadPlugged("modem")){
+								if(parent.hadModem()){
 									redirect_page("modem");
 								}
 								else{
@@ -224,7 +224,7 @@ function getWANStatus(){
 							--RetryCountDown;
 							setTimeout("getWANStatus();", 1000);
 						}
-						else if(parent.hadPlugged("modem")){
+						else if(parent.hadModem()){
 							redirect_page("modem");
 						}
 						else{
@@ -239,7 +239,7 @@ function getWANStatus(){
 							setTimeout("getWANStatus();", 2000);
 						}
 						else{
-							if(parent.hadPlugged("modem")){
+							if(parent.hadModem()){
 								redirect_page("modem");
 							}	
 							else{
@@ -286,13 +286,13 @@ function redirect_page(redirect_flag){
 					<td align="left">
 						<div class="description_down"><#QKSet_detect_desc2#></div>
 					</td>
-					<td align="right">
-						<!--img onclick="parent.gotoIndex();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'"-->
-					</td>
+					<td align="right"></td>
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;" id="splitLine">
+			<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+		</div>
 	</div>
   <br/><br/>
 	<table id="tblsetting_1" class="QISform" width="auto" border=0 align="center" cellpadding="5" cellspacing="0">

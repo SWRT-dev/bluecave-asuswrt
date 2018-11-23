@@ -19,6 +19,7 @@
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
 <script type="text/javascript" language="JavaScript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 var wItem = new Array(new Array("", "", "TCP"),
 											new Array("FTP", "20,21", "TCP"),
@@ -58,6 +59,8 @@ var dual_wan_lb_status = (check_dual_wan_status().status == "1" && check_dual_wa
 var support_dual_wan_unit_flag = (mtwancfg_support && dual_wan_lb_status) ? true : false;
 function initial(){
 	show_menu();
+	// https://www.asus.com/support/FAQ/114093/
+	httpApi.faqURL("faq", "114093", "https://www.asus.com", "/support/FAQ/");
 	//parse nvram to array
 	var parseNvramToArray = function(oriNvram) {
 		var parseArray = [];
@@ -102,7 +105,6 @@ function initial(){
 	Object.keys(vts_rulelist_array).forEach(function(key) {
 		showvts_rulelist(vts_rulelist_array[key], key);
 	});
-	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "port", "forwarding"]);
 
 	if(!parent.usb_support){
 		document.getElementById('FTP_desc').style.display = "none";
@@ -116,7 +118,7 @@ function initial(){
 		var KnownApps = document.form.KnownApps;
 		KnownApps.options[1].selected = 1;
 		change_wizard(KnownApps, 'KnownApps');
-		if(addRow_Group(32, $("#vts_rulelist_0")[0])) applyRule();
+		if(addRow_Group(64, $("#vts_rulelist_0")[0])) applyRule();
 	}
 
 	if(based_modelid == "GT-AC5300" || based_modelid == "GT-AC9600")
@@ -574,7 +576,7 @@ function gen_vts_ruleTable_Block(_tableID) {
 				break;
 		}
 	}
-	html += '<td colspan="7">' + wan_title + '<#IPConnection_VSList_title#>&nbsp;(<#List_limit#>&nbsp;32)</td>';
+	html += '<td colspan="7">' + wan_title + '<#IPConnection_VSList_title#>&nbsp;(<#List_limit#>&nbsp;64)</td>';
 	html += '</tr>';
 	html += '</thead>';
 
@@ -596,7 +598,7 @@ function gen_vts_ruleTable_Block(_tableID) {
 	html += '<input type="text" maxlength="30" class="input_15_table" name="vts_target_x_' + wan_idx + '" id="vts_target_x_' + wan_idx + '" onKeyPress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"/>';
 	html += '</td>';
 	html += '<td width="16%">';
-	html += '<input type="text" maxlength="" class="input_12_table" name="vts_port_x_' + wan_idx + '" id="vts_port_x_' + wan_idx + '" onkeypress="return validator.isPortRange(this, event)" autocorrect="off" autocapitalize="off"/>';
+	html += '<input type="text" maxlength="60" class="input_12_table" name="vts_port_x_' + wan_idx + '" id="vts_port_x_' + wan_idx + '" onkeypress="return validator.isPortRange(this, event)" autocorrect="off" autocapitalize="off"/>';
 	html += '</td>';
 	html += '<td width="18%">';
 	html += "<div style='display:inline-flex;'>";
@@ -617,7 +619,7 @@ function gen_vts_ruleTable_Block(_tableID) {
 	html += '</select>';
 	html += '</td>';	
 	html += '<td width="6%">';
-	html += '<input type="button" class="add_btn" onClick="addRow_Group(32, this);" name="vts_rulelist_' + wan_idx + '" id="vts_rulelist_' + wan_idx + '" value="">';
+	html += '<input type="button" class="add_btn" onClick="addRow_Group(64, this);" name="vts_rulelist_' + wan_idx + '" id="vts_rulelist_' + wan_idx + '" value="">';
 	html += '</td>';
 	html += '</tr>';
 	html += '</table>';
@@ -667,7 +669,7 @@ function gen_vts_ruleTable_Block(_tableID) {
 								<td bgcolor="#4D595D" valign="top"  >
 								<div>&nbsp;</div>
 								<div class="formfonttitle"><#menu5_3#> - <#menu5_3_4#></div>
-								<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+								<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 								<div>
 									<div class="formfontdesc"><#IPConnection_VServerEnable_sectiondesc#></div>
 									<ul style="margin-left:-25px; *margin-left:10px;">

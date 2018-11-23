@@ -1,7 +1,7 @@
 .\" Copyright (c) 2014 Sougata Santra / Tuxera Inc.
 .\" Copyright (c) 2011 Erik Larsson / Tuxera Inc.
 .\"
-.TH FATLABEL 8 "March 2014" "Tuxera TFATprogs 3014.9.11"
+.TH FATLABEL 8 "March 2014" "Tuxera TFATprogs 3017.7.17.3"
 .SH NAME
 fatlabel \- display/change the label on a FAT file system
 .SH SYNOPSIS
@@ -29,9 +29,17 @@ preceded by
 and the long name is preceded by
 .BR \-\- .
 .TP
+\fB\--cp\fR CODEPAGE
+Use the given code page to decode or encode the volume label. The following
+code pages are supported: 437, 737, 775, 850, 852, 855, 857, 860, 861, 862,
+863, 864, 865, 866, 869, 874, 932, 936, 949, 950. The default is 437.
+.TP
 \fB\-l\fR, \fB\-\-label\fR LABEL
-Set the volume label of a FAT volume to \fBLABEL\fR. The volume label is
-limited to 11 ASCII units, i.e. 11 bytes in most cases.
+Set the volume label for the filesystem. The volume label can be up to 11
+bytes long when encoded with code page specified by --cp option.
+.SH PLEASE NOTE
+.B fatlabel
+currently does not support FAT12 volumes.
 .SH BUGS
 There are no known problems with
 .BR fatlabel .
@@ -40,7 +48,12 @@ fat-support@tuxera.com.
 .hy
 .SH AUTHORS
 .B fatlabel
-was written by Sougata Santra, Tuxera Inc.
+was written by
+.RS 8
+Erik Larsson, Tuxera Inc.
+.br
+Sougata Santra, Tuxera Inc.
+.RE
 .SH AVAILABILITY
 .B fatlabel
 is part of the

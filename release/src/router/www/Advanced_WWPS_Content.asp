@@ -20,10 +20,7 @@
 <script><% wl_get_parameter(); %>
 $(function () {
 	if(amesh_support && (isSwMode("rt") || isSwMode("ap"))) {
-		$('<script>')
-			.attr('type', 'text/javascript')
-			.attr('src','/require/modules/amesh.js')
-			.appendTo('head');
+		addNewScript('/require/modules/amesh.js');
 	}
 });
 var wsc_config_state_old = '<% nvram_get("wsc_config_state"); %>';
@@ -352,7 +349,7 @@ function loadXML(){
 }
 
 function refresh_wpsinfo(xhr){
-	if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = '<% abs_index_page(); %>';
+	if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/";
 
 	var wpss = xhr.responseXML.getElementsByTagName("wps");
 	if(wpss == null || wpss[0] == null){
@@ -748,7 +745,7 @@ function checkWLReady(){
 		  <td bgcolor="#4D595D" valign="top"  >
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_1#> - <#menu5_1_2#></div>
-		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		  <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 		  <div class="formfontdesc"><#WLANConfig11b_display6_sectiondesc#></div>
 		  <div id="lantiq_ready" style="display:none;color:#FC0;margin-left:5px;font-size:13px;">Wireless is setting...</div>
 		  <div id="WPS_hideSSID_hint" class="formfontdesc" style="display:none;color:#FFCC00;"></div>		  
@@ -853,7 +850,7 @@ function checkWLReady(){
 				
 				<td id="wps_switch">
 						<span class="devicepin" style="color:#FFF;" id="wps_band_word"></span>&nbsp;&nbsp;
-						<input type="button" class="button_gen_long" name="switchWPSbtn" id="switchWPSbtn" value="<#Switch_band#>" class="button" onClick="SwitchBand();">
+						<input type="button" class="button_gen" name="switchWPSbtn" id="switchWPSbtn" value="<#Switch_band#>" class="button" onClick="SwitchBand();">
 						<br><span id="wps_band_hint"></span>
 		  	</td>
 				<td  id="wps_select" style="display:none">

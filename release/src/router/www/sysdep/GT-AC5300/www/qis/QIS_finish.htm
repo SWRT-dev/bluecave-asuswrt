@@ -228,7 +228,7 @@ function doLiveUpdate(_do){
 		document.start_update.submit();
 	}
 	else{
-		setTimeout("parent.location.href='<% abs_index_page(); %>'", 3000);
+		setTimeout("parent.location.href='/'", 3000);
 	}
 }
 
@@ -463,7 +463,7 @@ function checkIsNewFirmware(){
 		else{
 			var delayTimeout = (parent.based_modelid == "RT-AC82U" || parent.based_modelid == "RT-AC58U") ? 10000 : 1;
 			setTimeout(function(){
-				parent.location.href = '<% abs_index_page(); %>';
+				parent.location.href = '/';
 			}, delayTimeout);
 		}
 	}
@@ -1492,6 +1492,10 @@ function show_tm_eula(){
 		document.getElementById('agreement_panel').innerHTML= data;
 		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
 		$("#eula_url").attr("href",url);
+		url = "https://www.trendmicro.com/en_us/about/legal/privacy-policy-product.html"
+		$("#tm_eula_url").attr("href",url);
+		url = "https://success.trendmicro.com/data-collection-disclosure";
+		$("#tm_disclosure_url").attr("href",url);
 		adjust_TM_eula_height("agreement_panel");
 	});
 
@@ -1756,7 +1760,7 @@ function cancel(){
 	<div class="itemTitle"><#menu5_2#></div>
 	<fieldset>
 		<div class="row">
-			<label><#LAN IP#></label>
+			<label><#LAN_IP#></label>
 			<div id="lanip_m"></div>
 		</div>
 		<div class="row_end">
@@ -1767,7 +1771,7 @@ function cancel(){
 	<br />
 
 	<fieldset>
-		<div class="row_end"><a class="iuiA" onclick="parent.location.href='<% abs_index_page(); %>';"><#menu5#></a></div>
+		<div class="row_end"><a class="iuiA" onclick="parent.location.href='/';"><#menu5#></a></div>
 	</fieldset>
 	<br />
 	<fieldset>
@@ -1781,7 +1785,7 @@ function cancel(){
 </div>
 
 <div id="AreaHint" style="margin-top:10px; margin-left:5px;">
-	<div><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>	
 	<div id="main_manual" style="padding-left:20px;margin-top:10px">
 		<span><#ASUS_Registration#></span>
 	</div>
@@ -1801,7 +1805,9 @@ function cancel(){
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;">
+			<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+		</div>
 		<br>
 		<br>
 	</div>
@@ -1852,12 +1858,13 @@ function cancel(){
 						margin-top:5px;
 						width:90%;
 						height:30px;
-						background:url(/images/quotabar_bg_progress.gif);
-						background-repeat: repeat-x;
+						background: #596E74;
+						border-top: 1px solid #929EA1;
+						border-bottom: 1px solid #929eA1;
 					}
 				</style>
 				<span id="progress_bar_no" style="display:none;position:absolute;margin-left:285px;margin-top:7px;*margin-left:290px">0%</span>
-				<img id="updateProgress" src="/images/quotabar.gif" style="width:0%" height="30px">
+				<div id="updateProgress" class="quotabar" style="width:0%;height:30px;"></div>
 			</div>
 		</div>
 		<br>
@@ -1902,7 +1909,9 @@ function cancel(){
 				</tr>
 			</table>
 		</div>
-		<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:5px;">
+			<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+		</div>
 		<br>
 		<br>
 	</div>
@@ -2059,8 +2068,8 @@ function cancel(){
 <form method="post" name="restartForm" action="/start_apply2.htm" target="hidden_frame">
 	<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
 	<input type="hidden" name="flag" value="finishQIS">
-	<input type="hidden" name="current_page" value="<% abs_index_page(); %>">
-	<input type="hidden" name="next_page" value="<% abs_index_page(); %>">
+	<input type="hidden" name="current_page" value="/">
+	<input type="hidden" name="next_page" value="/">
 	<input type="hidden" name="action_mode" value="apply">
 	<input type="hidden" name="action_script" value="">
 	<input type="hidden" name="action_wait" value="0">

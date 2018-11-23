@@ -626,7 +626,7 @@ void start_vpnserver(int serverNum)
 	snprintf(&iface[0], IF_SIZE, "%s%d", nvram_safe_get(&buffer[0]), serverNum+SERVER_IF_START);
 
 	//
-	if(is_intf_up(&iface[0]) && ifType == TAP) {
+	if(is_intf_up(&iface[0]) > 0 && ifType == TAP) {
 		eval("brctl", "delif", nvram_safe_get("lan_ifname"), &iface[0]);
 	}
 
@@ -786,10 +786,14 @@ void start_vpnserver(int serverNum)
 	sprintf(&buffer[0], "vpn_server%d_port", serverNum);
 	fprintf(fp, "port %d\n", nvram_get_int(&buffer[0]));
 
-	if(nvram_get_int("ddns_enable_x"))
-		fprintf(fp_client, "remote %s %s\n", nvram_safe_get("ddns_hostname_x"), nvram_safe_get(&buffer[0]));
-	else
-		fprintf(fp_client, "remote %s %s\n", nvram_safe_get("wan0_ipaddr"), nvram_safe_get(&buffer[0]));
+	if (nvram_get_int("ddns_enable_x") && nvram_get_int("ddns_status") && nvram_invmatch("ddns_hostname_x", ""))
+		fprintf(fp_client, "remote %s %d\n", nvram_safe_get("ddns_hostname_x"), nvram_get_int(&buffer[0]));
+	else {
+		const char *address = get_wanip();
+		if (inet_addr_(address) == INADDR_ANY)
+			address = "0.0.0.0"; /* error */
+		fprintf(fp_client, "remote %s %d\n", address, nvram_get_int(&buffer[0]));
+	}
 
 	fprintf(fp_client, "float\n");
 
@@ -1697,14 +1701,16 @@ int write_vpn_resolv(FILE* f)
 
 void create_openvpn_passwd()
 {
+	FILE *fps, *fpp;
 	unsigned char s[512];
-	char *p;
-	char salt[32];
+	char salt[32], *p;
 	char *nv, *nvp, *b;
 	char *username, *passwd;
-	FILE *fp1, *fp2, *fp3;
-	int id = 200;
+#ifdef RTCONFIG_NVRAM_ENCRYPT
 	char dec_passwd[256];
+#endif
+	int gid = 200; /* OpenVPN GID */
+	int uid = 200;
 
 	strcpy(salt, "$1$");
 	f_read("/dev/urandom", s, 6);
@@ -1716,31 +1722,34 @@ void create_openvpn_passwd()
 		++p;
 	}
 
-	fp1=fopen("/etc/shadow.openvpn", "w");
-	fp2=fopen("/etc/passwd.openvpn", "w");
-	fp3=fopen("/etc/group.openvpn", "w");
-	if (!fp1 || !fp2 || !fp3) return;
+	fps = fopen("/etc/shadow.openvpn", "w");
+	fpp = fopen("/etc/passwd.openvpn", "w");
+	if (fps == NULL || fpp == NULL)
+		goto error;
 
 	nv = nvp = strdup(nvram_safe_get("vpn_serverx_clientlist"));
-
-	if(nv) {
+	if (nv) {
 		while ((b = strsep(&nvp, "<")) != NULL) {
-			if((vstrsep(b, ">", &username, &passwd)!=2)) continue;
-			if(strlen(username)==0||strlen(passwd)==0) continue;
+			if (vstrsep(b, ">", &username, &passwd) != 2)
+				continue;
+			if (*username == '\0' || *passwd == '\0')
+				continue;
 #ifdef RTCONFIG_NVRAM_ENCRYPT
 			memset(dec_passwd, 0, sizeof(dec_passwd));
 			pw_dec(passwd, dec_passwd);
 			passwd = dec_passwd;
 #endif
 			p = crypt(passwd, salt);
-			fprintf(fp1, "%s:%s:0:0:99999:7:0:0:\n", username, p);
-			fprintf(fp2, "%s:x:%d:%d:::\n", username, id, id);
-			fprintf(fp3, "%s:x:%d:\n", username, id);
-			id++;
+			fprintf(fps, "%s:%s:0:0:99999:7:0:0:\n", username, p);
+			fprintf(fpp, "%s:x:%d:%d::/dev/null:/dev/null\n", username, uid, gid);
+			uid++;
 		}
 		free(nv);
 	}
-	fclose(fp1);
-	fclose(fp2);
-	fclose(fp3);
+
+error:
+	if (fps)
+		fclose(fps);
+	if (fpp)
+		fclose(fpp);
 }

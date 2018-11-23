@@ -19,6 +19,11 @@ var ru_idx_start = 0;
 var dslx_annex_state = "<% nvram_get("dslx_annex"); %>";
 var x_Setting = "<% nvram_get("x_Setting"); %>";
 var w_Setting = "<% nvram_get("w_Setting"); %>";
+//apply DSL setting if changed
+var orig_dslx_transmode = "<% nvram_get("dslx_transmode"); %>";
+var orig_dslx_modulation ="<% nvram_get("dslx_modulation"); %>";
+var orig_dslx_annex="<% nvram_get("dslx_annex"); %>";
+var orig_dslx_testlab = "<% nvram_get("dslx_testlab"); %>";
 
 function setIptvNumPvc() {
 	var pvc_cnt = 0;
@@ -490,14 +495,31 @@ function btnNext() {
 	//Specific setting
 	if( document.form.dsltmp_cfg_country.value=='Thailand'
 		&& document.form.dsltmp_cfg_ispname.value=='3BB 15M/1.5M'
-		&& document.form.dslx_modulation.value != "4"
-		&& document.form.dslx_annex.value != "3"
 		&& parent.based_modelid != "DSL-N55U-B"
 	){
 		document.form.dslx_modulation.value = "4";
 		document.form.dslx_annex.value = "3";
+	}
+	if(parent.based_modelid == "DSL-AC68U") {
+		if( document.form.dsltmp_cfg_country.value=='Turkey'
+			&& document.form.dsltmp_cfg_ispname.value.search("Turk Telekom") >= 0
+		){
+			document.form.dslx_testlab.value = "TR_TT";
+			document.form.dslx_dla_enable.value = "0";
+		}
+		else{
+			document.form.dslx_testlab.value = "disable";
+		}
+	}
+
+	if(document.form.dslx_transmode.value != orig_dslx_transmode
+		|| document.form.dslx_modulation.value != orig_dslx_modulation
+		|| document.form.dslx_annex.value != orig_dslx_annex
+		|| document.form.dslx_testlab.value != orig_dslx_testlab
+	) {
 		parent.restartDSLSetting = true;
 	}
+
 	if(parent.restartDSLSetting) {
 		document.form.action_script.value = "restart_dsl_setting;".concat(document.form.action_script.value);
 	}
@@ -564,14 +586,13 @@ function btnNext() {
 <input type="hidden" name="dsltmp_cfg_iptv_enable" value="0">
 <input type="hidden" name="dsltmp_transmode" value="atm">
 <input type="hidden" name="dsltmp_qis_dsl_pvc_set" value="1">
+<input type="hidden" name="dslx_transmode" value="atm">
 <input type="hidden" name="dslx_modulation" value="<% nvram_get("dslx_modulation"); %>">
 <input type="hidden" name="dslx_annex" value="<% nvram_get("dslx_annex"); %>">
+<input type="hidden" name="dslx_testlab" value="<% nvram_get("dslx_testlab"); %>">
+<input type="hidden" name="dslx_dla_enable" value="<% nvram_get("dslx_dla_enable"); %>">
 
 <div class="QISmain">
-	<!--
-	<div class="formfonttitle" style="padding:0 0 0 10;" id="FailReason"><#Manual_Setting_Title#></div>
-	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
-	-->
 	<div class="formfonttitle" style="padding:6 0 0 10;">
 			<div>
 				<table width="730px">
@@ -582,7 +603,7 @@ function btnNext() {
 					</tr>
 				</table>
 			</div>
-			<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+			<div style="margin:5px;"><div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div></div>
 	</div>
 	<br/>
 	<table width="80%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">

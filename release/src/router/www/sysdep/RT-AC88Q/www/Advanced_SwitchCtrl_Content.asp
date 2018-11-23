@@ -122,10 +122,10 @@ function initial(){
 					html += "</div>";
 				}
 			}
-			var groupNumHint = "1 & 2 or 3 & 4 or 1 & 4 or 2 & 3";
+			var groupNumHint = "(1 & 2) , (3 & 4) , (1 & 4) , (2 & 3)";
 			if(_group_id == 1)
 				groupNumHint = "5 & 6 or 7 & 8 or 5 & 8 or 6 & 7";	
-			html += "<div class='bondingHintBox'><p class='bondingHintText'>Select Port at least " + groupNumHint + " combination for the best performance result</p></div>";/*untranslated*/
+			html += "<div class='bondingHintBox'><p class='bondingHintText'><#SwitchCtrl_Select_At_Least_Port#></p></div>";
 			return html;
 		};
 
@@ -212,13 +212,13 @@ function valid_form(){
 					return _lan_trunk;
 				}
 				if(_count < 2 && _count > 0) {
-					alert("Please select at least 2 ports at Bonding / Link aggregation Group " + _group_id + "");/*untranslated*/
+					alert("<#SwitchCtrl_At_Least_2_Ports_Group#>");
 					_lan_trunk = -1;
 					return _lan_trunk;
 				}
 				if(_lan_trunk_type == "2") { // 802.3ad, 2 ports only
 					if(_count > 2) {
-						alert("Please select 2 ports only at Bonding / Link aggregation Group " + _group_id + "");/*untranslated*/
+						alert("<#SwitchCtrl_Only_2_Ports_Group#>");
 						_lan_trunk = -1;
 						return _lan_trunk;
 					}
@@ -245,32 +245,32 @@ function valid_form(){
 
 		if(lan_trunk_type != "0") {
 			if(document.form.lan_trunk_0.value == "0" && document.form.lan_trunk_1.value == "0") {
-				alert("Please setup a least one group of setting to process.");/*untranslated*/
+				alert("<#SwitchCtrl_At_Least_Group_Alert#>");
 				return false;
 			}
 		}
 		if(lan_trunk_type == "1") {
 			if(document.form.lan_trunk_0.value % 5 == 0 && document.form.lan_trunk_0.value != 0 && lan_group_count != 4) { //only horizontal port
-				alert("Please select 1 & 2 or 3 & 4 or 1 & 4 or 2 & 3 ports combination.");/*untranslated*/
+				alert("<#SwitchCtrl_Combination0_Alert#>");
 				return false;
 			}
 			if(document.form.lan_trunk_1.value % 5 == 0 && document.form.lan_trunk_1.value != 0 && lan_group1_count != 4) { //only horizontal port
-				alert("Please select 5 & 6 or 7 & 8 or 5 & 8 or 6 & 7 ports combination.");/*untranslated*/
+				alert("<#SwitchCtrl_Combination1_Alert#>");
 				return false;
 			}
 		}
 		if(lan_trunk_type == "2") {
 			if(document.form.lan_trunk_0.value != "0" && document.form.lan_trunk_1.value != "0") {
-				alert("Please select 2 ports only for only one group.");/*untranslated*/
+				alert("<#SwitchCtrl_Only_2_Ports_Only_One_Group#>");
 				return false;
 			}
 
 			if(document.form.lan_trunk_0.value % 5 == 0 && document.form.lan_trunk_0.value != 0) { //only horizontal port
-				alert("Please select 1 & 2 or 3 & 4 or 1 & 4 or 2 & 3 ports combination.");/*untranslated*/
+				alert("<#SwitchCtrl_Combination0_Alert#>");
 				return false;
 			}
 			else if(document.form.lan_trunk_1.value % 5 == 0 && document.form.lan_trunk_1.value != 0) { //only horizontal port
-				alert("Please select 5 & 6 or 7 & 8 or 5 & 8 or 6 & 7 ports combination.");/*untranslated*/
+				alert("<#SwitchCtrl_Combination1_Alert#>");
 				return false;
 			}
 		}
@@ -287,7 +287,7 @@ function valid_form(){
 
 function changeTrunkType(obj) {
 	if(vlan_enable != "0" && (orig_lan_trunk_type == "0" && obj.value != "0")){
-		if(!confirm("Enable bonding feature will disable VLAN feature. Are you sure to continue?"))//untranslated
+		if(!confirm("<#SwitchCtrl_Disable_VLAN_Confirm#>"))
 			return false;
 		else{
 			document.form.vlan_enable.disabled = false;
@@ -299,7 +299,7 @@ function changeTrunkType(obj) {
 	document.getElementById("lan1_trunk").style.display = "none";
 	document.getElementById("lan_trunk_hint").innerHTML = "";
 	if(document.form.lan_trunk_type_item.style.display == "none") {
-		document.getElementById("lan_trunk_hint").innerHTML = "Current feature is disabled due to LAN as WAN setting, please remove the setting to process.";/*untranslated*/
+		document.getElementById("lan_trunk_hint").innerHTML = "<#SwitchCtrl_Bonding_Disable_Hint#>";
 		document.getElementById("lan_trunk_hint").style.marginLeft = "0px";
 	}
 	else {
@@ -307,12 +307,12 @@ function changeTrunkType(obj) {
 		$(".cb_lan1_trunk").prop("checked", false);
 		switch(obj.value) {
 			case "1" :
-				document.getElementById("lan_trunk_hint").innerHTML = "Please select 2 - 4 ports for each group.";/*untranslated*/
+				document.getElementById("lan_trunk_hint").innerHTML = "<#SwitchCtrl_2to4_Each_Ports#>";
 				document.getElementById("lan0_trunk").style.display = "";
 				document.getElementById("lan1_trunk").style.display = "";
 				break;
 			case "2" :
-				document.getElementById("lan_trunk_hint").innerHTML = "Please select 2 ports only for only one group.";/*untranslated*/
+				document.getElementById("lan_trunk_hint").innerHTML = "<#SwitchCtrl_Only_2_Ports_Only_One_Group#>";
 				document.getElementById("lan0_trunk").style.display = "";
 				document.getElementById("lan1_trunk").style.display = "";
 				break;
@@ -478,7 +478,7 @@ function retune8023adLanPort() {
 		  <td bgcolor="#4D595D" valign="top"  >
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_2#> - <#Switch_itemname#></div>
-      <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+      <div style="margin: 10px 0 10px 5px" class="splitLine"></div>
       <div class="formfontdesc"><#SwitchCtrl_desc#></div>
 		  
 		  <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -522,7 +522,7 @@ function retune8023adLanPort() {
 		</td>
       	</tr>					
 	<tr>
-		<th>Enable GRO(Generic Receive Offload)<!--untranslated--></th>
+		<th><#SwitchCtrl_Enable_GRO#></th>
 		<td>
 			<select name="qca_gro" class="input_option">
 				<option class="content_input_fd" value="0" <% nvram_match("qca_gro", "0","selected"); %>><#WLANConfig11b_WirelessCtrl_buttonname#></option>
@@ -531,10 +531,10 @@ function retune8023adLanPort() {
 		</td>
 	</tr>
 	<tr>
-		<th>Hash algorithm<!--untranslated--></th>
+		<th><#SwitchCtrl_Hash_Algo#></th>
 		<td>
 			<select name="lan_hash_algorithm" class="input_option">
-				<option value="0" <% nvram_match( "lan_hash_algorithm", "0", "selected"); %>>Source Port</option><!--untranslated-->
+				<option value="0" <% nvram_match( "lan_hash_algorithm", "0", "selected"); %>><#SwitchCtrl_Source_Port#></option>
 				<option value="1" <% nvram_match( "lan_hash_algorithm", "1", "selected"); %>>Layer2</option><!--untranslated-->
 				<option value="2" <% nvram_match( "lan_hash_algorithm", "2", "selected"); %>>Layer2+3</option><!--untranslated-->
 				<option value="3" <% nvram_match( "lan_hash_algorithm", "3", "selected"); %>>Layer3</option><!--untranslated-->
@@ -543,7 +543,7 @@ function retune8023adLanPort() {
 		</td>
 	</tr>
 											<tr id="tr_lan_trunk_type" style="display:none;">
-												<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);">Select your bonding type</a></th><!--untranslated-->
+												<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);"><#SwitchCtrl_Select_Bonding_Type#></a></th>
 												<td>
 													<select id="lan_trunk_type_item" name="lan_trunk_type_item" class="input_option" onchange="changeTrunkType(this);">
 														<option value="0" <% nvram_match( "lan_trunk_type", "0", "selected"); %>><#btn_disable#></option>
@@ -554,7 +554,7 @@ function retune8023adLanPort() {
 												</td>
 											</tr>
 											<tr id="lan0_trunk" style="display:none;">
-												<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);">Bonding / Link aggregation Group0</a></th><!--untranslated-->
+												<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);"><#SwitchCtrl_Select_Bonding_Group#> 0</a></th>
 												<td>
 													<div id="lan0_trunk_icon"></div>
 													<div class='lan_port_hidden'>
@@ -566,7 +566,7 @@ function retune8023adLanPort() {
 												</td>
 											</tr>
 											<tr id="lan1_trunk" style="display:none;">
-												<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);">Bonding / Link aggregation Group1</a></th><!--untranslated-->
+												<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(29,1);"><#SwitchCtrl_Select_Bonding_Group#> 1</a></th>
 												<td>
 													<div id="lan1_trunk_icon"></div>
 													<div class='lan_port_hidden'>

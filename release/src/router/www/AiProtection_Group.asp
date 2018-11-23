@@ -31,7 +31,7 @@ function initial(){
 </script>
 </head>
 
-<body onload="initial();" onunload="unload_body();" onselectstart="return false;">
+<body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 
@@ -80,7 +80,7 @@ function initial(){
 				</tr>
 			</table>
 		</div>
-		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 		<div id="PC_desc">
 			<table width="700px" style="margin-left:25px;">
 				<tr>

@@ -74,9 +74,7 @@ _get_wdm_by_usbnet(){
 			continue
 		fi
 
-		rp1_head=`echo -n $rp1 |awk 'BEGIN{FS=":"}{print $1}'`
-		rp2_head=`echo -n $rp2 |awk 'BEGIN{FS=":"}{print $1}'`
-		if [ "$rp1_head" == "$rp2_head" ]; then
+		if [ "$rp1" == "$rp2" ]; then
 			echo "/dev/cdc-wdm$i"
 			return
 		fi
@@ -219,6 +217,16 @@ _is_Docomo_modem(){
 	if [ "$modem_vid" == "4100" -a "$modem_pid" == "25446" ]; then # Docomo L03F.
 		ret="1"
 	elif [ "$modem_vid" == "4100" -a "$modem_pid" == "25382" ]; then # Docomo L-03D
+		ret="1"
+	fi
+
+	echo -n "$ret"
+}
+
+_is_ET128(){
+	ret="0"
+
+	if [ "$modem_vid" == "4817" -a "$modem_pid" == "7433" ]; then
 		ret="1"
 	fi
 
@@ -370,7 +378,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		echo "Got the int node: $modem_act_node."
 	fi
 
-	if [ "$modem_enable" != "2" ]; then
+	et128=`_is_ET128`
+	if [ "$modem_enable" != "2" ] && [ "$et128" != "1" ]; then
 		# Set full functionality
 		at_ret=`/usr/sbin/modem_at.sh '+CFUN?' 2>&1`
 
@@ -426,7 +435,11 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	# input PIN if need.
 	echo "PIN: detect PIN if it's needed."
 	/usr/sbin/modem_status.sh sim
-	/usr/sbin/modem_status.sh simauth
+	if [ "$et128" == "1" ]; then
+		sleep 2
+	else
+		/usr/sbin/modem_status.sh simauth
+	fi
 	ret=`nvram get ${prefix}act_sim`
 	if [ "$ret" != "1" ]; then
 		if [ "$ret" == "2" -a "$modem_pin" != "" ]; then
@@ -449,7 +462,9 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		if [ "$modem_type" != "gobi" ]; then
 			/usr/sbin/modem_status.sh imsi
 		fi
-		/usr/sbin/modem_status.sh iccid
+		if [ "$et128" != "1" ]; then
+			/usr/sbin/modem_status.sh iccid
+		fi
 
 		# Auto-APN
 		echo "Running autoapn..."
@@ -493,10 +508,6 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 			if [ "$modem_user" != "" -o "$modem_pass" != "" ]; then
 				echo "Gobi2: Set the PPP profile."
-				#if [ "$modem_authmode" == "3" ]; then
-				#	modem_authmode=2 # When auth type is BOTH, choose CHAP.
-				#fi
-				#at_ret=`/usr/sbin/modem_at.sh '$QCPDPP=1,'$modem_authmode',"'$modem_pass'","'$modem_user'"' 2>&1`
 				at_ret=`/usr/sbin/modem_at.sh '$PPP='$modem_user','$modem_pass 2>&1`
 				ret=`echo -n $at_ret |grep "OK" 2>/dev/null`
 				if [ -z "$ret" ]; then
@@ -523,20 +534,18 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				/usr/sbin/modem_at.sh '' # clean the output of +COPS=2.
 			fi
 
-			if [ "$modem_pdp" != "2" ]; then # IPv4
-				echo "Gobi($qcqmi): set the ISP IPv4 profile."
-				/usr/sbin/modem_at.sh '+CGDCONT=1,"IP","'$modem_apn'"'
+			# clean the profile 2 before
+			/usr/sbin/modem_at.sh '+CGDCONT=2'
+
+			pdp_str=`_get_pdp_str`
+			echo "Gobi: set the PDP be $pdp_str & APN be $modem_apn."
+			/usr/sbin/modem_at.sh '+CGDCONT=1,"'$pdp_str'","'$modem_apn'"'
+			if [ "$modem_user" != "" -o "$modem_pass" != "" ]; then
 				/usr/sbin/modem_at.sh '$QCPDPP=1,'$modem_authmode',"'$modem_pass'","'$modem_user'"'
 			fi
 
-			if [ "$modem_pdp" == "2" ] || [ "$modem_pdp" == "3" ]; then # IPv6
-				echo "Gobi($qcqmi): set the ISP IPv6 profile."
-				/usr/sbin/modem_at.sh '+CGDCONT=2,"IPV6","'$modem_apn'"'
-				/usr/sbin/modem_at.sh '$QCPDPP=2,'$modem_authmode',"'$modem_pass'","'$modem_user'"'
-			fi
-
 			echo "Reset Modem for the new profile..."
-			/usr/sbin/modem_at.sh +CMODEMRESET=1
+			/usr/sbin/modem_at.sh +CMODEMRESET=2
 		fi
 
 		echo "Gobi: Successfull to set the ISP profile."
@@ -566,28 +575,21 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		#	exit 0
 		#fi
 
-		if [ "$modem_user" != "" -o "$modem_pass" != "" ]; then
-			if [ "$modem_authmode" == "3" ]; then
-				flag_auth="--auth-type both"
-			elif [ "$modem_authmode" == "2" ]; then
-				flag_auth="--auth-type chap"
-			elif [ "$modem_authmode" == "1" ]; then
-				flag_auth="--auth-type pap"
-			else
-				flag_auth="--auth-type none"
-			fi
-
-			if [ "$modem_user" != "" ]; then
-				flag_auth="$flag_auth --username $modem_user"
-			fi
-			if [ "$modem_pass" != "" ]; then
-				flag_auth="$flag_auth --password $modem_pass"
-			fi
-
-			echo "$modem_type: set the flag_auth be \"$flag_auth\"."
-
-			echo "uqmi -d $wdm --keep-client-id wds --start-network --apn \"$modem_apn\" \"$flag_auth\" --ip-family $pdp_str"
-			uqmi -d $wdm --keep-client-id wds --start-network --apn "$modem_apn" "$flag_auth" --ip-family $pdp_str
+		if [ -n "$modem_user" -o -n "$modem_pass" ]; then
+			case "$modem_authmode" in
+				1) flag_auth="pap" ;;
+				2) flag_auth="chap" ;;
+				3) flag_auth="both" ;;
+				*) flag_auth="none" ;;
+			esac
+			echo "uqmi -d $wdm --keep-client-id wds --start-network --apn \"$modem_apn\" --ip-family $pdp_str" \
+				${flag_auth:+--auth-type \"$flag_auth\"} \
+				${modem_user:+--username \"$modem_user\"} \
+				${modem_pass:+--password \"$modem_pass\"}
+			uqmi -d $wdm --keep-client-id wds --start-network --apn "$modem_apn" --ip-family $pdp_str \
+				${flag_auth:+--auth-type "$flag_auth"} \
+				${modem_user:+--username "$modem_user"} \
+				${modem_pass:+--password "$modem_pass"}
 		else
 			echo "uqmi -d $wdm --keep-client-id wds --start-network --apn \"$modem_apn\" --ip-family $pdp_str"
 			uqmi -d $wdm --keep-client-id wds --start-network --apn "$modem_apn" --ip-family $pdp_str
@@ -648,6 +650,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 	is_Docomo=`_is_Docomo_modem`
 	if [ "$Dev3G" == "Docomo_dongles" ] || [ "$is_Docomo" == "1" ]; then
 		echo "COPS: Docomo dongles cannot COPS=0, so skip it."
+	elif [ "$et128" == "1" ]; then
+		echo "COPS: Huawei ET128 skip to reset COPS."
 	elif [ "$modem_vid" == "6797" -a "$modem_pid" == "4098" ]; then # BandLuxe C120.
 		echo "COPS: BandLuxe C120 start with CFUN=0, so don't need to unregister the network."
 	elif [ "$modem_vid" == "4817" -a "$modem_pid" == "5382" ]; then # Huawei E3276.
@@ -719,6 +723,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 		# check the register state after set COPS.
 		if [ "$Dev3G" == "Docomo_dongles" ] || [ "$is_Docomo" == "1" ]; then
 			echo "COPS: Docomo dongles cannot CGATT=1, so skip it."
+		elif [ "$et128" == "1" ]; then
+			echo "COPS: Huawei ET128 cannot CGATT=1, so skip it."
 		elif [ "$modem_vid" == "4204" -a "$modem_pid" == "14104" ]; then # Pantech UML290VW: VID=0x106c, PID=0x3718
 			echo "COPS: Pantech UML290VW cannot CGATT?, so skip it."
 		else
@@ -795,6 +801,33 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 				exit 0
 			fi
 		else
+			if [ "$modem_pdp" == "2" ] || [ "$modem_pdp" == "3" ]; then
+				i=0
+				got_ip=0
+				nvram set freeze_duck=12
+				while [ $i -lt 10 ]; do
+					modem_status.sh ip
+					ipv6=`nvram get ${prefix}act_ipv6`
+					if [ -n "$ipv6" ]; then
+						prefix1_ipv6=`echo -n "$ipv6" |awk 'BEGIN{FS="."}{print $1}'`
+						prefix2_ipv6=`echo -n "$ipv6" |awk 'BEGIN{FS="."}{print $2}'`
+						if [ -n "$prefix1_ipv6" ] && [ "$prefix1_ipv6" -gt "0" ]; then
+							got_ip=`expr $got_ip + 1`
+						fi
+						if [ -n "$prefix2_ipv6" ] && [ "$prefix2_ipv6" -gt "0" ]; then
+							got_ip=`expr $got_ip + 1`
+						fi
+						if [ "$got_ip" -gt "0" ]; then
+							break
+						fi
+					fi
+
+					i=`expr $i + 1`
+					echo "Wait $i seconds for IPv6..."
+					sleep 1
+				done
+			fi
+
 			# WDS set the autoconnect & roaming
 			# autoconnect: 0, disable; 1, enable; 2, pause.
 			# roaming: 0, allow; 1, disable. Only be activated when autoconnect is enabled.
@@ -812,7 +845,8 @@ if [ "$modem_type" == "tty" -o "$modem_type" == "qmi" -o "$modem_type" == "mbim"
 
 			if [ "$modem_pdp" == "2" ] || [ "$modem_pdp" == "3" ]; then # IPv6
 				echo "StartDataSessionWith IPv6..."
-				gobi_api qcqmi0 StartDataSessionWithIPFamily 6 "$modem_apn" "$modem_authmode" "$modem_user" "$modem_pass" &
+				gobi_api qcqmi0 StartDataSessionWithIPFamily 6 &
+				sleep 2
 			fi
 		fi
 

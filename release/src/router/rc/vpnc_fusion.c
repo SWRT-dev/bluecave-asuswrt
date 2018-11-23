@@ -223,6 +223,12 @@ int vpnc_update_resolvconf(const int unit)
 		goto error;
 	}
 #ifdef NORESOLV /* dnsmasq uses no resolv.conf */
+#ifdef RTCONFIG_YANDEXDNS
+	if (yadns_mode != YADNS_DISABLED) {
+		/* keep yandex.dns servers */
+		fp_servers = NULL;
+	} else
+#endif
 	if (!(fp_servers = fopen("/tmp/resolv.dnsmasq", "w+"))) {
 		perror("/tmp/resolv.dnsmasq");
 		fclose(fp);
@@ -246,7 +252,8 @@ int vpnc_update_resolvconf(const int unit)
 
 	fclose(fp);
 #ifdef NORESOLV /* dnsmasq uses no resolv.conf */
-	fclose(fp_servers);
+	if (fp_servers)
+		fclose(fp_servers);
 #endif
 	file_unlock(lock);
 
@@ -694,6 +701,76 @@ static int _find_vpnc_idx_by_ovpn_unit(const int ovpn_unit)
 	return -1;
 }
 
+void vpnc_ovpn_set_dns(int ovpn_unit)
+{
+	char nvname[16] = {0};
+	char *old = NULL;
+	char *new = NULL;
+	size_t size = 0;
+	char buf[128];
+	char addr[16];
+	FILE *fp = NULL;
+
+	snprintf(nvname, sizeof(nvname), "vpnc%d_dns", _find_vpnc_idx_by_ovpn_unit(ovpn_unit));
+
+	fp = fopen("/etc/openvpn/resolv.conf", "r");
+	if (!fp) {
+		//_dprintf("read /etc/openvpn/resolv.conf fail\n");
+		return;
+	}
+	while(fgets(buf, sizeof(buf), fp) != NULL)
+	{
+		//nameserver xxx.xxx.xxx.xxx
+		if(sscanf (buf,"nameserver %15s", addr) != 1)
+		{
+			_dprintf("\n=====\nunknown %s\n=====\n", buf);
+			continue;
+		}
+
+		trim_r(addr);
+
+		old = nvram_get(nvname);
+		if (*old)
+		{
+			size = strlen(old) + strlen(addr) + 2;
+			new = malloc(size);
+			if(new)
+			{
+				snprintf(new, size, "%s %s", old, addr);
+				nvram_set(nvname, new);
+				free(new);
+			}
+			else
+			{
+				_dprintf("vpnc_ovpn_update_dns fail\n");
+				continue;
+			}
+		}
+		else
+		{
+			nvram_set(nvname, addr);
+		}
+	}
+	fclose(fp);
+}
+
+void vpnc_handle_dns_policy_rule(const VPNC_ROUTE_CMD cmd, const int vpnc_id)
+{
+	char nvname[16], cmd_str[8], id_str[8];
+	char tmp[32];
+	char *vpn_dns, *next;
+
+	snprintf(nvname, sizeof(nvname), "vpnc%d_dns", vpnc_id);
+	snprintf(cmd_str, sizeof(cmd_str), "%s", (cmd == VPNC_ROUTE_DEL)? "del": "add");
+	snprintf(id_str, sizeof(id_str), "%d", vpnc_id);
+
+	vpn_dns = nvram_safe_get(nvname);
+	foreach(tmp, vpn_dns, next) {
+		//_dprintf("dns %s\n", tmp);
+		eval("ip", "rule", cmd_str, "from", "0/0", "to", tmp, "table", id_str, "priority", VPNC_RULE_PRIORITY);
+	}
+}
+
 /*******************************************************************
 * NAME: vpnc_ovpn_up_main
 * AUTHOR: Andy Chiu
@@ -737,6 +814,10 @@ int vpnc_ovpn_up_main(int argc, char **argv)
 		if(vpn_gateway)
 			nvram_set(strlcat_r(prefix, "gateway", tmp, sizeof(tmp)), vpn_gateway);
 		nvram_set(strlcat_r(prefix, "dns", tmp, sizeof(tmp)), "");	//clean dns
+
+		ovpn_up_handler(unit);
+		vpnc_ovpn_set_dns(unit);
+		update_resolvconf();
 
 		//set route table
 		cnt = 0;
@@ -782,6 +863,11 @@ int vpnc_ovpn_up_main(int argc, char **argv)
 			++cnt;
 		}
 		nvram_set_int(strlcat_r(prefix, "remote_num", tmp, sizeof(tmp)), cnt);
+
+#ifdef USE_MULTIPATH_ROUTE_TABLE
+		//set dns server policy rule
+		vpnc_handle_dns_policy_rule(VPNC_ROUTE_ADD, vpnc_idx);
+#endif
 	}
 	return 0;
 	
@@ -821,9 +907,13 @@ int vpnc_ovpn_down_main(int argc, char **argv)
 		vpnc_down(ifname);
 
 		/* Add dns servers to resolv.conf */
+		ovpn_down_handler(unit);
 		update_resolvconf();
 
 #ifdef USE_MULTIPATH_ROUTE_TABLE	
+		//clean dns server policy rule
+		vpnc_handle_dns_policy_rule(VPNC_ROUTE_DEL, vpnc_idx);
+
 		//clean routing rule
 		clean_routing_rule_by_vpnc_idx(vpnc_idx);
 
@@ -1714,20 +1804,24 @@ start_vpnc_by_unit(const int unit)
 			if (VPNC_PPTP_OPT_MPPC == prof->config.pptp.option) {
 				fprintf(fp, "nomppe nomppc\n");
 			} else
-			if (VPNC_PPTP_OPT_MPPE40== prof->config.pptp.option) {
+			if (VPNC_PPTP_OPT_MPPE40 == prof->config.pptp.option) {
 				fprintf(fp, "require-mppe\n"
 					    "require-mppe-40\n");
 			} else
-			if (VPNC_PPTP_OPT_MPPE56== prof->config.pptp.option) {
+			if (VPNC_PPTP_OPT_MPPE56 == prof->config.pptp.option) {
 				fprintf(fp, "nomppe-40\n"
-					    "nomppe-128\n"
 					    "require-mppe\n"
 					    "require-mppe-56\n");
 			} else
-			if (VPNC_PPTP_OPT_MPPE128== prof->config.pptp.option) {
+			if (VPNC_PPTP_OPT_MPPE128 == prof->config.pptp.option) {
 				fprintf(fp, "nomppe-40\n"
 					    "nomppe-56\n"
 					    "require-mppe\n"
+					    "require-mppe-128\n");
+			} else
+			if (VPNC_PPTP_OPT_AUTO == prof->config.pptp.option) {
+				fprintf(fp, "require-mppe-40\n"
+					    "require-mppe-56\n"
 					    "require-mppe-128\n");
 			}
 		} else {

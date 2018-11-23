@@ -33,7 +33,7 @@
 #include "tun.h"
 #include "misc.h"
 
-#define MAX_ROUTES_DEFAULT 100
+#define MAX_ROUTES_DEFAULT 256
 
 #ifdef WIN32
 /*

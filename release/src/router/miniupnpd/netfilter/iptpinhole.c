@@ -15,6 +15,8 @@
 #include "../config.h"
 #include "iptpinhole.h"
 #include "../upnpglobalvars.h"
+#include "../upnputils.h"
+
 
 #ifdef ENABLE_UPNPPINHOLE
 
@@ -419,7 +421,7 @@ clean_pinhole_list(unsigned int * next_timestamp)
 	time_t current_time;
 	int n = 0;
 
-	current_time = time(NULL);
+	current_time = upnp_time();
 	p = pinhole_list.lh_first;
 	while(p != NULL) {
 		if(p->timestamp <= (unsigned int)current_time) {

@@ -363,7 +363,7 @@ function edit_guest_unit(_unit, _subunit) {
 	};
 	var unit_subunit = _unit + "." + _subunit;
 	document.getElementById("gn_interfce").innerHTML = "<#Guest_Network#> " + _subunit + " - " +   wl_nband_title[_unit];
-	document.getElementById("gn_interfce").innerHTML += "<br>SET UP";
+	document.getElementById("gn_interfce").innerHTML += "<br><#GuestNetwork_Create_New#>";
 
 	var guest_group_num = gn_array_2g.length;
 	var edit_gn_html = "";
@@ -485,11 +485,6 @@ function edit_guest_unit(_unit, _subunit) {
 
 	updateMacModeOption(gn_array[idx]);
 
-
-	if(sw_mode == "3") {
-		document.getElementById("gnset_wl_lanaccess").style.display = "none";
-	}
-
 	if (Rawifi_support)
 		g_maxsta = 32;
 	else if (Qcawifi_support){
@@ -522,9 +517,15 @@ function edit_guest_unit(_unit, _subunit) {
 		document.getElementById("gnset_wl_captive_portal").style.display = "none";
 		document.getElementById("gnset_wl_guest_num").style.display = "";
 		document.getElementById("gnset_wl_expire").style.display = "";
-		document.getElementById("gnset_wl_lanaccess").style.display = "";
-		document.getElementById("gnset_wl_bw_enabled").style.display = "";
-		document.getElementById("gnset_wl_bw_setting").style.display = "";
+		if(isSwMode("ap")){
+			document.getElementById("gnset_wl_lanaccess").style.display = "none";
+			document.getElementById("gnset_wl_bw_enabled").style.display = "none";
+			document.getElementById("gnset_wl_bw_setting").style.display = "none";
+		}
+		else{
+			document.getElementById("gnset_wl_lanaccess").style.display = "";
+			show_bandwidth(unit_bw_enabled);
+		}
 	}
 
 	$('#full_screen_bg').fadeIn();
@@ -1144,15 +1145,17 @@ function updateMacModeOption(gn_array){
 
 function show_wl_maclist_x(){
 	var code = "";
+	var clientListEventData = [];
 	code +='<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="list_table"  id="wl_maclist_x_table">'; 
 	if(Object.keys(manually_maclist_list_array).length == 0)
-		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td>';
+		code +='<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td></tr>';
 	else{
 		//user icon
 		var userIconBase64 = "NoIcon";
 		var clientName, deviceType, deviceVender;
 		Object.keys(manually_maclist_list_array).forEach(function(key) {
-			var clientMac = key;
+			var clientMac = key.toUpperCase();
+			var clientIconID = "clientIcon_" + clientMac.replace(/\:/g, "");
 			if(clientList[clientMac]) {
 				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
 				deviceType = clientList[clientMac].type;
@@ -1163,29 +1166,29 @@ function show_wl_maclist_x(){
 				deviceType = 0;
 				deviceVender = "";
 			}
-			code +='<tr id="row_'+clientMac+'">';
-			code +='<td width="80%" align="center">';
+			code += '<tr id="row_'+clientMac+'">';
+			code += '<td width="80%" align="center">';
 			code += '<table style="width:100%;"><tr><td style="width:40%;height:56px;border:0px;float:right;">';
 			if(clientList[clientMac] == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+				code += '<div id="' + clientIconID + '" class="clientIcon type0"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div id="' + clientIconID + '" style="text-align:center;"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' +clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+					code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "" && !downsize_4m_support) {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+						code += '<div id="' + clientIconID + '" class="venderIcon ' + venderIconClassName + '"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'\', \'\', \'GuestNetwork\')"></div>';
+						code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 					}
 				}
 			}
@@ -1194,12 +1197,20 @@ function show_wl_maclist_x(){
 			code += '<div>' + clientMac + '</div>';
 			code += '</td></tr></table>';
 			code += '</td>';
-			code +='<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this, \'' + clientMac + '\');\" value=\"\"/></td></tr>';		
+			code += '<td width="20%"><input type="button" class=\"remove_btn\" onclick=\"deleteRow(this, \'' + clientMac + '\');\" value=\"\"/></td></tr>';
+			clientListEventData.push({"mac" : clientMac, "name" : "", "ip" : "", "callBack" : "GuestNetwork"});
 		});
 	}	
 	
-  	code +='</tr></table>';
+	code += '</table>';
 	document.getElementById("wl_maclist_x_Block").innerHTML = code;
+	for(var i = 0; i < clientListEventData.length; i += 1) {
+		var clientIconID = "clientIcon_" + clientListEventData[i].mac.replace(/\:/g, "");
+		var clientIconObj = $("#wl_maclist_x_Block").children("#wl_maclist_x_table").find("#" + clientIconID + "")[0];
+		var paramData = JSON.parse(JSON.stringify(clientListEventData[i]));
+		paramData["obj"] = clientIconObj;
+		$("#wl_maclist_x_Block").children("#wl_maclist_x_table").find("#" + clientIconID + "").click(paramData, popClientListEditTable);
+	}
 }
 
 function deleteRow(r, delMac){
@@ -1456,7 +1467,7 @@ function bandwidth_code(o,event){
 		<div id="gn_copyOtherSetting" style="width:30%;float:right;" >
 			<div id="copyOtherSettingIcon" class='gnset_copySettingContent_icon'></div>
 			<div class="gnset_copySettingContent_txt">
-				COPY OTHER<!--untranslated-->
+				<#GuestNetwork_Copy_Other#>
 				<br>
 				<#Settings#>
 			</div>
@@ -1464,7 +1475,7 @@ function bandwidth_code(o,event){
 		</div>
 	</div>
 	<div id="edited_list" class="gnset_copySettingContent_bg">
-		<div class="gnset_copySettingContent_title">Using the Same Settings With...<!--untranslated--></div>
+		<div class="gnset_copySettingContent_title"><#GuestNetwork_Using_Same#></div>
 		
 		<div id="edited_guestnetwork_list" class="gnset_copySettingContent_list_bg"></div>
 	</div>
@@ -1564,12 +1575,12 @@ function bandwidth_code(o,event){
 		</div>
 		<div id="gnset_wl_guest_num" class="gnset_setting_item_bg">
 			<div class='gnset_setting_item_titleName'>
-				Total Guest<!--untranslated-->
+				<#GuestNetwork_Total_Guest#>
 			</div>
 			<div class='gnset_setting_item_content'>
 				<div style="float:left;width:50%">
 					<select name="wl_guest_num" class="gnset_setting_input_text_autoWidth"></select>
-					<span class="gnset_des">guests</span><!--untranslated-->
+					<span class="gnset_des"><#GuestNetwork_Guests#></span>
 				</div>
 				<!--div class="gnset_setting_note">UP TO 50 GUESTS</div-->
 			</div>
@@ -1637,7 +1648,7 @@ function bandwidth_code(o,event){
 		</div>
 		<div id="gnset_wl_lanaccess" class="gnset_setting_item_bg">
 			<div class='gnset_setting_item_titleName'>
-				Access limit<!-- Untranslated -->
+				<#GuestNetwork_Access_Limit#>
 			</div>
 			<div class='gnset_setting_item_content'>
 				<div class="gnset_setting_content_bg">
@@ -1646,7 +1657,7 @@ function bandwidth_code(o,event){
 				</div>
 				<div class="gnset_setting_content_bg">
 					<input type="radio" name="wl_lanaccess" id="lanaccess_off" value="off" onchange="updateLanaccess()">
-					<label for="lanaccess_off" class="gnset_setting_content">Only access internet<!-- Untranslated --></label>
+					<label for="lanaccess_off" class="gnset_setting_content"><#GuestNetwork_Internet_Only#></label>
 				</div>
 				<!--div class="gnset_setting_content_bg">
 					<input type="radio" name="wl_lanaccess" id="lanaccess_vlan" value="vlan" onchange="updateLanaccess()">

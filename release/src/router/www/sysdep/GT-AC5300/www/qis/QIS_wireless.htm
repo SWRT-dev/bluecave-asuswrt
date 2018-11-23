@@ -91,7 +91,6 @@ function QKWireless_load_body(){
 		parent.set_step("t3");
 		document.getElementById("theFieldset").style.display = "none";
 		hideLinkTag();
-		flash_button();
 		show_prev_button();
 		
 		if(is_KR_sku){	// MODELDEP by Territory_code
@@ -914,7 +913,7 @@ function gotoIndex_wireless(){
 		return false;
 	}
 	else
-		parent.location.href = '<% abs_index_page(); %>';
+		parent.location.href = '/';
 }
 
 var retValHandler = {
@@ -948,7 +947,7 @@ var retValHandler = {
 
 	"__checkWlcStatus" : function(_status){
 		if(_status.wlc_state == 2 && _status.wlc_sbstate == 0){ // connected
-			top.location.href = '<% abs_index_page(); %>';
+			top.location.href = '/';
 		}
 		else{
 			top.location.href = '/error_page.htm?flag=8';

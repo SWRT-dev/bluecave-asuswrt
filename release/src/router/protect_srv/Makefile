@@ -21,15 +21,15 @@ CFLAGS += -I$(TOP)/libqcsapi_client -I$(TOP)/httpd -I./sysdeps/qtn
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
-ifeq ($(RTCONFIG_AMAS),y)
-LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
-endif
-
 ifeq ($(CONFIG_KERNEL_PTHREAD_ONE),y)
 CFLAGS += -DCONFIG_LINUX3X_OR_4X
 endif
 ifeq ($(HND_ROUTER),y)
 CFLAGS += -DNON_P_THREAD
+endif
+
+ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DTYPEDEF_FLOAT_T
 endif
 
 LDFLAGS += -L$(TOP)/nvram$(BCMEX)${EX7} ${EXTRA_NV_LDFLAGS} -lnvram

@@ -30,6 +30,7 @@
 #include "getifstats.h"
 #include "getconnstatus.h"
 #include "upnpurns.h"
+#include "upnputils.h"
 
 static void
 BuildSendAndCloseSoapResp(struct upnphttp * h,
@@ -227,7 +228,7 @@ GetStatusInfo(struct upnphttp * h, const char * action)
 	 * Disconnecting, Disconnected */
 
 	status = get_wan_connection_status_str(ext_if_name);
-	uptime = (time(NULL) - startup_time);
+	uptime = upnp_get_uptime();
 	bodylen = snprintf(body, sizeof(body), resp,
 		action, SERVICE_TYPE_WANIPC,
 		status, (long)uptime, action);

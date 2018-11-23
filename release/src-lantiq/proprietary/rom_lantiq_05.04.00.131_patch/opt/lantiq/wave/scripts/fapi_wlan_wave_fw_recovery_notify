@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/tmp/wireless/lantiq/bin/sh
 # This script is used for the FW recovery commands from drvhlpr.
 # It dumps FW memory and stop/start hostapd
 # It is an API between drvhlpr and scripts
@@ -97,6 +97,7 @@ handle_fw_crash()
 		overlay_mem_free=`df | awk '/\/dev\/ubi1_0/ {print $4}'`
 		overlay_mem_free=$((overlay_mem_free*1024/2))
 		tar_size=`ls -l ${dump_dir}.tar | awk '{print $5}'`
+		rm -f $wave_folder/*_$interface_name*_dump.tar
 		if [ "$tar_size" -lt "$overlay_mem_free" ]
 		then
 			cp ${dump_dir}.tar $wave_folder/
@@ -121,6 +122,8 @@ handle_fw_crash()
 	
 	time_sec=`awk '{print $1}' < /proc/uptime`
 	print2log $radio_index FW_RECOVERY "$script_name: tid=$tid; created: ${dump_dir}.tar ($time_sec)"
+	echo `date` "$interface_name crash" > /jffs/wave_fw_crash_and_reboot
+	# reboot
 }
 
 handle_fw_recovery_end()

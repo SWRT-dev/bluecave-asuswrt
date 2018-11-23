@@ -229,7 +229,7 @@ function applyRule(){
 					return false;
 
 			if(wans_mode_orig != "lb" && check_bwdpi_engine_status()) {
-				var confirm_flag = confirm("If you turn on the load balance option, AiProtection function will be disable. Are you sure to process?");/*untranslated*/
+				var confirm_flag = confirm("<#dualwan_lb_dpi_conflict#>");
 				if(confirm_flag) {
 					document.form.action_script.value = "dpi_disable;reboot;";
 				}
@@ -864,27 +864,34 @@ function enable_lb_rules(flag){
 	}
 }
 
-var str0="";
+var str0 = "";
 function add_option_count(obj, obj_t, selected_flag){
-		
-		if(obj_t.name == "wandog_maxfail" || (obj_t.name == "wandog_fb_count" && document.getElementById("wandog_fb_count_tr").style.display == "") || obj_t.name == "detect_count"){
-				
-				free_options(obj_t);
-				for(var i=1; i<100; i++){
-						if(based_modelid == "4G-AC53U" || based_modelid == "4G-AC55U" || based_modelid == "4G-AC68U")
-							str0= i;
-						else
-							str0 = i*parseInt(obj.value);
+	var start = 1;
+	var end = 99;
 
-						if(selected_flag == i)
-								add_option(obj_t, str0, i, 1);
-						else
-								add_option(obj_t, str0, i, 0);
-				}
+	if(obj_t.name == "wandog_maxfail" || (obj_t.name == "wandog_fb_count" && document.getElementById("wandog_fb_count_tr").style.display == "") || obj_t.name == "detect_count"){
+		if(obj_t.name == "wandog_fb_count" || obj_t.name == "wandog_maxfail"){
+			start = 3;
+			if(obj_t.name == "wandog_fb_count")
+				end = parseInt(document.form.wandog_maxfail.value);
 		}
-		else{
-			return;
-		}		
+
+		free_options(obj_t);
+		for(var i = start; i <= end; i++){
+			if((based_modelid == "4G-AC53U" || based_modelid == "4G-AC55U" || based_modelid == "4G-AC68U") && obj_t.name != "wandog_fb_count")
+				str0= i;
+			else
+				str0 = i*parseInt(obj.value);
+
+			if(selected_flag == i)
+					add_option(obj_t, str0, i, 1);
+			else
+					add_option(obj_t, str0, i, 0);
+		}
+	}
+	else{
+		return;
+	}
 }
 
 function hotstandby_act(enable){
@@ -1027,7 +1034,7 @@ function remain_origins(){
 								  <td bgcolor="#4D595D" valign="top">
 								  <div>&nbsp;</div>
 								  <div class="formfonttitle"><#menu5_3#> - <#dualwan#></div>
-								  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+								  <div style="margin: 10px 0 10px 5px" class="splitLine"></div>
 					  			<div class="formfontdesc"><#dualwan_desc#></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 										
@@ -1205,9 +1212,9 @@ function remain_origins(){
 					<tr>
 						<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(26,5);"><div id="fo_detection_count_hd"><#dualwan_pingtime_detect#></div></a></th>
 						<td>
-									<select name="wandog_maxfail" class="input_option" onchange="update_detection_time();">
-									</select>&nbsp;&nbsp;<span id="fo_seconds" style="color:#FFFFFF;"><#Second#></span>
-									<span id="fo_tail_msg" style="display: none">(<#dualwan_pingtime_detect#>: <span id="fo_detection_time"></span>&nbsp;&nbsp;<#Second#>)</span>
+							<select name="wandog_maxfail" class="input_option" onchange="update_detection_time();add_option_count(document.form.wandog_interval, document.form.wandog_fb_count, document.form.wandog_fb_count.value);">
+							</select>&nbsp;&nbsp;<span id="fo_seconds" style="color:#FFFFFF;"><#Second#></span>
+							<span id="fo_tail_msg" style="display: none">(<#dualwan_pingtime_detect#>: <span id="fo_detection_time"></span>&nbsp;&nbsp;<#Second#>)</span>
 						</td>
 					</tr>
 

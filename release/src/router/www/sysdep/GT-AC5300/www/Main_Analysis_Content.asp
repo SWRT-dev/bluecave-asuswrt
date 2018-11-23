@@ -75,11 +75,11 @@
 				"width" : "30%"
 			},
 			{
-				"title" : "Loss",
+				"title" : "<#Loss#>",
 				"width" : "20%"
 			},
 			{
-				"title" : "Jitter",
+				"title" : "<#Jitter#>",
 				"width" : "20%"
 			}
 		],
@@ -432,14 +432,14 @@ validator.targetDomainName = function($o){
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#Network_Tools#> - <#Network_Analysis#></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
 									<div class="formfontdesc" id="cmdDesc"><#NetworkTools_Ping#></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
 											<th width="20%"><#NetworkTools_Method#></th>
 											<td>
 												<select id="cmdMethod" class="input_option" name="cmdMethod" onchange="hideCNT(this.value);">
-													<option value="1" selected>Ping (Continuous)</option>
+													<option value="1" selected>Ping (<#dualwan_pingtime_detect_continuous#>)</option>
 													<option value="3">Ping</option>
 													<option value="4">Traceroute</option>
 													<option value="5">Nslookup</option>
@@ -465,7 +465,7 @@ validator.targetDomainName = function($o){
 									</table>
 
 									<div class="apply_gen" style="height:40px">
-										<input class="button_gen_long" id="cmdBtn" type="button" value="<#NetworkTools_Diagnose_btn#>">
+										<input class="button_gen" id="cmdBtn" type="button" value="<#NetworkTools_Diagnose_btn#>">
 										<script>
 											$("#cmdBtn")
 												.click(function(){

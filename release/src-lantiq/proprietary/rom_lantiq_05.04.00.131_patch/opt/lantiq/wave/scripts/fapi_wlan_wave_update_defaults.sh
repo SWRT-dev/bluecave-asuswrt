@@ -30,6 +30,14 @@ channel_5=$6
 ccode_24=$7
 ccode_5=$8
 pincode=`nvram get secret_code`
+wifi_psk=`nvram get wifi_psk`
+
+if [ "$wifi_psk" != "" ] ; then
+	security_24="WPA2-Personal"
+	security_5="WPA2-Personal"
+	password_24=`nvram get wl0_wpa_psk`
+	password_5=`nvram get wl1_wpa_psk`
+fi
 
 cd $DBDIR_0
 sed -i "s/SSID_0=test_ssid/SSID_0=$ssid_24/g" $DEFFILE_SSID
@@ -58,6 +66,9 @@ if [ "$channel_24" != "" ] ; then
 fi
 if [ "$ccode_24" != "" ] ; then
 	sed -i "s/RegulatoryDomain_0=US/RegulatoryDomain_0=$ccode_24/g" $DEFFILE_RADIO
+	if [ "$ccode_24" = "GB" ] ; then
+		sed -i "s/WaveTxOpMode_0=Dynamic/WaveTxOpMode_0=Disabled/g" $DEFFILE_RADIO_VENDOR
+	fi
 fi
 
 sed -i "s/OperatingStandards_0=b,g,n/OperatingStandards_0=n,g/g" $DEFFILE_RADIO
@@ -101,6 +112,7 @@ if [ "$ccode_5" != "" ] ; then
 	sed -i "s/RegulatoryDomain_0=US/RegulatoryDomain_0=$ccode_5/g" $DEFFILE_RADIO
 	if [ "$ccode_5" = "GB" ] ; then
 		sed -i "s/IEEE80211hEnabled_0=false/IEEE80211hEnabled_0=true/g" $DEFFILE_RADIO
+		sed -i "s/WaveTxOpMode_0=Dynamic/WaveTxOpMode_0=Disabled/g" $DEFFILE_RADIO_VENDOR
 	fi
 fi
 
@@ -118,4 +130,7 @@ cat $DEFFILE_RADIO | grep AutoChannelEnable_0
 
 sed -i "s/WaveExternallyManaged_0=true/WaveExternallyManaged_0=false/g" /opt/lantiq/wave/db/default/radio0/$DEFFILE_RADIO_VENDOR
 sed -i "s/WaveExternallyManaged_0=true/WaveExternallyManaged_0=false/g" /opt/lantiq/wave/db/default/radio2/$DEFFILE_RADIO_VENDOR
+
+sed -i "s/WaveIgnore40MhzIntolerant_0=false/WaveIgnore40MhzIntolerant_0=true/g" /opt/lantiq/wave/db/default/radio0/$DEFFILE_RADIO_VENDOR
+sed -i "s/WaveIgnore40MhzIntolerant_0=false/WaveIgnore40MhzIntolerant_0=true/g" /opt/lantiq/wave/db/default/radio2/$DEFFILE_RADIO_VENDOR
 

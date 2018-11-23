@@ -8,5 +8,7 @@ extern void stop_ovpn_eas();
 extern void stop_ovpn_client(int unit);
 extern void stop_ovpn_server(int unit);
 extern void write_ovpn_dnsmasq_config(FILE* f);
-extern int write_ovpn_resolv(FILE* f);
+extern int write_ovpn_resolv(FILE* fp_resolv, FILE* fp_servers);
 extern void update_ovpn_profie_remote();
+extern void ovpn_up_handler(int unit);
+extern void ovpn_down_handler(int unit);

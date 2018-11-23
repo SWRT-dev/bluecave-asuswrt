@@ -17,6 +17,7 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style>
 .div_table{
 	display:table;
@@ -104,18 +105,6 @@
 	padding:10px;
 	display: none;
 }
-
-.alert_ASUS_EULA{
-	width:480px;
-	height:auto;
-	position:absolute;
-	background: rgba(0,0,0,0.9);
-	z-index:10;
-	margin:-340px;
-	border-radius:10px;
-	padding:25px;
-	display: none;
-}
 </style>
 <script>
 
@@ -134,7 +123,7 @@ var realip_state = "";
 var StatusList = {
 	"NoInetrnet": "Internet is disconnected. Please check your WAN connection for remote control",
 	"SvrFail": "Server connection failed",
-	"StepAccount": "Please follow steps to pair your account",
+	"StepAccount": "<#Alexa_Status_Account#>",
 	"EnableRemoteCtrl": "<#Alexa_Register1#>",
 	"Success": "IFTTT account is registered"
 }
@@ -180,7 +169,8 @@ function tag_control(){
 	if((obj = document.getElementById('remote_control_here')) != null){
 		obj.style="text-decoration: underline;cursor:pointer;";
 		obj.onclick=function(){
-			enable_remote_control();
+			ASUS_EULA.config(enable_remote_control, function(){});
+			ASUS_EULA.check('asus');
 		};
 	}
 
@@ -258,27 +248,11 @@ function detcet_aae_state(){
 	});
 }
 
-function setting_ASUS_EULA(){
-	if(document.form.ASUS_EULA_enable.checked == true){
-		require(['/require/modules/makeRequest.js'], function(makeRequest){
-			makeRequest.start('/enable_ASUS_EULA.cgi', function(){
-				document.form.ASUS_EULA.value = "1";
-				document.getElementById("eula_agree").style.display = "none";
-				document.getElementById("eula_button").style.display = "none";
-				document.getElementById("eula_loading").style.display = "";
-				detcet_aae_state();},
-				function(){});
-		});
-	}else{
-		document.form.ASUS_EULA_enable.focus();
-	}
-}
-
 function get_activation_code(){
-	if(document.form.ASUS_EULA.value != 1){
-		cal_panel_block("alert_ASUS_EULA");
-		$('#alert_ASUS_EULA').fadeIn(1000);
-	}else{
+	close_alert('alert_pin');
+	ASUS_EULA.config(get_activation_code, function(){});
+	if(ASUS_EULA.check("asus")){
+		detcet_aae_state();
 		gen_new_pincode();
 	}
 }
@@ -306,8 +280,6 @@ function show_alert_pin(xhr){
 function close_alert(name){
 	if(name == 'alert_pin'){
 		clearInterval(countdownid);
-	}else if(name == 'alert_ASUS_EULA'){
-		document.form.ASUS_EULA_enable.checked = false;
 	}
 	$('#'+name).fadeOut(100);
 }
@@ -432,7 +404,6 @@ function show_account_state(){
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
-<input type="hidden" name="ASUS_EULA" value="<% nvram_get("ASUS_EULA"); %>">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
 	<tr>
 		<td width="17">&nbsp;</td>
@@ -454,18 +425,17 @@ function show_account_state(){
 									<div>&nbsp;</div>
 									<div id="formfonttitle" class="formfonttitle">Alexa & IFTTT - IFTTT</div>
 									<div id="divSwitchMenu" style="margin-top:-40px;float:right;"><div style="width:110px;height:30px;float:left;border-top-left-radius:8px;border-bottom-left-radius:8px;" class="block_filter"><a href="Advanced_Smart_Home_Alexa.asp"><div class="block_filter_name">Amazon Alexa</div></a></div><div style="width:110px;height:30px;float:left;border-top-right-radius:8px;border-bottom-right-radius:8px;" class="block_filter_pressed"><div class="tab_font_color" style="text-align:center;padding-top:5px;font-size:14px">IFTTT</div></div></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div class="div_table">
 											<div class="div_tr">
 												<div class="div_td div_desc" style="width:55%">
 													<div style="font-weight:bolder;font-size:16px;padding:25px 40px"><#IFTTT_Desc#></div>
 													<div style="padding:0px 40px;font-family:Arial, Helvetica, sans-serif;font-size:13px;">
 														<span><#IFTTT_Example0#></span>
-														<p style="font-size:13px;padding-top: 20px;padding-left: 20px;font-style:italic;">“If closes to dinner time or bedtime, then turn off wifi”</p>
-														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“If my daughter comes home, then send me and email, text, or phone call”</p>
-														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“If my wife comes home, then play my favorite song”</p>
-														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“If I am playing a game, then boost the game speed”</p>
+														<p style="font-size:13px;padding-top: 20px;padding-left: 20px;font-style:italic;">“<#IFTTT_Example1#>”</p>
+														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“<#IFTTT_Example2#>”</p>
+														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“<#IFTTT_Example3#>”</p>
+														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“<#IFTTT_Example4#>”</p>
 														<a style="font-size:13px;padding-top: 2px;padding-left: 20px;font-style:italic;text-decoration: underline;cursor:pointer;" href="https://ifttt.com/asusrouter" target="_blank"><#IFTTT_more_applets#></a>
 													</div>
 													<div style="text-align:center;padding-top:60px;font-family:Arial, Helvetica, sans-serif;font-style:italic;font-weight:lighter;font-size:18px;"><#IFTTT_start0#></div>
@@ -507,41 +477,12 @@ function show_account_state(){
 																		<div class="step_3"></div>
 																	</div>
 																	<div class="div_td" style="font-size:16px;padding:5px 0px 0px 10px;">
-																		<div><span style="color:#FFCC00;text-decoration:underline;cursor:pointer;" onclick="get_activation_code();">Get Activation Code</span> ,Paste activation code to link IFTTT account and your ASUS Router</div>
+																		<div><span style="color:#FFCC00;text-decoration:underline;cursor:pointer;" onclick="get_activation_code();"><#Get_Activation_Code#></span> ,<#Link_IFTTT_and_Router#></div>
 																	</div>
 																</div>
 																<div style="font-weight:bolder;font-size:20px;color:#c0c0c0;padding-top:57px;padding-left:15px;"><#IFTTT_and#></div>
 																<div class="smh_ifttt" style="cursor:pointer;" onclick="window.open('https://ifttt.com/asusrouter');" target="_blank"></div>
 															</div>
-														</table>
-													</div>
-													<div id="alert_ASUS_EULA" class="alert_ASUS_EULA">
-														<table style="width:99%">
-															<tr>
-																<th colspan="2">
-																	<div style="font-size:17px;padding-bottom:8px;">To get activation code for IFTTT acount linking, you have to agree ASUS EULA by pressing below button.</div>
-																</th>
-															</tr>
-															<tr id="eula_agree">
-																<td colspan="2">
-																	<span style="font-size:15px;padding-left:20px; color:#FFCC00"><input type="checkbox" name="ASUS_EULA_enable" value="0"> I agree to the <a style="color:#FFCC00;text-decoration:underline" target="_blank" href="https://www.asus.com/us/Terms_of_Use_Notice_Privacy_Policy/Official-Site/">ASUS Terms Of Use Notice</a> and <a style="color:#FFCC00;text-decoration:underline" target="_blank" href="https://www.asus.com/us/Terms_of_Use_Notice_Privacy_Policy/Privacy_Policy/">Privacy Policy</a></span>
-																</td>
-															</tr>
-															<tr id="eula_button">
-																<td>
-																	<div style="text-align:right;padding:20px 10px 0px 0px;">
-																		<input class="button_gen" type="button" onclick="setting_ASUS_EULA();" value="<#CTL_Agree#>">
-																	</div>
-																</td>
-																<td>
-																	<div style="text-align:left;padding:20px 0px 0px 10px;">
-																		<input class="button_gen" type="button" onclick="close_alert('alert_ASUS_EULA');" value="<#CTL_close#>">
-																	</div>
-																</td>
-															</tr>
-															<tr id="eula_loading" style="display:none">
-																<td width="20%" height="80" align="center"><img src="/images/loading.gif"></td>
-															</tr>
 														</table>
 													</div>
 													<div id="alert_pin" class="alertpin">

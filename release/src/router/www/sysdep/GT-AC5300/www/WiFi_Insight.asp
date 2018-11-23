@@ -65,7 +65,8 @@ function initial(){
 							</td>
 						</tr> 
 						<tr>
-							<td class="line_export"><img src="images/New_ui/export/line_export.png" /></td>
+							<td><div class="splitLine"></div></td>
+
 						</tr>
 						<tr>
 							<td>

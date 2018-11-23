@@ -83,20 +83,18 @@ li span {
 }
 
 .button{
-	background-color:#279FD9;
-	/*background:rgba(255,255,255,0.1);
-	border: solid 1px #6e8385;*/
-	border-radius: 4px ;
-	transition: visibility 0s linear 0.218s,opacity 0.218s,background-color 0.218s;
-	height: 68px;
+	display: inline-block;
 	width: 300px;
-	/*width: 220px;*/
-	font-size: 20pt;
-	color: #181818;
+	border: 2px solid #27D1A4;
+	border-radius: 35px;
+	height: 66px;
+	line-height: 66px;
+	margin: 30px 20px;
+	font-size:1.5em;
+	cursor:pointer;
+	color: #FFF;
+	background: #27D1A4;
 	text-align: center;
-	float:right;
-	margin:25px 0 0 78px;
-	line-height:68px;
 }
 .form_input{
 	background-color:rgba(255,255,255,0.2);
@@ -322,6 +320,7 @@ var get_protocol = function() {
 var header_info = [<% get_header_info(); %>];
 var location_org = get_protocol() + "//" + header_info[0].host;
 
+
 function initial(){
 	<% login_state_hook(); %>
 	var LoginIP = login_ip_str();
@@ -455,18 +454,11 @@ function initial(){
 	}
 	else if(casenum.search("6") !== -1){
 		$("#page_title").html("<#web_redirect_reason6#>");
-	//	if(LoginIP != "0.0.0.0" && LoginIP != nowIP){
-			//showtext($("#failReason1")[0], "<#web_redirect_reason6#> Please check again.");
-		//	html_code = html_code_notlogin;
-	//	}else{
-			//showtext($("#failReason1")[0], "<#web_redirect_reason6#>");
 			html_code += "<ul>";
 			html_code += "<li><span><#web_redirect_case6_desc1#>";
 			html_code += "<span style='font-weight:bolder'>"+ new_lan_ip +"</span></span></li>";
 			html_code += "<li><span><#web_redirect_case6_desc2#></span></li>";
-			//html_code += "<li><#web_redirect_suggestion0_1#></li>";
 			html_code += "</ul>";
-	//	}
 
 		$("#wanLink").html("<#CTL_next#>");
 		$("#wanLink").click(function(){
@@ -533,7 +525,7 @@ function initial(){
 		$("#reason_field").hide();
 	}
 	else{
-		parent.location = '<% abs_index_page(); %>';
+		parent.location = '/';
 	}
 
 	$("#case_content")[0].innerHTML  = html_code;
@@ -568,7 +560,11 @@ function manually_start_wan_Link(){
 }
 
 function change_lan_subnet(){
-	top.location.href = "/updateSubnet.htm";
+	document.form.force_change.value++;
+	document.form.submit();
+	setTimeout(detect_router, 5000);
+	$("#wanLink").hide();
+	$("#submitBtn").show();
 }
 
 function detect_router(){
@@ -607,7 +603,7 @@ function detect_general(){
 		if(dsl_support)
 			top.location.href = '/Advanced_DSL_Content.asp';
 		else if(sw_mode == 3)
-			top.location.href = '<% abs_index_page(); %>';
+			top.location.href = '/';
 		else
 			top.location.href = '/Advanced_WAN_Content.asp';
 	}
@@ -623,7 +619,7 @@ function detect_ppp_connect(){
 		success: function(response){
 			if( wanstate == "2"  && wansbstate == "0" && wanauxstate == "0"){
 				//history.go(-1);
-				top.location.href = '<% abs_index_page(); %>';
+				top.location.href = '/';
 			}
 			else{
 				setTimeout(detect_ppp_connect, 1000);
@@ -635,6 +631,15 @@ function detect_ppp_connect(){
 
 </head>
 <body class="wrapper" onload="initial();">
+	<iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
+	<form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
+		<input type="hidden" name="action_mode" value="apply">
+		<input type="hidden" name="action_script" value="restart_subnet">
+		<input type="hidden" name="action_wait" value="5">
+		<input type="hidden" name="force_change" value='<% nvram_get("force_change"); %>'>
+		<input type="hidden" name="flag" value="background">
+	</form>
+
 	<div id="loginTable" class="div_table main_field_gap" style="display:none">
 		<div id="oops" class="div_tr title_name">Oops!</div>
 		<div class="div_tr title_name">
@@ -685,9 +690,12 @@ function detect_ppp_connect(){
 		</div>
 		</div>
 		<div>
+		<div style="text-align: center;">
 		<div id="wanLink" class='button' style="display:none"><#btn_go#></div>
-		<!--div id="back_btn" class='button' style="display:none">Back</div-->
-		<div id="submitBtn" class='button button_background' style="display:none"></div>
+			<div id="submitBtn" class='button button_background' style="color:#27D1A4; display:none;">
+				<span><#CTL_reconnection#>&nbsp</span><img src="/images/InternetScan.gif">
+			</div>
+		</div>
 	</div>
 </body>
 </html>

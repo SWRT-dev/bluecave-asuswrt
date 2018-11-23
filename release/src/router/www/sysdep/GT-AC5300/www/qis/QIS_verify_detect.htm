@@ -134,7 +134,7 @@ function getWANStatus(){
 							getWANStatus();
 						}
 						else{
-							if(parent.hadPlugged("modem")){
+							if(parent.hadModem()){
 								redirect_page("modem");
 							}	
 							else{
@@ -159,7 +159,7 @@ function getWANStatus(){
 					}
 				}
 				else{	
-					if(parent.hadPlugged("modem")){
+					if(parent.hadModem()){
 						redirect_page("modem");
 					}	
 					else{
@@ -181,7 +181,7 @@ function getWANStatus(){
 							}
 						}
 						else{	
-							if(parent.hadPlugged("modem")){
+							if(parent.hadModem()){
 								redirect_page("modem");
 							}	
 							else{
@@ -200,7 +200,7 @@ function getWANStatus(){
 						setTimeout("getWANStatus();", 2000);
 					}
 					else{
-						if(parent.hadPlugged("modem")){
+						if(parent.hadModem()){
 							redirect_page("modem");
 						}	
 						else{

@@ -86,6 +86,59 @@
 	-moz-border-radius: 10px;
 	border-radius: 10px;
 }
+.AiMesh_promoteHint_bg {
+	position: absolute;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	z-index: 200;
+	background-color:#2b373b;
+	margin-left: 140px;
+	width: 600px;
+	height: auto;
+	box-shadow: 3px 3px 10px #000;
+	display:block;
+	overflow: auto;
+	line-height: 180%;
+	font-size: 14px;
+}
+.AiMesh_promoteHint_content_bg {
+	width: 570px;
+	height: 200px;
+	position: relative;
+	overflow: hidden;
+	margin: auto;
+	margin-top: 10px;
+}
+.AiMesh_promoteHint_content_bg.redirect {
+	height: auto;
+	text-align: center;
+}
+.AiMesh_promoteHint_content_left_bg {
+	float: left;
+	width: 48%;
+	height: 100%;
+	margin: 0 1%;
+}
+.AiMesh_promoteHint_title {
+	font-weight: bolder;
+	text-align: center;
+	font-size: 16px;
+	height: 50px;
+	line-height: 50px;
+}
+.AiMesh_promoteHint_img {
+	background-size: 100%;
+	background-repeat: no-repeat;
+	background-position-y: 50%;
+	background-image: url(/images/New_ui/amesh/house_final_dea.png);
+}
+.AiMesh_promoteHint_redirect_text {
+	font-weight: bolder;
+	text-decoration: underline;
+	cursor: pointer;
+	margin: 10px;
+}
 </style>
 <script type="text/javascript" src="/md5.js"></script>
 <script type="text/javascript" src="/state.js"></script>
@@ -95,8 +148,10 @@
 <script type="text/javascript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <script>
 if(usb_support) addNewScript("/disk_functions.js");
 
@@ -186,7 +241,7 @@ function initial(){
 	var isIE6 = navigator.userAgent.search("MSIE 6") > -1;
 	if(isIE6)
 		alert("<#ALERT_TO_CHANGE_BROWSER#>");
-	
+
 	if(dualWAN_support && sw_mode == 1){
 		check_dualwan(wans_flag);
 	}
@@ -210,11 +265,25 @@ function initial(){
 	else
 		show_middle_status(document.form.wl_auth_mode_x.value, parseInt(document.form.wl_wep_x.value));
 
-	set_default_choice();
+	if(amesh_support && (isSwMode("rt") || isSwMode("ap"))) {
+		var html = '<a id="clientStatusLink" href="device-map/amesh.asp" target="statusframe">';
+		html += '<div id="iconAMesh" class="iconAMesh_dis" style="margin-top:20px;" onclick="clickEvent(this);"></div>';
+		html += '</a>';
+		html += '<div class="clients" id="ameshNumber" style="cursor:pointer;"><#AiMesh_Node#>: <span>0</span></div>';
+		$("#ameshContainer").html(html);
+		require(['/require/modules/amesh.js'], function(){
+			updateAMeshCount();
+			setInterval(updateAMeshCount, 5000);
+		});
+		setTimeout(AiMesh_promoteHint, 1000);
+	}
+	else
+		$("#ameshContainer").remove();
 
+	set_default_choice();
 	if(!parent.usb_support || usbPortMax == 0){
-		document.getElementById("line3_td").height = '40px';
-		document.getElementById("line3_img").src = '/images/New_ui/networkmap/line_dualwan.png';
+		$("#line3_img").hide();
+		$("#line3_single").show();
 		document.getElementById("clients_td").colSpan = "3";
 		document.getElementById("clients_td").width = '350';
 		document.getElementById("clientspace_td").style.display = "none";
@@ -293,7 +362,7 @@ function initial(){
 		
 		check_usb3();
 	}
-	
+
 	showMapWANStatus(sw_mode);
 
 	if(sw_mode != "1"){
@@ -321,12 +390,6 @@ function initial(){
 		
 		if(wanlink_ipaddr == '0.0.0.0' || wanlink_ipaddr == '')
 			document.getElementById("wanIP_div").style.display = "none";
-	}
-
-	var NM_table_img = cookie.get("NM_table_img");
-	if(NM_table_img != "" && NM_table_img != null){
-		customize_NM_table(NM_table_img);
-		document.getElementById("bgimg").options[NM_table_img[4]].selected = 1;
 	}
 
 	if(smart_connect_support){
@@ -386,20 +449,24 @@ function initial(){
 	}
 
 	orig_NM_container_height = parseInt($(".NM_radius_bottom_container").css("height"));
+	setTimeout(check_eula, 100);
+}
 
-	if(amesh_support && (isSwMode("rt") || isSwMode("ap"))) {
-		var html = '<a id="clientStatusLink" href="device-map/amesh.asp" target="statusframe">';
-		html += '<div id="iconAMesh" class="iconAMesh_dis" style="margin-top:20px;" onclick="clickEvent(this);"></div>';
-		html += '</a>';
-		html += '<div class="clients" id="ameshNumber" style="cursor:pointer;">AiMesh Node: <span>0</span></div>';/* untranslated */
-		$("#ameshContainer").html(html);
-		require(['/require/modules/amesh.js'], function(){
-			updateAMeshCount();
-			setInterval(updateAMeshCount, 5000);
-		});
+function check_eula(){
+	ASUS_EULA.config(check_eula, check_eula);
+
+	var asus_status = httpApi.nvramGet(["ASUS_EULA", "ASUS_EULA_time", "ddns_enable_x", "ddns_server_x"], true);
+	if( (asus_status.ASUS_EULA == "1" && asus_status.ASUS_EULA_time == "") ||
+		(asus_status.ASUS_EULA != "1" && asus_status.ddns_enable_x == "1" && asus_status.ddns_server_x == "WWW.ASUS.COM") ){
+		ASUS_EULA.check("asus");
+		return false;
 	}
-	else
-		$("#ameshContainer").remove();
+
+	var tm_status = httpApi.nvramGet(["TM_EULA", "TM_EULA_time"], true);
+	if(tm_status.TM_EULA == "1" &&  tm_status.TM_EULA_time == ""){
+		ASUS_EULA.check("tm");
+		return false;
+	}
 }
 
 function show_smart_connect_status(){
@@ -455,16 +522,6 @@ function show_ddns_status(){
 var isMD5DDNSName = function(){
 	var macAddr = '<% nvram_get("lan_hwaddr"); %>'.toUpperCase().replace(/:/g, "");
 	return "A"+hexMD5(macAddr).toUpperCase()+".asuscomm.com";
-}
-
-function customize_NM_table(img){
-	$("#NM_table").css({
-		"background": "url('/images/" + img +"')",
-		"background-repeat": "no-repeat",
-		"background-size": "cover"
-	});
-
-	cookie.set("NM_table_img", img, 365);
 }
 
 function set_default_choice(){
@@ -620,11 +677,10 @@ function showDiskInfo(device){
 
 	if(device.mountNumber > 0){
 		percentbar = simpleNum2((device.totalSize - device.totalUsed)/device.totalSize*100);
-		percentbar = Math.round(100 - percentbar);		
+		percentbar = Math.round(100 - percentbar);	
 
-		//dec_html_code += '<p id="diskDesc'+ device.usbPath +'" style="margin-top:5px;"><#Availablespace#>:</p><div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
 		dec_html_code += '<div id="diskquota" align="left" style="margin-top:5px;margin-bottom:10px;">\n';
-		dec_html_code += '<img src="images/quotabar.gif" width="' + percentbar + '" height="13">';
+		dec_html_code += '<div class="quotabar" style="width:'+ percentbar +'%;height:13px;"></div>';
 		dec_html_code += '</div>\n';
 	}
 	else{
@@ -722,7 +778,7 @@ function clickEvent(obj){
 							stitle = "<#menu5_4_4#> Status";
 					}
 					else	
-						stitle = "Primary WAN status";
+						stitle = "<#statusTitle_Primary_WAN#>";
 				}
 				else{
 					if(dualwan_second_if == "wan")
@@ -736,14 +792,14 @@ function clickEvent(obj){
 							stitle = "<#menu5_4_4#> Status";
 					}
 					else
-						stitle = "Secondary WAN status";
+						stitle = "<#statusTitle_Secondary_WAN#>";
 				}
 			}
 			else {
 				if(obj.id.indexOf("primary") != -1)
-					stitle = "Primary WAN status"; /*untranslated*/
+					stitle = "<#statusTitle_Primary_WAN#>";
 				else
-					stitle = "Secondary WAN status"; /*untranslated*/
+					stitle = "<#statusTitle_Secondary_WAN#>";
 			}
 		}
 
@@ -794,7 +850,7 @@ function clickEvent(obj){
 		setTimeout(function(){
 			var flag = '<% get_parameter("flag"); %>';
 			var id = '<% get_parameter("id"); %>';
-			if(flag != "" && id != "")
+			if(flag != "" && id != "" && id != "donot_search")
 				document.getElementById("statusframe").src = "/device-map/amesh.asp?id=" + id + "";
 			else
 				document.getElementById("statusframe").src = "/device-map/amesh.asp";
@@ -1501,11 +1557,11 @@ function popupEditBlock(clientObj){
 		}
 		if(clientObj.isLogin) {
 			document.getElementById('client_login').style.display = "";
-			document.getElementById('client_login').innerHTML = "logged-in-user";
+			document.getElementById('client_login').innerHTML = "<#Clientlist_Logged_In_User#>";
 		}
 		if(clientObj.isPrinter) {
 			document.getElementById('client_printer').style.display = "";
-			document.getElementById('client_printer').innerHTML = "Printer";
+			document.getElementById('client_printer').innerHTML = "<#Clientlist_Printer#>";
 		}
 		if(clientObj.isITunes) {
 			document.getElementById('client_iTunes').style.display = "";
@@ -1761,7 +1817,7 @@ function check_usb3(){
 	if(based_modelid == "DSL-AC68U" || based_modelid == "RT-AC3200" || based_modelid == "RT-AC87U" || based_modelid == "RT-AC68U" || based_modelid == "RT-AC68A" || based_modelid == "RT-AC56S" || based_modelid == "RT-AC56U" || based_modelid == "RT-AC55U" || based_modelid == "RT-AC55UHP" || based_modelid == "RT-N18U" || based_modelid == "RT-AC88U" || based_modelid == "RT-AC86U" || based_modelid == "AC2900" || based_modelid == "RT-AC3100" || based_modelid == "RT-AC5300" || based_modelid == "RP-AC68U" || based_modelid == "RT-AC58U" || based_modelid == "RT-AC82U" || based_modelid == "MAP-AC3000" || based_modelid == "RT-AC85U" || based_modelid == "RT-AC65U"|| based_modelid == "4G-AC68U" || based_modelid == "BLUECAVE"){
 		document.getElementById('usb_text_1').innerHTML = "USB 3.0";
 	}
-	else if(based_modelid == "RT-AC88Q" || based_modelid == "RT-AD7200" || based_modelid == "RT-N65U" || based_modelid == "GT-AC5300" || based_modelid == "GT-AC9600"){
+	else if(based_modelid == "RT-AC88Q" || based_modelid == "RT-AD7200" || based_modelid == "RT-N65U" || based_modelid == "GT-AC5300" || based_modelid == "RT-AX88U" || based_modelid == "RT-AX95U"){
 		document.getElementById('usb_text_1').innerHTML = "USB 3.0";
 		document.getElementById('usb_text_2').innerHTML = "USB 3.0";
 	}
@@ -1769,6 +1825,10 @@ function check_usb3(){
 		document.getElementById('usb_text_1').innerHTML = "USB 3.0";
 		document.getElementById('usb_text_2').innerHTML = "USB 3.0";
 		document.getElementById('usb_text_3').innerHTML = "M.2 SSD";
+	}
+	else if(based_modelid == "GT-AX96U" || based_modelid == "GT-AC9600"){
+		document.getElementById('usb_text_1').innerHTML = "USB 3.1";
+		document.getElementById('usb_text_2').innerHTML = "USB 3.1";
 	}
 }
 
@@ -1982,17 +2042,13 @@ function updateClientsCount() {
 		success: function(response){
 			var re_tune_client_count = function() {
 				var count = 0;
-				var fromNetworkmapd_array = [];
+				count = fromNetworkmapd_maclist[0].length;
 				for(var i in fromNetworkmapd_maclist[0]){
 					if (fromNetworkmapd_maclist[0].hasOwnProperty(i)) {
-						fromNetworkmapd_array[fromNetworkmapd_maclist[0][i]] = 1;
-					}
-				}
-				count = fromNetworkmapd_maclist[0].length;
-				for(var i in get_cfg_clientlist[0]){
-					if (get_cfg_clientlist[0].hasOwnProperty(i)) {
-						if(fromNetworkmapd_array[get_cfg_clientlist[0][i].mac] != undefined)
-							count--;
+						if(clientList[fromNetworkmapd_maclist[0][i]] != undefined) {
+							if(clientList[fromNetworkmapd_maclist[0][i]].amesh_isRe)
+								count--;
+						}
 					}
 				}
 				return count;
@@ -2024,6 +2080,74 @@ function setDefaultIcon() {
 }
 function closeClientDetailView() {
 	edit_cancel();
+}
+function AiMesh_promoteHint() {
+	var AiMesh_promoteHint_flag = (httpApi.uiFlag.get("AiMeshHint") == "1") ? true : false;
+	var get_cfg_clientlist = [<% get_cfg_clientlist(); %>][0];
+	var AiMesh_node_count_flag = (get_cfg_clientlist.length < 2) ? true : false;
+	if(!AiMesh_promoteHint_flag && AiMesh_node_count_flag) {
+		httpApi.uiFlag.set("AiMeshHint", "1")
+		var $AiMesh_promoteHint = $('<div>');
+		$AiMesh_promoteHint.attr({"id" : "AiMesh_promoteHint"});
+		$AiMesh_promoteHint.addClass("AiMesh_promoteHint_bg");
+		$AiMesh_promoteHint.css("display", "none");
+		$AiMesh_promoteHint.attr({"onselectstart" : "return false"});
+		$AiMesh_promoteHint.appendTo($('body'));
+
+		var $AiMesh_promoteHint_content_bg = $('<div>');
+		$AiMesh_promoteHint_content_bg.addClass("AiMesh_promoteHint_content_bg");
+		$AiMesh_promoteHint.append($AiMesh_promoteHint_content_bg);
+
+		var $AiMesh_promoteHint_content_left_bg = $('<div>');
+		$AiMesh_promoteHint_content_left_bg.addClass("AiMesh_promoteHint_content_left_bg");
+		$AiMesh_promoteHint_content_bg.append($AiMesh_promoteHint_content_left_bg);
+
+		var $AiMesh_promoteHint_title = $('<div>');
+		$AiMesh_promoteHint_title.addClass("AiMesh_promoteHint_title");
+		var title = "<#NewFeatureAvailable#>";
+		$AiMesh_promoteHint_title.html(title);
+		$AiMesh_promoteHint_content_left_bg.append($AiMesh_promoteHint_title);
+
+		var $AiMesh_promoteHint_description = $('<div>');
+		var description = "<#AiMesh_Feature_Desc#>";
+		$AiMesh_promoteHint_description.html(description);
+		$AiMesh_promoteHint_content_left_bg.append($AiMesh_promoteHint_description);
+
+		var $AiMesh_promoteHint_content_right_bg = $('<div>');
+		$AiMesh_promoteHint_content_right_bg.addClass("AiMesh_promoteHint_content_left_bg AiMesh_promoteHint_img");
+		$AiMesh_promoteHint_content_bg.append($AiMesh_promoteHint_content_right_bg);
+
+		var $AiMesh_promoteHint_content_link_bg = $('<div>');
+		$AiMesh_promoteHint_content_link_bg.addClass("AiMesh_promoteHint_content_bg redirect");
+		$AiMesh_promoteHint.append($AiMesh_promoteHint_content_link_bg);
+
+		var $AiMesh_promoteHint_confirm = $("<input/>");
+		$AiMesh_promoteHint_confirm.addClass("button_gen");
+		$AiMesh_promoteHint_confirm.attr({"type" : "button"});
+		$AiMesh_promoteHint_confirm.val("<#CTL_ok#>");
+
+		$AiMesh_promoteHint_confirm.click(
+			function() {
+				if($('.AiMesh_promoteHint_bg').length > 0)
+					$('.AiMesh_promoteHint_bg').remove();
+			}
+		);
+		$AiMesh_promoteHint_content_link_bg.append($AiMesh_promoteHint_confirm);
+
+		var $AiMesh_promoteHint_link = $('<div>');
+		$AiMesh_promoteHint_link.addClass("AiMesh_promoteHint_redirect_text");
+		var redirect_text = "<a id='AiMesh_promoteHint_faq' href='https://www.asus.com/AiMesh/' target='_blank'><#AiMesh_FAQ#></a>";
+		$AiMesh_promoteHint_link.html(redirect_text);
+		$AiMesh_promoteHint_content_link_bg.append($AiMesh_promoteHint_link);
+
+		$("#AiMesh_promoteHint").fadeIn(300);
+		cal_panel_block("AiMesh_promoteHint", 0.2);
+		adjust_panel_block_top("AiMesh_promoteHint", 170);
+	}
+	else {
+		if($('.AiMesh_promoteHint_bg').length > 0)
+			$('.AiMesh_promoteHint_bg').remove();
+	}
 }
 </script>
 </head>
@@ -2061,11 +2185,12 @@ function closeClientDetailView() {
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0" scrolling="no"></iframe>
 
 <form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="<% rel_index_page(); %>">
+<input type="hidden" name="current_page" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="wl_auth_mode_x" value="<% nvram_get("wl0_auth_mode_x"); %>">
 <input type="hidden" name="wl_wep_x" value="<% nvram_get("wl0_wep_x"); %>">
+<input type="hidden" name="wl_key_type" value="<% nvram_get("wl_key_type"); %>"><!-- for ralink platform-->
 <input type="hidden" name="action_mode" value="">
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
@@ -2078,8 +2203,8 @@ function closeClientDetailView() {
 </form>
 <!-- Start for Editing client list-->
 <form method="post" name="list_form" id="list_form" action="/start_apply2.htm" target="hidden_frame">
-	<input type="hidden" name="current_page" value="<% rel_index_page(); %>">
-	<input type="hidden" name="next_page" value="<% rel_index_page(); %>">
+	<input type="hidden" name="current_page" value="">
+	<input type="hidden" name="next_page" value="">
 	<input type="hidden" name="modified" value="0">
 	<input type="hidden" name="flag" value="background">
 	<input type="hidden" name="action_mode" value="apply">
@@ -2098,8 +2223,8 @@ function closeClientDetailView() {
 </form>
 
 <form method="post" name="maclist_form" id="maclist_form" action="/start_apply2.htm" target="hidden_frame">
-	<input type="hidden" name="current_page" value="<% rel_index_page(); %>">
-	<input type="hidden" name="next_page" value="<% rel_index_page(); %>">
+	<input type="hidden" name="current_page" value="">
+	<input type="hidden" name="next_page" value="">
 	<input type="hidden" name="modified" value="0">
 	<input type="hidden" name="flag" value="">
 	<input type="hidden" name="action_mode" value="apply_new">
@@ -2125,8 +2250,8 @@ function closeClientDetailView() {
 	<input type="hidden" name="action_mode" value="apply">
 	<input type="hidden" name="action_script" value="restart_networkmap">
 	<input type="hidden" name="action_wait" value="2">
-	<input type="hidden" name="current_page" value="<% rel_index_page(); %>">
-	<input type="hidden" name="next_page" value="<% rel_index_page(); %>">
+	<input type="hidden" name="current_page" value="">
+	<input type="hidden" name="next_page" value="">
 	<input type="hidden" name="networkmap_enable" value="<% nvram_get("networkmap_enable"); %>">
 </form>
 
@@ -2257,7 +2382,7 @@ function closeClientDetailView() {
 								<div class="type15" onclick="select_image(this.className);" title="ROG"></div><!--untranslated-->
 							</td>
 							<td>
-								<div class="type18" onclick="select_image(this.className);" title="Printer"></div><!--untranslated-->
+								<div class="type18" onclick="select_image(this.className);" title="<#Clientlist_Printer#>"></div>
 							</td>
 							<td>
 								<div class="type19" onclick="select_image(this.className);" title="Windows Phone"></div><!--untranslated-->
@@ -2408,7 +2533,8 @@ function closeClientDetailView() {
 						<div id="first_wan_title"><#dualwan_primary#>:</div>
 						<div id="primary_pap_concurrent" style="display:none">
 							<div style="padding: 3px 0">2.4 GHz Parent-AP</div>
-							<div id="speed_info_primary">Link Rate:</div>
+							<div id="speed_info_primary" style="display:none">Link Rate:</div>
+							<div id="rssi_info_primary" style="display:none">RSSI:</div>
 						</div>
 						<div style="padding:5px"><strong id="primary_status"></strong></div>
 					</td>
@@ -2419,7 +2545,8 @@ function closeClientDetailView() {
 						<div id="second_wan_title"><#dualwan_secondary#>:</div>
 						<div id="secondary_pap_concurrent" style="display:none">
 							<div style="padding: 3px 0">5 GHz Parent-AP</div>
-							<div id="speed_info_secondary">Link Rate:</div>
+							<div id="speed_info_secondary" style="display:none">Link Rate:</div>
+							<div id="rssi_info_secondary" style="display:none">RSSI:</div>
 						</div>
 						<div style="padding:5px"><strong id="secondary_status"></strong></div>
 					</td>
@@ -2503,6 +2630,7 @@ function closeClientDetailView() {
 				<tr>
 					<td id="line3_td" colspan="3" align="center" height="35px">
 						<img id="line3_img" src="/images/New_ui/networkmap/line_two.png" style="margin-top:-5px;">
+						<div id="line3_single" class="single_wan_connected" style="display:none"></div>
 					</td>
 				</tr>
 				<tr>
@@ -2533,16 +2661,7 @@ function closeClientDetailView() {
 								</script>			
 							</div>
 						</div>
-
 						<div id="ameshContainer" onclick="showstausframe('AMesh');"></div>
-
-						<!--div id="" onclick="">
-							<img style="margin-top:15px;width:150px;height:2px" src="/images/New_ui/networkmap/linetwo2.png">
-							<a id="" href="device-map/clients.asp" target="statusframe">
-							<div id="iconClient" style="margin-top:20px;" onclick=""></div>
-							</a>
-							<div class="clients" id="" style="cursor:pointer;">Wireless Clients:</div>
-						</div-->
 					</td>
 
 					<td width="36" rowspan="6" id="clientspace_td"></td>
@@ -2591,26 +2710,10 @@ function closeClientDetailView() {
 </table>
 <div id="navtxt" class="navtext" style="position:absolute; top:50px; left:-100px; visibility:hidden; font-family:Arial, Verdana"></div>
 <div id="footer"></div>
-<select id="bgimg" onChange="customize_NM_table(this.value);" class="input_option_left" style="display:none;">
-	<option value="wall0.gif">dark</option>
-	<option value="wall1.gif">light</option>
-</select>		
-
 <script>
 	if(flag == "Internet" || flag == "Client")
 		document.getElementById("statusframe").src = "";
-
 	initial();
-
-	/* Disable networkmapd update for RP-AC66
-	var manualUpdate = false;
-	if(parseInt((JS_timeObj.getTime()-cookie.get("nwmapRefreshTime"))/60000) > 1){
-		setTimeout(function(){
-			document.networkmapdRefresh.submit();
-		}, 3500);
-	}
-	cookie.set("nwmapRefreshTime", JS_timeObj.getTime(), 1);
-	*/
 </script>
 </body>
 </html>

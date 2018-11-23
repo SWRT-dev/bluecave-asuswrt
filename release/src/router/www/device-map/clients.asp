@@ -274,7 +274,7 @@ function drawClientList(tab){
 	}
 
 	if(clientHtmlTd == ''){
-		if(networkmap_fullscan == 1)
+		if(networkmap_fullscan == 2)
 			clientHtmlTd = '<div style="color:#FC0;height:30px;text-align:center;margin-top:15px"><#Device_Searching#><img src="/images/InternetScan.gif"></div>';
 		else
 			clientHtmlTd = '<div style="color:#FC0;height:30px;text-align:center;margin-top:15px"><#IPConnection_VSList_Norule#></div>';
@@ -452,7 +452,7 @@ function updateClientList(e){
 				<td>
 					<div id="tabOnline" class="tabclick_NW" align="center">
 						<span>
-							Online
+							<#Clientlist_Online#>
 						</span>
 					</div>
 					<script>

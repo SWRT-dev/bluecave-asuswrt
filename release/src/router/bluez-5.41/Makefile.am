@@ -148,12 +148,6 @@ builtin_modules =
 builtin_sources =
 builtin_nodist =
 
-bleencrypt_source = src/bleencrypt/gatt-amap.h src/bleencrypt/gatt-amap.c \
-			src/bleencrypt/bleencrypt.h src/bleencrypt/bleencrypt.c \
-			src/bleencrypt/encrypt.h src/bleencrypt/encrypt.c \
-			src/bleencrypt/blepack.h src/bleencrypt/blepack-server.c \
-			src/bleencrypt/utility.h
-
 include Makefile.plugins
 
 if MAINTAINER_MODE
@@ -168,7 +162,6 @@ libexec_PROGRAMS += src/bluetoothd
 
 src_bluetoothd_SOURCES = $(builtin_sources) \
 			$(attrib_sources) $(btio_sources) \
-			$(bleencrypt_source) \
 			src/bluetooth.ver \
 			src/main.c src/log.h src/log.c \
 			src/backtrace.h src/backtrace.c \

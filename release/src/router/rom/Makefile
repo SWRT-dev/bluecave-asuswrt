@@ -146,6 +146,11 @@ endif
 ifeq ($(RTCONFIG_HTTPS),y)
 	cp -f webs_scripts/public.pem $(INSTALLDIR)/usr/sbin/public.pem
 endif
+ifeq ($(RTAC68U),y)
+ifneq ("$(wildcard $(SRCBASE)/../../buildtools/tmks.bin)","")
+	cp -f $(SRCBASE)/../../buildtools/tmks.bin $(INSTALLDIR)/usr/sbin/tmks
+endif
+endif
 else
 ifeq ($(RTCONFIG_HTTPS),y)
 	cp -f webs_scripts/ssl_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
@@ -167,6 +172,10 @@ endif
 ifeq ($(AC2900),y)
 	cp -f webs_scripts/verizon_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 endif
+ifeq ($(RTAC68U),y)
+	cp -f webs_scripts/ssl_webs_upgrade_enc.sh $(INSTALLDIR)/usr/sbin/webs_upgrade_enc.sh
+	cp -f webs_scripts/ssl_webs_update_enc.sh $(INSTALLDIR)/usr/sbin/webs_update_enc.sh
+endif
 
 ifeq ($(or $(RTCONFIG_BWDPI),$(RTCONFIG_BWDPI_DEP)),y)
 	cp -f webs_scripts/sig2nd_upgrade.sh $(INSTALLDIR)/usr/sbin/sig_upgrade.sh
@@ -174,6 +183,11 @@ ifeq ($(or $(RTCONFIG_BWDPI),$(RTCONFIG_BWDPI_DEP)),y)
 endif
 ifeq ($(RTCONFIG_HTTPS),y)
 	cp -f webs_scripts/public.pem $(INSTALLDIR)/usr/sbin/public.pem
+endif
+ifeq ($(RTAC68U),y)
+ifneq ("$(wildcard $(SRCBASE)/../../buildtools/tmks.bin)","")
+	cp -f $(SRCBASE)/../../buildtools/tmks.bin $(INSTALLDIR)/usr/sbin/tmks
+endif
 endif
 endif
 
@@ -196,11 +210,12 @@ endif
 
 ifeq ($(RTAC68U),y)
 	mkdir -p $(INSTALLDIR)/rom/cfe
-	cp -rf cfe/cfe_tmo_2.1.2.6.bin $(INSTALLDIR)/rom/cfe/
+	cp -rf cfe/cfe_tmo.bin $(INSTALLDIR)/rom/cfe/
 	cp -rf cfe/cfe_1.0.2.0.bin $(INSTALLDIR)/rom/cfe
 	cp -rf cfe/cfe_1.0.2.0_esmt.bin $(INSTALLDIR)/rom/cfe
 	cp -rf cfe/cfe_ac66u_b1_1.1.2.0.bin $(INSTALLDIR)/rom/cfe
 	cp -rf cfe/cfe_rt-ac68u_5636_c0_1.3.0.7.bin $(INSTALLDIR)/rom/cfe
+	cp -rf cfe/cfe_rt-ac68u_v2_5003_1.0.2.9.bin $(INSTALLDIR)/rom/cfe
 	cp -rf cfe/mtd-write $(INSTALLDIR)/rom/cfe/
 endif
 
@@ -218,6 +233,10 @@ ifeq ($(BUILD_NAME), RT-AC68U)
 	cp -rf dlna/icon_sm.rt-ac66u_v2.png $(INSTALLDIR)/rom/dlna/icon_alt_sm.png
 	cp -rf dlna/icon_lrg.rt-ac66u_v2.jpg $(INSTALLDIR)/rom/dlna/icon_alt_lrg.jpg
 	cp -rf dlna/icon_lrg.rt-ac66u_v2.png $(INSTALLDIR)/rom/dlna/icon_alt_lrg.png
+	cp -rf dlna/icon_sm.rp-ac1900.jpg $(INSTALLDIR)/rom/dlna/icon_alt2_sm.jpg
+	cp -rf dlna/icon_sm.rp-ac1900.png $(INSTALLDIR)/rom/dlna/icon_alt2_sm.png
+	cp -rf dlna/icon_lrg.rp-ac1900.jpg $(INSTALLDIR)/rom/dlna/icon_alt2_lrg.jpg
+	cp -rf dlna/icon_lrg.rp-ac1900.png $(INSTALLDIR)/rom/dlna/icon_alt2_lrg.png
 endif
 ifeq ($(and $(LJPG),$(SJPG),$(LPNG),$(SPNG)),)
 	$(warning Add media server icon for $(BUILD_NAME) !!!!!!!!!!!!)

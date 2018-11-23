@@ -20,6 +20,7 @@
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <style>
 .contentM_qis{
 	position:absolute;
@@ -75,8 +76,9 @@ function initial(){
 	var pptpd_wins2_orig = '<% nvram_get("pptpd_wins2"); %>';
 	var pptpd_clients = '<% nvram_get("pptpd_clients"); %>';
 	
-	show_menu();		
-	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "VPN"]);
+	show_menu();
+	httpApi.faqURL("faq", "114892", "https://www.asus.com", "/support/FAQ/");
+	httpApi.faqURL("faq_port_forwarding", "1033906", "https://www.asus.com", "/support/FAQ/");
 
 	formShowAndHide(document.form.pptpd_enable.value, "pptpd");	
 	if(wans_mode == "lb"){
@@ -174,8 +176,6 @@ function initial(){
 	}
 	$('#divSwitchMenu').html(gen_switch_menu(vpn_server_array, "PPTP"));
 
-	//set FAQ URL
-	set_FAQ_link("faq_port_forwarding", "1033906", "privateIP");//this id is include in string : #vpn_privateIP_hint#
 }
 
 var MAX_RETRY_NUM = 5;
@@ -570,7 +570,7 @@ function showpptpd_clientlist(){
 				}
 				else if(j == 1){
 					overlib_str1[i] += pptpd_clientlist_col[1];
-					code +='<td width="30%" title="'+overlib_str1[i]+'" style="text-align:center;">-</td>';
+					code +='<td width="30%" title="'+overlib_str1[i]+'" style="text-align:center;pointer-events:none;">-</td>';
 				} 
 			}
 			
@@ -885,7 +885,7 @@ function update_pptp_client_status(){
 									<div>&nbsp;</div>
 									<div id="divVPNTitle" class="formfonttitle"><#BOP_isp_heart_item#> - PPTP</div>
 									<div id="divSwitchMenu" style="margin-top:-40px;float:right;"></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div id="privateIP_notes" class="formfontdesc" style="display:none;color:#FC0;"><#vpn_privateIP_hint#></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<thead>
@@ -949,7 +949,7 @@ function update_pptp_client_status(){
 											</thead>								
 											<tr>
 												<th><#PPPConnection_x_WANLink_itemname#></th>
-												<th><#HSDPAConfig_Username_itemname#></th>
+												<th><#Username#></th>
 												<th><#HSDPAConfig_Password_itemname#></th>
 												<th><#list_add_delete#></th>
 												<th><#pvccfg_edit#></th>

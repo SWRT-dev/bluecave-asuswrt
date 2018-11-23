@@ -11,8 +11,10 @@ script_name="$0"
 interface_name=$1
 pid=$$
 
+re_mode=`nvram get re_mode`
+
 radio_name=${interface_name%%.*}
-if [ -e "$INIT_FLAG" ] && [ -e ${USE_CURRENT_CONF}_${radio_name} ]
+if [ $re_mode != "1" ] && [ -e "$INIT_FLAG" ] && [ -e ${USE_CURRENT_CONF}_${radio_name} ]
 then
 	echo "####### $script_name: init flow with conf from previous setting" > /dev/console
 	# Create the output configuration file
@@ -500,7 +502,10 @@ then
 	if [ "$auto_channel" = "1" ]
 	then
 		channel="acs_smart"
-		[ `check_endpoint_connected $radio_name` -eq 1 ] && channel="acs_sta_mode"
+		if [ "$re_mode" = "1" ]
+		then
+			channel="acs_sta_mode"
+		fi
 	else
 		channel=`db2fapi_convert regular Channel $radio_index`
 	fi

@@ -1430,6 +1430,16 @@ function IPv4_dotquadA_to_intA(strbits) {
 	}
 	return maskConvertResult;
 }
+//CIDR to netmask converion
+function createNetmaskAddr(bitCount) {
+	var mask = [];
+	for(var i = 0; i < 4; i += 1) {
+		var n = Math.min(bitCount, 8);
+		mask.push(256 - Math.pow(2, 8-n));
+		bitCount -= n;
+	}
+	return mask.join('.');
+}
 function clear_subnet_input(_type) {
 	var subnet_node = document.getElementById("td_net_" + _type + "_private_subnet");
 	while (subnet_node.firstChild) {
@@ -1442,9 +1452,11 @@ function gen_subnet_input(_type, _idx, _value) {
 	subnet_input_obj.className = "input_25_table";
 	subnet_input_obj.id = "ipsec_" + _type + "_subnet_" + _idx;
 	subnet_input_obj.value = _value;
+	subnet_input_obj.placeholder = "(ex.10.10.10.0/24)";
 	if(subnetIP_support_IPv6)
 		subnet_input_obj.maxLength = "39";
 	else {
+		subnet_input_obj.placeholder = "(ex.10.10.10.0/24)";
 		subnet_input_obj.maxLength = "18";
 		subnet_input_obj.onkeypress = function() {
 			return validator.isIPAddrPlusNetmask(this,event);
@@ -1503,12 +1515,12 @@ function initialIPSecProfile() {
 
 	clear_subnet_input("local");
 	document.getElementById("td_net_local_private_subnet").appendChild(gen_subnet_input("local", 1, ""));
-	document.getElementById("td_net_local_private_subnet").appendChild(gen_subnet_hint());
+	document.getElementById("td_net_local_private_subnet").appendChild(gen_subnet_add("local"));
 	document.ipsec_form.ipsec_local_port.value = "0";
 
 	clear_subnet_input("remote");
 	document.getElementById("td_net_remote_private_subnet").appendChild(gen_subnet_input("remote", 1, ""));
-	document.getElementById("td_net_remote_private_subnet").appendChild(gen_subnet_hint());
+	document.getElementById("td_net_remote_private_subnet").appendChild(gen_subnet_add("remote"));
 
 	document.ipsec_form.ipsec_remote_port.value = "0";
 	settingRadioItemCheck(document.ipsec_form.ipsec_ike, "1");
@@ -1665,10 +1677,13 @@ function UpdatePSecProfile(array, array_ext) {
 			if(local_subnet[i] != "") {
 				document.getElementById("td_net_local_private_subnet").appendChild(gen_subnet_input("local", local_subnet_idx, local_subnet[i]));
 				if(local_subnet_idx == 1) {
-					document.getElementById("td_net_local_private_subnet").appendChild(gen_subnet_hint());
+					document.getElementById("td_net_local_private_subnet").appendChild(gen_subnet_add("local"));
 				}
 				local_subnet_idx++;
 			}
+		}
+		if(local_subnet_idx > 2) {
+			document.getElementById("td_net_local_private_subnet").appendChild(gen_subnet_del("local"));
 		}
 	}
 	document.ipsec_form.ipsec_local_port.value = array[10];
@@ -1681,10 +1696,13 @@ function UpdatePSecProfile(array, array_ext) {
 			if(remote_subnet[i] != "") {
 				document.getElementById("td_net_remote_private_subnet").appendChild(gen_subnet_input("remote", remote_subnet_idx, remote_subnet[i]));
 				if(remote_subnet_idx == 1) {
-					document.getElementById("td_net_remote_private_subnet").appendChild(gen_subnet_hint());
+					document.getElementById("td_net_remote_private_subnet").appendChild(gen_subnet_add("remote"));
 				}
 				remote_subnet_idx++;
 			}
+		}
+		if(remote_subnet_idx > 2) {
+			document.getElementById("td_net_remote_private_subnet").appendChild(gen_subnet_del("remote"));
 		}
 	}
 	document.ipsec_form.ipsec_remote_port.value = array[12];
@@ -1807,7 +1825,7 @@ function save_ipsec_profile_panel() {
 
 		if(!validator.isEmpty(document.ipsec_form.ipsec_preshared_key))
 			return false;
-		if(!Block_chars(document.ipsec_form.ipsec_preshared_key, [">", "<", "#", "null"]))
+		if(!Block_chars(document.ipsec_form.ipsec_preshared_key, [">", "<", "&", "\"", "null"]))
 			return false;
 		if(is_KR_sku){
 			if(!validator.psk_KR(document.ipsec_form.ipsec_preshared_key))
@@ -1855,10 +1873,50 @@ function save_ipsec_profile_panel() {
 			return false;
 
 		var valid_subnet = function(_type) {
-			var existSubnetItem = document.getElementById("tr_net_" + _type + "_private_subnet").getElementsByClassName("input_25_table").length;
+			var checkGatewayIP = function(_lanIPAddr, _lanNetMask) {
+				var lanIPAddr = _lanIPAddr;
+				var lanNetMask = _lanNetMask;
+				var ipConflict;
+				var alertMsg = function (type, ipAddr, netStart, netEnd) {
+					alert("*Conflict with " + type + " IP: " + ipAddr + ",\n" + "Network segment is " + netStart + " ~ " + netEnd);
+				};
+
+				//1.check Wan IP
+				ipConflict = checkIPConflict("WAN", lanIPAddr, lanNetMask);
+				if(ipConflict.state) {
+					alertMsg("WAN", ipConflict.ipAddr, ipConflict.netLegalRangeStart, ipConflict.netLegalRangeEnd);
+					return false;
+				}
+
+				//2.check PPTP
+				if(pptpd_support) {
+					ipConflict = checkIPConflict("PPTP", lanIPAddr, lanNetMask);
+					if(ipConflict.state) {
+						alertMsg("PPTP", ipConflict.ipAddr, ipConflict.netLegalRangeStart, ipConflict.netLegalRangeEnd);
+						return false;
+					}
+				}
+
+				//3.check OpenVPN
+				if(openvpnd_support) {
+					ipConflict = checkIPConflict("OpenVPN", lanIPAddr, lanNetMask);
+					if(ipConflict.state) {
+						alertMsg("OpenVPN", ipConflict.ipAddr, ipConflict.netLegalRangeStart, ipConflict.netLegalRangeEnd);
+						return false;
+					}
+				}
+
+				return true;
+			};
+			var existSubnetItem = 1;//ike v1 only single subnet
+			var ike_version = getRadioItemCheck(document.ipsec_form.ipsec_ike);
+			if(ike_version == "2")
+				existSubnetItem = document.getElementById("tr_net_" + _type + "_private_subnet").getElementsByClassName("input_25_table").length;
+			var existSubnetItemList = "";
 			var existSubnetObj = "";
 			var is_ipv4 = false;
 			var is_ipv6 = false;
+			//var all_profile_subnet_list_array = all_profile_subnet_list.split(">");
 			for(var i = 1 ; i <= existSubnetItem; i += 1) {
 				existSubnetObj = document.getElementById("ipsec_" + _type + "_subnet_" + i);
 				is_ipv4 = (existSubnetObj.value.indexOf(".") != -1) ? true : false;
@@ -1883,12 +1941,38 @@ function save_ipsec_profile_panel() {
 						existSubnetObj.select();
 						return false;
 					}
+					var subnetMask = createNetmaskAddr(maskCIDR);
+					if(!checkGatewayIP(subnetIP, subnetMask)) {
+						existSubnetObj.focus();
+						existSubnetObj.select();
+						return false;
+					}
 				}
 				else if(is_ipv6) {
 					if(!validator.isLegal_ipv6(existSubnetObj)) {
 						return false;
 					}
 				}
+
+				if(existSubnetItemList.search(existSubnetObj.value.split("/")[0]) != -1) {
+					alert("Conflict with other subnet.");/*untranslated*/
+					existSubnetObj.focus();
+					existSubnetObj.select();
+					return false;
+				}
+				existSubnetItemList += document.getElementById("ipsec_" + _type + "_subnet_" + i).value + ">";
+
+				/*
+				for(var j = 0 ; j < all_profile_subnet_list_array.length; j += 1) {
+					if(j != document.form.ipsec_profile_item.value.split("_")[2]) {
+						if(all_profile_subnet_list_array[j].search(existSubnetObj.value.split("/")[0]) != -1) {
+							alert("Conflict with profile "+j+" subnet.");
+							existSubnetObj.focus();
+							return false;
+						}
+					}
+				}
+				*/
 			}
 			return true;
 		};
@@ -1963,7 +2047,10 @@ function save_ipsec_profile_panel() {
 		var accessible_networks = "null";
 		var get_subnet_list = function(_type) {
 			var subnet_list = "";
-			var existSubnetItem = document.getElementById("tr_net_" + _type + "_private_subnet").getElementsByClassName("input_25_table").length;
+			var existSubnetItem = 1;//ike v1 only single subnet
+			var ike_version = getRadioItemCheck(document.ipsec_form.ipsec_ike);
+			if(ike_version == "2")
+				existSubnetItem = document.getElementById("tr_net_" + _type + "_private_subnet").getElementsByClassName("input_25_table").length;
 			for(var i = 1 ; i <= existSubnetItem; i += 1) {
 				subnet_list += "<" + document.getElementById("ipsec_" + _type + "_subnet_" + i).value;
 			}
@@ -2156,6 +2243,8 @@ function changeIKEVersion() {
 			changeExchangeMode();
 			break;
 	}
+	controlSubnetStatus(ike_version, "local");
+	controlSubnetStatus(ike_version, "remote");
 }
 function changeExchangeMode() {
 	var clickItem = getRadioItemCheck(document.ipsec_form.ipsec_exchange);
@@ -2204,6 +2293,75 @@ function changeRemoteGatewayMethod() {
 	}
 	else if(clickItem == "1") {
 		$("#ipsec_remote_gateway").attr("maxlength", "64");
+	}
+}
+function add_subnet_item(obj, _type) {
+	var existSubnetItem = obj.parentNode.getElementsByClassName("input_25_table").length;
+	if(existSubnetItem > 3) {
+		alert("<#JS_itemlimit1#> " + existSubnetItem + " <#JS_itemlimit2#>");
+	}
+	else {
+		var code = "";
+		var divObj = document.createElement("input");
+		divObj.type = "text";
+		divObj.className = "input_25_table";
+		divObj.id = "ipsec_" + _type + "_subnet_" + (existSubnetItem + 1);
+		if(subnetIP_support_IPv6)
+			divObj.maxLength = "39";
+		else {
+			divObj.placeholder = "(ex.10.10.10.0/24)";
+			divObj.maxLength = "18";
+			divObj.onkeypress = function() {
+				return validator.isIPAddrPlusNetmask(this,event);
+			};
+		}
+		divObj.style.marginTop = "4px";
+		//divObj.onkeypress = function(){return validator.isIPAddr(this, event);};
+		obj.parentNode.appendChild(divObj);
+
+		var removeElement = function(element) {
+			element && element.parentNode && element.parentNode.removeChild(element);
+		};
+		if(document.getElementById("btDelRemoteSubnet_" + _type) != null) {
+			removeElement(document.getElementById("btDelRemoteSubnet_" + _type));
+		}
+		var divObj = document.createElement("input");
+		divObj.id = "btDelRemoteSubnet_" + _type;
+		divObj.type = "text";
+		divObj.className = "remove_btn";
+		divObj.style.height = "27px";
+		divObj.onclick = function() { del_subnet_item(this, _type);};
+		obj.parentNode.appendChild(divObj);
+	}
+}
+function del_subnet_item(obj, _type) {
+
+	var delIndex = obj.parentNode.getElementsByClassName('input_25_table').length;
+	var removeElement = function(element) {
+	    element && element.parentNode && element.parentNode.removeChild(element);
+	};
+	if(document.getElementById("ipsec_" + _type + "_subnet_" + delIndex) != null) {
+		removeElement(document.getElementById("ipsec_" + _type + "_subnet_"+ delIndex));
+	}
+	if(delIndex == "2") {
+		if(document.getElementById("btDelRemoteSubnet_" + _type) != null) {
+			removeElement(document.getElementById("btDelRemoteSubnet_" + _type));
+		}
+	}
+}
+function controlSubnetStatus(_ikeVersion, _type) {
+	switch(_ikeVersion) {
+		case "1" :
+			$("#td_net_" + _type +"_private_subnet").children(".add_btn").css("display", "none");
+			$("#td_net_" + _type +"_private_subnet").children(".input_25_table").css("display", "none");
+			$("#td_net_" + _type +"_private_subnet").children(".input_25_table").eq(0).css("display", "");
+			$("#td_net_" + _type +"_private_subnet").children(".remove_btn").css("display", "none");
+			break;
+		case "2" :
+			$("#td_net_" + _type +"_private_subnet").children(".add_btn").css("display", "");
+			$("#td_net_" + _type +"_private_subnet").children(".input_25_table").css("display", "");
+			$("#td_net_" + _type +"_private_subnet").children(".remove_btn").css("display", "");
+			break;
 	}
 }
 </script>
@@ -2270,7 +2428,7 @@ function changeRemoteGatewayMethod() {
 						</td>
 					</tr>  		
 					<tr>
-						<th><#HSDPAConfig_Username_itemname#></th>
+						<th><#Username#></th>
 						<td>
 							<input type="text" maxlength="64" name="vpnc_account_edit" value="" class="input_32_table" style="float:left;" autocomplete="off" autocorrect="off" autocapitalize="off"></input>
 						</td>
@@ -2328,7 +2486,7 @@ function changeRemoteGatewayMethod() {
 						<td bgcolor="#4D595D" valign="top">
 							<div>&nbsp;</div>
 							<div class="formfonttitle">VPN - <#vpnc_title#></div>
-							<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+							<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 							<div class="formfontdesc">
 								<#vpnc_desc1#><br>
 								<#vpnc_desc2#><br>
@@ -2361,7 +2519,7 @@ function changeRemoteGatewayMethod() {
 							</table>          					
 							<div id="vpnc_clientlist_Block"></div>
 							<div class="apply_gen">
-								<input class="button_gen_long" onclick="Add_profile(10)" type="button" value="<#vpnc_step1#>">
+								<input class="button_gen" onclick="Add_profile(10)" type="button" value="<#vpnc_step1#>">
 							</div>
           				</td>
         			</tr>        			
@@ -2404,7 +2562,7 @@ function changeRemoteGatewayMethod() {
 	<input type="hidden" name="action_mode" value="apply">
 	<input type="hidden" name="action_script" value="ipsec_set_cli">
 	<input type="hidden" name="action_wait" value="3">
-	<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+	<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 	<input type="hidden" name="ipsec_profile_item" value="">
 	<input type="hidden" name="ipsec_profile_client_1" id="ipsec_profile_client_1" value="">
 	<input type="hidden" name="ipsec_profile_client_2" id="ipsec_profile_client_2" value="">
@@ -2497,14 +2655,14 @@ function changeRemoteGatewayMethod() {
 					<tr id="tr_adv_local_id">
 						<th><#vpn_ipsec_Local_ID#></th>
 						<td>
-							<input type="text" class="input_25_table" name="ipsec_local_id">
+							<input type="text" class="input_25_table" name="ipsec_local_id" placeholder="<#IPConnection_ExternalIPAddress_itemname#>、FQDN、<#AiProtection_WebProtector_EMail#> or DN">
 							<span style="color:#FC0">(Optional)<!--untranslated--></span>
 						</td>
 					</tr>
 					<tr id="tr_adv_remote_id">
 						<th><#vpn_ipsec_Remote_ID#></th>
 						<td>
-							<input type="text" class="input_25_table" name="ipsec_remote_id">
+							<input type="text" class="input_25_table" name="ipsec_remote_id" placeholder="<#IPConnection_ExternalIPAddress_itemname#>、FQDN、<#AiProtection_WebProtector_EMail#> or DN">
 							<span style="color:#FC0">(Optional)<!--untranslated--></span>
 						</td>
 					</tr>
@@ -2621,13 +2779,13 @@ function changeRemoteGatewayMethod() {
 							</td>
 						</tr>
 						<tr id="tr_adv_ike_isakmp" style="display:none;">
-							<th>IKE / ISAKMP Port<!--untranslated--></th>
+							<th><#vpn_ipsec_IKE_ISAKMP_Port#></th>
 							<td>
 								<input type="text" class="input_6_table" name="ipsec_ike_isakmp" maxlength="3" value="500">
 							</td>
 						</tr>
 						<tr id="tr_adv_ike_isakmp_nat" style="display:none;"s>
-							<th>IKE / ISAKMP NAT-T Port<!--untranslated--></th>
+							<th><#vpn_ipsec_IKE_ISAKMP_NAT_Port#></th>
 							<td>
 								<input type="text" class="input_6_table" name="ipsec_ike_isakmp_nat" maxlength="4" value="4500">
 							</td>
@@ -2715,7 +2873,7 @@ function changeRemoteGatewayMethod() {
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="saveNvram">
 <input type="hidden" name="action_wait" value="1">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpnc_clientlist" value='<% nvram_get("vpnc_clientlist"); %>'>
 <input type="hidden" name="vpn_upload_type" value="ovpn">
@@ -2750,7 +2908,7 @@ function changeRemoteGatewayMethod() {
 							</td>
 						</tr>  			
 						<tr>
-							<th><#HSDPAConfig_Username_itemname#> (option)</th>
+							<th><#Username#> (option)</th>
 							<td>
 								<input type="text" maxlength="64" name="vpnc_openvpn_username" value="" class="input_32_table" style="float:left;" autocomplete="off" autocorrect="off" autocapitalize="off"></input>
 							</td>
@@ -2785,7 +2943,7 @@ function changeRemoteGatewayMethod() {
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="saveNvram">
 <input type="hidden" name="action_wait" value="1">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_upload_type" value="ca">
 <input type="hidden" name="vpn_upload_unit" value="1">
@@ -2808,7 +2966,7 @@ function changeRemoteGatewayMethod() {
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="saveNvram">
 <input type="hidden" name="action_wait" value="1">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_upload_type" value="cert">
 <input type="hidden" name="vpn_upload_unit" value="1">
@@ -2830,7 +2988,7 @@ function changeRemoteGatewayMethod() {
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="saveNvram">
 <input type="hidden" name="action_wait" value="1">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_upload_type" value="key">
 <input type="hidden" name="vpn_upload_unit" value="1">
@@ -2852,7 +3010,7 @@ function changeRemoteGatewayMethod() {
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="saveNvram">
 <input type="hidden" name="action_wait" value="1">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_upload_type" value="static">
 <input type="hidden" name="vpn_upload_unit" value="1">
@@ -2883,7 +3041,7 @@ function changeRemoteGatewayMethod() {
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="saveNvram">
 <input type="hidden" name="action_wait" value="1">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="vpn_upload_unit" value="1">
 <input type="hidden" name="vpn_crt_client1_ca" value="" disabled>
@@ -2927,7 +3085,7 @@ function changeRemoteGatewayMethod() {
 												<p><#vpn_openvpn_KC_Edit1#> <span style="color:#FC0;">----- BEGIN xxx ----- </span>/<span style="color:#FC0;"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
 												<p><#vpn_openvpn_KC_Limit#>
 											</div>													
-											<div style="margin:5px;*margin-left:-5px;"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+											<div style="margin:5px;*margin-left:-5px;width: 700px;" class="splitLine"></div>
 										</td>	
 									</tr>
 									<tr>

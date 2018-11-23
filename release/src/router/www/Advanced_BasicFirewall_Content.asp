@@ -16,6 +16,8 @@
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 var firewall_enable = '<% nvram_get("fw_enable_x"); %>';
 var wItem = new Array(new Array("", "", "TCP"),
@@ -37,6 +39,8 @@ var overlib_str3 = new Array();
 
 function initial(){
 	show_menu();
+	//	https://www.asus.com/support/FAQ/1031610/
+	httpApi.faqURL("faq", "1031610", "https://www.asus.com", "/support/FAQ/");
 	loadAppOptions();
 	showipv6_fw_rulelist();
 	change_firewall(firewall_enable);
@@ -430,11 +434,11 @@ function ipv6_valid(obj, cidr){
 								<td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#menu5_5#></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div class="formfontdesc" style="font-size:14px;font-weight:bold;margin-top:10px;"><#menu5_1_1#></div>
 									<div class="formfontdesc"><#FirewallConfig_display2_sectiondesc#></div>
 									<div class="formfontdesc" style="margin-top:-10px;">
-										<a id="faq" href="https://www.asus.com/support/FAQ/1031610/" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">DoS Protection FAQ</a>	<!-- untranslated -->
+										<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">DoS Protection FAQ</a>	<!-- untranslated -->
 									</div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<tr>
@@ -458,9 +462,9 @@ function ipv6_valid(obj, cidr){
 											<td>
 												<select name="fw_log_x" class="input_option">
 													<option value="none" <% nvram_match("fw_log_x", "none","selected"); %>><#wl_securitylevel_0#></option>
-													<option value="drop" <% nvram_match("fw_log_x", "drop","selected"); %>>Dropped</option>
-													<option value="accept" <% nvram_match("fw_log_x", "accept","selected"); %>>Accepted</option>
-													<option value="both" <% nvram_match("fw_log_x", "both","selected"); %>>Both</option>
+													<option value="drop" <% nvram_match("fw_log_x", "drop","selected"); %>><#option_dropped#></option>
+													<option value="accept" <% nvram_match("fw_log_x", "accept","selected"); %>><#option_accepted#></option>
+													<option value="both" <% nvram_match("fw_log_x", "both","selected"); %>><#option_both_direction#></option>
 												</select>
 											</td>
 										</tr>					

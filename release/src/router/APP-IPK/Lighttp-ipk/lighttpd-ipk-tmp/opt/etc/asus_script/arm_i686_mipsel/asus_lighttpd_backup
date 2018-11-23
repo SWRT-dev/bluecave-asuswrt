@@ -1,0 +1,94 @@
+#! /bin/sh
+APP_UCLIBC_VERSION=0.9.28
+
+PATH=/bin:/sbin:/usr/sbin:/usr/bin:/opt/bin
+
+APPS_MOUNTED_PATH=`nvram get apps_mounted_path`
+APPS_INSTALL_FOLDER=`nvram get apps_install_folder`
+APPS_INSTALL_PATH=$APPS_MOUNTED_PATH/$APPS_INSTALL_FOLDER
+APPS_DEV=`nvram get apps_dev`
+APPS_PATH=${APPS_MOUNTED_PATH:9}
+PORT=`nvram get dm_http_port`
+LIGHTTPD_CONTROL_FILE=$APPS_INSTALL_PATH/etc/asus_lighttpd.conf
+
+case "$1" in
+	recover)
+		num=86
+		if [ -z $PORT ]; then
+			PORT=8081
+		fi
+		echo "var.log_root = \"/opt/etc/asus_conf.d/logs\"">$LIGHTTPD_CONTROL_FILE
+		echo "var.server_root = \"/opt/etc\"">>$LIGHTTPD_CONTROL_FILE
+		echo "var.state_dir = \"/var/run\"">>$LIGHTTPD_CONTROL_FILE
+		echo "var.home_dir = \"/opt/bin\"">>$LIGHTTPD_CONTROL_FILE
+		echo "var.conf_dir = \"/opt/etc\"">>$LIGHTTPD_CONTROL_FILE
+		echo "var.vhosts_dir = server_root + \"/vhosts\"">>$LIGHTTPD_CONTROL_FILE
+		echo "var.cache_dir = \"/var/cache/lighttpd\"">>$LIGHTTPD_CONTROL_FILE
+		echo "var.socket_dir = home_dir + \"/sockets\"">>$LIGHTTPD_CONTROL_FILE
+		echo "include \"asus_modules.conf\"">>$LIGHTTPD_CONTROL_FILE
+		while [ $num -ne 0 ]
+		do
+			num=$(($num-1))
+			echo "#">>$LIGHTTPD_CONTROL_FILE
+		done
+		echo "server.port = $PORT">>$LIGHTTPD_CONTROL_FILE
+		echo "server.username = \"admin\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.groupname = \"root\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.document-root = server_root + \"/downloadmaster\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.pid-file = state_dir + \"/lighttpd.pid\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.event-handler = \"poll\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.network-backend = \"writev\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.max-fds = 2048">>$LIGHTTPD_CONTROL_FILE
+		echo "server.stat-cache-engine = \"simple\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.max-connections = 1024">>$LIGHTTPD_CONTROL_FILE
+		echo "index-file.names += (">>$LIGHTTPD_CONTROL_FILE
+		echo "\"index.xhtml\", \"index.html\", \"index.htm\", \"default.htm\", \"index.php\", \"index.asp\", \"downloadmaster/index.asp\"">>$LIGHTTPD_CONTROL_FILE
+		echo ")">>$LIGHTTPD_CONTROL_FILE
+		echo "url.access-deny          = ( \"~\", \".inc\" )">>$LIGHTTPD_CONTROL_FILE
+		echo "\$HTTP[\"url\"]=~\"^/dm_uploadbt.cgi$\"{">>$LIGHTTPD_CONTROL_FILE
+		echo "		server.document-root = \" /opt/etc/downloadmaster/downloadmaster\"">>$LIGHTTPD_CONTROL_FILE
+		echo "alias.url = ( \"/dm_uploadbt.cgi\" => \"/opt/etc/downloadmaster/downloadmaster/dm_uploadbt.cgi\" ) ">>$LIGHTTPD_CONTROL_FILE
+		echo "	}">>$LIGHTTPD_CONTROL_FILE
+		echo "static-file.exclude-extensions = ( \".php\", \".pl\", \".fcgi\", \".scgi\" )">>$LIGHTTPD_CONTROL_FILE
+		echo "include \"asus_conf.d/mime.conf\"">>$LIGHTTPD_CONTROL_FILE
+		echo "include \"asus_conf.d/dirlisting.conf\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.follow-symlink = \"enable\"">>$LIGHTTPD_CONTROL_FILE
+		echo "server.upload-dirs = ( \"/opt/etc/asus_conf.d/logs\" )">>$LIGHTTPD_CONTROL_FILE
+                num=294
+		while [ $num -ne 0 ]
+		do
+			num=$(($num-1))
+			echo "#">>$LIGHTTPD_CONTROL_FILE
+		done
+		echo "\$SERVER[\"socket\"] == \":8481\" {" >>$LIGHTTPD_CONTROL_FILE
+		echo "    ssl.engine                  = \"enable\"">>$LIGHTTPD_CONTROL_FILE
+		echo "    ssl.pemfile                 = \"/opt/etc/asus_lighttpd/server.pem\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	ssl.use-compression=\"disable\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	ssl.use-sslv2 = \"disable\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	ssl.use-sslv3 = \"disable\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	ssl.honor-cipher-order = \"enable\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	ssl.cipher-list=\"ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:!ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-SHA256:!ECDHE-RSA-AES128-SHA:AES256-GCM-SHA384:AES256-SHA256:!AES256-SHA:AES128-GCM-SHA256:AES128-SHA256:!AES128-SHA:!ECDHE-RSA-DES-CBC3-SHA:!DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;\"">>$LIGHTTPD_CONTROL_FILE
+		echo "   }">>$LIGHTTPD_CONTROL_FILE
+		echo "server.modules += (\"mod_auth_ticket\")">>$LIGHTTPD_CONTROL_FILE
+		echo "\$HTTP[\"url\"] =~ \"^/\" {">>$LIGHTTPD_CONTROL_FILE
+		echo "	auth-ticket.loglevel = 255">>$LIGHTTPD_CONTROL_FILE
+		echo "	auth-ticket.override = 2">>$LIGHTTPD_CONTROL_FILE
+		echo "	auth-ticket.timeout  = 1800">>$LIGHTTPD_CONTROL_FILE
+		echo "	auth-ticket.key      = \"sharedsecret.passwd\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	auth-ticket.name     = \"AuthByPasswd\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	auth-ticket.options  = \"path=/; httponly;\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	auth-ticket.authurl  = \"/Main_Login.asp\"">>$LIGHTTPD_CONTROL_FILE
+		echo "	#auth-ticket.authurl  = \"/login.asp\"">>$LIGHTTPD_CONTROL_FILE
+		echo "}">>$LIGHTTPD_CONTROL_FILE
+		echo "include \"asus_conf.d/compress.conf\"">>$LIGHTTPD_CONTROL_FILE                         
+	;;
+	reload)
+		rm -f $LIGHTTPD_CONTROL_FILE
+		sh /tmp/APPS/Lighttpd/Script/lighttpd_backup recover&
+		#sleep 3
+		#/opt/bin/asus_lighttpd -Df /opt/etc/asus_lighttpd.conf&
+	;;
+   *)
+exit 1
+    ;;
+esac

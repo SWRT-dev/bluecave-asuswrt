@@ -25,12 +25,16 @@ OPTIONS
               options makes ntfsck exit immediately if the volume  appears  to
               be  in  order  (no  dirty flag set, logfile clean, no hibernated
               Windows session, ...), but otherwise a full repair is performed.
+              Note  that  volume  is considered dirty if either one or more of
+              follwing is true a) dirty flag set b) logfile  clean  c)  hiber‐
+              nated windows volume.
 
        -c, --fast-check
-              Check if volume is dirty then exit. If the volume is dirty  then
-              the  exit  value will be 100. If used with -m/--mount-check-only
-              then also repairs any issues which  prevent  volume  from  being
-              mounted.
+              Check  if volume is dirty then exit. If the volume is dirty then
+              the exit value will be 100. If used  with  -m/--mount-check-only
+              then  also  repairs  any  issues which prevent volume from being
+              mounted. Read the definition of  dirty  volume  from  -a/--auto‐
+              matic-repair option.
 
        -m, --mount-check-only
               Check  if  volume  can  be  mounted  safely and if volume can be
@@ -55,9 +59,6 @@ OPTIONS
        -O, --no-orpan-check
               Don't check for orphaned files. This option speeds up ntfsck.
 
-       -M, --no-mft-scan
-              Don't scan $MFT. This option typically slows down ntfsck.
-
        -S, --no-sync
               Don't sync NTFS metadata before exit. This option speeds up ntf‐
               sck  however  it's  safe  to  use  only   if   device   is   not
@@ -75,6 +76,9 @@ OPTIONS
               check/repair. If specified, this sets an upper limit on the exe‐
               cution time of ntfsck. After the  timeout  occurs,  ntfsck  will
               clear all its pending tasks and return as soon as possible.
+              As  a  special case, a timeout value of 0 means that there is no
+              timeout, i.e. it is equivalent to  not  specifying  the  timeout
+              option at all.
 
        -f, --force
               This  will override some sensible defaults. Use this option with
@@ -96,9 +100,6 @@ OPTIONS
               Delete cross linked clusters in case ntfsck cannot resolve  them
               by moving to empty space.
 
-       -n, --check-duplicate-names
-              Enable duplicate name detection check.
-
        -w, --mem NUMBER
               Set  memory  limit in system (in MB). This is useful for running
               ntfsck in systems with low memory, and when user  already  knows
@@ -118,9 +119,23 @@ OPTIONS
               --mem option above description.
 
        -p, --playlog
-              Play NTFS Journal if volume is dirty and $LogFile isn't corrupt.
-              In case $LogFile is corrupt reset it or if we encounter specifi‐
-              cation changes or un-supported actions then also reset it.
+              Play NTFS Journal if volume is dirty, needs a journal replay and
+              $LogFile isn't corrupt. In case $LogFile is corrupt reset it  or
+              if  we  encounter  specification changes or un-supported actions
+              then also reset it.
+
+       -r, --replay
+              Same as --playlog but doesn't invoke fsck run after journal  has
+              been played.
+
+       -B, --progress-fd
+              This  option  is similar to '-C fd' in e2fsck. It causes fsck to
+              write progress of ntfsck to specified file descriptor.  If  file
+              descriptor is negative, then progress is suppressed and can only
+              be enabled by sending SIGUSR1 signal. Once this  signal  arrives
+              absolute value of input is used as file descriptor. SIGUSR2 sig‐
+              nal can be used to stop progress information  being  written  to
+              file descriptor.
 
        -h, --help
               Show a list of options with a brief description of each one.
@@ -147,4 +162,4 @@ SEE ALSO
 
 
 
-Tuxera NTFS Utilities 3016.5.3   October 2012                        NTFSCK(8)
+Tuxera NTFS Utilities 3017.7.18.4January 2017                        NTFSCK(8)

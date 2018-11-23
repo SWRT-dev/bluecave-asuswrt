@@ -59,13 +59,30 @@ if(dsl_support){
 	if(notif_hint_array[0] != ""){ 
 		notif_msg = "<ol style=\"margin-left:-20px;*margin-left:20px;\">";
 		for(var i=0; i<notif_hint_array.length; i++){
-			if(i==0)
+			if(i==0){
 				notif_msg += "<li>"+notif_hint_array[i];
-			else
-				notif_msg += "<div><img src=\"/images/New_ui/export/line_export_notif.png\" style=\"margin-top:2px;margin-bottom:2px;margin-left:-20px;*margin-left:-20px;\"></div><li>"+notif_hint_array[i];
+			}
+			else{
+				notif_msg += "<div style=\"width:240px;margin: 2px 0 2px -20px;*margin-left:-20px;\" class=\"splitLine\"></div><li>" + notif_hint_array[i];
+			}
 		}
 		notif_msg += "</ol>";
     	}	
+}
+
+var aimesh_system_new_fw_flag = false;
+if(amesh_support) {
+	var get_cfg_clientlist = [<% get_cfg_clientlist(); %>][0];
+	for (var idx in get_cfg_clientlist) {
+		if(get_cfg_clientlist.hasOwnProperty(idx)) {
+			if(get_cfg_clientlist[idx].online == "1") {
+				if(get_cfg_clientlist[idx].newfwver != "") {
+					aimesh_system_new_fw_flag = true;
+					break;
+				}
+			}
+		}
+	}
 }
 
 var notification = {
@@ -111,6 +128,9 @@ var notification = {
 
 			for(i=0; i<notification.array.length; i++){
 				if(notification.array[i] != null && notification.array[i] != "off"){
+					if(i == 3 && notification.array[2] != null && notification.array[2] != "off")//filter 5G when 2G have notification
+						continue;
+
 						txt += '<tr><td><table id="notiDiv_table3" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#232629">';
 		  			txt += '<tr><td><table id="notiDiv_table5" border="0" cellpadding="5" cellspacing="0" bgcolor="#232629" width="100%">';
 		  			txt += '<tr><td valign="TOP" width="100%"><div style="white-space:pre-wrap;font-size:13px;color:white;cursor:text">' + notification.desc[i] + '</div>';
@@ -230,8 +250,7 @@ var notification = {
 					notification.action_desc[1] = '<#ASUSGATE_act_update#>';
 					notification.clickCallBack[1] = "location.href = 'Advanced_FirmwareUpgrade_Content.asp?confirm_show="+current_firmware_path+"';"
 				}
-			}
-			else
+			}else
 				notification.upgrade = 0;
 		}
 		

@@ -17,7 +17,8 @@
 <script type="text/javascript" language="JavaScript" src="/help.js"></script>
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script type="text/javaScript" src="/js/jquery.js"></script>
-
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style type="text/css">
 .contentM_upload{
 	position:absolute;
@@ -71,6 +72,7 @@ var le_state = '<% nvram_get("le_state"); %>';
 
 function init(){
 	show_menu();
+	httpApi.faqURL("faq", "1034294", "https://www.asus.com", "/support/FAQ/");
     ddns_load_body();
 	update_ddns_wan_unit_option();
 
@@ -83,7 +85,12 @@ function init(){
 		}
 	}
 
-	setTimeout("show_warning_message();", 100);
+	setTimeout(show_warning_message, 100);
+
+	ASUS_EULA.config(applyRule, refreshpage);
+	if(ddns_enable_x == "1" && ddns_server_x == "WWW.ASUS.COM"){
+		ASUS_EULA.check('asus');
+	}
 }
 
 function update_ddns_wan_unit_option(){
@@ -238,16 +245,20 @@ function ddns_load_body(){
     }
    
     hideLoading();
-    var ddnsHint = getDDNSState(ddns_return_code, ddns_hostname_x_t, ddns_old_name);
 
-    if(ddnsHint != "")
-        alert(ddnsHint);
-    if(ddns_return_code.indexOf('200')!=-1 || ddns_return_code.indexOf('220')!=-1 || ddns_return_code == 'register,230'){
-        showhide("wan_ip_hide2", 0);
-        if(ddns_server_x == "WWW.ASUS.COM"){
-            showhide("wan_ip_hide3", 1);
-        }
-    }
+	if(ddns_enable_x == "1")
+	{
+		var ddnsHint = getDDNSState(ddns_return_code, ddns_hostname_x_t, ddns_old_name);
+
+		if(ddnsHint != "")
+			alert(ddnsHint);
+		if(ddns_return_code.indexOf('200')!=-1 || ddns_return_code.indexOf('220')!=-1 || ddns_return_code == 'register,230'){
+			showhide("wan_ip_hide2", 0);
+			if(ddns_server_x == "WWW.ASUS.COM"){
+				showhide("wan_ip_hide3", 1);
+			}
+		}
+	}
 }
 
 function get_cert_info(){
@@ -263,14 +274,22 @@ function get_cert_info(){
 	});
 }
 
-function applyRule(){
-    if(validForm()){
-        if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.selectedIndex == 0){
-            document.form.ddns_hostname_x.value = document.form.DDNSName.value+".asuscomm.com";   
-        }
+function apply_eula_check(){
+	if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.value == "WWW.ASUS.COM"){
+		if(!ASUS_EULA.check("asus")) return false;
+	}
+	
+	applyRule();
+}
 
-        check_update();
-    }
+function applyRule(){
+	if(validForm()){
+		if(document.form.ddns_enable_x[0].checked == true && document.form.ddns_server_x.selectedIndex == 0){
+			document.form.ddns_hostname_x.value = document.form.DDNSName.value+".asuscomm.com";
+		}
+
+		check_update();
+	}
 }
 
 function validForm(){
@@ -458,10 +477,10 @@ function change_cert_method(cert_method){
 
 			case "1":
 				document.getElementById("cert_desc").style.display = "";
-				document.getElementById("le_desc").innerHTML = "Let's Encrypt is a service to provide free domain-validated certificate and certificate will be renewed automatically."; //untranslated
+				document.getElementById("le_desc").innerHTML = "<#LANHostConfig_x_DDNSLetsEncrypt_desc#>"; //untranslated
 				html_code = '<div style="margin-top:5px;"><input type="checkbox" name="letsEncryptTerm_check" checked>';
 				html_code += "I agree to the Let's Encrypt";//untranslated
-				html_code += '<a href="https://letsencrypt.org/documents/LE-SA-v1.1.1-August-1-2016.pdf" target="_blank" style="margin-left: 5px; color:#FFF; text-decoration: underline;">Term of Service</a>'
+				html_code += '<a href="https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf" target="_blank" style="margin-left: 5px; color:#FFF; text-decoration: underline;">Term of Service</a>'
 				html_code += "</div>";
 				document.getElementById("cert_act").innerHTML = html_code;
 
@@ -523,8 +542,8 @@ function show_cert_details(){
 function check_filename(){
 	var key_file = document.upload_form.file_key.value;
 	var cert_file = document.upload_form.file_cert.value;
-	var key_subname = key_file.substring(key_file.indexOf('.') + 1);
-	var cert_subname = cert_file.substring(cert_file.indexOf('.') + 1);
+	var key_subname = key_file.substring(key_file.lastIndexOf('.') + 1);
+	var cert_subname = cert_file.substring(cert_file.lastIndexOf('.') + 1);
 
 	if(key_subname != 'pem' && key_subname != 'key'){
 		alert("Please select correct private key file.");
@@ -596,7 +615,7 @@ function save_cert_key(){
 		  		<td bgcolor="#4D595D" valign="top"  >
 		  		<div>&nbsp;</div>
 		  		<div class="formfonttitle"><#menu5_3#> - <#menu5_3_6#></div>
-		  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		  		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 		 		<div class="formfontdesc"><#LANHostConfig_x_DDNSEnable_sectiondesc#></div>
 		 		<div class="formfontdesc" style="margin-top:-8px;"><#NSlookup_help#></div>
 				<div class="formfontdesc" id="wan_ip_hide2" style="color:#FFCC00; display:none;"><#LANHostConfig_x_DDNSEnable_sectiondesc2#></div>
@@ -707,7 +726,12 @@ function save_cert_key(){
 					<span id="self_signed" style="color:#FFF;">
 					<input type="radio" value="0" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "0", "checked"); %>><#wl_securitylevel_0#>
 					</span>	
-					<div id="cert_desc" style="color:#FFCC00; margin-top: 5px;"><span id="le_desc"></span><span id="le_faq"><a href="https://www.asus.com/us/support/FAQ/1034294" target="_blank" style="margin-left: 5px; color:#FFCC00; text-decoration: underline;">FAQ</a></span></div>
+					<div id="cert_desc" style="color:#FFCC00; margin-top: 5px;">
+						<span id="le_desc"></span>
+						<span id="le_faq">
+							<a id="faq" href="" target="_blank" style="margin-left: 5px; color:#FFCC00; text-decoration: underline;">FAQ</a>
+						</span>
+					</div>
 					<div id="cert_act" style="margin-top: 5px;"></div>
 				</td>
 			</tr>
@@ -738,7 +762,7 @@ function save_cert_key(){
 			</tr>
 		</table>
 				<div class="apply_gen">
-					<input class="button_gen" onclick="applyRule();" type="button" value="<#CTL_apply#>" />
+					<input class="button_gen" onclick="apply_eula_check();" type="button" value="<#CTL_apply#>" />
 				</div>
 		
 			  </td>
@@ -774,6 +798,7 @@ function save_cert_key(){
 		<div style="display:table-cell; width: 45%;">SSL Certificate :</div>
 		<div style="display:table-cell;"><input type="file" name="file_cert" class="input Upload_file"></div>
 	</div>
+	<div style="color: #FC0; margin-left: 15px; margin-top: 20px">*Private keys cannot be passphrase protected.</div>
 	<div align="center" style="margin-top:30px; padding-bottom:15px;">
 		<div style="display:table-cell;"><input class="button_gen" type="button" onclick="hide_upload_window();" id="cancelBtn" value="<#CTL_Cancel#>"></div>
 		<div style="display:table-cell; padding-left: 5px;"><input class="button_gen" type="button" onclick="upload_cert_key();" value="<#CTL_ok#>"></div>

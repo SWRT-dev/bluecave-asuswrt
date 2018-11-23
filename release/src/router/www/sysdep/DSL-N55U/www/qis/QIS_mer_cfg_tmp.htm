@@ -290,7 +290,7 @@ function gotoHome() {
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
-		parent.location.href = "<% abs_index_page(); %>";
+		parent.location.href = "/";
 	}
 }
 </script>
@@ -342,7 +342,7 @@ function gotoHome() {
 			</td>
 		</tr>
 	</table>
-	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><div style="width: 700px; height: 2px;" class="splitLine"></div></div>
 	<br/>
 
 
@@ -592,35 +592,12 @@ function gotoHome() {
 		</td>
 	  </tr>
   </table>
-<!-- Renjie: Remove this field, we will use Option 61 and 12 for UK Sky.
-  <table>
-	  <tr>
-		<th width="120"><span id="ppp_username1" style="display:none">PPP <#HSDPAConfig_Username_itemname#>:</span></th>
-		<td>
-		  <span id="ppp_username2" style="display:none">
-		  <input type="text" name="ppp_username" class="input_32_table" value="" tabindex="11" maxlength="32" size="20" autocomplete="off" autocorrect="off" autocapitalize="off">
-		  </span>
-		</td>
-	  </tr>
-	  <tr>
-		<th width="120"><span id="ppp_password1" style="display:none">PPP <#HSDPAConfig_Password_itemname#>:</span></th>
-		<td>
-		  <span id="ppp_password2" style="display:none">
-		  <input type="text" name="ppp_password" class="input_32_table" value="" tabindex="12" maxlength="32" size="20" autocomplete="off" autocorrect="off" autocapitalize="off">
-		  </span>
-		</td>
-	  </tr>
-  </table>
--->
 </div>
 
 
 	<div class="apply_gen" style="margin-top:30px">
-		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" tabindex="14" onclick="gotoprev(document.form);" class="button_gen_long" >
-<!--
-		<input type="button" id="nextButton" value="Ethernet WAN" onclick="redirect_page('internet_type');" class="button_gen" >
--->
-		<input type="button" id="nextButton" value="<#CTL_next#>" tabindex="13" onclick="submitForm();" class="button_gen_long">
+		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" tabindex="14" onclick="gotoprev(document.form);" class="button_gen" >
+		<input type="button" id="nextButton" value="<#CTL_next#>" tabindex="13" onclick="submitForm();" class="button_gen">
 	</div>
 
 </div>

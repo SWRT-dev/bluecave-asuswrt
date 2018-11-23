@@ -20,6 +20,8 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <style type="text/css">
 .printerServer_table{
 	width:740px;
@@ -66,7 +68,12 @@
 <script>
 function initial(){
 	show_menu();
-	//setTimeout("showMethod('','none');", 100);
+	//id="faq" href="https://www.asus.com/US/support/FAQ/114046"
+        httpApi.faqURL("faq1", "114046", "https://www.asus.com", "/support/FAQ/");
+	//id="faq" href="https://www.asus.com/US/support/FAQ/114024"
+        httpApi.faqURL("faq2", "114024", "https://www.asus.com", "/support/FAQ/");
+	//id="faq" href="https://www.asus.com/US/support/FAQ/113661"
+        httpApi.faqURL("faq3", "113661", "https://www.asus.com", "/support/FAQ/");
 }
 
 function showMethod(flag1, flag2){
@@ -125,7 +132,7 @@ function showMethod(flag1, flag2){
 		</td>
   </tr> 
   <tr>
-  	<td class="line_export"><img src="images/New_ui/export/line_export.png" /></td>
+  	<td><div class="splitLine"></div></td>
   </tr>
   <tr>
    	<td><div class="formfontdesc"><#Network_Printer_desc#></div></td> 
@@ -143,14 +150,14 @@ function showMethod(flag1, flag2){
 										<div class="">
 											<ul class="">
 												<li>
-														<a id="faq1" href="https://www.asus.com/support/FAQ/114046/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#asus_ez_print_share#> FAQ</a>&nbsp;&nbsp;
-														<a href="http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/Printer.zip" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FC0">Download Now!</a>
+													<a id="faq1" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#asus_ez_print_share#> FAQ</a>&nbsp;&nbsp;
+													<a href="http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless/Printer.zip" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FC0">Download Now!</a>
 												</li>
 												<li style="margin-top:10px;">
-														<a id="faq2" href="https://www.asus.com/support/FAQ/114024/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#LPR_print_share#> FAQ (Windows)</a>&nbsp;&nbsp;
+													<a id="faq2" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#LPR_print_share#> FAQ (Windows)</a>&nbsp;&nbsp;
 												</li>
 												<li style="margin-top:10px;">
-														<a id="faq3" href="https://www.asus.com/support/FAQ/113661/" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#LPR_print_share#> FAQ (MAC)</a>&nbsp;&nbsp;
+													<a id="faq3" href="" target="_blank" style="text-decoration:underline;font-size:14px;font-weight:bolder;color:#FFF"><#LPR_print_share#> FAQ (MAC)</a>&nbsp;&nbsp;
 												</li>
 											</ul>	
 										</div>	

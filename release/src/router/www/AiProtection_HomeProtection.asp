@@ -16,6 +16,8 @@
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style>
 .weakness{
 	width:650px;
@@ -116,10 +118,21 @@
 }
 
 .line_1{
-	background:url('/images/line.png') no-repeat;
-	width:6px;
-	height:102px;
-	background-size:4px 185px;
+}
+
+.shadow{
+	position: absolute;
+	width: 140px;
+	height: 110px;
+	background-color: #6B7071;
+	opacity: 0.6;
+	z-index: 5;
+	margin-top: -23px;
+	display: none;
+	border-radius: 10px;
+}
+.shadow_m{
+	margin-top: -9px;
 }
 </style>
 <script>
@@ -130,9 +143,6 @@ window.onresize = function() {
 	}
 	if(document.getElementById("alert_preference").style.display == "block") {
 		cal_panel_block("alert_preference", 0.25);
-	}
-	if(document.getElementById("agreement_panel").style.display == "block") {
-		cal_panel_block("agreement_panel", 0.25);
 	}
 }
 <% get_AiDisk_status(); %>
@@ -147,13 +157,19 @@ var safe_count = 0;
 
 function initial(){
 	show_menu();
-
+	//	http://www.asus.com/support/FAQ/1008719/
+	httpApi.faqURL("faq", "1008719", "https://www.asus.com", "/support/FAQ/");
 	if(lyra_hide_support){
-		document.getElementById("scenario_tr").style.display = "none";
-		document.getElementById("security_scan_tr").style.display = "none";
-		$(".AiProtection_02").css('display','none');
-		$(".AiProtection_03").css('display','none');
-		$(".line_1").css('display','none');
+		$("#scenario_tr").css({"visibility":"hidden"});
+		$("#scenario_img").attr({"height":"0"});
+		$("#security_scan_tr").hide();
+		$(".AiProtection_02").hide();
+		$(".AiProtection_03").hide();
+		$(".line_1").hide();
+		if(!uiSupport("dpi_vp")){
+			$("#twoWayIPS_padding").hide();
+			$("#twoWayIPS_field").hide();
+		}
 	}
 
 	if(document.form.wrs_protect_enable.value == '1'){
@@ -294,18 +310,18 @@ function check_weakness(){
 	if(danger_count != 0){
 		$("#router_scan_count").html(danger_count);
 		$("#router_scan_count").css("backgroundColor", "#ED1C24");
-		$("#router_scan_state").html("Danger");
+		$("#router_scan_state").html("<#AiProtection_scan_rDanger#>");
 	}
 	else if(risk_count != 0){
 		$("#router_scan_count").html(risk_count);
 		$("#router_scan_count").css("backgroundColor", "#EF9800");
-		$("#router_scan_state").html("Risk");
+		$("#router_scan_state").html("<#AiProtection_scan_rRisk#>");
 	}
 	else if(safe_count != 0){
 		$("#all_security_btn").hide();
 		$("#router_scan_count").html(safe_count);
 		$("#router_scan_count").css("backgroundColor", "#24A628");
-		$("#router_scan_state").html("Safe");
+		$("#router_scan_state").html("<#AiProtection_scan_rSafe#>");
 	}
 }
 
@@ -757,19 +773,6 @@ function check_TM_feature(){
 	}
 }
 
-function show_tm_eula(){
-	$.get("tm_eula.htm", function(data){
-		document.getElementById('agreement_panel').innerHTML= data;
-		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
-		$("#eula_url").attr("href",url);
-		adjust_TM_eula_height("agreement_panel");
-	});
-
-	dr_advise();
-	cal_panel_block("agreement_panel", 0.25);
-	$("#agreement_panel").fadeIn(300);
-}
-
 function cancel(){
 	refreshpage();
 }
@@ -881,30 +884,19 @@ function check_smtp_server_type(){
 
 function shadeHandle(flag){
 	if(flag == "0"){
-		$("#mals_shade").css("display", "");
-		$("#mals_count_shade").css("display", "");
-		$("#vp_shade").css("display", "");
-		$("#vp_count_shade").css("display", "");
-		$("#cc_shade").css("display", "");
-		$("#infected_count_shade").css("display", "");
+		$(".shadow").toggle("display", "");
 	}
 	else{
-		$("#mals_shade").css("display", "none");
-		$("#mals_count_shade").css("display", "none");
-		$("#vp_shade").css("display", "none");
-		$("#vp_count_shade").css("display", "none");
-		$("#cc_shade").css("display", "none");
-		$("#infected_count_shade").css("display", "none");
+		$(".shadow").css("display", "none");
 	}
 
 }
 </script>
 </head>
 
-<body onload="initial();" onunload="unload_body();" onselectstart="return false;">
+<body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="eula_panel_container"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5.]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -1022,7 +1014,7 @@ function shadeHandle(flag){
 							<input class="button_gen" type="button" onclick="close_weakness_status();" value="<#CTL_close#>">
 						</td>
 						<td>
-							<input id="all_security_btn" class="button_gen_long" type="button" onclick="enable_whole_security();" value="<#CTL_secure#>">
+							<input id="all_security_btn" class="button_gen" type="button" onclick="enable_whole_security();" value="<#CTL_secure#>">
 						</td>
 					</tr>
 				</table>
@@ -1094,7 +1086,7 @@ function shadeHandle(flag){
 			<td>
 				<div style="text-align:center;margin-top:20px;">
 					<input class="button_gen" type="button" onclick="close_alert_preference();" value="<#CTL_close#>">
-					<input class="button_gen_long" type="button" onclick="apply_alert_preference();" value="<#CTL_apply#>">
+					<input class="button_gen" type="button" onclick="apply_alert_preference();" value="<#CTL_apply#>">
 				</div>
 			</td>
 		</tr>
@@ -1166,7 +1158,7 @@ function shadeHandle(flag){
 											</tr>
 										</table>
 									</div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div id="PC_desc">
 										<table width="700px" style="margin-left:25px;">
 											<tr>
@@ -1179,7 +1171,9 @@ function shadeHandle(flag){
 														<tr>
 															<td>
 																<div style="width:430px"><#AiProtection_desc#></div>
-																<div style="width:430px"><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1008719/" target="_blank"><#AiProtection_title#> FAQ</a></div>
+																<div style="width:430px">
+																	<a id="faq" style="text-decoration:underline;" href="" target="_blank"><#AiProtection_title#> FAQ</a>
+																</div>
 															</td>
 															<td>
 																<div style="width:100px;height:48px;margin-left:-40px;background-image:url('images/New_ui/tm_logo.png');"></div>
@@ -1188,7 +1182,7 @@ function shadeHandle(flag){
 														<tr id="scenario_tr">
 															<td rowspan="2">
 																<div>
-																	<img src="/images/New_ui/Home_Protection_Scenario.png">
+																	<img id="scenario_img" src="/images/New_ui/Home_Protection_Scenario.png">
 																</div>
 															</td>
 														</tr>
@@ -1207,14 +1201,13 @@ function shadeHandle(flag){
 														<script type="text/javascript">
 															$('#radio_protection_enable').iphoneSwitch('<% nvram_get("wrs_protect_enable"); %>',
 																function(){
-																	if(document.form.TM_EULA.value == 0){
-																		show_tm_eula();
-																		return;
-																	}
+																	ASUS_EULA.config(eula_confirm, cancel);
 
-																	document.form.wrs_protect_enable.value = "1";
-																	shadeHandle("1");
-																	applyRule();
+																	if(ASUS_EULA.check("tm")){
+																		document.form.wrs_protect_enable.value = "1";
+																		shadeHandle("1");
+																		applyRule();
+																	}
 																},
 																function(){
 																	document.form.wrs_protect_enable.value = "0";
@@ -1236,14 +1229,14 @@ function shadeHandle(flag){
 													<div class="AiProtection_01"></div>
 												</td>
 												 <td width="6px">
-													<div class="line_1"></div>
+													<div class="line_vertical line_1"></div>
 												</td>
 												<td style="padding:10px;">
 													<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_scan#></div>
 													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;"><#AiProtection_scan_desc#></div>
 												</td>
 												 <td width="6px">
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div>
@@ -1251,7 +1244,7 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td>
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;">
 													<div id="router_scan_status" style="text-align:center;">
@@ -1266,7 +1259,7 @@ function shadeHandle(flag){
 													<div class="AiProtection_02"></div>
 												</td>
 												 <td width="6px">
-													<div class="line_1"></div>
+													<div class="line_vertical line_1"></div>
 												</td>
 												<td style="padding:10px;cursor:pointer;" onclick="location.href='AiProtection_MaliciousSitesBlocking.asp'">
 													<div>
@@ -1275,11 +1268,11 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												 <td width="6px">
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div style="position:relative;">
-														<div id="mals_shade" style="position:absolute;width:140px;height:115px;background-color:#505050;opacity:0.6;z-index:5;margin-top:-26px;display:none"></div>
+														<div id="mals_shade" class="shadow"></div>
 														<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_mals_enable"></div>
 														<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 															<script type="text/javascript">
@@ -1298,28 +1291,28 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td >
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;cursor:pointer;">
 													<div style="position:relative" onclick="location.href='AiProtection_MaliciousSitesBlocking.asp'">
-														<div id="mals_count_shade" style="position:absolute;width:140px;height:115px;background-color:#505050;opacity:0.6;z-index:5;margin-top:-14px;display:none"></div>
+														<div id="mals_count_shade" class="shadow shadow_m"></div>
 														<div style="text-align:center;">
-															<div id="mali_count" style="width:45px;height:45px;margin:0 auto;line-height: 45px;font-size:38px;color:#FC0;text-shadow:1px 1px 0px black"></div>
+															<div id="mali_count" style="height:45px;margin:0 auto;line-height: 45px;font-size:38px;color:#FC0;text-shadow:1px 1px 0px black"></div>
 															<div style="font-size: 16px;"><#AiProtection_scan_rHits#></div>
-															<div id="mali_time" style="height:22px;color:#A1A7A8"></div>
+															<div id="mali_time" style="height:25px;color:#A1A7A8"></div>
 														</div>
 													</div>
 
 												</td>
 											</tr>
 
-											<tr style="height:10px;"></tr>
-											<tr class="block_bg block_line" style="height:120px;">
+											<tr id="twoWayIPS_padding" style="height:10px;"></tr>
+											<tr id="twoWayIPS_field" class="block_bg block_line" style="height:120px;">
 												<td style="border-radius:10px 0px 0px 10px;">
 													<div class="AiProtection_02"></div>
 												</td>
-												 <td width="6px">
-													<div class="line_1"></div>
+												 <td >
+													<div style="height:135px;" class="line_vertical line_1"></div>
 												</td>
 												<td style="padding:10px;cursor:pointer;" onclick="location.href='AiProtection_IntrusionPreventionSystem.asp'">
 													<div>
@@ -1328,11 +1321,11 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												 <td width="6px">
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div style="position:relative">
-														<div id="vp_shade" style="position:absolute;width:140px;height:115px;background-color:#505050;opacity:0.6;z-index:5;margin-top:-26px;display:none"></div>
+														<div id="vp_shade" class="shadow"></div>
 														<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_vp_enable"></div>
 														<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 															<script type="text/javascript">
@@ -1351,15 +1344,15 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td >
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;cursor:pointer;">
 													<div style="position:relative" onclick="location.href='AiProtection_IntrusionPreventionSystem.asp'">
-														<div id="vp_count_shade" style="position:absolute;width:140px;height:115px;background-color:#505050;opacity:0.6;z-index:5;margin-top:-14px;display:none"></div>
+														<div id="vp_count_shade" class="shadow shadow_m"></div>
 														<div style="text-align:center;">
-															<div id="vp_count" style="width:45px;height:45px;margin:0 auto;line-height: 45px;font-size:38px;color:#FC0;text-shadow:1px 1px 0px black"></div>
+															<div id="vp_count" style="height:45px;margin:0 auto;line-height: 45px;font-size:38px;color:#FC0;text-shadow:1px 1px 0px black"></div>
 															<div style="font-size: 16px;"><#AiProtection_scan_rHits#></div>
-															<div id="vp_time" style="height:22px;color:#A1A7A8"></div>
+															<div id="vp_time" style="height:25px;color:#A1A7A8"></div>
 														</div>
 													</div>
 												</td>
@@ -1371,18 +1364,18 @@ function shadeHandle(flag){
 													<div class="AiProtection_03"></div>
 												</td>
 												 <td width="6px">
-													<div class="line_1"></div>
+													<div style="height:120px;" class="line_vertical line_1"></div>
 												</td>
 												<td style="padding:10px;cursor:pointer" onclick="location.href='AiProtection_InfectedDevicePreventBlock.asp'">
 													<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_detection_blocking#></div>
 													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;;padding-top:5px;"><#AiProtection_detection_block_desc#></div>
 												</td>
 												 <td>
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div style="position:relative">
-														<div id="cc_shade" style="position:absolute;width:140px;height:115px;background-color:#505050;opacity:0.6;z-index:5;margin-top:-26px;display:none"></div>
+														<div id="cc_shade" class="shadow"></div>
 														<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_cc_enable"></div>
 														<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
 															<script type="text/javascript">
@@ -1401,15 +1394,15 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td>
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;cursor:pointer;">
 													<div style="position:relative" onclick="location.href='AiProtection_InfectedDevicePreventBlock.asp'">
-														<div id="infected_count_shade" style="position:absolute;width:140px;height:115px;background-color:#505050;opacity:0.6;z-index:5;margin-top:-14px;display:none"></div>
+														<div id="infected_count_shade" class="shadow shadow_m"></div>
 														<div style="text-align:center;">
-															<div id="infected_count" style="width:45px;height:45px;margin:0 auto;line-height: 45px;font-size:38px;color:#FC0;text-shadow:1px 1px 0px black"></div>
+															<div id="infected_count" style="height:45px;margin:0 auto;line-height: 45px;font-size:38px;color:#FC0;text-shadow:1px 1px 0px black"></div>
 															<div style="font-size: 16px;"><#AiProtection_scan_rHits#></div>
-															<div id="infected_time" style="height:22px;color:#A1A7A8"></div>
+															<div id="infected_time" style="height:25px;color:#A1A7A8"></div>
 														</div>
 													</div>
 												</td>
@@ -1418,7 +1411,7 @@ function shadeHandle(flag){
 									</div>
 									<div style=";margin:20px 0;text-align:right">
 										<div style="display:inline-block">
-											<input class="button_gen_long" type="button" onclick="show_alert_preference();" value="<#AiProtection_alert_pref#>">
+											<input class="button_gen" type="button" onclick="show_alert_preference();" value="<#AiProtection_alert_pref#>">
 										</div>
 									</div>
 									<div style="width:135px;height:55px;margin: -10px 0 0 600px;background-image:url('images/New_ui/tm_logo_power.png');"></div>

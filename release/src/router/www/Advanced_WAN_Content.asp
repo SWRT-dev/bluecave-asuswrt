@@ -12,17 +12,6 @@
 <link rel="stylesheet" type="text/css" href="index_style.css"> 
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <style>
-.apply_gen_wan{
- 	text-align:center;
- 	background-color:#4D595D;
- 	width:99%;
- 	margin-top:10px;
-	border-radius: 0 0 3px 3px;
-	-moz-border-radius-bottomright: 3px;
-	-moz-border-radius-bottomleft: 3px;
-	behavior: url(/PIE.htc);
-	border-radius: 0 0 3px 3px;
-}
 .FormTable{
  	margin-top:10px;	
 }
@@ -32,6 +21,8 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/validator.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 
 var wans_dualwan = '<% nvram_get("wans_dualwan"); %>';
@@ -88,7 +79,9 @@ function initial(){
 		}
 	}
 	
-	show_menu();			
+	show_menu();
+	// https://www.asus.com/support/FAQ/1011715/
+	httpApi.faqURL("faq", "1011715", "https://www.asus.com", "/support/FAQ/");
 	change_wan_type(document.form.wan_proto.value, 0);	
 	fixed_change_wan_type(document.form.wan_proto.value);
 	genWANSoption();
@@ -106,8 +99,6 @@ function initial(){
 			document.getElementById("yadns_hint").innerHTML = "<span><#YandexDNS_settings_hint#></span>";
 		}
 	}
-
-	addOnlineHelp(document.getElementById("faq"), ["UPnP"]);
 
 	if(gobi_support){
 		document.getElementById("page_title").innerHTML = "<#WAN_page_desc#>";
@@ -801,7 +792,7 @@ function ppp_echo_control(flag){
 	var enable = (flag == 1) ? 1 : 0;
 	inputCtrl(document.form.wan_ppp_echo_interval, enable);
 	inputCtrl(document.form.wan_ppp_echo_failure, enable);
-	var enable = (flag == 2) ? 1 : 0;
+	enable = (flag == 2) ? 1 : 0;
 	//inputCtrl(document.form.dns_probe_timeout, enable);
 	inputCtrl(document.form.dns_delay_round, enable);
 }
@@ -813,7 +804,7 @@ function ppp_echo_control(flag){
 <script>
 	if(sw_mode == 3){
 		alert("<#page_not_support_mode_hint#>");
-		location.href = '<% abs_index_page(); %>';
+		location.href = "/";
 	}
 </script>
 <div id="TopBanner"></div>
@@ -867,7 +858,7 @@ function ppp_echo_control(flag){
 	  			<td bgcolor="#4D595D" valign="top">
 		  			<div>&nbsp;</div>
 		  			<div class="formfonttitle"><#menu5_3#> - <#menu5_3_1#></div>
-		  			<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		  			<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 		  			<div id="page_title" class="formfontdesc" style="margin-bottom:0px;"><#Layer3Forwarding_x_ConnectionType_sectiondesc#></div>
 
 						<table id="WANscap" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
@@ -880,10 +871,6 @@ function ppp_echo_control(flag){
 								<th id="wan_inf_th"><#wan_type#></th>
 								<td align="left">
 									<select class="input_option" name="wan_unit" onchange="change_wan_unit(this);"></select>
-									<!--select id="dsltmp_transmode" name="dsltmp_transmode" class="input_option" style="margin-left:7px;" onChange="change_dsl_transmode(this);">
-													<option value="atm" <% nvram_match("dsltmp_transmode", "atm", "selected"); %>>ADSL WAN (ATM)</option>
-													<option value="ptm" <% nvram_match("dsltmp_transmode", "ptm", "selected"); %>>VDSL WAN (PTM)</option>
-									</select-->
 								</td>
 							</tr>
 						</table>
@@ -1028,7 +1015,7 @@ function ppp_echo_control(flag){
 							    </select></td>
 							</tr>
             	<tr>
-              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#PPPConnection_UserName_itemname#></a></th>
+              	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,4);"><#Username#></a></th>
               	<td><input type="text" maxlength="64" class="input_32_table" name="wan_pppoe_username" value="" autocomplete="off" onkeypress="return validator.isString(this, event)" autocorrect="off" autocapitalize="off"></td>
             	</tr>
             	<tr>
@@ -1139,7 +1126,7 @@ function ppp_echo_control(flag){
           	<th ><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,16);"><#PPPConnection_x_MacAddressForISP_itemname#></a></th>
 				<td>
 					<input type="text" name="wan_hwaddr_x" class="input_20_table" maxlength="17" value="<% nvram_get("wan_hwaddr_x"); %>" onKeyPress="return validator.isHWAddr(this,event)" autocorrect="off" autocapitalize="off">
-					<input type="button" class="button_gen_long" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
+					<input type="button" class="button_gen" onclick="showMAC();" value="<#BOP_isp_MACclone#>">
 				</td>
         	</tr>
 

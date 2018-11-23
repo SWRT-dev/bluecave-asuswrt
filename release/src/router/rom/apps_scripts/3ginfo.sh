@@ -6,7 +6,9 @@ ver_2nd=`echo -n $kernel_version |awk 'BEGIN{FS="."}{print $2}'`
 
 
 echo ">"
-if [ "$ver_1st" -ge "3" ] && [ "$ver_2nd" -ge "2" ]; then
+if [ "$ver_1st" -ge "4" ]; then
+	cat /sys/kernel/debug/usb/devices
+elif [ "$ver_1st" -ge "3" ] && [ "$ver_2nd" -ge "2" ]; then
 	cat /sys/kernel/debug/usb/devices
 else
 	cat /proc/bus/usb/devices
@@ -131,6 +133,8 @@ for modem_unit in 0 1; do
 	echo "${prefix}act_startsec=$str"
 	str=`nvram get ${prefix}act_ip`
 	echo "${prefix}act_ip=$str"
+	str=`nvram get ${prefix}act_ipv6`
+	echo "${prefix}act_ipv6=$str"
 	echo ">"
 	echo "modem autoapn:>"
 	nvram show |grep ^${prefix}auto

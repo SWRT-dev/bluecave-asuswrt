@@ -53,6 +53,7 @@ LDFLAGS += -L$(TOP)/wlcsm -lwlcsm
 endif
 
 ifeq ($(RTCONFIG_BCMARM),y)
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DTYPEDEF_FLOAT_T
 LDFLAGS += -lgcc_s
 endif
 
@@ -62,6 +63,9 @@ endif
 
 ifeq ($(RTCONFIG_AMAS),y)
 LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
+ifeq ($(RTCONFIG_QCA),y)
+LDFLAGS += -lm
+endif
 endif
 
 CFLAGS += -Wall -I.

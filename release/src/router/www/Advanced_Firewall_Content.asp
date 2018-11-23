@@ -442,7 +442,7 @@ function updateDateTime(){
 					<td bgcolor="#4D595D" valign="top">
 		  				<div>&nbsp;</div>
 		  				<div class="formfonttitle"><#menu5_5#> - <#menu5_5_4#></div>
-		  				<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		  				<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 		  				<div class="formfontdesc"><#FirewallConfig_display1_sectiondesc#></div>
 		  				<div class="formfontdesc"><#FirewallConfig_display3_sectiondesc#></div>
 		  				<div class="formfontdesc" style="color:#FFCC00;"><#FirewallConfig_display4_sectiondesc#></div>	

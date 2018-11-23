@@ -4,6 +4,7 @@ CFLAGS += -Wall -O
 
 ifeq ($(RTCONFIG_BCMARM),y)
 CFLAGS += $(EXTRA_FLAG)
+CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include -DTYPEDEF_FLOAT_T
 endif
 
 CFLAGS += -I$(TOP)/shared -I$(SRCBASE)/include
@@ -12,10 +13,6 @@ INSTALL = install
 
 ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
-endif
-
-ifeq ($(RTCONFIG_AMAS),y)
-LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
 endif
 
 OBJS = asuslog.o

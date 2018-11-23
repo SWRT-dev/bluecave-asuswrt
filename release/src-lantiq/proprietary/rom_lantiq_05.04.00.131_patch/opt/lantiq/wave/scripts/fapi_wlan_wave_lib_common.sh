@@ -1621,6 +1621,8 @@ write_initial_content()
 			echo "############## $interface_name supplicant parameters #############" > $wpa_supplicant_configuration_conf_temp
 			set_conf_param wpa_supplicant_configuration regular otf $pid $interface_name ctrl_interface /var/run/wpa_supplicant
 			set_conf_param wpa_supplicant_configuration regular otf $pid $interface_name update_config "1"
+			# Filter for ASUS vsie
+			set_conf_param wpa_supplicant_configuration regular otf $pid $interface_name driver_param "\"vendor_events_filter=f832e4\""
 		fi
 	fi
 }
@@ -3425,17 +3427,27 @@ up_add_start_endpoint_to_runner()
 	echo "cp -s ${BINDIR}/wpa_cli /tmp/wpa_cli_${endpoint_name}" >> $start_supplicant_conf
 	echo "/tmp/wpa_cli_${endpoint_name} -i${endpoint_name} -a${SUPPLICANT_EVENTS_SCRIPT} -B" >> $start_supplicant_conf
 
+
 	# Add the EndPoint to the bridge, unless bridge name is None
-	[ "$endpoint_bridge" != "None" ] && echo "brctl addif ${endpoint_bridge} ${endpoint_name}" >> $start_supplicant_conf
+	# ASUS_EXT. If the device is amesh re node, the STA interfaces are be added by bh_ctrl
+	re_mode=`nvram get re_mode`
+	if [ "$re_mode" != "1" ]
+	then
+		[ "$endpoint_bridge" != "None" ] && echo "brctl addif ${endpoint_bridge} ${endpoint_name}" >> $start_supplicant_conf
+	fi
 	# Execute network related commands during init flow when WDS is disabled
 	if [ $wds -eq 0 ]
 	then
-		echo "if [ -e /proc/l2nat/dev ]" >> $start_supplicant_conf
-		echo "then" >> $start_supplicant_conf
-		echo "	[ \`cat /proc/l2nat/dev | grep $endpoint_name -c\` -eq 0 ] && echo add $endpoint_name > /proc/l2nat/dev" >> $start_supplicant_conf
-		echo "else" >> $start_supplicant_conf
-		echo "	echo \"/proc/l2nat/dev was not found. L2NAT is not insmoded?\" > /dev/console" >> $start_supplicant_conf
-		echo "fi" >> $start_supplicant_conf
+		# ASUS_EXT. If the device is amesh re node, the STA interfaces are be added by bh_ctrl
+		if [ "$re_mode" != "1" ]
+		then
+			echo "if [ -e /proc/l2nat/dev ]" >> $start_supplicant_conf
+			echo "then" >> $start_supplicant_conf
+			echo "	[ \`cat /proc/l2nat/dev | grep $endpoint_name -c\` -eq 0 ] && echo add $endpoint_name > /proc/l2nat/dev" >> $start_supplicant_conf
+			echo "else" >> $start_supplicant_conf
+			echo "	echo \"/proc/l2nat/dev was not found. L2NAT is not insmoded?\" > /dev/console" >> $start_supplicant_conf
+			echo "fi" >> $start_supplicant_conf
+		fi
 		echo "if [ -e /proc/ppa/api/bridged_flow_learning ]" >> $start_supplicant_conf
 		echo "then" >> $start_supplicant_conf
 		echo "	[ \`cat /proc/ppa/api/bridged_flow_learning | grep Enabled -c\` -eq 0 ] && echo enable > /proc/ppa/api/bridged_flow_learning" >> $start_supplicant_conf
@@ -3472,13 +3484,20 @@ up_reconfigure_endpoint()
 	endpoint_name=$1
 	endpoint_bridge=$2
 
+	# ASUS_EXT. If the device is amesh re node, the STA interfaces are be added by bh_ctrl
+	re_mode=`nvram get re_mode`
+
 	# If Endpoint is not in the bridge, add it to the bridge, unless bridge name is None
 	if [ "$endpoint_bridge" != "None" ]
 	then
-		echo "if [ \`brctl show | grep $endpoint_name -c\` -eq 0 ]" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
-		echo "then" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
-		echo "	brctl addif ${endpoint_bridge} ${endpoint_name}" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
-		echo "fi" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		# ASUS_EXT. If the device is amesh re node, the STA interfaces are be added by bh_ctrl
+		if [ "$re_mode" != "1" ]
+		then
+			echo "if [ \`brctl show | grep $endpoint_name -c\` -eq 0 ]" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+			echo "then" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+			echo "	brctl addif ${endpoint_bridge} ${endpoint_name}" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+			echo "fi" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
+		fi
 	fi
 	echo "wpa_cli -i${endpoint_name} reconfigure" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}
 	echo "### EndPoint post-up commands ###" >> ${CONF_DIR}/${FAPI_WLAN_WAVE_RUNNNER}

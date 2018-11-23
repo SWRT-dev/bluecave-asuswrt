@@ -55,6 +55,7 @@
 #endif
 
 #include <mtd.h>
+#include <limits.h>
 
 void update_lan_status(int);
 
@@ -1201,7 +1202,7 @@ const zoneinfo_t tz_list[] = {
         {"UTC-6.30",    "Asia/Yangon"},		// (GMT+06:30) Yangon
         {"UTC-7",       "Asia/Bangkok"},	// (GMT+07:00) Bangkok, Hanoi, Jakarta
         {"UTC-7_2",     "Asia/Krasnoyarsk"},	// (GMT+07:00) Krasnoyarsk
-        {"CST-8",       "Asia/Shanghai`"},	// (GMT+08:00) Beijing, Hong Kong 
+        {"CST-8",       "Asia/Shanghai"},	// (GMT+08:00) Beijing, Hong Kong 
         {"CST-8_1",     "Asia/Chongqing"},	// (GMT+08:00) Chongqing, Urumqi
         {"SST-8",       "Asia/Kuala_Lumpur"},	// (GMT+08:00) Kuala_Lumpur, Singapore
         {"CCT-8",       "Asia/Taipei"},		// (GMT+08:00) Taipei
@@ -1342,7 +1343,7 @@ void
 setup_timezone(void)
 {
 #ifndef RC_BUILDTIME
-#define RC_BUILDTIME	1487030400	// Feb 14 00:00:00 GMT 2017
+#define RC_BUILDTIME	1525496688	// May  5 05:04:48 GMT 2018
 #endif
 	time_t now;
 	struct tm gm, local;
@@ -1524,7 +1525,7 @@ int setup_dnsmq(int mode)
 		if (!is_psta(nvram_get_int("wlc_band")) && !is_psr(nvram_get_int("wlc_band")))
 #endif
 		{
-			snprintf(tmp, sizeof(tmp), "%s:%d", nvram_safe_get("lan_ipaddr"), /*nvram_get_int("http_lanport") ? :*/ 80);
+			snprintf(tmp, sizeof(tmp), "%s:%d", nvram_safe_get("lan_ipaddr"), nvram_get_int("http_lanport") ? : 80);
 			eval("iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "-d", "10.0.0.1", "--dport", "80",
 				"-j", "DNAT", "--to-destination", tmp);
 		}
@@ -1607,3 +1608,49 @@ int mssid_mac_validate(const char *macaddr)
 	else
 		return 1;
 }
+
+int rand_seed_by_time(void)
+{
+	time_t atime;
+	static unsigned long rand_base = 0;
+
+	time(&atime);
+	srand(((unsigned long)atime + rand_base++) % ULONG_MAX);
+
+	return rand();
+}
+
+#if defined(RTCONFIG_QCA)
+char *get_wpa_supplicant_pidfile(const char *ifname, char *buf, int size)
+{
+	if(ifname == NULL || buf == NULL || size < 24)
+		return "/var/run/wifi-sta0.pid";
+
+	snprintf(buf, size, "/var/run/wifi-%s.pid", ifname);
+	return buf;
+}
+
+void kill_wifi_wpa_supplicant(int unit)
+{
+	int band, end;
+	char buf[32], *pidfile;
+
+	if (unit > MAX_NR_WL_IF)
+		return;
+	else if (unit < 0) {
+		band = 0;
+		end = MAX_NR_WL_IF;
+	}
+	else {
+		band = end = unit;
+	}
+	for(; band < end; band++) {
+		const char *ifname = get_staifname(band);
+		pidfile = get_wpa_supplicant_pidfile(ifname, buf, sizeof(buf));
+		kill_pidfile_tk(pidfile);
+		unlink(pidfile);
+		doSystem("ifconfig %s down", ifname);
+	}
+}
+#endif	/* RTCONFIG_QCA */
+

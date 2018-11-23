@@ -130,6 +130,19 @@ if(filter_HwVer)
 	fwVer = fwVer.slice(0, fwVer.indexOf("HwVer")-1);
 
 var dsl_type = "<% nvram_get("dsllog_adsltype"); %>".replace("_", " ");
+var status_isVDSLmode = "<% nvram_get("dsllog_xdslmode"); %>";
+if(status_isVDSLmode == "VDSL"){
+	dsl_type = dsl_type.replace("ANNEX ", "");
+}
+
+function display_basic_dsl_information(){
+	if(status_isVDSLmode == "VDSL")	{
+		document.getElementById("th_AdslType").innerHTML = "<#dslsetting_disc2_vdsl#>";      /*untranslated*/
+	}
+	else {
+		document.getElementById("th_AdslType").innerHTML = "<#dslsetting_disc2#>";
+	}
+}
 	
 function showadslbootTime(){
 	if(adsl_timestamp_update != "" && sync_status_update == "up")
@@ -170,6 +183,7 @@ function initial()
 		document.getElementById("div_AdslState").innerHTML = "";
 		document.getElementById("router_icon").className = "router_logo";
 		document.getElementById("area_Opmode").style.display = "";
+		display_basic_dsl_information();
 		document.getElementById("area_AdslType").style.display = "";
 		document.getElementById("div_AdslType").innerHTML = "<p style=\"padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;\">"+dsl_type+"</p>";
 		document.getElementById("area_Uptime").style.display = "";
@@ -227,6 +241,9 @@ function update_log(){
 					document.getElementById("div_DataRateDown").innerHTML = log_DataRateDown;
 					document.getElementById("div_AdslState").innerHTML = "";
 					document.getElementById("div_Opmode").innerHTML = "<p style=\"padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;\">"+log_Opmode+"</p>";
+					if(status_isVDSLmode == "VDSL"){
+						log_AdslType = log_AdslType.replace("ANNEX ", "");
+					}
 					document.getElementById("div_AdslType").innerHTML = "<p style=\"padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;\">"+log_AdslType+"</p>";
 					document.getElementById("router_icon").className = "router_logo";
 					document.getElementById("area_Opmode").style.display = "";
@@ -256,7 +273,8 @@ function update_log(){
 					document.getElementById("area_Opmode").style.display = "none";
 					document.getElementById("area_AdslType").style.display = "none";
 					document.getElementById("area_Uptime").style.display = "none";
-				}	
+				}
+				display_basic_dsl_information();
 				setTimeout("update_log();", 3000);
 			}	
 	});		
@@ -330,27 +348,27 @@ function update_log(){
 								<tr>
 									<td>
 										<div id="area_Opmode">
-										<img style="margin-bottom:10px;" src="/images/New_ui/networkmap/linetwo2.png">										
+										<div style="margin-top:10px;" class="line_horizontal"></div>
 										<p class="formfonttitle_nwm" ><#dslsetting_disc1#></p>
 										<div id="div_Opmode" style="width:100%;">
 												<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;">
 												<% nvram_get("dsllog_opmode"); %>
 												</p>
 										</div>										
-										<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+										<div style="margin-top:37px;" class="line_horizontal"></div>
 										</div>
 									</td>		
 								</tr>
 								<tr>
 									<td>
 										<div id="area_AdslType">
-										<p class="formfonttitle_nwm" ><#dslsetting_disc2#></p>
+										<p class="formfonttitle_nwm" id="th_AdslType"><#dslsetting_disc2#></p>
 										<div id="div_AdslType">
 												<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;">
 												<% nvram_get("dsllog_adsltype"); %>
 												</p>
 										</div>
-										<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+										<div style="margin-top:37px;" class="line_horizontal"></div>
 										</div>
 									</td>		
 								</tr>	
@@ -363,7 +381,7 @@ function update_log(){
 												<span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#>
 												</p>
 										</div>
-										<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+										<div style="margin-top:5px;" class="line_horizontal"></div>
 										</div>
 									</td>		
 								</tr>

@@ -120,15 +120,6 @@ function QKfinish_load_body(){
 	}
 }
 
-function validate_ip(){
-	if(document.form.dsl_gateway.value == document.form.dsl_ipaddr.value){
-		alert("<#IPConnection_warning_WANIPEQUALGatewayIP#>");
-		return false;
-	}
-	return true;
-}
-
-
 function submitForm(){	
 	if(validForm()){
 		
@@ -153,79 +144,115 @@ function submitForm(){
 	
 }
 
-function validForm(){
-	// test if LAN IP is a private IP.
-	var A_class_start = inet_network("10.0.0.0");
-	var A_class_end = inet_network("10.255.255.255");
-	var B_class_start = inet_network("172.16.0.0");
-	var B_class_end = inet_network("172.31.255.255");
-	var C_class_start = inet_network("192.168.0.0");
-	var C_class_end = inet_network("192.168.255.255");
-	
-	var ip_obj = document.form.dsl_ipaddr;
-	var ip_num = inet_network(ip_obj.value);
-	var ip_class = "";	
-	
-	if(ip_num > A_class_start && ip_num < A_class_end)
-		ip_class = 'A';
-	else if(ip_num > B_class_start && ip_num < B_class_end)
-		ip_class = 'B';
-	else if(ip_num > C_class_start && ip_num < C_class_end)
-		ip_class = 'C';
-	else{
-		alert(ip_obj.value+" <#JS_validip#>");
-		ip_obj.value = "";
-		ip_obj.focus();
-		ip_obj.select();
-		return false;
-	}
-	
-	// test if netmask is valid.
-	var netmask_obj = document.form.dsl_netmask;
-	var netmask_num = inet_network(netmask_obj.value);
-	var netmask_reverse_num = ~netmask_num;
-	var default_netmask = "";
-	var wrong_netmask = 0;
+// test if WAN IP & Gateway & DNS IP is a valid IP
+// DNS IP allows to input nothing
+function valid_IP(obj_name, obj_flag){
+		// A : 1.0.0.0~126.255.255.255
+		// B : 127.0.0.0~127.255.255.255 (forbidden)
+		// C : 128.0.0.0~255.255.255.254
+		var A_class_start = inet_network("1.0.0.0");
+		var A_class_end = inet_network("126.255.255.255");
+		var B_class_start = inet_network("127.0.0.0");
+		var B_class_end = inet_network("127.255.255.255");
+		var C_class_start = inet_network("128.0.0.0");
+		var C_class_end = inet_network("255.255.255.255");
+        
+		var ip_obj = obj_name;
+		var ip_num = inet_network(ip_obj.value);
 
-	if(netmask_num < 0) wrong_netmask = 1;	
-
-	if(ip_class == 'A')
-		default_netmask = "255.0.0.0";
-	else if(ip_class == 'B')
-		default_netmask = "255.255.0.0";
-	else
-		default_netmask = "255.255.255.0";
-	
-	var test_num = netmask_reverse_num;
-	while(test_num != 0){
-		if((test_num+1)%2 == 0)
-			test_num = (test_num+1)/2-1;
-		else{
-			wrong_netmask = 1;
-			break;
+		if(obj_flag == "DNS" && ip_num == -1){ //DNS allows to input nothing
+			return true;
 		}
-	}
-	if(wrong_netmask == 1){
-		alert(netmask_obj.value+" <#JS_validip#>");
-		netmask_obj.value = default_netmask;
-		netmask_obj.focus();
-		netmask_obj.select();
-		return false;
-	}
-	
-	if(!validate_ip())
+        
+		if(obj_flag == "GW" && ip_num == -1){ //GW allows to input nothing
+			return true;
+		}
+        
+		if(ip_num > A_class_start && ip_num < A_class_end)
+			return true;
+		else if(ip_num > B_class_start && ip_num < B_class_end){
+			alert(ip_obj.value+" <#JS_validip#>");
+			ip_obj.focus();
+			ip_obj.select();
 			return false;
-	
-	var subnet_head = getSubnet(ip_obj.value, netmask_obj.value, "head");
-	var subnet_end = getSubnet(ip_obj.value, netmask_obj.value, "end");
-	
-	if(ip_num == subnet_head || ip_num == subnet_end){
-		alert(ip_obj.value+" <#JS_validip#>");
-		ip_obj.value = "";
-		ip_obj.focus();
-		ip_obj.select();
+		}
+		else if(ip_num > C_class_start && ip_num < C_class_end)
+			return true;
+		else{
+			alert(ip_obj.value+" <#JS_validip#>");
+			ip_obj.focus();
+			ip_obj.select();
+			return false;
+		}
+}
+
+function validate_ip(){
+
+		if(!valid_IP(document.form.dsl_ipaddr, "")) return false;  //WAN IP
+		if(!valid_IP(document.form.dsl_gateway, "GW"))return false;  //Gateway IP
+
+		if(document.form.dsl_gateway.value == document.form.dsl_ipaddr.value){
+			alert("<#IPConnection_warning_WANIPEQUALGatewayIP#>");
+			document.form.dsl_ipaddr.focus();
+			document.form.dsl_ipaddr.select();            
+			return false;
+		}
+
+		var default_netmask = "";
+		var wrong_netmask = 0;
+		var netmask_obj = document.form.dsl_netmask;
+		var netmask_num = inet_network(netmask_obj.value);
+
+		if(netmask_num==0){
+			var netmask_reverse_num = 0;        //Viz 2011.07 : Let netmask 0.0.0.0 pass
+		}
+		else{
+			var netmask_reverse_num = ~netmask_num;
+		}
+        
+		if(netmask_num < 0) wrong_netmask = 1;
+
+		var test_num = netmask_reverse_num;
+		while(test_num != 0){
+			if((test_num+1)%2 == 0)
+				test_num = (test_num+1)/2-1;
+			else{
+				wrong_netmask = 1;
+				break;
+			}
+		}
+        
+		if(wrong_netmask == 1){
+			alert(netmask_obj.value+" <#JS_validip#>");
+			netmask_obj.value = default_netmask;
+			netmask_obj.focus();
+			netmask_obj.select();
+			return false;
+		}// end netmask check
+    
+    return true;
+}
+
+function validate_dns(){
+	if(document.form.dsl_dns1_x.value.length > 0
+	&& !validator.ipAddrFinalQIS(document.form.dsl_dns1_x, "wan_dns1_x")){
 		return false;
 	}
+	else if(document.form.dsl_dns2_x.value.length > 0
+	&& !validator.ipAddrFinalQIS(document.form.dsl_dns2_x, "wan_dns2_x")){
+		return false;
+	}
+
+    return true;
+}
+
+function validForm(){
+	if(!validate_ip()){
+        return false;
+    }
+	if(!validate_dns()){
+        return false;
+    }
 	return true;
 }
 
@@ -235,7 +262,7 @@ function gotoHome() {
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
-		parent.location.href = "<% abs_index_page(); %>";
+		parent.location.href = "/";
 	}
 }
 
@@ -284,7 +311,7 @@ function gotoHome() {
 			</td>
 		</tr>
 	</table>		
-	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img style="width: 700px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+	<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><div style="width: 700px;height: 2px;" class="splitLine"></div></div>
 	<br/>
 
 <table id="tblsetting_1" class="QISform" width="400" border=0 align="center" cellpadding="5" cellspacing="0">
@@ -370,11 +397,8 @@ function gotoHome() {
 <div class="test_css" style="margin-top:20px;margin-left:20px;">Note:  If you are not sure about the IP/DNS address setting, then please contact with your ISP.</div>
 
 	<div class="apply_gen" style="margin-top:30px">
-		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" tabindex="7" onclick="gotoprev(document.form);" class="button_gen_long" >
-<!--
-		<input type="button" id="nextButton" value="Ethernet WAN" onclick="redirect_page('internet_type');" class="button_gen" >
--->
-		<input type="button" id="nextButton" value="<#CTL_next#>" tabindex="6" onclick="submitForm();" class="button_gen_long">
+		<input type="button" id="prevButton" value="<#Manual_Setting_btn#>" tabindex="7" onclick="gotoprev(document.form);" class="button_gen" >
+		<input type="button" id="nextButton" value="<#CTL_next#>" tabindex="6" onclick="submitForm();" class="button_gen">
 	</div>
 
 </div>

@@ -27,12 +27,9 @@
 }
 
 #notiDiv_table5{
-	behavior: url(/PIE.htc);
-	-webkit-border-bottom-right-radius: 5px;
-	-webkit-border-bottom-left-radius: 5px;
-	-moz-border-radius-bottomright: 5px;
-	-moz-border-radius-bottomleft: 5px;
-	border-radius: 5px 5px 5px 5px ;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
 	margin:3px 0px 0px 3px ;
 	behavior: url(/PIE.htc);
 }

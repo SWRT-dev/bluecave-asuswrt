@@ -60,31 +60,31 @@ body{
 		display:table-cell;
 		width:250px;
 		color:#007AFE;
-		text-align:right;		
+		text-align:right;
 	}
 
 	.wireless_field{
 		display:table-cell;
 		width:550px;
 	}
-	
+
 	.wireless_field_5g{
 		padding-left:30px;
 	}
-	
+
 	.footer_mobile{
 		display:none;
 	}
-	
+
 	.footer_desktop{
 		display:block;
 		margin-top:-60px;
 	}
-	
+
 	#wireless_2g_field{
 		border-bottom:0px solid #DBDBDB;
 	}
-	
+
 	.desktop_sort{
 		display:table-cell;
 		width:300px;
@@ -103,7 +103,7 @@ body{
 		-webkit-animation: led_animation 4s infinite linear;
 		-moz-animation: led_animation 4s infinite linear;
 		-o-animation: led_animation 4s infinite linear;
-		animation: led_animation 4s infinite linear;				
+		animation: led_animation 4s infinite linear;
 }
 @keyframes led_animation {
 	0% {
@@ -126,12 +126,12 @@ body{
 	}
 	80% {
 		background:url('images/qis/LED07-05.png') no-repeat;
-	}	
+	}
 	90% {
 		background:url('images/qis/LED08-05.png') no-repeat;
 	}
 	100% {
-		background:url('images/qis/LED08-05.png') no-repeat;	
+		background:url('images/qis/LED08-05.png') no-repeat;
 	}
 }
 .preload_image{
@@ -223,44 +223,28 @@ var band5g_support = (rc_support.search("5G") == -1) ? false : true;
 var Rawifi_support = (rc_support.search("rawifi") == -1) ? false : true;
 var Qcawifi_support = (rc_support.search("qcawifi") == -1) ? false : true;
 var isDefault = ('<% nvram_get("x_Setting"); %>' == 0) ? true : false;
+var utf8_ssid_support =  (rc_support.search("utf8_ssid") == -1) ? false : true;
 var accounts = [<% get_all_accounts(); %>][0];
 for(var i=0; i<accounts.length; i++){
-	accounts[i] = decodeURIComponent(accounts[i]);	
+	accounts[i] = decodeURIComponent(accounts[i]);
 }
 if(accounts.length == 0)
 	accounts = ['<% nvram_get("http_username"); %>'];
-	
+
 /*Navigation Pane;*/
 var panel = '<div id="navigation" data-role="panel" data-display="overlay" data-theme="b" class="navigation" style="width:520px;opacity:0.96;"><div class="ui-panel-inner" style="padding:0"><ul>';
 	panel += '<div class="icon_menu_expand" style="width:43px;height:32px;display:inline-block"></div>';
 	panel += '<div class="icon_logo" style="height:38px;width:126px;display:inline-block;margin-left:20px;"></div>';
-	/*panel += '<div style="margin-top:10px;"><table style="width:100%;"><tr><td><div class="icon_language" style="width:29px;height:32px;display:inline-block"></div></td>';
-	panel += '<td><div style="width:200px;display:inline-block;margin-left:10px"><select onchange=submit_language(this.value)>';
-	panel += '<option value="EN">English</option>';
-	panel += '<option value="TW">繁體中文</option>';
-	panel += '<option value="CN">简体中文</option>';
-	panel += '<option value="CZ">Česky</option>';
-	panel += '<option value="PL">Polski</option>';
-	panel += '<option value="RU">Pусский</option>';
-	panel += '<option value="DE">Deutsch</option>';
-	panel += '<option value="FI">Suomi</option>';
-	panel += '<option value="FR">Français</option>';
-	panel += '<option value="TR">Türkçe</option>';
-	panel += '<option value="TH">ไทย</option>';
-	panel += '<option value="MS">Malay</option>';
-	panel += '<option value="JP">日本語</option>';
-	panel += '</select></div></td></tr></table></div>';*/
-	panel += '<div style="font-family:HelveticaNeue-Medium,Arial;font-weight:bold;font-size:1.375em;color:#A8CBF4;line-height:20px;padding:20px 0 19px 0;border-bottom:1px solid #4C545E;">OPERATION MODE</div>';
-	panel += '<div id="nav_rp" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'RP\')">REPEATER</div>';
-	panel += '<div id="nav_ap" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'AP\')">ACCESS POINT(AP)</div>';
-	panel += '<div id="nav_mb" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'MB\')">MEDIA BRIDGE(CLIENT)</div>';
-	panel += '<div id="nav_express_5g" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'express_5g\')">Express Way<br>(Router to repeater use 5GHz only, repeater to client use 2.4GHz only)</div>';
-	panel += '<div id="nav_express_2g" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'express_2g\')">Express Way<br>(Router to repeater use 2.4GHz only, repeater to client use 5GHz only)</div>';	
-	panel += '<div style="font-family:HelveticaNeue-Medium,Arial;font-weight:bold;font-size:1.375em;color:#A8CBF4;line-height:20px;padding:20px 0 19px 0;border-bottom:1px solid #4C545E;margin-top:14px;">Other Item</div>';
-	//panel += '<div id="nav_info" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer">About</div>';
+	panel += '<div style="font-family:HelveticaNeue-Medium,Arial;font-weight:bold;font-size:1.375em;color:#A8CBF4;line-height:20px;padding:20px 0 19px 0;border-bottom:1px solid #4C545E;"><#menu5_6_1#></div>';
+	panel += '<div id="nav_rp" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'RP\')"><#OP_RE_item#></div>';
+	panel += '<div id="nav_ap" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'AP\')"><#OP_AP_item#></div>';
+	panel += '<div id="nav_mb" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'MB\')"><#OP_MB_item#></div>';
+	panel += '<div id="nav_express_5g" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'express_5g\')"><#OP_RE5G_item#><br>(<#QIS_RP_desc11#>)</div>';
+	panel += '<div id="nav_express_2g" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="operation_mode_switch(\'express_2g\')"><#OP_RE2G_item#><br>(<#QIS_RP_desc12#>)</div>';
+	panel += '<div style="font-family:HelveticaNeue-Medium,Arial;font-weight:bold;font-size:1.375em;color:#A8CBF4;line-height:20px;padding:20px 0 19px 0;border-bottom:1px solid #4C545E;margin-top:14px;"><#menu5_4_3#></div>';
 	if(!isDefault)
-		panel += '<div id="nav_back" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="back_to_home();">Skip Setup Wizard</div>';
-	panel += '<div><label for="upload_setting_profile" style="width:212px;height:62px;background-color:#DC6263;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.625em;color:#FFF;border-radius:4px;text-align:center;line-height:62px;margin:28px 0 14px 0;">Upload</label></div>';
+		panel += '<div id="nav_back" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;line-height:28px;padding:26px 10px;border-bottom:1px solid #4C545E;cursor:pointer" onclick="back_to_home();"><#CTL_Setting#></div>';
+	panel += '<div><label for="upload_setting_profile" style="width:212px;height:62px;background-color:#DC6263;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.625em;color:#FFF;border-radius:4px;text-align:center;line-height:62px;margin:28px 0 14px 0;"><#CTL_upload#></label></div>';
 	panel += '</ul></div>';
 
 $(document).one('pagebeforecreate', function () {
@@ -299,7 +283,7 @@ var isOriginSwMode = function(mode){
 
 	if(sw_mode == '2' && wlc_psta == '0' && wlc_express == '0'){	// Repeater
 		ui_sw_mode = "re";
-	} 
+	}
 	else if((sw_mode == '3' && wlc_psta == '0' && wlc_express == '0') || (sw_mode == '3' && wlc_psta == '' && wlc_express == '0' )){	// Access Point
 		ui_sw_mode = "ap";
 	}
@@ -313,7 +297,7 @@ var isOriginSwMode = function(mode){
 		ui_sw_mode = "ew5";
 	}
 	else if(sw_mode == '5' && wlc_psta == '0' && wlc_express == '0'){	// Hotspot
-		ui_sw_mode = 'hs'; 
+		ui_sw_mode = 'hs';
 	}
 	else ui_sw_mode = "rt"; // Router
 
@@ -332,66 +316,66 @@ $(document).ready(function(){
 		document.form.sw_mode.value = "3";
 		document.form.wlc_express.value = "0";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Access Point";
+		document.getElementById("welcome_button").innerHTML = "<#OP_AP_item#>";
 	}
 	else if(qis_flag == "sitesurvey_exp2"){
 		sw_mode = "2";
 		document.form.sw_mode.value = "2";
 		document.form.wlc_express.value = "1";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Express Way";
+		document.getElementById("welcome_button").innerHTML = "<#OP_RE2G_item#>";
 	}
 	else if(qis_flag == "sitesurvey_exp5"){
 		sw_mode = "2";
 		document.form.sw_mode.value = "2";
 		document.form.wlc_express.value = "2";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Express Way";
+		document.getElementById("welcome_button").innerHTML = "<#OP_RE5G_item#>";
 	}
 	else if(qis_flag == "sitesurvey_rep"){
 		sw_mode = "2";
 		document.form.sw_mode.value = "2";
 		document.form.wlc_express.value = "0";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Repeater";
+		document.getElementById("welcome_button").innerHTML = "<#OP_RE_item#>";
 	}
 	else if(qis_flag == "sitesurvey_mb"){
 		sw_mode = "4";
 
 		if(Rawifi_support || Qcawifi_support)
 			document.form.sw_mode.value = "2";
-		else	
+		else
 			document.form.sw_mode.value = "3";
-			
+
 		document.form.wlc_express.value = "0";
 		document.form.wlc_psta.value = "1";
-		document.getElementById("welcome_button").innerHTML = "Start Media Bridge";
+		document.getElementById("welcome_button").innerHTML = "<#OP_MB_item#>";
 	}
 	else{
 		if(isOriginSwMode("ap")){
-			document.getElementById("welcome_button").innerHTML = "Start Access Point";
+			document.getElementById("welcome_button").innerHTML = "<#OP_AP_item#>";
 		}
 		else if(isOriginSwMode("ew2")){
-			document.getElementById("welcome_button").innerHTML = "Start Express Way";
+			document.getElementById("welcome_button").innerHTML = "<#OP_RE2G_item#>";
 		}
 		else if(isOriginSwMode("ew5")){
-			document.getElementById("welcome_button").innerHTML = "Start Express Way";
+			document.getElementById("welcome_button").innerHTML = "<#OP_RE5G_item#>";
 		}
 		else if(isOriginSwMode("mb")){
-			document.getElementById("welcome_button").innerHTML = "Start Media Bridge";
-		}	
+			document.getElementById("welcome_button").innerHTML = "<#OP_MB_item#>";
+		}
 		else{
-			document.getElementById("welcome_button").innerHTML = "Start Repeater";
+			document.getElementById("welcome_button").innerHTML = "<#OP_RE_item#>";
 		}
 	}
-	 
+
 	$("#loading_container").hide();
 	if (!band5g_support){
 		$('#pap_manual_band_option').prop('disabled', true);
 		$("#wireless_5g_field").hide();
 		$("#summary_5g_field").hide();
 	}
-	
+
 	$("#model_welcome").html(document.form.productid.value);
 	$("#model_welcome_field").html(document.form.productid.value);
 	$("#model_pap_list").html(document.form.productid.value);
@@ -475,7 +459,7 @@ $(document).ready(function(){
 				}
 				else{
 					wireless_apply();
-				}				
+				}
 			}
 		}
 	});
@@ -536,7 +520,7 @@ function navigation_opmode_style(flag){
 	if(sw_mode == "2"){		//Repeater
 		if(flag != "initial")
 			rescan("switch");
-		
+
 		if(document.form.wlc_express.value == "1"){		//Express: parent 2.4 GHz, client 5 GHz
 			document.getElementById("nav_rp").style.color = "#FFF";
 			document.getElementById("nav_express_2g").style.color = "#007AFF";
@@ -577,11 +561,11 @@ function navigation_opmode_style(flag){
 		$("#wifiPrevious").show();
 		$("#sync_pap_container").show();
 		$("#loading_container").hide();
-		$("#welcome_main_field").show();		
+		$("#welcome_main_field").show();
 	}
 	else if(sw_mode == "4"){ // Media Bridge
 		if(flag != "initial") rescan("switch");
-		
+
 		document.getElementById("nav_rp").style.color = "#FFF";
 		document.getElementById("nav_express_2g").style.color = "#FFF";
 		document.getElementById("nav_express_5g").style.color = "#FFF";
@@ -613,7 +597,7 @@ function navigation_opmode_style(flag){
 			$('#wireless_2g_ssid').val(decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_ssid"); %>'));
 			$('#wireless_2g_key').val(decodeURIComponent('<% nvram_char_to_ascii("", "wl0.1_wpa_psk"); %>'));
 			$('#wireless_5g_ssid').val(decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_ssid"); %>'));
-			$('#wireless_5g_key').val(decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>'));	
+			$('#wireless_5g_key').val(decodeURIComponent('<% nvram_char_to_ascii("", "wl1.1_wpa_psk"); %>'));
 		}
 		else{
 			$('#wireless_2g_ssid').val(decodeURIComponent('<% nvram_char_to_ascii("", "wl0_ssid"); %>'));
@@ -645,15 +629,15 @@ function update_site_info(e) { //Use AJAX to get real-time AP status from aplist
 			setTimeout("update_site_info();",1000);
 		},
 		success: function(response){
-			if(wlc_scan_state != 3 || aplist[0].length != 9){
+			if(wlc_scan_state != 5 || (aplist[0].length != 9 && aplist[0].length != 10)){
 				setTimeout("update_site_info();", 2000);
-			}else{			
+			}else{
 				if(sw_mode == "3" && document.form.wlc_psta.value == "0")
 					return false;
 
 				var aplist_array = [[]];
 				for(i=0;i<aplist.length;i++){
-					aplist_array[i] = new Array(9);			
+					aplist_array[i] = new Array(9);
 					aplist_array[i][0] = aplist[i][0];
 					aplist_array[i][1] = aplist[i][1];
 					aplist_array[i][2] = aplist[i][2];
@@ -664,19 +648,19 @@ function update_site_info(e) { //Use AJAX to get real-time AP status from aplist
 					aplist_array[i][7] = aplist[i][7];
 					aplist_array[i][8] = aplist[i][8];
 				}
-				
+
 				aplist_info = aplist_array.sort(function(a,b){
 					var a_tmp = parseInt(a[5]);	//compare signal strength
 					var b_tmp = parseInt(b[5]);
-						
+
 					if(a_tmp > b_tmp)
 						return -1;
 					else if(a_tmp < b_tmp)
 						return 1;
 					else
-						return 0;					
+						return 0;
 				});
-				
+
 				arrange_ap();
 				if(document.form.wlc_express.value == "1"){		//Express Way: Parent 5 GHz, Client 2.4 GHz
 					gen_aplist_table("5G");
@@ -687,7 +671,7 @@ function update_site_info(e) { //Use AJAX to get real-time AP status from aplist
 				else{
 					gen_aplist_table();
 				}
-				
+
 				scan_flag = 1;
 			}
 		}
@@ -697,7 +681,7 @@ function update_site_info(e) { //Use AJAX to get real-time AP status from aplist
 function login_next(){
 	if(validForm()){
 		if(document.form.sw_mode.value == "3" && document.form.wlc_express.value == "0" && document.form.wlc_psta.value == "0"){
-			$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false});		
+			$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false});
 		}
 		else{
 			if(scan_flag == 1){
@@ -705,10 +689,10 @@ function login_next(){
 			}
 			else{
 				show_progress();
-				$("#login_desc").html("Search for available Wi-Fi networks around ASUS repeater");
+				$("#login_desc").html("<#APSurvey_action_searching_AP#>");
 				$("#loading_container").show();
-				$("#login_field").hide();	
-				$("#login_title").hide();	
+				$("#login_field").hide();
+				$("#login_title").hide();
 				setTimeout(wait_ap_scan, 1000);
 			}
 		}
@@ -764,98 +748,98 @@ function gen_aplist_table(band){
 		if(parent_ap[aplist_info[i][6]].band ==  band){
 			continue;
 		}
-		
+
 		if(parent_ap[aplist_info[i][6]].SSID == "" || parent_ap[aplist_info[i][6]].SSID == " "){
 			continue;
-		}	
-		
+		}
+
 		if(parent_ap[aplist_info[i][6]].connected == "2"){
 			code_connected += '<div id="' + aplist_info[i][6] + '" style="border-bottom:1px solid #43474B;padding:29px 0;display:table;width:100%">';
 			code_connected += '<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;color:#DBDBDB">';
 			code_connected += '<div style="display:table-cell;width:38px;">';
 			if(parent_ap[aplist_info[i][6]].encryption == "NONE")
 				code_connected += '<div class="icon_wifi_' + parent_ap[aplist_info[i][6]].signal_level + '" style="width:41px;height:32px;"></div>';
-			else	
+			else
 				code_connected += '<div class="icon_wifi_' + parent_ap[aplist_info[i][6]].signal_level + '_lock" style="width:38px;height:32px;"></div>';
-		
+
 			code_connected += '</div>';
 			code_connected += '<div style="display:table-cell;width:100%;padding-left:12px;color:#007AFE">' + parent_ap[aplist_info[i][6]].SSID + '</div>';
-			code_connected += '<div style="display:table-cell;vertical-align:middle;width:62px;padding-right:28px;">';	
+			code_connected += '<div style="display:table-cell;vertical-align:middle;width:62px;padding-right:28px;">';
 			if(parent_ap[aplist_info[i][6]].band == "2G")
-				code_connected += '<div class="icon_tab_2g" style="width:79px;height:32px;"></div>';		
+				code_connected += '<div class="icon_tab_2g" style="width:79px;height:32px;"></div>';
 			else
 				code_connected += '<div class="icon_tab_5g" style="width:79px;height:32px;"></div>';
-			
+
 			code_connected += '</div>';
-			code_connected += '<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">';	
+			code_connected += '<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">';
 			code_connected += '<div class="icon_arrow_right" style="width:20px;height:32px;"></div>';
 			code_connected += '</div>';
 			code_connected += '</div>';
 			code_connected += '</div>';
 			continue;
 		}
-		
+
 		if(wl0_checked == "1" && wl1_checked == ""){
 			prefix_ssid = document.form.wlc0_ssid.value.substring(0, document.form.wlc0_ssid.value.length-3);
 		}
 		else if(wl1_checked == "1" && wl0_checked == ""){
 			prefix_ssid = document.form.wlc1_ssid.value.substring(0,document.form.wlc1_ssid.value.length-3);
 		}
-		
+
 		if(parent_ap[aplist_info[i][6]].SSID.indexOf(prefix_ssid) != -1){
 			code_similar += '<div id="' + aplist_info[i][6] + '" style="border-bottom:1px solid #43474B;padding:29px 0;display:table;width:100%">';
 			code_similar += '<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;color:#DBDBDB">';
 			code_similar += '<div style="display:table-cell;width:38px;">';
 			if(parent_ap[aplist_info[i][6]].encryption == "NONE")
 				code_similar += '<div class="icon_wifi_' + parent_ap[aplist_info[i][6]].signal_level + '" style="width:41px;height:32px;"></div>';
-			else	
+			else
 				code_similar += '<div class="icon_wifi_' + parent_ap[aplist_info[i][6]].signal_level + '_lock" style="width:38px;height:32px;"></div>';
-		
+
 			code_similar += '</div>';
 			code_similar += '<div style="display:table-cell;width:100%;padding-left:12px;">' + parent_ap[aplist_info[i][6]].SSID + '</div>';
-			code_similar += '<div style="display:table-cell;vertical-align:middle;width:62px;padding-right:28px;">';	
+			code_similar += '<div style="display:table-cell;vertical-align:middle;width:62px;padding-right:28px;">';
 			if(parent_ap[aplist_info[i][6]].band == "2G")
-				code_similar += '<div class="icon_tab_2g" style="width:79px;height:32px;"></div>';		
+				code_similar += '<div class="icon_tab_2g" style="width:79px;height:32px;"></div>';
 			else
 				code_similar += '<div class="icon_tab_5g" style="width:79px;height:32px;"></div>';
-			
+
 			code_similar += '</div>';
-			code_similar += '<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">';	
+			code_similar += '<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">';
 			code_similar += '<div class="icon_arrow_right" style="width:20px;height:32px;"></div>';
 			code_similar += '</div>';
 			code_similar += '</div>';
 			code_similar += '</div>';
-	
+
 			continue;
 		}
-		
+
 		code += '<div id="' + aplist_info[i][6] + '" style="border-bottom:1px solid #43474B;padding:29px 0;display:table;width:100%">';
 		code += '<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;color:#DBDBDB">';
 		code += '<div style="display:table-cell;width:38px;">';
 		if(parent_ap[aplist_info[i][6]].encryption == "NONE")
 			code += '<div class="icon_wifi_' + parent_ap[aplist_info[i][6]].signal_level + '" style="width:41px;height:32px;"></div>';
-		else	
+		else
 			code += '<div class="icon_wifi_' + parent_ap[aplist_info[i][6]].signal_level + '_lock" style="width:38px;height:32px;"></div>';
-	
+
 		code += '</div>';
 		code += '<div style="display:table-cell;width:100%;padding-left:12px;">' + parent_ap[aplist_info[i][6]].SSID + '</div>';
-		code += '<div style="display:table-cell;vertical-align:middle;width:62px;padding-right:28px;">';	
+		code += '<div style="display:table-cell;vertical-align:middle;width:62px;padding-right:28px;">';
 		if(parent_ap[aplist_info[i][6]].band == "2G")
-			code += '<div class="icon_tab_2g" style="width:79px;height:32px;"></div>';		
+			code += '<div class="icon_tab_2g" style="width:79px;height:32px;"></div>';
 		else
 			code += '<div class="icon_tab_5g" style="width:79px;height:32px;"></div>';
-		
+
 		code += '</div>';
-		code += '<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">';	
+		code += '<div style="display:table-cell;vertical-align:middle;width:30px;text-align:right;padding-right:28px;">';
 		code += '<div class="icon_arrow_right" style="width:20px;height:32px;"></div>';
 		code += '</div>';
 		code += '</div>';
 		code += '</div>';
 	}
-	
+
 
 	if(aplist_info == ""){
-		code = '<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;">Cannot detect Wi-Fi signal. Rescan Wi-Fi or add the Wi-Fi network manually.</div>';
+		code = '<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;"><#APSurvey_action_searching_noresult#></div>';
 	}
 
 	code = code_connected + code_similar + code;
@@ -876,7 +860,7 @@ function register_apList_event(){
 			$("#auth_type").html(parent_ap[this.id].encryption);
 		else
 			$("#auth_type").html(parent_ap[this.id].authentication);
-			
+
 		if(parent_ap[this.id].authentication == "Open System"){
 			document.getElementById("pap_key_field").style.display = "none";
 			document.getElementById("parentAP_key").disabled = true;
@@ -885,14 +869,14 @@ function register_apList_event(){
 			document.getElementById("pap_key_field").style.display = "";
 			document.getElementById("parentAP_key").disabled = false;
 		}
-		
+
 		if(parent_ap[this.id].band == "2G"){
 			select_band_temp = "2g";
 			if(primary_pap == "")
 				primary_pap = "2G";
-				
+
 			document.form.wlc0_ssid.value = htmlEnDeCode.htmlDecode(parent_ap[this.id].SSID);
-			if(parent_ap[this.id].encryption == "NONE"){				
+			if(parent_ap[this.id].encryption == "NONE"){
 				document.form.wlc0_auth_mode.value = "open";
 				document.form.wlc0_crypto.value = "";
 				document.form.wlc0_wep.value = "0";
@@ -903,22 +887,22 @@ function register_apList_event(){
 			}
 			else if(parent_ap[this.id].encryption == "TKIP"){
 				document.form.wlc0_auth_mode.value = "psk";
-				document.form.wlc0_crypto.value = "tkip";			
+				document.form.wlc0_crypto.value = "tkip";
 			}
 			else if(parent_ap[this.id].authentication == "WPA-Personal" && parent_ap[this.id].encryption == "AES"){		//compatible with others competitors
 				document.form.wlc0_auth_mode.value = "psk";
 				document.form.wlc0_crypto.value = "aes";
-			}			
+			}
 			else{
 				document.form.wlc0_auth_mode.value = "psk2";
 				document.form.wlc0_crypto.value = "aes";
 			}
-		}	
+		}
 		else{
 			select_band_temp = "5g";
 			if(primary_pap == "")
 				primary_pap = "5G";
-	
+
 			document.form.wlc1_ssid.value = htmlEnDeCode.htmlDecode(parent_ap[this.id].SSID);
 			if(parent_ap[this.id].encryption == "NONE"){
 				document.form.wlc1_auth_mode.value = "open";
@@ -940,8 +924,8 @@ function register_apList_event(){
 				document.form.wlc1_auth_mode.value = "psk2";
 				document.form.wlc1_crypto.value = "aes";
 			}
-		}	
-		
+		}
+
 		$.mobile.changePage("#pap_input", {transition: "slide", changeHash: false});
 	});
 }
@@ -959,27 +943,27 @@ function show_sort_field(){
 
 function sort_ap(kind, sequence){
 	var array_tmp = new Array();
-	array_tmp = aplist_info.sort(function(a,b){				
+	array_tmp = aplist_info.sort(function(a,b){
 		if(kind == "signal"){
 			var a_tmp = parseInt(a[5]);	//compare signal strength
 			var b_tmp = parseInt(b[5]);
 		}
 		else if(kind == "alpha"){
 			var a_tmp = a[1].toUpperCase();	//compare SSID
-			var b_tmp = b[1].toUpperCase();	
+			var b_tmp = b[1].toUpperCase();
 		}
 		else{
 			var a_tmp = a[0];	//compare band
-			var b_tmp = b[0];	
+			var b_tmp = b[0];
 		}
-								
+
 		if(sequence == "top"){
 			if(a_tmp > b_tmp)
 				return -1;
 			else if(a_tmp < b_tmp)
 				return 1;
 			else
-				return 0;	
+				return 0;
 		}
 		else{
 			if(a_tmp > b_tmp)
@@ -987,7 +971,7 @@ function sort_ap(kind, sequence){
 			else if(a_tmp < b_tmp)
 				return -1;
 			else
-				return 0;				
+				return 0;
 		}
 	});
 
@@ -998,28 +982,28 @@ function sort_ap(kind, sequence){
 		gen_aplist_table("5G");
 	else
 		gen_aplist_table();
-	
+
 	show_sort_field();
 	scrollTop();
 }
 
 function ip_advance_setting(obj){
-	if(obj.value == "dhcp"){		
+	if(obj.value == "dhcp"){
 		document.getElementById("ip_advance_setting").style.display = "none";
 		document.getElementById("pap_ip_advance_setting_ipaddr").disabled = true;
 		document.getElementById("pap_ip_advance_setting_subnet").disabled = true;
 		document.getElementById("pap_ip_advance_setting_gateway").disabled = true;
 		document.getElementById("pap_ip_advance_setting_dns1").disabled = true;
 		document.getElementById("pap_ip_advance_setting_dns2").disabled = true;
-	}	
-	else{	
+	}
+	else{
 		document.getElementById("ip_advance_setting").style.display = "";
 		document.getElementById("pap_ip_advance_setting_ipaddr").disabled = false;
 		document.getElementById("pap_ip_advance_setting_subnet").disabled = false;
 		document.getElementById("pap_ip_advance_setting_gateway").disabled = false;
 		document.getElementById("pap_ip_advance_setting_dns1").disabled = false;
 		document.getElementById("pap_ip_advance_setting_dns2").disabled = false;
-	}	
+	}
 }
 
 function ip_advance_setting_show(obj){
@@ -1051,14 +1035,14 @@ function ip_advance_setting_show(obj){
 	else{
 		document.getElementById("wep_auth_mode_advance_setting_option").style.display = "none";
 		document.getElementById("wepkey_index_advance_setting_option").style.display = "none";
-		document.getElementById("ip_advance_setting_option").style.display = "none";	
+		document.getElementById("ip_advance_setting_option").style.display = "none";
 		document.getElementById("ip_advance_setting").style.display = "none";
 		document.getElementById("pap_ip_advance_setting_ipaddr").disabled = true;
 		document.getElementById("pap_ip_advance_setting_subnet").disabled = true;
 		document.getElementById("pap_ip_advance_setting_gateway").disabled = true;
 		document.getElementById("pap_ip_advance_setting_dns1").disabled = true;
 		document.getElementById("pap_ip_advance_setting_dns2").disabled = true;
-	}	
+	}
 }
 
 var wl0_checked = "";
@@ -1067,7 +1051,7 @@ var wl_last_checked = "";
 function pap_connect(){
 	if(currPap.encryption != "WEP"){
 		if(!document.getElementById("parentAP_key").disabled && !validator.psk(document.getElementById("parentAP_key"))) return false;
-	}	
+	}
 
 	select_band = select_band_temp;
 	if(select_band == "2g"){
@@ -1125,12 +1109,12 @@ function pap_connect(){
 		if(wl0_checked == "1"){
 			gen_aplist_table("2G");
 			document.getElementById("pap_list_title_2g_skip").style.display = "";
-		}	
+		}
 		else{
 			gen_aplist_table("5G");
 			document.getElementById("pap_list_title_5g_skip").style.display = "";
-		}	
-		
+		}
+
 		document.getElementById("pap_list_title").style.display = "none";
 		$.mobile.changePage("#pap_list", {transition: "slide", changeHash: false});
 	}
@@ -1172,7 +1156,7 @@ function pap_connect(){
 }
 
 var startQuery = function(){
-	$.ajax({ 
+	$.ajax({
 		url: "http://ec2-54-202-251-7.us-west-2.compute.amazonaws.com/find/internet_check.json",
 		dataType: 'jsonp',
 		timeout: 2000,
@@ -1235,7 +1219,7 @@ function use_pap_setting(obj){
 				document.getElementById('wireless_2g_ssid').value = document.form.wlc0_ssid.value;
 				document.getElementById('wireless_2g_key').value = document.form.wlc0_wpa_psk.value
 			}
-			
+
 			if(document.form.wlc1_ssid.value != ""){
 				document.getElementById('wireless_5g_ssid').value = document.form.wlc1_ssid.value;
 				document.getElementById('wireless_5g_key').value = document.form.wlc1_wpa_psk.value;
@@ -1258,13 +1242,13 @@ function use_pap_setting(obj){
 			if(document.form.wlc_express.value == "2"){
 				document.getElementById('wireless_5g_ssid').disabled = true;
 				document.getElementById('wireless_5g_key').disabled = true;
-				
+
 			}else{
 				document.getElementById('wireless_5g_ssid').disabled = false;
 				document.getElementById('wireless_5g_key').disabled = false;
 				if(document.form.wlc0_ssid.value != ""){
 					document.getElementById('wireless_5g_ssid').value = document.form.wlc1_ssid.value;
-					document.getElementById('wireless_5g_key').value = document.form.wlc1_wpa_psk.value;				
+					document.getElementById('wireless_5g_key').value = document.form.wlc1_wpa_psk.value;
 				}
 				else{
 					document.getElementById('wireless_5g_ssid').value = document.form.wlc1_ssid.value;
@@ -1286,7 +1270,7 @@ function use_pap_setting(obj){
 				document.getElementById('wireless_2g_ssid').value = document.form.wlc0_ssid.value.slice(0,28) + "_RPT";
 				document.getElementById('wireless_2g_key').value = document.form.wlc0_wpa_psk.value
 			}
-			
+
 			if(document.form.wlc1_ssid.value != ""){
 				document.getElementById('wireless_5g_ssid').value = document.form.wlc1_ssid.value.slice(0,28) + "_RPT";
 				document.getElementById('wireless_5g_key').value = document.form.wlc1_wpa_psk.value;
@@ -1309,13 +1293,13 @@ function use_pap_setting(obj){
 			if(document.form.wlc_express.value == "2"){
 				document.getElementById('wireless_5g_ssid').disabled = true;
 				document.getElementById('wireless_5g_key').disabled = true;
-				
+
 			}else{
 				document.getElementById('wireless_5g_ssid').disabled = false;
 				document.getElementById('wireless_5g_key').disabled = false;
 				if(document.form.wlc0_ssid.value != ""){
 					document.getElementById('wireless_5g_ssid').value = document.form.wlc1_ssid.value.slice(0,28) + "_RPT";
-					document.getElementById('wireless_5g_key').value = document.form.wlc1_wpa_psk.value;				
+					document.getElementById('wireless_5g_key').value = document.form.wlc1_wpa_psk.value;
 				}
 				else{
 					document.getElementById('wireless_5g_ssid').value = document.form.wlc1_ssid.value.slice(0,28) + "_RPT5G";
@@ -1345,7 +1329,7 @@ var check_common_string = function(pwd, flag){
 	var termCommon5 = ["123123","abc123","letmein","master","qazwsx","admin"];
 	var termCommon8 = ["adminpassword","loginpassword","passw0rd","password","useradmin","userpassword"];
 	var nSeqString = 0;
-	if(flag == "httpd_password"){	//at lease length 5		
+	if(flag == "httpd_password"){	//at lease length 5
 		if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
 		if(termNumerics.toLowerCase().indexOf(pwd) != -1 || termNumerics.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
 		if(termSymbols.toLowerCase().indexOf(pwd) != -1 || termSymbols.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
@@ -1353,11 +1337,11 @@ var check_common_string = function(pwd, flag){
 		if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
 		if(termKeyboards3.toLowerCase().indexOf(pwd) != -1 || termKeyboards3.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
 		for(var s=0;s<termCommon5.length;s++){
-			if(pwd == termCommon5[s])	{ nSeqString++; }	
+			if(pwd == termCommon5[s])	{ nSeqString++; }
 		}
 		for(var t=0;t<termCommon8.length;t++){
-			if(pwd == termCommon8[t])	{ nSeqString++; }	
-		}		
+			if(pwd == termCommon8[t])	{ nSeqString++; }
+		}
 	}
 	else if(flag == "wpa_key"){	//at lease length 8
 		if(termAlphas.toLowerCase().indexOf(pwd) != -1 || termAlphas.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
@@ -1366,16 +1350,16 @@ var check_common_string = function(pwd, flag){
 		if(termKeyboards1.toLowerCase().indexOf(pwd) != -1 || termKeyboards1.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
 		if(termKeyboards2.toLowerCase().indexOf(pwd) != -1 || termKeyboards2.strReverse().toLowerCase().indexOf(pwd) != -1) { nSeqString++; }
 		for(var s=0;s<termCommon8.length;s++){
-			if(pwd == termCommon8[s])	{ nSeqString++; }	
-		}		
+			if(pwd == termCommon8[s])	{ nSeqString++; }
+		}
 	}
-	
+
 	//pure repeat character string
 	if(pwd == pwd.charAt(0).repeat(pwd.length)) { nSeqString++; }
-	
+
 	if(nSeqString > 0)
 		return true;
-	else		
+	else
 		return false;
 }
 
@@ -1391,7 +1375,7 @@ function wireless_apply(){
 			return false;
 	}
 	else{
-		if(!validator.stringSSID(document.getElementById("wireless_2g_ssid")) || !validator.stringSSID(document.getElementById("wireless_5g_ssid"))) return false;	
+		if(!validator.stringSSID(document.getElementById("wireless_2g_ssid")) || !validator.stringSSID(document.getElementById("wireless_5g_ssid"))) return false;
 	}
 
 	document.form.wl0_ssid.value = $("#wireless_2g_ssid").val();
@@ -1402,14 +1386,14 @@ function wireless_apply(){
 	if(document.form.wl0_wpa_psk.value == ""){
 		if( !(document.form.sw_mode.value == "2" && document.form.wlc_express.value == "1" && document.form.wlc_psta.value == "0")){
 			if(is_KR_sku){
-				alert("<#JS_PSK64Hex_kr#> <#JS_validPWD#>");	
+				alert("<#JS_PSK64Hex_kr#> <#JS_validPWD#>");
 				document.getElementById("wireless_2g_key").focus();
 				return false;
 			}
 
 			if(!confirm("<#QIS_confirm_recommand_encryp#>")){
 				document.getElementById("wireless_2g_key").focus();
-				return false;			
+				return false;
 			}
 		}
 	}
@@ -1426,7 +1410,7 @@ function wireless_apply(){
 				return false;
 			}
 		}
-		
+
 		if(check_common_string(document.form.wl0_wpa_psk.value, "wpa_key")){
 			if(!confirm("<#JS_common_passwd#>")){
 				return false;
@@ -1437,14 +1421,14 @@ function wireless_apply(){
 	if(document.form.wl1_wpa_psk.value == ""){
 		if( !(document.form.sw_mode.value == "2" && document.form.wlc_express.value == "2" && document.form.wlc_psta.value == "0")){
 			if(is_KR_sku){
-				alert("<#JS_PSK64Hex_kr#> <#JS_validPWD#>");	
+				alert("<#JS_PSK64Hex_kr#> <#JS_validPWD#>");
 				document.getElementById("wireless_5g_key").focus();
 				return false;
 			}
 
 			if(!confirm("<#QIS_confirm_recommand_encryp#>")){
 				document.getElementById("wireless_5g_key").focus();
-				return false;			
+				return false;
 			}
 		}
 	}
@@ -1461,7 +1445,7 @@ function wireless_apply(){
 				return false;
 			}
 		}
-		
+
 		if(check_common_string(document.form.wl1_wpa_psk.value, "wpa_key")){
 			if(!confirm("<#JS_common_passwd#>")){
 				return false;
@@ -1477,16 +1461,16 @@ function wireless_apply(){
 		document.form.wl0_auth_mode_x.value = "psk2";
 		document.form.wl0_crypto.value = "aes";
 	}
-		
+
 	if(document.form.wl1_wpa_psk.value == ""){
 		document.form.wl1_auth_mode_x.value = "open";
 		document.form.wl1_crypto.value = "";
 	}
 	else{
 		document.form.wl1_auth_mode_x.value = "psk2";
-		document.form.wl1_crypto.value = "aes";	
-	}	
-	
+		document.form.wl1_crypto.value = "aes";
+	}
+
 	document.getElementById("summary_wl0_ssid").innerHTML = $("#wireless_2g_ssid").val();
 	document.getElementById("summary_wl0_key").innerHTML = ($("#wireless_2g_key").val() == "") ? "Open System" : $("#wireless_2g_key").val();
 	document.getElementById("summary_wl1_ssid").innerHTML = $("#wireless_5g_ssid").val();
@@ -1498,7 +1482,7 @@ function wireless_apply(){
 	else if(document.form.wlc_express.value == "1"){
 		document.getElementById("summary_2g_field").style.display = "none";
 	}
-	
+
 	if(document.form.sw_mode.value == "2"){
 		if(document.form.wlc_express.value == "2"){
 			document.form.wl0_ssid.name = "wl0.1_ssid";
@@ -1508,7 +1492,7 @@ function wireless_apply(){
 		else if(document.form.wlc_express.value == "1"){
 			document.form.wl1_ssid.name = "wl1.1_ssid";
 			document.form.wl1_wpa_psk.name = "wl1.1_wpa_psk";
-			document.form.wl1_auth_mode_x.name = "wl1.1_auth_mode_x";		
+			document.form.wl1_auth_mode_x.name = "wl1.1_auth_mode_x";
 		}
 		else{
 			document.form.wl0_ssid.name = "wl0.1_ssid";
@@ -1547,7 +1531,7 @@ function show_progress(){
 function start_welcome(){
 	if(!forceChangePW){
 		if(document.form.sw_mode.value == "3" && document.form.wlc_express.value == "0" && document.form.wlc_psta.value == "0"){
-			$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false});		
+			$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false});
 		}
 		else{
 			if(scan_flag == 1){
@@ -1555,7 +1539,7 @@ function start_welcome(){
 			}
 			else{
 				show_progress();
-				$("#login_desc").html("Search for available Wi-Fi networks around ASUS repeater");
+				$("#login_desc").html("<#APSurvey_action_searching_AP#>");
 				$("#loading_container").show();
 				$("#login_field").hide();
 				$("#login_title").hide();
@@ -1576,7 +1560,7 @@ function rescan(flag){
 		$.mobile.changePage("#welcome", {transition: "fade", changeHash: false});
 	}
 	else{
-		$("#login_desc").html("Search for available Wi-Fi networks around ASUS repeater");
+		$("#login_desc").html("<#APSurvey_action_searching_AP#>");
 		$("#loading_container").show();
 		$("#login_field").hide();
 		$("#login_title").hide();
@@ -1604,45 +1588,45 @@ function pap_manual_connect(){
 	var auth_mode = "";
 	var crypto = "aes";
 	var key = "";
-	if(document.getElementById("pap_manual_auth_option").value != "open"){		
+	if(document.getElementById("pap_manual_auth_option").value != "open"){
 		if(document.getElementById("pap_manual_auth_option").value == "psk"){
 			auth_mode = "psk";
 			crypto = "tkip";
-		}	
+		}
 		else{
-			auth_mode = "psk2";			
+			auth_mode = "psk2";
 			crypto = "aes";
-		}	
-		
+		}
+
 		key = document.getElementById("pap_manual_key").value;
 	}
 	else{
 		auth_mode = "open";
 		crypto = "";
-	}	
+	}
 
 	if(document.getElementById("pap_manual_band_option").value == "2g"){
 		wl0_checked = "1";
 		if(primary_pap == "")
 			primary_pap = "2G";
-			
+
 		document.form.wlc0_ssid.value = document.getElementById("pap_manual_ssid").value;
 		document.form.wlc0_auth_mode.value = auth_mode;
 		document.form.wlc0_crypto.value = crypto;
-		document.form.wlc0_wpa_psk.value = key;	
+		document.form.wlc0_wpa_psk.value = key;
 		document.form.wlc0_hide_pap.value = 1;
 	}
 	else{
 		wl1_checked = "1";
 		if(primary_pap == "")
 			primary_pap = "5G";
-			
+
 		document.form.wlc1_ssid.value = document.getElementById("pap_manual_ssid").value;
 		document.form.wlc1_auth_mode.value = auth_mode;
 		document.form.wlc1_crypto.value = crypto;
 		document.form.wlc1_wpa_psk.value = key;
 		document.form.wlc1_hide_pap.value = 1;
-	}	
+	}
 
 	document.getElementById("pap_manual_ssid").value = "";
 	document.getElementById("pap_manual_key").value = "";
@@ -1653,12 +1637,12 @@ function pap_manual_connect(){
 		if(wl0_checked == "1"){
 			gen_aplist_table("2G");
 			document.getElementById("pap_list_title_2g_skip").style.display = "";
-		}	
+		}
 		else{
 			gen_aplist_table("5G");
 			document.getElementById("pap_list_title_5g_skip").style.display = "";
-		}	
-		
+		}
+
 		document.getElementById("pap_list_title").style.display = "none";
 		$.mobile.changePage("#pap_list", {transition: "slide", changeHash: false});
 	}
@@ -1690,7 +1674,7 @@ function pap_manual_connect(){
 				document.getElementById("wireless_2g_field").style.display = "";
 				document.getElementById("wireless_5g_field").style.display = "";
 			}
-						
+
 			$.mobile.changePage("#wireless_setting", {transition: "slide", changeHash: false});
 			document.getElementById("sync_pap").checked = false;
 			use_pap_setting();
@@ -1715,12 +1699,12 @@ function skip_pap(){
 	}
 	else{
 		if(wl0_checked == ""){
-			document.form.wlc0_ssid.value = "";			
+			document.form.wlc0_ssid.value = "";
 			document.form.wlc0_auth_mode.value = "";
 			document.form.wlc0_crypto.value = "";
 			document.form.wlc0_wpa_psk.value = "";
 		}
-		
+
 		if(wl1_checked == ""){
 			document.form.wlc1_ssid.value = "";
 			document.form.wlc1_auth_mode.value = "";
@@ -1763,12 +1747,12 @@ Media Bridge:		sw_mode: 3, wlc_express: 0, wlc_psta: 1
 function operation_mode_switch(mode){
 	resetVar();
 
-	if(mode == "RP"){		//Repeater 
+	if(mode == "RP"){		//Repeater
 		sw_mode = "2";
 		document.form.sw_mode.value = "2";
 		document.form.wlc_express.value = "0";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Repeater";
+		document.getElementById("welcome_button").innerHTML = "<#OP_RE_item#>";
 	}
 	else if(mode == "MB"){		//Media Bridge
 		sw_mode = "4";
@@ -1776,64 +1760,65 @@ function operation_mode_switch(mode){
 			document.form.sw_mode.value = "2";
 		else
 			document.form.sw_mode.value = "3";		//Broadcom
-		
+
 		document.form.wlc_express.value = "0";
 		document.form.wlc_psta.value = "1";
-		document.getElementById("welcome_button").innerHTML = "Start Media Bridge";
+		document.getElementById("welcome_button").innerHTML = "<#OP_MB_item#>";
 	}
 	else if(mode == "AP"){		//Access Point
 		sw_mode = "3";
 		document.form.sw_mode.value = "3";
 		document.form.wlc_express.value = "0";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Access Point";
+		document.getElementById("welcome_button").innerHTML = "<#OP_AP_item#>";
 	}
 	else if(mode == "express_5g"){		//Express: parent 5 GHz, client 2.4 GHz
 		sw_mode = "2";
 		document.form.sw_mode.value = "2";
 		document.form.wlc_express.value = "2";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Express Way";
+		document.getElementById("welcome_button").innerHTML = "<#OP_RE5G_item#>";
 	}
 	else if(mode == "express_2g"){		//Express: parent 2.4 GHz, client 5 GHz
 		sw_mode = "2";
 		document.form.sw_mode.value = "2";
 		document.form.wlc_express.value = "1";
 		document.form.wlc_psta.value = "0";
-		document.getElementById("welcome_button").innerHTML = "Start Express Way";
+		document.getElementById("welcome_button").innerHTML = "<#OP_RE2G_item#>";
 	}
-	
+
 	navigation_opmode_style();
 }
 
 function uploadSetting(){
-  var file_obj = document.getElementById("upload_setting_profile");
-	
-	if(file_obj.value == ""){
+	var file_obj = document.getElementById("upload_setting_profile");
+	var file_obj_name = file_obj.value.toUpperCase();
+
+	if(file_obj_name == ""){
 		alert("<#JS_fieldblank#>");
 		file_obj.focus();
 	}
-	else if(file_obj.value.length < 6 ||
-					((file_obj.value.lastIndexOf(".CFG")  < 0)&&(file_obj.value.lastIndexOf(".cfg")  < 0)) || 
-					((file_obj.value.lastIndexOf(".CFG") != (file_obj.value.length)-4)&&(file_obj.value.lastIndexOf(".cfg") != (file_obj.value.length)-4))){		
+	else if(file_obj_name.length < 6 ||
+				file_obj_name.lastIndexOf(".CFG")  < 0 ||
+				file_obj_name.lastIndexOf(".CFG") != (file_obj_name.length)-4){
 		alert("<#Setting_upload_hint#>");
 		file_obj.focus();
 	}
-	else{		
+	else{
 		document.form.action = "/upload.cgi";
 		document.form.action_script.value = "";
 		document.form.enctype = "multipart/form-data";
 		document.form.submit();
 		$("#loading_background").show();
 		$("#upload_progress_bar").animate(
-			{width: "100%"}, 
+			{width: "100%"},
 			{duration: 120000}
 		);
 
 		setTimeout(function(){
 			startQuery();
 		}, 60000);
-	}	
+	}
 }
 
 function switchType(obj, hide){
@@ -1872,18 +1857,18 @@ function pass_checked(obj, icon){
 
 function submit_language(obj){
 	if(obj != document.titleForm.preferred_lang.value){
-		
+
 		with(document.titleForm){
 			action = "/start_apply.htm";
-			
+
 			if(location.pathname == "/")
 				current_page.value = "<% abs_index_page(); %>";
 			else
 				current_page.value = location.pathname;
-				
+
 			preferred_lang.value = obj;
 			flag.value = "set_language";
-			
+
 			submit();
 		}
 	}
@@ -1893,7 +1878,7 @@ function submit_language(obj){
 }
 
 function back_to_home(){
-	location.href = "<% abs_index_page(); %>";
+	location.href = "/";
 }
 
 function scrollTop(){
@@ -1917,7 +1902,7 @@ function clear_info(){
 	var temp_wl0 = "";
 	var temp_wl1 = "";
 	if(select_band == "2g"){
-		document.form.wlc0_ssid.value = "";			
+		document.form.wlc0_ssid.value = "";
 		document.form.wlc0_auth_mode.value = "";
 		document.form.wlc0_crypto.value = "";
 		document.form.wlc0_wpa_psk.value = "";
@@ -1928,7 +1913,7 @@ function clear_info(){
 
 	}
 	else if(select_band == "5g"){
-		document.form.wlc1_ssid.value = "";			
+		document.form.wlc1_ssid.value = "";
 		document.form.wlc1_auth_mode.value = "";
 		document.form.wlc1_crypto.value = "";
 		document.form.wlc1_wpa_psk.value = "";
@@ -1959,25 +1944,25 @@ function clear_info(){
 
 function final_summary(){
 	var string = "";
-	string += "You can now follow information below and connect to extended Wi-Fi network";
+	string += "<#QIS_RP_desc1#>";
 	if(document.form.sw_mode.value == "3" && document.form.wlc_psta.value == "1"){
-		string += "<br/>In Media Bridge mode, only wireless devices connect to the P-AP. Client devices need to be connected to the Media Bridge with a network cable.";			
+		string += "<br/><#OP_MB_desc6#>";
 	}
-		
-	string += "<br/><span>Use <a href='http://repeater.asus.com' target='_blank' style='text-decoration:underline'>repeater.asus.com</a> to login the device</span>";
-	string += "<br/><span id='summary_try' style='display:none'>Try Connecting to Internet...</span><span id='summary_try_button' style='margin-left:12px;padding:3px 12px;border-radius:3px;background:#007AFF;display:none' onclick='startQuery();'>GO</span>";
-		
+
+	string += "<br/><span><#ROG_finish_login_info#></span>";
+	string += "<br/><span id='summary_try' style='display:none'><#QIS_RP_desc10#></span><span id='summary_try_button' style='margin-left:12px;padding:3px 12px;border-radius:3px;background:#007AFF;display:none' onclick='startQuery();'><#btn_go#></span>";
+
 	$("#summary_desc").html(string);
 	document.getElementById("summary_desc").style.textAlign = "left";
 	document.getElementById("summary_desc").style.marginTop = "10px";
 	document.getElementById("summary_desc").style.marginLeft = "10px";
-	$("#summary_led").hide();		
+	$("#summary_led").hide();
 	$("#summary_main").show();
-	
+
 	document.getElementById("led_field").style.display = "table-cell";
 }
 
-function validForm(){	
+function validForm(){
 	if(document.getElementById("http_username").value.length == 0){
 		alert("<#File_Pop_content_alert_desc1#>");
 		document.getElementById("http_username").focus();
@@ -2029,7 +2014,7 @@ function validForm(){
 	}
 
 	if(httpPassInput.value.length > 0 && httpPassConfirmInput.value.length < 5){
-		alert("<#JS_short_password#>");			
+		alert("<#JS_short_password#>");
 		httpPassInput.focus();
 		httpPassInput.select();
 		return false;
@@ -2039,14 +2024,14 @@ function validForm(){
 		httpPassInput.focus();
 		httpPassInput.select();
 		return false;
-	}	
+	}
 
-	if(httpPassInput.value == '<% nvram_default_get("http_passwd"); %>'){	
+	if(httpPassInput.value == '<% nvram_default_get("http_passwd"); %>'){
 		alert("* <#QIS_adminpass_confirm0#>");
 		httpPassInput.focus();
 		httpPassInput.select();
 		return false;
-	}	
+	}
 
 	if(check_common_string(httpPassInput.value, "httpd_password")){
 		if(!confirm("<#JS_common_passwd#>")){
@@ -2086,10 +2071,10 @@ function genOptions(){
 		$("#pap_manual_band_option-button span").html("2.4 GHz");
 	}
 
-	if(wl1_checked == ""){	
+	if(wl1_checked == ""){
 		options += "<option value='5g'>5 GHz</option>";
 		$("#pap_manual_band_option-button span").html("5 GHz");
-	}	
+	}
 
 	$("#pap_manual_band_option").html(options);
 }
@@ -2103,9 +2088,9 @@ function genOptions(){
 			<div style="height:15px;width:250px;background-color:#555; border:2px solid #888;border-radius:10px;margin:auto">
 				<div id="upload_progress_bar" style="width: 0%;height:15px;background:#529CEE;border-radius:10px"></div>
 			</div>
-			<div style="color:#DBDBDB;font-size:30pt;font-family:HelveticaNeueW10-35Thin,Helvetica W01 Light,Arial;margin:21px 0">Setting is uploading! Please wait about 120 seconds.</div>
-		</div>	
-	</div>	
+			<div style="color:#DBDBDB;font-size:30pt;font-family:HelveticaNeueW10-35Thin,Helvetica W01 Light,Arial;margin:21px 0:text-align:center;"><#SET_ok_desc#></div>
+		</div>
+	</div>
 </div>
 <!-- Welcome Page -->
 <div data-role="page" id="welcome" name="welcome" style="background:url('images/qis/pattern3-3_10_A15.png'),url('images/qis/pattern3_05_4.png'),url('images/qis/mainimage_img4.png') #1D1E1F no-repeat;">
@@ -2126,20 +2111,19 @@ function genOptions(){
 				</td>
 				<td style="padding:0;">
 					<div id="model_welcome" style="color:#FFF;font-family:Arial Bold;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>
-				</td>		
+				</td>
 			</tr>
 		</table>
 	</div>
 
 	<div id="welcome_main_field">
-		<div style="font-family:Uni Sans Thin, Helvetica W01 Light, Arial;font-size:9em;color:#FFF;line-height:50px;margin:120px 46px 0 46px;text-align:center;">Welcome</div>
-		<div style="font-family:Uni Sans Thin, Helvetica W01 Light, Arial;font-size:2.875em;color:#007AFF;text-align:center;margin:36px 46px 0 46px;">ASUS Networking Family</div>
+		<div style="font-family:Uni Sans Thin, Helvetica W01 Light, Arial;font-size:4em;color:#007AFF;text-align:center;margin:96px 46px 0 46px;"><#QIS_welcome_title#></div>
 		<div id="model_image" style="height:334px;width:auto;background:url('images/Model_product.png') no-repeat;background-size:145px;background-position:center;margin-top:36px;"></div>
 		<div id="model_welcome_field" style="text-align:center;color:#DBDBDB;font-size:30pt;font-family:HelveticaNeueW10-35Thin,Helvetica W01 Light,Arial;line-height:23px;margin:21px 0"></div>
 		<div style="text-align:center;margin:31px 0">
-			<div  id="welcome_button" style="cursor:pointer;width:414px;height:88px;border-radius:4px;color:#FFF;background-color:#007AFF;border:1px solid #007AFF;font-size:2.25em;margin:auto;line-height:88px;" onclick="start_welcome();">Start Repeater</div>
+			<div  id="welcome_button" style="cursor:pointer;width:480px;height:auto;border-radius:4px;color:#FFF;background-color:#007AFF;border:1px solid #007AFF;font-size:2.25em;margin:auto;line-height:88px;" onclick="start_welcome();"><#OP_RE_item#></div>
 		</div>
-		<div style="color:#FFF;font-size:18px;text-align:center;"><a href="#navigation">Advanced Setting</a></div>
+		<div style="color:#FFF;font-size:18px;text-align:center;"><a href="#navigation"><#menu5#></a></div>
 		<div style="visibility: hidden" class="led_intro loading"></div>
 	</div>
 </div>
@@ -2162,34 +2146,34 @@ function genOptions(){
 				</td>
 				<td style="padding:0;">
 					<div id="model_welcome" style="color:#FFF;font-family:Arial Bold;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>
-				</td>		
+				</td>
 			</tr>
 		</table>
 	</div>
 	<div class="desktop_left_field">
 		<div id="login_title">
-			<div style="font-size:60px;">Login </div>
-			<div style="font-size:32px;">Username/Passowrd</div>
-			<div style="font-size:32px;">Setting</div>
+			<div style="font-size:60px;"><#CTL_login#></div>
+			<div style="font-size:32px;"><#Username#>/<#HSDPAConfig_Password_itemname#></div>
+			<div style="font-size:32px;"><#Settings#></div>
 		</div>
 	</div>
-	
+
 	<div class="table_td">
 		<div id="login_desc" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;"><#QIS_pass_desc1#></div>
 		<div id="login_field">
 			<div style="margin-left:38px;">
 				<div style="display:table;margin:18px 0 19px 30px;width:100%">
-					<div style="HelveticaNeueLT45_Light_regular,Helvetica_regular,Arial;font-size:1.5em;color:#B8D8FF;display:table-cell"><#Router_Login_Name#></div>
-				</div>	
+					<div style="HelveticaNeueLT45_Light_regular,Helvetica_regular,Arial;font-size:1.5em;color:#B8D8FF;display:table-cell"><#Username#></div>
+				</div>
 				<div style="margin:22px 55px 41px 30px">
 					<input id="http_username" type="text" maxlength="64" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
 				</div>
-			</div>		
+			</div>
 			<div style="margin-left:38px;">
 				<div style="display:table;margin:18px 0 19px 30px;width:100%">
 					<div style="HelveticaNeueLT45_Light_regular,Helvetica_regular,Arial;font-size:1.5em;color:#B8D8FF;display:table-cell"><#PASS_new#></div>
 					<div class="icon_eye_open" style="width:32px;height:32px;display:table-cell;padding-right:110px;" onclick="pass_checked('http_passwd', this)"></div>
-				</div>	
+				</div>
 				<div style="margin:22px 55px 41px 30px">
 					<input id="http_passwd" type="text" maxlength="64" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
 				</div>
@@ -2197,7 +2181,7 @@ function genOptions(){
 			<div style="margin-left:38px;margin-bottom:150px;">
 				<div style="display:table;margin:18px 0 19px 30px;width:100%">
 					<div style="HelveticaNeueLT45_Light_regular,Helvetica_regular,Arial;font-size:1.5em;color:#B8D8FF;display:table-cell"><#PASS_retype#></div>
-				</div>	
+				</div>
 				<div style="margin:22px 55px 41px 30px">
 					<input id="http_passwd_confirm" type="text" maxlength="64" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
 				</div>
@@ -2205,23 +2189,23 @@ function genOptions(){
 
 				<!--for desktop-->
 			<div class="footer_desktop" style="color:#FFF;text-align:center;margin-top:0;">
-				<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick='$("#http_username").val("");$("#http_passwd").val("");$("#http_password_confirm").val("");$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});'>CANCEL</div>
-				<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="login_next();">Next</div>
-			</div>		
+				<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick='$("#http_username").val("");$("#http_passwd").val("");$("#http_password_confirm").val("");$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});'><#CTL_Cancel#></div>
+				<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="login_next();"><#CTL_next#></div>
+			</div>
 			<div class="footer_mobile">
 				<table style="width:100%;">
 					<tr style="height:98px;text-align:center">
 						<td style="width:50%" onclick='$("#http_username").val("");$("#http_passwd").val("");$("#http_password_confirm").val("");$.mobile.changePage("#welcome", {transition: "slide", changeHash: false, reverse: true});'>
-							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593">CANCEL</div>
+							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593"><#CTL_Cancel#></div>
 						</td>
 						<td style="width:50%;background:#007AFF" onclick="login_next();">
-							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;">Next</div>
+							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;"><#CTL_next#></div>
 						</td>
 					</tr>
 				</table>
-			</div>			
+			</div>
 		</div>
-			
+
 		<div id="loading_container" style="max-width:520px;margin:50px auto 0 auto">
 			<div class="loading"></div>
 			<div id="progress_container" style="height:30px;width:100%;margin-top:10px;">
@@ -2229,10 +2213,10 @@ function genOptions(){
 					<div id="progress_bar" style="width: 0%;height:15px;background:#529CEE;border-radius:10px"></div>
 				</div>
 			</div>
-			<div style="text-align:center;color:#DBDBDB;font-size:30pt;font-family:HelveticaNeueW10-35Thin,Helvetica W01 Light,Arial;line-height:23px;margin:21px 0">Please wait for few seconds</div>
+			<div style="text-align:center;color:#DBDBDB;font-size:30pt;font-family:HelveticaNeueW10-35Thin,Helvetica W01 Light,Arial;line-height:23px;margin:21px 0"><#QIS_autoMAC_desc2#></div>
 		</div>
-		<div class="preload_image"></div>		
-	</div>	
+		<div class="preload_image"></div>
+	</div>
 </div>
 
 <!-- P-AP List Page -->
@@ -2255,38 +2239,38 @@ function genOptions(){
 				<td style="padding:0;">
 					<div id="model_pap_list" style="color:#FFF;font-family:Arial Bold;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>
 				</td>
-			
+
 			</tr>
 		</table>
 	</div>
 	<div class="desktop_left_field">
-		<div style="font-size:60px">Host</div>
-		<div style="font-size:32px">List</div>
+		<div style="font-size:60px"><#Internet#></div>
+		<div style="font-size:32px"><#WLANConfig11b_RBRList_groupitemdesc#></div>
 	</div>
 	<div class="table_td" style="width:1000px;">
-		<div id="pap_list_title" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;">Select the Wi-Fi network you would like to extend.</div>
-		<div id="pap_list_title_2g_skip" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;display:none">You have already selected the 2.4 GHz wireless network. Do you want to select the 5 GHz wireless network? If no, click [SKIP]</div>
-		<div id="pap_list_title_5g_skip" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;display:none">You have already selected the 5 GHz wireless network. Do you want to select the 2.4 GHz wireless network? If no, click [SKIP]</div>
+		<div id="pap_list_title" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;"><#QIS_extend_AP#></div>
+		<div id="pap_list_title_2g_skip" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;display:none"><#QIS_RP_desc2#></div>
+		<div id="pap_list_title_5g_skip" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;display:none"><#QIS_RP_desc3#></div>
 		<div id="ap_list_title" style="font-family:HelveticaCE55-Roman,Helvetica,Arial;font-size:1.75em;color:#B8D8FF;margin:20px 0 0 46px;padding-bottom:19px;border-bottom:1px solid #DBDBDB">
-			<div style="display:table-cell">Wi-Fi Network Lists</div>
+			<div style="display:table-cell"><#WLANConfig11b_RBRList_groupitemdesc#></div>
 			<div class="desktop_sort">
 				<div style="table-row">
 					<div style="display:table-cell;width:70px;" onclick="show_sort_field();"><div class="icon_sorting" style="width:28px;height:32px;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.125em;margin:auto;"></div></div>
 					<div style="display:table-cell;width:70px;" onclick='genOptions();$.mobile.changePage("#pap_manual", {transition: "fade", changeHash: false});'><div class="icon_plus" style="width:32px;height:32px;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.125em;margin:auto;"></div></div>
 					<div style="display:table-cell;width:70px;" onclick="rescan();"><div class="icon_rescan" style="width:32px;height:32px;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.125em;margin:auto;"></div></div>
-					<div id="dualBand_skip_desktop" style="display:none;width:90px;vertical-align:middle;text-align:center" onclick="skip_pap();">SKIP</div>
+					<div id="dualBand_skip_desktop" style="display:none;width:90px;vertical-align:middle;text-align:center" onclick="skip_pap();"><#CTL_Skip#></div>
 				</div>
 			</div>
 		</div>
 		<div id="ap_list" style="margin:0 0 102px 38px;"></div>
-		
+
 		<div class="footer_mobile">
 			<table id="select_pap" style="width:100%;">
 				<tr style="height:98px;text-align:center">
 					<td style="width:20%" onclick="show_sort_field();"><div class="icon_sorting" style="width:28px;height:32px;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.125em;margin:auto"></div></td>
 					<td style="width:20%" onclick='$.mobile.changePage("#pap_manual", {transition: "fade", changeHash: false});'><div class="icon_plus" style="width:32px;height:32px;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.125em;margin:auto"></div></td>
 					<td style="width:20%" onclick="rescan();"><div class="icon_rescan" style="width:32px;height:32px;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.125em;margin:auto"></div></td>
-					<td id="dualBand_skip" style="width:276px;color:#0078FF;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light_regular,Arial;font-size:2.25em;text-align:center;border-left:1px solid #333;display:none" onclick="skip_pap();">Skip</td>
+					<td id="dualBand_skip" style="width:276px;color:#0078FF;font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light_regular,Arial;font-size:2.25em;text-align:center;border-left:1px solid #333;display:none" onclick="skip_pap();"><#CTL_Skip#></td>
 				</tr>
 			</table>
 		</div>
@@ -2297,7 +2281,7 @@ function genOptions(){
 			<table style="border-spacing:0;width:100%">
 				<tr>
 					<td style="padding:0;">
-						<div style="width:284px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;margin:38px 0 38px 46px;">Order By <div style="font-size:2.25em">WORD</div></div>
+						<div style="width:284px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.5em;color:#FFF;margin:38px 0 38px 46px;"><#QIS_RP_desc7#></div></div>
 					</td>
 					<td style="padding:0;width:96px">
 						<div style="width:56px;height:56px;background:#FFF;border-radius:20px;padding:20px;margin-right:56px;" onclick="sort_ap('alpha', 'down')">
@@ -2308,12 +2292,12 @@ function genOptions(){
 						<div style="width:56px;height:56px;background:#FFF;border-radius:20px;padding:20px;margin-right:64px;" onclick="sort_ap('alpha', 'top')">
 							<div class="icon_sort_alphabet_Z" style="width:58px;height:64px;background-size:100%;"></div>
 						</div>
-					</td>				
+					</td>
 				</tr>
 				<tr><td colspan="3"><div style="height:1px;width:100%;background:rgba(255,255,255,0.9)"></div></td></tr>
 				<tr>
 					<td style="padding:0;">
-						<div style="width:284px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;margin:38px 0 38px 46px;">Order By <div style="font-size:2.25em">STRENGTH</div></div>
+						<div style="width:284px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.5em;color:#FFF;margin:38px 0 38px 46px;"><#QIS_RP_desc8#></div></div>
 					</td>
 					<td style="padding:0;width:96px">
 						<div style="width:56px;height:56px;background:#FFF;border-radius:20px;padding:20px;margin-right:56px;" onclick="sort_ap('signal', 'top')">
@@ -2325,12 +2309,12 @@ function genOptions(){
 						<div style="width:56px;height:56px;background:#FFF;border-radius:20px;padding:20px;margin-right:64px;" onclick="sort_ap('signal', 'down')">
 							<div class="icon_sort_signal_low" style="width:64px;height:64px;background-size:100%;"></div>
 						</div>
-					</td>				
-				</tr>				
+					</td>
+				</tr>
 				<tr><td colspan="3"><div style="height:1px;width:100%;background:rgba(255,255,255,0.9)"></div></td></tr>
 				<tr id="sortByBand">
 					<td style="padding:0;">
-						<div style="width:284px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#FFF;margin:38px 0 38px 46px;">Order By <div style="font-size:2.25em">BAND</div></div>
+						<div style="width:284px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.5em;color:#FFF;margin:38px 0 38px 46px;"><#QIS_RP_desc9#></div>
 					</td>
 					<td style="padding:0;width:96px">
 						<div style="width:56px;height:56px;background:#FFF;border-radius:20px;padding:20px;margin-right:56px;" onclick="sort_ap('band', 'down')">
@@ -2342,8 +2326,8 @@ function genOptions(){
 						<div style="width:56px;height:56px;background:#FFF;border-radius:20px;padding:20px;margin-right:64px;" onclick="sort_ap('band', 'top')">
 							<div class="icon_sort_band_5g" style="width:46px;height:64px;background-size:100%;margin-left:5px;"></div>
 						</div>
-					</td>				
-				</tr>				
+					</td>
+				</tr>
 			</table>
 		</div>
 	</div>
@@ -2368,17 +2352,17 @@ function genOptions(){
 				<td style="padding:0;">
 					<div id="model_pap_input" style="color:#FFF;font-family:Arial Bold;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>
 				</td>
-			
+
 			</tr>
 		</table>
 	</div>
-	
+
 	<div class="desktop_left_field">
-		<div style="font-size:60px">Host</div>
-		<div style="font-size:32px">Information</div>
+		<div style="font-size:60px"><#Internet#></div>
+		<div style="font-size:32px"><#Network_key#></div>
 	</div>
 	<div class="table_td">
-		<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;">Enter the network key (Wi-Fi Password) for the selected Wi-Fi network</div>
+		<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;"><#wireless_psk_fillin#></div>
 		<div style="margin-left:38px">
 			<div style="border-bottom:1px solid #43474B;padding:29px 0">
 				<div style="display:table-row;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:2.25em;color:#DBDBDB">
@@ -2388,27 +2372,27 @@ function genOptions(){
 					<div id="pap_ssid" style="display:table-cell;width:90%;padding-left:12px;color:#007AFE"></div>
 					<div style="display:table-cell;width:30px;text-align:right;padding:0 28px 0 10px;">
 						<div class="icon_arrow_down" style="width:52px;height:32px;"></div>
-					</div>				
+					</div>
 				</div>
 			</div>
 		</div>
 		<div id="pap_key_field" style="margin-left:38px;border-bottom:1px solid #DBDBDB">
 			<div style="display:table;margin:18px 0 19px 30px;width:100%">
-				<div style="HelveticaNeueLT45_Light_regular,Helvetica_regular,Arial;font-size:1.5em;color:#B8D8FF;display:table-cell">Network Key</div>
+				<div style="HelveticaNeueLT45_Light_regular,Helvetica_regular,Arial;font-size:1.5em;color:#B8D8FF;display:table-cell"><#Network_key#></div>
 				<div class="icon_eye_open" style="width:32px;height:32px;display:table-cell;padding-right:110px;" onclick="pass_checked('parentAP_key', this)"></div>
-			</div>	
+			</div>
 			<div style="margin:22px 55px 41px 30px">
 				<input id="parentAP_key" type="text" maxlength="64" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
 			</div>
 		</div>
 		<div style="margin-left:38px;">
 			<label style="background:transparent;color:#C5C5C5; border:0;font-size:1.875em;font-weight:normal;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;text-align:left;left:-0.3em">
-				<input id="ip_advance_setting_checkbox" type="checkbox" style="width:21px;height:21px;" onclick="ip_advance_setting_show(this);">Advanced Setting
-			</label>	
+				<input id="ip_advance_setting_checkbox" type="checkbox" style="width:21px;height:21px;" onclick="ip_advance_setting_show(this);"><#menu5#>
+			</label>
 		</div>
 
 		<div id="wep_auth_mode_advance_setting_option" style="margin-left:38px;padding-bottom:15px;display:none">
-			<div style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">WEP Authentication Method</div>
+			<div style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#WLANConfig11b_AuthenticationMethod_itemname#></div>
 			<div style="margin:20px 55px 20px 18px">
 				<select id="wep_auth_mode_option">
 					<option value="open">Open</option>
@@ -2418,7 +2402,7 @@ function genOptions(){
 		</div>
 
 		<div id="wepkey_index_advance_setting_option" style="margin-left:38px;padding-bottom:15px;display:none">
-			<div style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">Key index</div>
+			<div style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#WLANConfig11b_WEPDefaultKey_itemname#></div>
 			<div style="margin:20px 55px 20px 18px">
 				<select id="wepkey_index_advanced_option">
 					<option value="1">1</option>
@@ -2430,55 +2414,55 @@ function genOptions(){
 		</div>
 
 		<div id="ip_advance_setting_option" style="margin-left:38px;padding-bottom:15px;display:none">
-			<div style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">IP Setting</div>
+			<div style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#Connectiontype#></div>
 			<div style="margin:20px 55px 20px 18px">
 				<select id="pap_ip_advanced_option" onchange="ip_advance_setting(this)">
-					<option value="dhcp">DHCP</option>
-					<option value="static">Static IP</option>
+					<option value="dhcp"><#BOP_ctype_title1#></option>
+					<option value="static"><#BOP_ctype_title5#></option>
 				</select>
 			</div>
 		</div>
 		<div id="ip_advance_setting" style="margin:20px 55px 123px 38px;display:none">
-			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">IP Address</label>
+			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#IPConnection_ExternalIPAddress_itemname#></label>
 			<div style="margin:20px 0 20px 18px;">
 				<input id="pap_ip_advance_setting_ipaddr" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text" style="color:#DBDBDB;font-size:1.875em" data-clear-btn="true">
 			</div>
-			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">Subnet Mask</label>
+			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#IPConnection_x_ExternalSubnetMask_itemname#></label>
 			<div style="margin:20px 0 20px 18px;">
 				<input id="pap_ip_advance_setting_subnet" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text" style="color:#DBDBDB;font-size:1.875em" data-clear-btn="true" disabled>
 			</div>
-			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">Default Gateway</label>
+			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#IPConnection_x_ExternalGateway_itemname#></label>
 			<div style="margin:20px 0 20px 18px;">
 				<input id="pap_ip_advance_setting_gateway" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text" style="color:#DBDBDB;font-size:1.875em" data-clear-btn="true" disabled>
 			</div>
-			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">DNS 1</label>
+			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#IPConnection_x_DNSServer1_itemname#></label>
 			<div style="margin:20px 0 20px 18px;">
 				<input id="pap_ip_advance_setting_dns1" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text" style="color:#DBDBDB;font-size:1.875em" data-clear-btn="true" disabled>
 			</div>
-			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;">DNS 2</label>
+			<label style="HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF;margin-left:18px;"><#IPConnection_x_DNSServer2_itemname#></label>
 			<div style="margin:20px 0 20px 18px;">
 				<input id="pap_ip_advance_setting_dns2" onkeypress="return validator.isIPAddr(this, event);" maxlength="15" type="text" style="color:#DBDBDB;font-size:1.875em" data-clear-btn="true" disabled>
 			</div>
 		</div>
-		
+
 		<!--for desktop-->
 		<div class="footer_desktop" style="color:#FFF;text-align:center;margin-top:0;">
-			<div id="wlCancel" style="display:inline-block;width:300px;border:1px solid #43474B;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="cancel_button();">PREVIOUS</div>
-			<div style="display:inline-block;width:300px;border:1px solid #43474B;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="pap_connect();">CONNECT</div>
+			<div id="wlCancel" style="display:inline-block;width:300px;border:1px solid #43474B;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="cancel_button();"><#CTL_prev#></div>
+			<div style="display:inline-block;width:300px;border:1px solid #43474B;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="pap_connect();"><#CTL_Add_enrollee#></div>
 		</div>
-		
+
 		<div class="footer_mobile">
 			<table style="width:100%;">
 				<tr style="height:98px;text-align:center">
 					<td style="width:50%" onclick="cancel_button();">
-						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593">PREVIOUS</div>
+						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593"><#CTL_prev#></div>
 					</td>
 					<td style="width:50%;background:#007AFF" onclick="pap_connect();">
-						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;">CONNECT</div>
+						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;"><#CTL_Add_enrollee#></div>
 					</td>
 				</tr>
 			</table>
-		</div>	
+		</div>
 	</div>
 </div>
 <!-- Wireless SSID/Password Setting -->
@@ -2500,30 +2484,30 @@ function genOptions(){
 				</td>
 				<td style="padding:0;">
 					<div id="model_wireless_setting" style="color:#FFF;font-family:Arial Bold;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>
-				</td>		
+				</td>
 			</tr>
 		</table>
 	</div>
-	
+
 	<div class="desktop_left_field">
-		<div style="font-size:60px">Wireless</div>
-		<div style="font-size:32px">Setting</div>
+		<div style="font-size:60px"><#menu5_1#></div>
+		<div style="font-size:32px"><#Settings#></div>
 	</div>
 	<div class="table_td">
-			<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;">Extend Wi-Fi network will follow the same settings of Wi-Fi network you just selected.</div>
+			<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;"><#QIS_RP_desc4#></div>
 			<div id="sync_pap_container" style="margin-left:38px";>
 				<label id="copy_pap" style="background:transparent;color:#C5C5C5; border:0;font-size:1.875em;font-weight:normal;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;text-align:left;left:-0.3em">
-					<input id="sync_pap" type="checkbox" style="width:21px;height:21px;" onclick="use_pap_setting(this);" >Same with parent AP SSID/Password
+					<input id="sync_pap" type="checkbox" style="width:21px;height:21px;" onclick="use_pap_setting(this);" ><#QIS_RP_desc5#>
 				</label>
 				<!--label id="custom_pap" style="background:transparent;color:#C5C5C5; border:0;font-size:1.875em;font-weight:normal;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;text-align:left;left:-0.3em">
 					<input id="sync_pap_custom" type="checkbox" style="width:21px;height:21px;" onclick="use_pap_setting(this);"><#QIS_apextended_usedefault#>
-				</label-->	
+				</label-->
 			</div>
 			<div id="wireless_2g_field" style="padding-bottom:35px;" class="wireless_field">
 				<div style="margin:31px 48px 7px 46px">
 					<div>
 						<span style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF">2.4 GHz</span>
-						<span style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;margin-left:15px;">Network Name (SSID)</span>
+						<span style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;margin-left:15px;"><#QIS_finish_wireless_item1#></span>
 					</div>
 					<div style="margin-top:19px">
 						<input id="wireless_2g_ssid" type="text" maxlength="32" onkeypress="return validator.isString(this, event)" style="color:#DBDBDB;font-size:1.875em;padding:0 18px" data-clear-btn="true">
@@ -2534,21 +2518,21 @@ function genOptions(){
 						<table style="width:100%">
 							<tr>
 								<td style="width:120px;"><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF">2.4 GHz</div></td>
-								<td><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;">Network Key</div></td>
+								<td><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;"><#QIS_finish_wireless_item2#></div></td>
 								<td><div class="icon_eye_open" style="width:32px;height:32px;margin:auto" onclick="pass_checked('wireless_2g_key', this)"></div></td>
 							</tr>
 						</table>
 					</div>
 					<div style="margin-top:19px">
 						<input id="wireless_2g_key" type="text" maxlength="64" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
-					</div>		
+					</div>
 				</div>
 			</div>
 			<div id="wireless_5g_field" style="margin-bottom:123px;max-width:1000px;" class="wireless_field wireless_field_5g">
 				<div style="margin:31px 48px 7px 46px">
 					<div>
 						<span style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF">5 GHz</span>
-						<span style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;margin-left:15px;">Network Name (SSID)</span>
+						<span style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;margin-left:15px;"><#QIS_finish_wireless_item1#></span>
 					</div>
 					<div style="margin-top:19px">
 						<input id="wireless_5g_ssid" type="text" maxlength="32" onkeypress="return validator.isString(this, event)" style="color:#DBDBDB;font-size:1.875em;padding:0 18px" data-clear-btn="true">
@@ -2559,7 +2543,7 @@ function genOptions(){
 						<table style="width:100%">
 							<tr>
 								<td style="width:120px;"><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#B8D8FF">5 GHz</div></td>
-								<td><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;">Network Key</div></td>
+								<td><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;"><#QIS_finish_wireless_item2#></div></td>
 								<td><div class="icon_eye_open" style="width:32px;height:32px;margin:auto" onclick="pass_checked('wireless_5g_key', this)"></div></td>
 							</tr>
 						</table>
@@ -2569,25 +2553,25 @@ function genOptions(){
 					</div>
 				</div>
 			</div>
-			
+
 					<!--for desktop-->
 			<div class="footer_desktop" style="color:#FFF;text-align:center;margin-top:0;max-width:1000px;">
-				<div id="cancelBtn" style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick='clear_info();$.mobile.changePage("#pap_list", {transition: "slide", changeHash: false, reverse: true});'>PREVIOUS</div>
-				<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="wireless_apply();">APPLY</div>
+				<div id="cancelBtn" style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick='clear_info();$.mobile.changePage("#pap_list", {transition: "slide", changeHash: false, reverse: true});'><#CTL_prev#></div>
+				<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick="wireless_apply();"><#CTL_apply#></div>
 			</div>
-			
+
 			<div class="footer_mobile">
 				<table style="width:100%;">
 					<tr style="height:98px;text-align:center">
 						<td style="width:50%" id="wifiPrevious" onclick='$.mobile.changePage("#pap_list", {transition: "slide", changeHash: false, reverse: true});'>
-							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593" >PREVIOUS</div>
+							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593" ><#CTL_prev#></div>
 						</td>
 						<td style="width:50%;background:#007AFF" onclick="wireless_apply();">
-							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;" >APPLY</div>
+							<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;" ><#CTL_apply#></div>
 						</td>
 					</tr>
 				</table>
-			</div>				
+			</div>
 	</div>
 </div>
 
@@ -2611,37 +2595,36 @@ function genOptions(){
 				<td style="padding:0;">
 					<div id="model_summary_page" style="color:#FFF;font-family:Arial Bold;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>
 				</td>
-			
+
 			</tr>
 		</table>
 	</div>
 	<div class="desktop_left_field" style="font-size:50px"><#QIS_finish_Summary#></div>
 	<div id="led_field" class="table_td" style="display:block">
-		<!--div id="summary_desc" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;">Congratulation!<br>You can now follow information below and connect to extended Wi-Fi network</div-->
-		<div id="summary_desc" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;text-align:center;">You can turn on/off LED by touching ASUS logo.</div>
+		<div id="summary_desc" style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;text-align:center;"><#QIS_RP_desc6#></div>
 		<div id="summary_led" style="margin:15px 0 0 46px;">
 			<div class="led_intro" style="height:588px;width:614px;background-position:center;margin:36px auto 0;"></div>
 			<div style="text-align:center;margin:31px 0">
-				<div style="width:314px;height:88px;border-radius:4px;color:#FFF;background-color:#007AFF;border:1px solid #007AFF;font-size:2.25em;margin:auto;line-height:88px;" onclick="final_summary();">NEXT</div>
+				<div style="width:314px;height:88px;border-radius:4px;color:#FFF;background-color:#007AFF;border:1px solid #007AFF;font-size:2.25em;margin:auto;line-height:88px;" onclick="final_summary();"><#CTL_next#></div>
 			</div>
 		</div>
 		<div id="summary_main"  style="margin-bottom:120px;display:none">
 			<div id="summary_2g_field" style="margin:15px 0 0 46px;word-break:break-all;" class="wireless_field">
-				<div style="font-family:Helvetica LT W10 Bold,Arial;font-size:1.5em;color:#B8D8FF;padding:21px 0 15px;border-bottom:1px solid #DBDBDB">Wireless - 2.4 GHz</div>
-				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0">Network Name (SSID)</div>
+				<div style="font-family:Helvetica LT W10 Bold,Arial;font-size:1.5em;color:#B8D8FF;padding:21px 0 15px;border-bottom:1px solid #DBDBDB">2.4 GHz</div>
+				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0"><#QIS_finish_wireless_item1#></div>
 				<div id="summary_wl0_ssid" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#007AFF;padding-bottom:24px;border-bottom:1px solid #DBDBDB"></div>
-				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0;">Network Key</div>
+				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0;"><#QIS_finish_wireless_item2#></div>
 				<div id="summary_wl0_key" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#007AFF;padding-bottom:24px;border-bottom:1px solid #DBDBDB"></div>
 			</div>
 			<div id="summary_5g_field" style="margin:15px 0 0 46px;word-break:break-all;" class="wireless_field wireless_field_5g">
-				<div style="font-family:Helvetica LT W10 Bold,Arial;font-size:1.5em;color:#B8D8FF;padding:21px 0 15px;border-bottom:1px solid #DBDBDB">Wireless - 5 GHz</div>
-				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0">Network Name (SSID)</div>
+				<div style="font-family:Helvetica LT W10 Bold,Arial;font-size:1.5em;color:#B8D8FF;padding:21px 0 15px;border-bottom:1px solid #DBDBDB">5 GHz</div>
+				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0"><#QIS_finish_wireless_item1#></div>
 				<div id="summary_wl1_ssid" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#007AFF;padding-bottom:24px;border-bottom:1px solid #DBDBDB"></div>
-				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0;">Network Key</div>
+				<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.375em;color:#999;padding:21px 0 22px 0;"><#QIS_finish_wireless_item2#></div>
 				<div id="summary_wl1_key" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#007AFF;padding-bottom:24px;border-bottom:1px solid #DBDBDB"></div>
 			</div>
 		</div>
-		
+
 
 	</div>
 </div>
@@ -2666,33 +2649,33 @@ function genOptions(){
 				<td style="padding:0;">
 					<div id="model_pap_manual" style="color:#FFF;font-family:Arial Bold;font-size:1.875em;background-color:rgba(79,79,79,62);padding-left:11px;"></div>
 				</td>
-			
+
 			</tr>
 		</table>
 	</div>
 	<div class="desktop_left_field">
-		<div style="font-size:60px">Manual</div>
-		<div style="font-size:32px">Input</div>
+		<div style="font-size:60px"><#Internet#></div>
+		<div style="font-size:32px"><#Manual_Setting_assign#></div>
 	</div>
 	<div class="table_td">
-		<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;">Please enter the specific Wi-Fi network you would like to extend</div>
+		<div style="font-family:Helvetica,Arial;font-size:2em;color:#FFF;margin:34px 0 0 46px;text-align:left;"><#QIS_extend_AP#></div>
 		<div style="margin:31px 48px 120px 46px;">
-			<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0 19px 0">Frequency</div>
+			<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0 19px 0"><#Interface#></div>
 			<div>
 				<select id="pap_manual_band_option"></select>
 			</div>
-			
-			<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0 19px 0">Network Name (SSID)</div>
+
+			<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0 19px 0"><#QIS_finish_wireless_item1#></div>
 			<div style="">
 				<input id="pap_manual_ssid" type="text" maxlength="32" onkeypress="return validator.isString(this, event)" style="color:#DBDBDB;font-size:1.875em;" data-clear-btn="true">
 			</div>
-			
-			<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0">Authentication Method</div>
+
+			<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0"><#WLANConfig11b_AuthenticationMethod_itemname#></div>
 			<div>
 				<select id="pap_manual_auth_option">
 					<option value="open">Open System</option>
 					<option value="psk">WPA-Personal</option>
-					<option value="psk2">WPA2-Personal</option>		
+					<option value="psk2">WPA2-Personal</option>
 				</select>
 			</div>
 			<script>
@@ -2703,36 +2686,36 @@ function genOptions(){
 					}
 				});
 			</script>
-			
+
 			<div id="pap_manual_key_field" style="display:none">
 				<div>
 					<table style="width:100%">
 						<tr>
-							<td><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0">Network Key</div></td>
+							<td><div style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.5em;color:#C3C3C3;padding:19px 0"><#Network_key#></div></td>
 							<td><div class="icon_eye_open" style="width:32px;height:32px;margin:auto" onclick="pass_checked('pap_manual_key', this)"></div></td>
 						</tr>
 					</table>
-				</div>	
+				</div>
 				<div>
 					<input id="pap_manual_key" type="text" maxlength="64" style="font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
 				</div>
 			</div>
 		</div>
-		
+
 		<!--for desktop-->
 		<div class="footer_desktop" style="color:#FFF;text-align:center;">
-			<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick='$("#parentAP_key").val("");$.mobile.changePage("#pap_list", {transition: "fade", changeHash: false, reverse: true});'>CANCEL</div>
-			<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;background:#007AFF" onclick="pap_manual_connect();">CONNECT</div>
+			<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;" onclick='$("#parentAP_key").val("");$.mobile.changePage("#pap_list", {transition: "fade", changeHash: false, reverse: true});'><#CTL_Cancel#></div>
+			<div style="display:inline-block;width:300px;border:1px solid #DBDBDB;border-radius:4px;height:66px;line-height:66px;margin:0 20px;font-size:1.5em;cursor:pointer;background:#007AFF" onclick="pap_manual_connect();"><#CTL_Add_enrollee#></div>
 		</div>
-		
+
 		<div class="footer_mobile">
 			<table style="width:100%;">
 				<tr style="height:98px;text-align:center">
 					<td style="width:50%" onclick='$("#parentAP_key").val("");$.mobile.changePage("#pap_list", {transition: "fade", changeHash: false, reverse: true});'>
-						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593" >CANCEL</div>
+						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#7E8593" ><#CTL_Cancel#></div>
 					</td>
 					<td style="width:50%;background:#007AFF">
-						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;" onclick="pap_manual_connect();">CONNECT</div>
+						<div style="font-family:HelveticaNeueW10-45Ligh,Helvetica W01 Light,Arial;font-size:1.875em;color:#FFF;border-left:1px solid #333;" onclick="pap_manual_connect();"><#CTL_Add_enrollee#></div>
 					</td>
 				</tr>
 			</table>

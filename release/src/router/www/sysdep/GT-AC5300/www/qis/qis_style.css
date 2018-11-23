@@ -18,11 +18,6 @@ legend {
 	height:100px;
 }
 
-/*.LevelQIS {  
-	margin-top: 5px;
-	background-image: url(/images/bg.gif);	
-}*/
-
 .LevelQIS {  
 	margin-left: 0px;
 	margin-top: 5px;
@@ -50,7 +45,6 @@ legend {
 
 .QISmain{
 	width:730px;
-	/*font-family:Verdana, Arial, Helvetica, sans-serif;*/
 	font-size:14px;
 	z-index:400;
 	position:relative;
@@ -211,7 +205,6 @@ legend {
 	padding-top:0px;
 	position:relative;
 	background-color:rgba(207,10,44,.5);
-	/*border: 1px solid #6B7071;*/
 	border-top-left-radius:8px;
 	border-top-right-radius:8px;
 	height:33px;
@@ -312,7 +305,6 @@ legend {
 	color:#000000;
 	border: 2px inset #F4F4F4;
 	background-color:#4D595D;
-	/*background-image:url(/images/New_ui/inputbg.png);*/
 	width:170px;
 	*width:175px;
 	display: inline-block;
@@ -329,7 +321,7 @@ legend {
 }
 
 .QISGeneralFont{
-	font-size: 12px;
+	font-size: 14px;
 	font-family:Segoe UI, Arial, sans-serif;
 	margin-left:70px;
 	*margin-left:90px;
@@ -391,8 +383,6 @@ legend {
 	-webkit-border-radius: 5px;
 	-moz-border-radius: 5px;
 	border-radius: 5px;
-	/*background-color:rgba(207,10,44,.5);*/
-	/*background-color:#4D595D;*/
 }
 
 .QIS_survey{
@@ -414,7 +404,6 @@ legend {
 
 .QIS_survey td{
 	color:#7EA2AE;
-	/*height:20px;*/
 	border: 1px solid #334044;
 }
 .test_css{	
@@ -425,7 +414,6 @@ legend {
 .QISTutorFont_admin_pass{
 	font-family: Verdana, Arial, sans-serif;
 	line-height: 20px;
-	width:320px;
 }
 #radio_1{
 	background: url(../images/survey/radio_status.png);

@@ -15,6 +15,9 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/form.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style>
 body{
 	margin: 0;
@@ -98,6 +101,15 @@ function initial(){
 	}
 
 }
+
+function sign_eula(){
+	ASUS_EULA.config(eula_confirm, cancel);
+
+	if(ASUS_EULA.check("tm")){
+		check_game_boost();
+	}
+}
+
 function check_game_boost(){
 	if(document.getElementById("game_boost_enable").checked){
 		if(!reset_wan_to_fo(document.form, 1)) {
@@ -129,21 +141,8 @@ function check_game_boost(){
 			}
 		}
 	}
-	
+
 	document.form.submit();
-}
-
-function show_tm_eula(){
-	$.get("tm_eula.htm", function(data){
-		document.getElementById('agreement_panel').innerHTML= data;
-		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
-		$("#eula_url").attr("href",url);
-		adjust_TM_eula_height("agreement_panel");
-	});
-
-	dr_advise();
-	cal_panel_block("agreement_panel", 0.25);
-	$("#agreement_panel").fadeIn(300);
 }
 
 function eula_confirm(){
@@ -160,7 +159,10 @@ function cancel(){
 <body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-
+<div id="hiddenMask" class="popup_bg" style="z-index:999;">
+	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
+	<!--[if lte IE 6.5.]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
+</div>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0" scrolling="no"></iframe>
 <form method="post" name="form" action="/start_apply.htm" target="hidden_frame">
 <input type="hidden" name="current_page" value="GameBoost.asp">
@@ -174,6 +176,7 @@ function cancel(){
 <input type="hidden" name="qos_type" value="<% nvram_get("qos_type"); %>">
 <input type="hidden" name="qos_type_ori" value="<% nvram_get("qos_type"); %>">
 <input type="hidden" name="bwdpi_app_rulelist" value="<% nvram_get("bwdpi_app_rulelist"); %>">
+<input type="hidden" name="TM_EULA" value="<% nvram_get("TM_EULA"); %>">
 </form>
 <div>
 	<table class="content" align="center" cellspacing="0" style="margin:auto;">
@@ -262,7 +265,7 @@ function cancel(){
 												</td>
 												<td>
 													<div class="switch" style="margin:auto;width:100px;height:40px;text-align:center;line-height:40px;font-size:18px">
-														<input id="game_boost_enable" type="checkbox" onclick="check_game_boost();">
+														<input id="game_boost_enable" type="checkbox" onclick="sign_eula();">
 														<div class="container" style="display:table;border-radius:5px;">
 															<div style="display:table-cell;width:50%;">
 																<!--div style="background:url('check.svg') no-repeat;width:40px;height:40px;margin: auto"></div-->

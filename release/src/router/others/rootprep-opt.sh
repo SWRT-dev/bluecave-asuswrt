@@ -36,6 +36,11 @@ ln -sf /tmp/var/wwwext www/ext
 ln -sf /tmp/var/wwwext www/user
 ln -sf /www/ext/proxy.pac www/proxy.pac
 ln -sf /www/ext/proxy.pac www/wpad.dat
+#kp
+ln -sf /jffs/koolproxy/data/certs/ca.crt www/kool.crt
+#k3cex
+ln -sf /jffs/softcenter www/softcenter
+
 
 # link dir under opt to /tmp/opt
 DMfiles="bin etc lib sbin share tmp usr include doc"

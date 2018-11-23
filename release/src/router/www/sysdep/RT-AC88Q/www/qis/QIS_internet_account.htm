@@ -64,8 +64,6 @@ function QKaccount_load_body(){
 	else{
 		parent.set_step("t2");
 		hideLinkTag();
-		flash_button();
-
 		if(is_TW_sku){
 			document.getElementById("isp_TW_desc").style.display = "";
 			document.getElementById("mac_clone_field").style.display = "none";
@@ -999,7 +997,9 @@ function pass_checked_iptv(obj){
 			</tr>
 		</table>
 	</div>
-	<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="../images/New_ui/export/line_export.png"></div>
+	<div style="margin:5px;" id="splitLine">
+		<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+	</div>
 </div>		
 <br/>
 <div>
@@ -1010,7 +1010,7 @@ function pass_checked_iptv(obj){
 		<div id="pppoe_fail_desc" style="font-size:14px;margin:0 0 10px 10px;color:#FC0;display:none"><#QKSet_Internet_Setup_fail_reason2#></div>
 		<table id="tblsetting_1" class="QISform" style="width:380px;" border="0" align="center" cellpadding="5" cellspacing="0">
 		<tr>
-			<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#HSDPAConfig_Username_itemname#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="../images/New_ui/helpicon.png"></span></th>
+			<th width="180"><span onmouseout="return nd();" onclick="openHint(7, 27);" style="cursor:help;"><#Username#><img align="right" style="cursor:pointer;margin-top:-14px\9;" src="../images/New_ui/helpicon.png"></span></th>
 			<td class="QISformtd">
 				<input type="text" name="wan_pppoe_username" maxlength="64" value="" tabindex="1" onkeypress="return validator.isString(this, event);" class="input_18_table" size="36" autocapitalization="off" autocomplete="off"/>
 			</td>
@@ -1118,7 +1118,7 @@ function pass_checked_iptv(obj){
 
 				<div id="dualwan_settings">
 				<table class="iptvTable">
-					<tr id="dualwan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+					<tr id="dualwan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 					<tr><td colspan="2"><div style="margin: 0px 5px 0px 15px; color:#FC0;">You must select "Ethernet LAN" as the primary WAN to use the IPTV function.<!--untranslated--></div></td></tr>
 					<tr id="tr_wans_primary" style="">
 						<th width="30%"><#dualwan_primary#>:</th>
@@ -1136,12 +1136,12 @@ function pass_checked_iptv(obj){
 
 				<div id="port_settings">
 				<table class="iptvTable">
-					<tr id="wan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+					<tr id="wan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 					<tr id="wan_voip_x">
 						<th><span id="voip_title">VoIP Port: </span></th>
 						<td>LAN3</td>
 					</tr>
-					<tr id="wan_iptv_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+					<tr id="wan_iptv_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 					<tr id="wan_iptv_x">
 						<th><span id="iptv_title">IPTV STB Port: </span></th>
 						<td>LAN4</td>
@@ -1151,7 +1151,7 @@ function pass_checked_iptv(obj){
 
 				<div id="manual_settings">
 					<table class="iptvTable">
-						<tr><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+						<tr><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 						<tr>
 							<th><#Internet#>:</th>
 							<td>
@@ -1177,13 +1177,13 @@ function pass_checked_iptv(obj){
 				</div>
 
 				<div id="iptv_configuration">
-					<div style="margin: 5px 5px 5px 7px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div>
+					<div style="margin: 5px 5px 5px 7px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div>
 					<table class="iptvTable">
 						<tr>
 							<th>VoIP Port: </th>
 							<td>LAN3</td>
 						</tr>
-						<tr><td colspan="2"><div style="margin: 5px 5px 5px 11px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+						<tr><td colspan="2"><div style="margin: 5px 5px 5px 11px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 						<tr>
 							<th>IPTV STB Port: </th>
 							<td>LAN4</td>
@@ -1222,7 +1222,7 @@ function pass_checked_iptv(obj){
 							</td>
 						</tr>
 		            	<tr id="tr_pppoe_username" style="display:none;">
-		             	 	<th style="color:#6CF;"><#HSDPAConfig_Username_itemname#>: </th>
+		             	 	<th style="color:#6CF;"><#Username#>: </th>
 		              		<td style="text-align:left;"><input type="text" maxlength="64" class="input_15_table" name="wan10_pppoe_username" value="<% nvram_get("wan10_pppoe_username"); %>" onkeypress="return validator.isString(this, event)"></td>
 		            	</tr>
 		            	<tr id="tr_pppoe_password" style="display:none;">
@@ -1244,7 +1244,7 @@ function pass_checked_iptv(obj){
 	<fieldset>
 		<div id="DNSDiv">
 			<div class="row">
-				<label><#PPPConnection_UserName_itemname#></label>
+				<label><#Username#></label>
 				<input type="text" name="wan_pppoe_username_m" placeholder="" maxlength="64" value="" autocapitalization="off" autocomplete="off"/>
 			</div>
 			<div class="row">

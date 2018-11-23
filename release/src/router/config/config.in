@@ -222,7 +222,7 @@ config RTCONFIG_IPSEC_CLIENT
 	bool "IPsec Support"
 	depends on RTCONFIG_IPSEC
 	default n
-	
+
 # !!TB
 config RTCONFIG_IPV6
 	bool "IPv6 Support"
@@ -396,6 +396,10 @@ config RTCONFIG_DBLOG
 	bool "System Diagnostic Support"
 	default n
 
+config RTCONFIG_NO_USBPORT
+	bool "No USB port"
+	default n
+
 config RTCONFIG_USB
 	bool "USB Support"
 	default y
@@ -416,7 +420,7 @@ config RTCONFIG_MEDIA_SERVER
 	bool "Media Server (MiniDLNA)"
 	depends on RTCONFIG_USB
 	default n
-	
+
 config RTCONFIG_MEDIASERVER_LIMIT
 	bool "Small memory optimization on Media Server"
 	depends on RTCONFIG_MEDIA_SERVER
@@ -519,7 +523,7 @@ config RTCONFIG_TFAT
 
 config RTCONFIG_OPENPLUS_TFAT
 	bool "Open + Tuxera FAT Support"
-	depends on RTCONFIG_OPEN_NTFS3G
+	depends on RTCONFIG_TFAT
 	default n
 
 config RTCONFIG_NTFS
@@ -1405,6 +1409,10 @@ config RTCONFIG_IFTTT
 	bool "IFTTT support"
 	default n
 
+config RTCONFIG_UTF8_SSID
+	bool "UTF8_SSID support"
+	default n
+
 config RTCONFIG_ERP_TEST
 	bool "erp test"
 	default n
@@ -1416,7 +1424,7 @@ config RTCONFIG_REBOOT_SCHEDULE
 config RTCONFIG_IPSEC
 	bool "IPSEC support"
 	default n
-	
+
 config RTCONFIG_CAPTIVE_PORTAL
 	bool "Captive Portal support"
 	default n
@@ -1554,6 +1562,10 @@ config RTCONFIG_DEFLAN50
 	bool "Let the default LAN subnet be 192.168.50.1"
 	default n
 
+config RTCONFIG_ALL_DEF_LAN50
+	bool "Let the default LAN subnet be 192.168.50.1 in all sku."
+	default n
+
 config RTCONFIG_VPN_FUSION
 	bool "Enable VPN Fusion"
 	default n
@@ -1688,17 +1700,21 @@ config RTCONFIG_AMAS
 config RTCONFIG_NO_SELECT_CHANNEL
 	bool "Auto Channel Selection (no select) for MTK."
 	default n
-	
+
 config RTCONFIG_USB_SWAP
 	bool "Enable SWAP, if enable USB function."
 	default n
-		
+
 config RTCONFIG_SW_DEVLED
 	bool "software led control."
 	default n
 
 config RTCONFIG_LYRA_HIDE
 	bool "Hide UI item for Lyra"
+	default n
+
+config RTCONFIG_PORT2_DEVICE
+	bool "2 Port device"
 	default n
 
 config RTCONFIG_NVRAM_ENCRYPT
@@ -1731,4 +1747,8 @@ config RTCONFIG_SW_HW_AUTH
 
 config RTCONFIG_LIBASUSLOG
 	bool "asuslog library for debug"
+	default n
+
+config RTCONFIG_ETHOBD
+	bool "ethernet onboarding for Aimash."
 	default n

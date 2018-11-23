@@ -19,8 +19,8 @@ TARGET_MODEL = $(subst -,,$(subst +,P,$(BUILD_NAME)))
 endif
 CFLAGS  += -D$(TARGET_MODEL)
 
-TARGET_LIBS = -lssl -lcrypto -ldl -lm
-AUTHLIB_LIBS = -lssl -lcrypto -ldl -lm
+TARGET_LIBS = -L$(TOP)/openssl -lssl -lcrypto -ldl -lm
+AUTHLIB_LIBS = -L$(TOP)/openssl -lssl -lcrypto -ldl -lm
 
 LDFLAGS = -L.
 LDFLAGS += -L$(TOP)/nvram$(BCMEX)${EX7} ${EXTRA_NV_LDFLAGS} -lnvram
@@ -32,12 +32,9 @@ ifeq ($(RTCONFIG_QTN),y)
 LDFLAGS += -L$(TOP)/libqcsapi_client -lqcsapi_client
 endif
 
-ifeq ($(RTCONFIG_AMAS),y)
-LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
-endif
-
 OBJS = sw_auth.o hw_auth.o
 
+# $(TARGET) and $(TOOL) is for debug only, don't enable it
 all :
 
 $(AUTHLIB): $(OBJS)

@@ -312,8 +312,8 @@ function bsd_disable(val){
 		document.form.wl2_bsd_steering_policy_x.disabled = false;
 		document.form.wl1_bsd_sta_select_policy_x.disabled = false;
 		document.form.wl2_bsd_sta_select_policy_x.disabled = false;
-		document.form.wl1_bsd_if_select_policy_x.disabled = false;
-		document.form.wl2_bsd_if_select_policy_x.disabled = false;
+		//document.form.wl1_bsd_if_select_policy_x.disabled = false;
+		//document.form.wl2_bsd_if_select_policy_x.disabled = false;
 		document.form.wl1_bsd_if_qualify_policy_x.disabled = false;
 		document.form.wl2_bsd_if_qualify_policy_x.disabled = false;
 		document.form.bsd_bounce_detect_x.disabled = false;
@@ -1302,8 +1302,8 @@ function set_lg_power(power_value,flag,idx){
 <input type="hidden" name="wl2_bsd_steering_policy_x" value="" disabled>
 <input type="hidden" name="wl1_bsd_sta_select_policy_x" value="" disabled>
 <input type="hidden" name="wl2_bsd_sta_select_policy_x" value="" disabled>
-<input type="hidden" name="wl1_bsd_if_select_policy_x" value="" disabled>
-<input type="hidden" name="wl2_bsd_if_select_policy_x" value="" disabled>
+<input type="hidden" name="wl1_bsd_if_select_policy_x" value="<% nvram_get("wl1_bsd_if_select_policy_x"); %>" disabled>
+<input type="hidden" name="wl2_bsd_if_select_policy_x" value="<% nvram_get("wl2_bsd_if_select_policy_x"); %>" disabled>
 <input type="hidden" name="wl1_bsd_if_qualify_policy_x" id="wl1_bsd_if_qualify_policy_x" value="" disabled>
 <input type="hidden" name="wl2_bsd_if_qualify_policy_x" id="wl2_bsd_if_qualify_policy_x" value="" disabled>
 <input type="hidden" name="bsd_bounce_detect_x" value=""  disabled>
@@ -1330,7 +1330,7 @@ function set_lg_power(power_value,flag,idx){
 		  <td bgcolor="#4D595D" valign="top">
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_1#> - <#smart_connect_rule#></div>
-     	  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+     	 <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
       	  <div class="formfontdesc"><#smart_connect_hint#></div>
 		  <div style="text-align:right;margin-top:-36px;padding-bottom:3px;"><input type="button" class="button_gen" value="<#View_List#>" onClick="pop_clientlist_listview(true)"></div>
 		  <div id="bsd_steering_div"></div>

@@ -796,8 +796,8 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x14fe);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x1506);
-			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011062000000100000000000000000000");
+			fprintf(fp, "TargetProductList=\"%s\"\n",	"1506,150f,151d,1c1e");
+			fprintf(fp, "HuaweiNewMode=1\n");
 			break;
 		case SN_Huawei_E3276S150:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
@@ -1172,7 +1172,7 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1446);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
-			fprintf(fp, "TargetProduct= \"1001,1406,140b,140c,1412,141b,14ac\"\n");
+			fprintf(fp, "TargetProductList=\"%s\"\n",	"1001,1406,140b,140c,1412,141b,14ac");
 			fprintf(fp, "CheckSuccess=%d\n",	20);
 			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011062000000100000000000000000000");
 			break;
@@ -1238,13 +1238,12 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "TargetProduct=0x%04x\n",	0x6802);
 			fprintf(fp, "MessageContent=%s\n",	"5553424312345678c000000080000671010000000000000000000000000000");
 			break;
-		case SN_Huawei_E353:
+		case SN_Huawei_E353: // some E3372.
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1f01);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
-			fprintf(fp, "TargetProduct=0x%04x\n",	0x14db);
-			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000a11062000000000000100000000000000");
-			fprintf(fp, "NoDriverLoading=1\n");
+			fprintf(fp, "TargetProductList=\"%s\"\n",	"14db,14dc");
+			fprintf(fp, "HuaweiNewMode=1\n");
 			break;
 		case SN_Haier_CE682:
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x201e);
@@ -1493,7 +1492,7 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1f16);
 #if 1
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
-			fprintf(fp, "TargetProductList=\"%s\"\n", "14f8,1575");
+			fprintf(fp, "TargetProductList=\"%s\"\n",	"14f8,1575");
 			fprintf(fp, "MessageContent=%s\n",	"55534243123456780000000000000011062000000101000100000000000000");
 #else
 			fprintf(fp, "Configuration=2\n");
@@ -1589,7 +1588,7 @@ int write_3g_conf(FILE *fp, int dno, int aut, const unsigned int vid, const unsi
 			fprintf(fp, "DefaultVendor=0x%04x\n",	0x12d1);
 			fprintf(fp, "DefaultProduct=0x%04x\n",	0x1f1e);
 			fprintf(fp, "TargetVendor=0x%04x\n",	0x12d1);
-			fprintf(fp, "TargetProductList=\"%s\"\n", "157f,1592");
+			fprintf(fp, "TargetProductList=\"%s\"\n",	"157f,1592");
 			fprintf(fp, "HuaweiNewMode=1\n");
 			break;
 		case SN_Huawei_GP02:
@@ -4904,13 +4903,10 @@ int asus_usb_interface(const char *device_name, const char *action)
 		snprintf(buf, sizeof(buf), "%x %x", vid, pid);
 		f_write_string("/sys/bus/usb-serial/drivers/option1/new_id", buf, 0, 0);
 #else
-		//sleep(2);
-		//snprintf(modem_cmd, sizeof(modem_cmd), "vendor=0x%04x", vid);
-		//snprintf(buf, sizeof(buf), "product=0x%04x", pid);
-		//eval("insmod", "option", modem_cmd, buf);
 		usb_dbg("(%s): Runing option with (0x%04x/0x%04x)...\n", device_name, vid, pid);
-		snprintf(modem_cmd, sizeof(modem_cmd), "vendor=0x%04x product=0x%04x", vid, pid);
-		modprobe("option", modem_cmd);
+		snprintf(modem_cmd, sizeof(modem_cmd), "vendor=0x%04x", vid);
+		snprintf(buf, sizeof(buf), "product=0x%04x", pid);
+		modprobe("option", modem_cmd, buf);
 #endif
 		sleep(1);
 	}

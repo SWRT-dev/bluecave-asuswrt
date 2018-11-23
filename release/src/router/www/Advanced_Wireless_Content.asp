@@ -26,10 +26,7 @@
 
 $(function () {
 	if(amesh_support && (isSwMode("rt") || isSwMode("ap"))) {
-		$('<script>')
-			.attr('type', 'text/javascript')
-			.attr('src','/require/modules/amesh.js')
-			.appendTo('head');
+		addNewScript('/require/modules/amesh.js');
 	}
 });
 
@@ -411,7 +408,7 @@ function applyRule(){
 				var wl_parameter = {
 					"original" : {
 						"ssid" : decodeURIComponent('<% nvram_char_to_ascii("", "wl_ssid"); %>'),
-						"psk" : decodeURIComponent('<% nvram_char_to_ascii("", "wl_wpa_psk"); %>')
+						"psk" :  decodeURIComponent('<% nvram_char_to_ascii("", "wl_wpa_psk"); %>')
 					},
 					"current": {
 						"ssid" : document.form.wl_ssid.value,
@@ -421,12 +418,13 @@ function applyRule(){
 				if(!AiMesh_confirm_msg("Wireless_SSID_PSK", wl_parameter))
 					return false;
 			}
-
 			var radio_value = (document.form.wl_closed[0].checked) ? 1 : 0;
 			if(document.form.wps_enable.value == 1) {
-				if(!AiMesh_confirm_msg("Wireless_Hide_WPS", radio_value))
-					return false;
-				document.form.wps_enable.value = "0";
+				if(radio_value) {
+					if(!AiMesh_confirm_msg("Wireless_Hide_WPS", radio_value))
+						return false;
+					document.form.wps_enable.value = "0";
+				}
 			}
 			else {
 				if(!AiMesh_confirm_msg("Wireless_Hide", radio_value))
@@ -950,7 +948,7 @@ function change_wl_nmode(o){
 		  <td bgcolor="#4D595D" valign="top">
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_1#> - <#menu5_1_1#></div>
-      <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+      		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
       <div class="formfontdesc"><#adv_wl_desc#></div>
 		<div id="lantiq_ready" style="display:none;color:#FC0;margin-left:5px;font-size:13px;">Wireless is setting...</div>
 			<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" id="WLgeneral" class="FormTable">

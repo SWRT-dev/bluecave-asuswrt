@@ -20,13 +20,11 @@
 <script type="text/javascript" language="JavaScript" src="/validator.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 $(function () {
 	if(amesh_support && (isSwMode("rt") || isSwMode("ap"))) {
-		$('<script>')
-			.attr('type', 'text/javascript')
-			.attr('src','/require/modules/amesh.js')
-			.appendTo('head');
+		addNewScript('/require/modules/amesh.js');
 	}
 });
 
@@ -72,6 +70,8 @@ if(yadns_support){
 
 function initial(){
 	show_menu();
+	//id="faq" href="https://www.asus.com/US/support/FAQ/1000906"
+	httpApi.faqURL("faq", "1000906", "https://www.asus.com", "/support/FAQ/");
 
 	var dhcp_staticlist_row = dhcp_staticlist_array.split('&#60');
 	for(var i = 1; i < dhcp_staticlist_row.length; i += 1) {
@@ -111,21 +111,17 @@ function initial(){
 		}
 	}
 
-	//Viz keep this, disabled temporarily. if(!tmo_support){
-			document.form.sip_server.disabled = true;
-			document.form.sip_server.parentNode.parentNode.style.display = "none";
-	//}else{
-	//		document.form.sip_server.disabled = false;
-	//		document.form.sip_server.parentNode.parentNode.style.display = "";		
-	//}
-
-	addOnlineHelp(document.getElementById("faq"), ["set", "up", "specific", "IP", "address"]);
+	document.form.sip_server.disabled = true;
+	document.form.sip_server.parentNode.parentNode.style.display = "none";	
 
 	if(vpn_fusion_support) {
 		vpnc_dev_policy_list_array = parse_vpnc_dev_policy_list('<% nvram_char_to_ascii("","vpnc_dev_policy_list"); %>');
 		vpnc_dev_policy_list_array_ori = vpnc_dev_policy_list_array.slice();
 	}
 
+	if(lyra_hide_support){
+		$("#dhcpEnable").hide();
+	}
 }
 
 function addRow_Group(upper){
@@ -232,16 +228,17 @@ function edit_Row(r){
 
 function showdhcp_staticlist(){
 	var code = "";
-
-	code +='<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="dhcp_staticlist_table">';
+	var clientListEventData = [];
+	code += '<table width="100%" cellspacing="0" cellpadding="4" align="center" class="list_table" id="dhcp_staticlist_table">';
 	if(Object.keys(manually_dhcp_list_array).length == 0)
-		code +='<tr><td style="color:#FFCC00;" colspan="3"><#IPConnection_VSList_Norule#></td></tr>';
+		code += '<tr><td style="color:#FFCC00;"><#IPConnection_VSList_Norule#></td></tr>';
 	else {
 		//user icon
 		var userIconBase64 = "NoIcon";
 		var clientName, deviceType, deviceVender;
 		Object.keys(manually_dhcp_list_array).forEach(function(key) {
 			var clientMac = manually_dhcp_list_array[key].toUpperCase();
+			var clientIconID = "clientIcon_" + clientMac.replace(/\:/g, "");
 			var clientIP = key;
 			if(clientList[clientMac]) {
 				clientName = (clientList[clientMac].nickName == "") ? clientList[clientMac].name : clientList[clientMac].nickName;
@@ -256,25 +253,25 @@ function showdhcp_staticlist(){
 			code += '<tr><td width="60%" align="center">';
 			code += '<table style="width:100%;"><tr><td style="width:40%;height:56px;border:0px;float:right;">';
 			if(clientList[clientMac] == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+				code += '<div id="' + clientIconID + '" class="clientIcon type0"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div id="' + clientIconID + '" style="text-align:center;"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+					code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "" && !downsize_4m_support) {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+						code += '<div id="' + clientIconID + '" class="venderIcon ' + venderIconClassName + '"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'DHCP\')"></div>';
+						code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 					}
 				}
 			}
@@ -283,13 +280,21 @@ function showdhcp_staticlist(){
 			code += '<div>' + clientMac + '</div>';
 			code += '</td></tr></table>';
 			code += '</td>';
-			code +='<td width="30%">'+ clientIP +'</td>';
-			code +='<td width="10%">';
-			code +='<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
+			code += '<td width="30%">'+ clientIP +'</td>';
+			code += '<td width="10%">';
+			code += '<input class="remove_btn" onclick="del_Row(this);" value=""/></td></tr>';
+			clientListEventData.push({"mac" : clientMac, "name" : clientName, "ip" : clientIP, "callBack" : "DHCP"});
 		});
 	}
-	code +='</table>';
+	code += '</table>';
 	document.getElementById("dhcp_staticlist_Block").innerHTML = code;
+	for(var i = 0; i < clientListEventData.length; i += 1) {
+		var clientIconID = "clientIcon_" + clientListEventData[i].mac.replace(/\:/g, "");
+		var clientIconObj = $("#dhcp_staticlist_Block").children("#dhcp_staticlist_table").find("#" + clientIconID + "")[0];
+		var paramData = JSON.parse(JSON.stringify(clientListEventData[i]));
+		paramData["obj"] = clientIconObj;
+		$("#dhcp_staticlist_Block").children("#dhcp_staticlist_table").find("#" + clientIconID + "").click(paramData, popClientListEditTable);
+	}
 }
 
 function applyRule(){
@@ -619,11 +624,11 @@ function parse_vpnc_dev_policy_list(_oriNvram) {
 		  <td bgcolor="#4D595D" valign="top">
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_2#> - <#menu5_2_2#></div>
-		  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		  <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
       <div class="formfontdesc"><#LANHostConfig_DHCPServerConfigurable_sectiondesc#></div>
       <div id="router_in_pool" class="formfontdesc" style="color:#FFCC00;display:none;"><#LANHostConfig_DHCPServerConfigurable_sectiondesc2#><span id="LANIP"></span></div>	
       <div id="VPN_conflict" class="formfontdesc" style="color:#FFCC00;display:none;"><span id="VPN_conflict_span"></span></div>
-			<div class="formfontdesc" style="margin-top:-10px;display:none;">
+			<div class="formfontdesc" style="margin-top:-10px;">
 				<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;"><#LANHostConfig_ManualDHCPList_groupitemdesc#>&nbsp;FAQ</a>
 			</div>
   
@@ -634,7 +639,7 @@ function parse_vpnc_dev_policy_list(_oriNvram) {
 			  </tr>
 			  </thead>		
 
-			  <tr>
+			  <tr id="dhcpEnable">
 				<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(5,1);"><#LANHostConfig_DHCPServerConfigurable_itemname#></a></th>
 				<td>
 				  <input type="radio" value="1" name="dhcp_enable_x" class="content_input_fd" onClick="return change_common_radio(this, 'LANHostConfig', 'dhcp_enable_x', '1')" <% nvram_match("dhcp_enable_x", "1", "checked"); %>><#checkbox_Yes#>

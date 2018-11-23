@@ -41,6 +41,7 @@
 #include <assert.h>
 #include <sys/sysinfo.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <syslog.h>
 #include <typedefs.h>
 #include <wlioctl.h>
@@ -143,6 +144,11 @@ void dbg(const char * format, ...)
 
 	if (nfd != -1) close(nfd);
 }
+
+/* XXX - this should be in a common file */
+#define WLMBSS_DEV_NAME        "wlmbss"
+#define WL_DEV_NAME "wl"
+#define WDS_DEV_NAME   "wds"
 
 /*
  * Reads file and returns contents
@@ -936,41 +942,73 @@ get_ifname_unit(const char* ifname, int *unit, int *subunit)
 	if (len == 0)
 		return -1;
 
-	/* point to the beginning of the last integer and convert */
-	p = str + (ifname_len - len);
-	val = strtoul(p, NULL, 10);
+	/* Check for WDS interface */
+	if (strncmp(str, WDS_DEV_NAME, strlen(WDS_DEV_NAME))) {
+		/* point to the beginning of the last integer and convert */
+		p = str + (ifname_len - len);
+		val = strtoul(p, NULL, 10);
 
-	/* if we are at the beginning of the string, or the previous
-	 * character is not a '.', then we have the unit number and
-	 * we are done parsing
-	 */
-	if (p == str || p[-1] != '.') {
+		/* if we are at the beginning of the string, or the previous
+		 * character is not a '.', then we have the unit number and
+		 * we are done parsing
+		 */
+		if (p == str || p[-1] != '.') {
+			if (unit)
+			*unit = val;
+			return 0;
+		} else {
+			if (subunit)
+				*subunit = val;
+		}
+
+		/* chop off the '.NNN' and get the unit number */
+		p--;
+		p[0] = '\0';
+
+		/* find the trailing digit chars */
+		len = sh_strrspn(str, digits);
+
+		/* fail if there were no trailing digits */
+		if (len == 0)
+			return -1;
+
+		/* point to the beginning of the last integer and convert */
+		p = p - len;
+		val = strtoul(p, NULL, 10);
+
+		/* save the unit number */
 		if (unit)
 			*unit = val;
-		return 0;
 	} else {
-		if (subunit)
-			*subunit = val;
+		/* WDS interface */
+		/* point to the beginning of the first integer and convert */
+		p = str + strlen(WDS_DEV_NAME);
+		val = strtoul(p, &p, 10);
+
+		/* if next character after integer is '.' then we have unit number else fail */
+		if (p[0] == '.') {
+			/* Save unit number */
+			if (unit) {
+				*unit = val;
+			}
+		} else {
+			return -1;
+		}
+
+		/* chop off the '.' and get the subunit number */
+		p++;
+		val = strtoul(p, &p, 10);
+
+		/* if next character after interger is '.' then we have subunit number else fail */
+		if (p[0] == '.') {
+			/* Save subunit number */
+			if (subunit) {
+				*subunit = val;
+			}
+		} else {
+			return -1;
+		}
 	}
-
-	/* chop off the '.NNN' and get the unit number */
-	p--;
-	p[0] = '\0';
-
-	/* find the trailing digit chars */
-	len = sh_strrspn(str, digits);
-
-	/* fail if there were no trailing digits */
-	if (len == 0)
-		return -1;
-
-	/* point to the beginning of the last integer and convert */
-	p = p - len;
-	val = strtoul(p, NULL, 10);
-
-	/* save the unit number */
-	if (unit)
-		*unit = val;
 
 	return 0;
 }
@@ -1233,10 +1271,6 @@ ure_any_enabled(void)
 	return nvram_match("ure_disable", "0");
 }
 
-
-#define WLMBSS_DEV_NAME	"wlmbss"
-#define WL_DEV_NAME "wl"
-#define WDS_DEV_NAME	"wds"
 
 /**
  *	 nvifname_to_osifname()
@@ -1747,10 +1781,12 @@ swap_check()
 /*
  * Kills process whose PID is stored in plaintext in pidfile
  * @param	pidfile	PID file
+ * @sig  	signal to be send
+ * @rm   	whether to remove this pid file (1) or not (0).
  * @return	0 on success and errno on failure
  */
 
-int kill_pidfile(char *pidfile)
+int kill_pidfile_s_rm(char *pidfile, int sig, int rm)
 {
 	FILE *fp;
 	char buf[256];
@@ -1759,45 +1795,23 @@ int kill_pidfile(char *pidfile)
 		if (fgets(buf, sizeof(buf), fp)) {
 			pid_t pid = strtoul(buf, NULL, 0);
 			fclose(fp);
-			return kill(pid, SIGTERM);
-		}
-		fclose(fp);
-  	}
-	return errno;
-}
-
-
-int kill_pidfile_s(char *pidfile, int sig)
-{
-	FILE *fp;
-	char buf[256];
-
-	if ((fp = fopen(pidfile, "r")) != NULL) {
-		if (fgets(buf, sizeof(buf), fp)) {
-			pid_t pid = strtoul(buf, NULL, 0);
-			fclose(fp);
-			return kill(pid, sig);
-		}
-		fclose(fp);
-  	}
-	return errno;
-}
-
-int kill_pidfile_s_rm(char *pidfile, int sig)
-{
-	FILE *fp;
-	char buf[256];
-
-	if ((fp = fopen(pidfile, "r")) != NULL) {
-		if (fgets(buf, sizeof(buf), fp)) {
-			pid_t pid = strtoul(buf, NULL, 0);
-			fclose(fp);
-			unlink(pidfile);
+			if(rm)
+				unlink(pidfile);
 			return kill(pid, sig);
 		}
 		fclose(fp);
 	}
 	return errno;
+}
+
+int kill_pidfile(char *pidfile)
+{
+	return kill_pidfile_s_rm(pidfile, SIGTERM, 1);
+}
+
+int kill_pidfile_s(char *pidfile, int sig)
+{
+	return kill_pidfile_s_rm(pidfile, sig, 0);
 }
 
 long uptime(void)
@@ -1836,7 +1850,7 @@ int _vstrsep(char *buf, const char *sep, ...)
 	return n;
 }
 
-#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_REALTEK) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_LANTIQ)
+#if defined(CONFIG_BCMWL5) || defined(RTCONFIG_REALTEK) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_LANTIQ)|| defined(RTCONFIG_QCA)
 char *
 wl_ether_etoa(const struct ether_addr *n)
 {
@@ -1847,7 +1861,7 @@ wl_ether_etoa(const struct ether_addr *n)
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		if (i)
 			*c++ = ':';
-#if defined(RTCONFIG_LANTIQ)		
+#if defined(RTCONFIG_LANTIQ)|| defined(RTCONFIG_LANTIQ)|| defined(RTCONFIG_QCA)			
 		c += sprintf(c, "%02X", n->ether_addr_octet[i] & 0xff);
 #else
 		c += sprintf(c, "%02X", n->octet[i] & 0xff);
@@ -2157,3 +2171,47 @@ int hex2str(unsigned char *hex, char *str, int hex_len)
 	*d = 0;
 	return 1;
 } /* End of hex2str */
+
+int char2hex (char ch)
+{
+	if(ch >= '0' && ch <= '9')
+		return ch - '0';
+	ch |= 0x20;
+	if(ch >= 'a' && ch <= 'f')
+		return ch - 'a' + 10;
+	return -1;
+}
+
+int str2hex(const char *str, unsigned char *data, size_t size)
+{
+	int idx,len;
+	int v1, v2;
+
+	for(idx = 0, len = 0; len < size; len++) {
+		if((v1 = char2hex(str[idx++])) < 0)
+			return len;
+		if((v2 = char2hex(str[idx++])) < 0)
+			return -1;
+		data[len] = (unsigned char)((v1 << 4)|v2);
+	}
+	return len;
+}
+
+
+void reset_stacksize(int newval)
+{
+	struct rlimit   lim;
+
+	getrlimit(RLIMIT_STACK, &lim);
+	printf("\nnow sys rlimit:cur=%d, max=%d\n", (int)lim.rlim_cur, (int)lim.rlim_max);
+
+	if(newval == ASUSRT_STACKSIZE && nvram_get_int("asus_stacksize"))
+		newval = nvram_get_int("asus_stacksize");
+
+	lim.rlim_cur = newval;
+	if(setrlimit(RLIMIT_STACK, &lim)==-1)
+		printf("\nreset stack_size soft limit failed\n");
+	else
+		printf("\nreset stack_size soft limit as %d\n", newval);
+}
+

@@ -651,7 +651,7 @@ function check_connect_status(){
 				mobile_auxstate = second_wanauxstate;
 			}
 
-			if(mobile_state == 2 && mobile_sbstate == 0 && mobile_auxstate == 0){
+			if(mobile_state == 2 && mobile_sbstate == 0 && mobile_auxstate != 1){
 				document.getElementById("connection_status").innerHTML = "<#Connected#>";
 				document.getElementById("mconnect_status").innerHTML = "<#Connected#>";
 			}
@@ -1749,7 +1749,7 @@ function update_lte_fw(){
 		<tr>
 			<td align="left">
 			<span class="formfonttitle"><#menu5_3#> - <#Mobile_status_title#></span>
-			<div style="width:600px; height:15px;overflow:hidden;position:relative;left:0px;top:5px;"><img src="/images/New_ui/export/line_export.png"></div>
+			<div style="width:600px; height:15px;overflow:hidden;position:relative;left:0px;top:5px;" class="splitLine"></div>
 			<div><#Mobile_status_desc1#></div>
 			</td>
 		</tr>
@@ -1763,9 +1763,6 @@ function update_lte_fw(){
 					</tr>
 					</thead>
 			 		<tr><th><#Modelname#></th><td><% nvram_get("productid"); %></td></tr>
-		  			<!--tr><th><#Hardware_version#></th><td><div id="modem_act_hwver"><% nvram_get("usb_modem_act_hwver"); %></div></td></tr-->
-		  			<!--tr><th>LTE Modem Version</th><td><div id="usb_modem_act_swver"><% nvram_get("usb_modem_act_swver"); %></div></td></tr-->
-		  			<!--tr><th>IMEI</th><td><div id="modem_act_imei"><% nvram_get("usb_modem_act_imei"); %></div></td></tr-->
 					<tr><th>IMSI</th><td><div id="modem_act_imsi"><% nvram_get("usb_modem_act_imsi"); %></div></td></tr>
 					<tr><th>ICCID</th><td><div id="modem_act_iccid"><% nvram_get("usb_modem_act_iccid"); %></div></td></tr>
 		 		</table>
@@ -1859,7 +1856,7 @@ function update_lte_fw(){
 						</tr>
 					</table>
 				</div>
-				<div style="margin:5px;"><img src="/images/New_ui/export/line_export.png"></div>
+				<div style="margin:5px;" class="splitLine"></div>
 	      		<div class="formfontdesc"><#WAN_page_desc#></div>			  
 
 					<table  width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="WANscap">
@@ -1901,34 +1898,6 @@ function update_lte_fw(){
 					 <div id="lte_update_note" style="color:#FFCC00; font-size:10px; display:none;">* Please remove SIM card before starting update and do not remove or unmount USB drive before update process is finished. </div>
 
 					<div id="basic_setting_desc" class="formfontdesc" style="margin-bottom:0px; margin-top: 15px;"><#Mobile_desc1#></div>
-					<!--table id="simdetect_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px">
-						<thead>
-						<tr>
-							<td colspan="2"><#Mobile_SIM_Detector#></td>
-						</tr>
-						</thead>
-						<tr>
-							<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(28, 5);"><#Mobile_SIM_Detector#></a></th>
-							<td>
-					    		<div class="left" style="width:94px; float:left;" id="simdetect_switch"></div>
-									<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden"></div>
-									<script type="text/javascript">
-										$('#simdetect_switch').iphoneSwitch('<% nvram_get("usb_modem_act_simdetect"); %>', 
-											function() {
-												curState = "1";
-												set_simdetect("1");
-												return true;
-											},
-											function() {
-											 	curState = "0";
-												set_simdetect("0");
-												return true;
-											 }
-										);
-									</script>
-							</td>
-						</tr>
-					</table-->
 
 				<table id="connection_table" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable" style="margin-top:8px">
 				  	<thead>
@@ -2155,14 +2124,14 @@ function update_lte_fw(){
 					</tr>					
                                 
 					<tr>
-						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,11);"><#HSDPAConfig_Username_itemname#></a></th>
+						<th><a class="hintstyle"  href="javascript:void(0);" onClick="openHint(21,11);"><#Username#></a></th>
 						<td>
 						<input id="modem_user" name="modem_user" class="input_20_table" style="margin-left:0px;" type="text" value="<% nvram_get("modem_user"); %>" autocorrect="off" autocapitalize="off"/>
 						</td>
 					</tr>
 
           			<tr id="modem_user_div_tr" style="display:none;">
-						<th><#HSDPAConfig_Username_itemname#></th>
+						<th><#Username#></th>
 	            		<td>
 							<div id="modem_user_div" style="color:#FFFFFF; margin-left:1px;"></div>
 						</td>
@@ -2201,7 +2170,7 @@ function update_lte_fw(){
 						<tr>
 							<td align="left">
 							<span id="sim_formtitle" class="formfonttitle"></span>
-							<div style="width:500px; height:15px;overflow:hidden;position:relative;left:0px;top:5px;"><img src="/images/New_ui/export/line_export.png"></div>
+							<div style="width:500px; height:15px;overflow:hidden;position:relative;left:0px;top:5px;" class="splitLine"></div>
 							<div id="sim_title_desc"></div>
 							</td>
 						</tr>

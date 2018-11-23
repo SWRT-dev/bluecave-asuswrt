@@ -20,6 +20,8 @@
 <script type="text/javascript" src="form.js"></script>
 <script type="text/javascript" src="switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="client_function.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style>
 #switch_menu{
 	text-align:right
@@ -47,12 +49,6 @@
 }
 </style>
 <script>
-window.onresize = function() {
-	if(document.getElementById("agreement_panel").style.display == "block") {
-		cal_panel_block("agreement_panel", 0.25);
-	}
-}
-
 var wrs_filter = "<% nvram_get("wrs_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var wrs_id_array = [["1,2,3,4,5,6,8", "9,10,14,15,16,25,26", "11"],
 					["24", "50", "52", "51", "53,89", "42"],
@@ -325,7 +321,7 @@ function addRow_main(obj, length){
 	}
 
 	if(blank_category == 0){
-		alert("The Content Category can not be empty");
+		alert("<#AiProtection_Category_Alert#>");
 		return false;
 	}
 
@@ -369,7 +365,7 @@ function addRow_main(obj, length){
 function genMain_table(){
 	var category_name = ["<#AiProtection_filter_Adult#>", "<#AiProtection_filter_message#>", "<#AiProtection_filter_p2p#>", "<#AiProtection_filter_stream#>"];
 	var sub_category_name = [["<#AiProtection_filter_Adult1#>", "<#AiProtection_filter_Adult2#>", "<#AiProtection_filter_Adult3#>"],
-							 ["<#AiProtection_filter_Adult4#>", "Social Networking", "E-Mail", "<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult6#>", "<#AiProtection_filter_Adult7#>"],
+							 ["<#AiProtection_filter_Adult4#>", "<#AiProtection_WebProtector_Social_Net#>", "<#AiProtection_WebProtector_EMail#>", "<#AiProtection_filter_Adult5#>", "<#AiProtection_filter_Adult6#>", "<#AiProtection_filter_Adult7#>"],
 							 ["<#AiProtection_filter_p2p1#>", "<#AiProtection_filter_p2p2#>"],
 							 ["<#AiProtection_filter_stream2#>", "<#AiProtection_filter_stream3#>", "<#AiProtection_WebProtector_Img_Search#>", "<#AiProtection_WebProtector_Search_Engine#>"]];
 
@@ -391,7 +387,7 @@ function genMain_table(){
 	code += '<th width="5%" height="30px" title="<#select_all#>">';
 	code += '<input id="selAll" type="checkbox" onclick="selectAll(this, 0);" value="">';
 	code += '</th>';
-	code += '<th width="40%">Group Name</th>';/*untranslated*/
+	code += '<th width="40%"><#PM_Group_Name#></th>';
 	code += '<th width="40%"><#AiProtection_filter_category#></th>';
 	code += '<th width="10%"><#list_add_delete#></th>';
 	code += '</tr>';
@@ -400,7 +396,7 @@ function genMain_table(){
 	code += '<input type="checkbox" checked="">';
 	code += '</td>';
 	code += '<td style="border-bottom:2px solid #000;">';
-	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" placeholder="ex: Group Name" autocorrect="off" autocapitalize="off">';
+	code += '<input type="text" maxlength="17" style="margin-left:10px;float:left;width:255px;" class="input_20_table" name="PC_devicename" onkeypress="return validator.isHWAddr(this,event)" onclick="hideClients_Block();" placeholder="ex: <#PM_Group_Name#>" autocorrect="off" autocapitalize="off">';
 	code += '<img id="pull_arrow" height="14px;" src="/images/arrow-down.gif" onclick="pullLANIPList(this);" title="<#select_client#>">';
 	code += '<div id="ClientList_Block_PC" class="clientlist_dropdown" style="margin-top:25px;margin-left:10px;"></div>';
 	code += '</td>';
@@ -432,7 +428,8 @@ function genMain_table(){
 			//user icon
 			var userIconBase64 = "NoIcon";
 			var clientName, clientMac, clientIP, deviceType, deviceVender;
-			var clientMac = wrs_filter_col[1];
+			var clientMac = wrs_filter_col[1].toUpperCase();
+			var clientIconID = "clientIcon_" + clientMac.replace(/\:/g, "");
 			var clientObj = clientList[clientMac];
 			if(clientObj) {
 				clientName = (clientObj.nickName == "") ? clientObj.name : clientObj.nickName;
@@ -460,25 +457,25 @@ function genMain_table(){
 			code +='<td title="' + clientMac + '">';
 			code += '<table style="width:100%;"><tr><td style="width:40%;height:56px;border:0px;float:right;margin-right:20px;">';
 			if(clientObj == undefined) {
-				code += '<div class="clientIcon type0" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+				code += '<div id="' + clientIconID + '" class="clientIcon type0"></div>';
 			}
 			else {
 				if(usericon_support) {
 					userIconBase64 = getUploadIcon(clientMac.replace(/\:/g, ""));
 				}
 				if(userIconBase64 != "NoIcon") {
-					code += '<div style="text-align:center;" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
+					code += '<div id="' + clientIconID + '" style="text-align:center;"><img class="imgUserIcon_card" src="' + userIconBase64 + '"></div>';
 				}
 				else if(deviceType != "0" || deviceVender == "") {
-					code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+					code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 				}
 				else if(deviceVender != "" ) {
 					var venderIconClassName = getVenderIconClassName(deviceVender.toLowerCase());
 					if(venderIconClassName != "" && !downsize_4m_support) {
-						code += '<div class="venderIcon ' + venderIconClassName + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+						code += '<div id="' + clientIconID + '" class="venderIcon ' + venderIconClassName + '"></div>';
 					}
 					else {
-						code += '<div class="clientIcon type' + deviceType + '" onClick="popClientListEditTable(\'' + clientMac + '\', this, \'' + clientName + '\', \'' + clientIP + '\', \'WebProtector\')"></div>';
+						code += '<div id="' + clientIconID + '" class="clientIcon type' + deviceType + '"></div>';
 					}
 				}
 			}
@@ -520,12 +517,20 @@ function genMain_table(){
 			code += '</td>';
 			code += '<td><input class="remove_btn" type="button" onclick="deleteRow_main(this);"></td>';
 			code += '</tr>';
+			clientListEventData.push({"mac" : clientMac, "name" : clientName, "ip" : clientIP, "callBack" : "WebProtector"});
 		}
 	}
 
 	code += '</tbody>';
 	code += '</table>';
 	document.getElementById('mainTable').innerHTML = code;
+	for(var i = 0; i < clientListEventData.length; i += 1) {
+		var clientIconID = "clientIcon_" + clientListEventData[i].mac.replace(/\:/g, "");
+		var clientIconObj = $("#mainTable").children("#mainTable_table").find("#" + clientIconID + "")[0];
+		var paramData = JSON.parse(JSON.stringify(clientListEventData[i]));
+		paramData["obj"] = clientIconObj;
+		$("#mainTable").children("#mainTable_table").find("#" + clientIconID + "").click(paramData, popClientListEditTable);
+	}
 	generate_group_list();
 	//showDropdownClientList('setClientIP', 'mac', 'all', 'ClientList_Block_PC', 'pull_arrow', 'all');
 }
@@ -574,7 +579,7 @@ function edit_table(){
 		}
 
 		if(blank_category == 0){
-				alert("The Content Category can not be empty");
+				alert("<#AiProtection_Category_Alert#>");
 				return false;
 		}
 	}
@@ -712,26 +717,9 @@ function translate_category_id(){
 	wrs_filter = wrs_filter_temp;
 }
 
-function show_tm_eula(){
-	$.get("tm_eula.htm", function(data){
-		document.getElementById('agreement_panel').innerHTML= data;
-		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
-		$("#eula_url").attr("href",url);
-		adjust_TM_eula_height("agreement_panel");
-	});
-
-	dr_advise();
-	cal_panel_block("agreement_panel", 0.25);
-	$("#agreement_panel").fadeIn(300);
-}
-
 function cancel(){
-	$("#agreement_panel").fadeOut(100);
 	$('#iphone_switch').animate({backgroundPosition: -37}, "slow", function() {});
 	curState = 0;
-	document.getElementById("hiddenMask").style.visibility = "hidden";
-	htmlbodyforIE = parent.document.getElementsByTagName("html");  //this both for IE&FF, use "html" but not "body" because <!DOCTYPE html PUBLIC.......>
-	htmlbodyforIE[0].style.overflow = "scroll";	  //hidden the Y-scrollbar for preventing from user scroll it.
 }
 
 function eula_confirm(){
@@ -761,10 +749,9 @@ function setGroup(name){
 </script>
 </head>
 
-<body onload="initial();" onunload="unload_body();" onselectstart="return false;">
+<body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="eula_panel_container"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -807,28 +794,17 @@ function setGroup(name){
 									<table width="730px">
 										<tr>
 											<td align="left">
-												<div class="formfonttitle" style="width:400px"><#menu5_5#> - Web Content Filters</div>
+												<div class="formfonttitle" style="width:400px"><#menu5_5#> - <#AiProtection_Web_Filter#></div>
 											</td>
 										</tr>
 									</table>
 								</div>
-								<div style="margin:0px 0px 10px 5px;"><img src="/images/New_ui/export/line_export.png"></div>
+								<div style="margin: 0 0 10px 5px" class="splitLine"></div>
 								<div id="PC_desc">
 									<table width="700px" style="margin-left:25px;">
 										<tr>
-											<!--td>
-												<img id="guest_image" src="/images/New_ui/Web_Apps_Restriction.png">
-											</td>
-											<td>&nbsp;&nbsp;</td-->
 											<td style="font-style: italic;font-size: 14px;">
-												<span>Web Content Filters allows you to block access to unwanted websites.</span>
-												<!--ol>
-													<li><#AiProtection_filter_desc2#></li>
-													<li><#AiProtection_filter_desc3#></li>
-													<li><#AiProtection_filter_desc4#></li>
-												</ol>
-												<span><#AiProtection_filter_note#></span-->
-												<!--div><a style="text-decoration:underline;" href="http://www.asus.com/support/FAQ/1008720/" target="_blank"><#Parental_Control#> FAQ</a></div-->
+												<span><#AiProtection_WebProtector_Desc#></span>
 											</td>
 										</tr>
 									</table>
@@ -837,7 +813,7 @@ function setGroup(name){
 			<!--=====Beginning of Main Content=====-->
 								<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 									<tr>
-										<th>Enable Web Content Filters</th>
+										<th><#AiProtection_WebProtector_Enable#></th>
 										<td>
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_web_restrict_enable"></div>
 											<div class="iphone_switch_container" style="height:32px; width:74px; position: relative; overflow: hidden">
@@ -845,14 +821,13 @@ function setGroup(name){
 													$('#radio_web_restrict_enable').iphoneSwitch('<% nvram_get("wrs_enable"); %>',
 														function(){
 															curState = 1;
-															if(document.form.TM_EULA.value == 0){
-																show_tm_eula();
-																return;
+															ASUS_EULA.config(eula_confirm, cancel);
+
+															if(ASUS_EULA.check("tm")){
+																document.form.wrs_enable.value = 1;
+																showhide("list_table",1);
+																applyRule();
 															}
-
-															document.form.wrs_enable.value = 1;
-															showhide("list_table",1);
-
 														},
 														function(){
 															document.form.wrs_enable.value = 0;

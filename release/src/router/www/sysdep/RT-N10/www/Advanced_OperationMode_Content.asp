@@ -218,7 +218,7 @@ function setScenerion(mode){
 	  	<td>
 	  		<div>&nbsp;</div>
 	  		<div class="formfonttitle"><#menu5_6#> - <#menu5_6_1#></div>
-	  		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+	  		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 		  	<div class="formfontdesc"><#OP_desc1#></div>
 
 		</td>

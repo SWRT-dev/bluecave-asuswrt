@@ -27,6 +27,7 @@ var dslx_ginp_try_enable_disp = "<%nvram_get("dslx_ginp_try_enable_disp");%>";
 
 function initial(){
 	show_menu();
+	hideXDSLSetting(document.form.dslx_testlab.value);
 	change_dla("<% nvram_get("dslx_dla_enable"); %>");
 	hide_nonstd_vectoring(<% nvram_get("dslx_vdsl_vectoring"); %>);
 	hide_vdtxpwrtestmode("<% nvram_get("dslx_vdtxpwrtestmode"); %>");
@@ -60,11 +61,11 @@ function update_current_SNR_margin(){
 				{
 					if(log_xDSLmode == "ADSL"){
 						document.getElementById("id_sta_adj_adsl").style.display = "";
-						document.getElementById("id_sta_adj_adsl").innerHTML = "Current SNR Margin: "+log_SNRMarginDown;
+						document.getElementById("id_sta_adj_adsl").innerHTML = "<#dslsetting_SNR_Margin#>: "+log_SNRMarginDown;
 					}
 					else if(log_xDSLmode == "VDSL"){
 						document.getElementById("id_sta_adj_vdsl").style.display = "";
-						document.getElementById("id_sta_adj_vdsl").innerHTML = "Current SNR Margin: "+log_SNRMarginDown;
+						document.getElementById("id_sta_adj_vdsl").innerHTML = "<#dslsetting_SNR_Margin#>: "+log_SNRMarginDown;
 					}
 				}
 				else{
@@ -86,6 +87,22 @@ function applyRule(){
 
 function valid_form(){
 	return true;
+}
+
+function hideXDSLSetting(_value)
+{
+	if( _value == "disable" )
+	{
+		//display DLA
+		inputHideCtrl(document.form.dslx_dla_enable, 1);
+	}
+	else
+	{
+		//disable DLA, then hidden
+		document.form.dslx_dla_enable.options[1].selected = 1;
+		change_dla('0')
+		inputHideCtrl(document.form.dslx_dla_enable, 0);
+	}
 }
 
 function change_dla(enable){
@@ -308,7 +325,7 @@ function check_ginp_try(obj){
 		  <td bgcolor="#4D595D" valign="top"  >
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle"><#menu5_6#> - <#menu_dsl_setting#></div>
-      <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+      <div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
       <div class="formfontdesc"><#dslsetting_disc0#></div>
 
 		<table width="99%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable">
@@ -346,6 +363,15 @@ function check_ginp_try(obj){
 						<option value="4" <% nvram_match("dslx_annex", "4", "selected"); %>>ANNEX A/I/J/L/M</option>
 						<option value="5" <% nvram_match("dslx_annex", "5", "selected"); %>>ANNEX B</option>
 						<option value="6" <% nvram_match("dslx_annex", "6", "selected"); %>>ANNEX B/J</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<th>Country / ISP - Specific Setting</th><!-- Untranslated -->
+				<td>
+					<select name="dslx_testlab" class="input_option" onchange="hideXDSLSetting(this.value);">
+						<option value="disable" <% nvram_match("dslx_testlab","disable","selected"); %>><#btn_Disabled#></option>
+						<option value="TR_TT" <% nvram_match("dslx_testlab","TR_TT","selected"); %>>Türk Telekom</option>
 					</select>
 				</td>
 			</tr>

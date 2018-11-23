@@ -290,12 +290,12 @@ function generateDetailTable(data_array){
 	var code = '';
 	code += '<div style="font-size:14px;font-weight:bold;border-bottom: 1px solid #797979">';
 	code += '<div style="display:table-cell;width:70px;padding-right:5px;"><#diskUtility_time#></div>';
-	code += '<div style="display:table-cell;width:50px;padding-right:5px;">Level</div>';
+	code += '<div style="display:table-cell;width:50px;padding-right:5px;"><#AiProtection_level_th#></div>';
 	code += '<div style="display:table-cell;width:140px;padding-right:5px;">Type</div>';
 	
-	code += '<div style="display:table-cell;width:130px;padding-right:5px;">Source</div>';
-	code += '<div style="display:table-cell;width:130px;padding-right:5px;">Destination</div>';
-	code += '<div style="display:table-cell;width:180px;padding-right:5px;">Security Alert</div>';
+	code += '<div style="display:table-cell;width:130px;padding-right:5px;"><#AiProtection_event_Source#></div>';
+	code += '<div style="display:table-cell;width:130px;padding-right:5px;"><#AiProtection_event_Destination#></div>';
+	code += '<div style="display:table-cell;width:180px;padding-right:5px;"><#AiProtection_alert#></div>';
 	code += '</div>';
 
 	if(data_array == ""){
@@ -396,10 +396,9 @@ function deleteHover(flag){
 </script>
 </head>
 
-<body onload="initial();" onunload="unload_body();" onselectstart="return false;">
+<body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="eula_panel_container"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5.]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -467,7 +466,7 @@ function deleteHover(flag){
 											</tr>
 										</table>
 									</div>									
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div id="PC_desc">
 										<table width="700px" style="margin-left:25px;">
 											<tr>
@@ -559,10 +558,10 @@ function deleteHover(flag){
 											<div id="detail_info_table" style="padding: 10px 15px;">
 												<div style="font-size:14px;font-weight:bold;border-bottom: 1px solid #797979">
 													<div style="display:table-cell;width:110px;padding-right:5px;"><#diskUtility_time#></div>
-													<div style="display:table-cell;width:50px;padding-right:5px;">Level</div>
-													<div style="display:table-cell;width:150px;padding-right:5px;">Source</div>
-													<div style="display:table-cell;width:150px;padding-right:5px;">Destination</div>
-													<div style="display:table-cell;width:220px;padding-right:5px;">Security Alert</div>
+													<div style="display:table-cell;width:50px;padding-right:5px;"><#AiProtection_level_th#></div>
+													<div style="display:table-cell;width:150px;padding-right:5px;"><#AiProtection_event_Source#></div>
+													<div style="display:table-cell;width:150px;padding-right:5px;"><#AiProtection_event_Destination#></div>
+													<div style="display:table-cell;width:220px;padding-right:5px;"><#AiProtection_alert#></div>
 												</div>
 												<!--div style="word-break:break-all;border-bottom: 1px solid #797979">
 													<div style="display:table-cell;width:110px;height:30px;vertical-align:middle;padding-right:5px;">2016/08/15 11:25</div>

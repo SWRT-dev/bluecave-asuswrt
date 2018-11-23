@@ -281,7 +281,7 @@ function submitForm(){
 }
 
 function gotoprev_type(){
-	parent.location.href = "<% abs_index_page(); %>";
+	parent.location.href = "/";
 }
 
 function ISP_Profile_Selection(isp){
@@ -809,14 +809,21 @@ function next_step(flag){
 		}
 
 		if(document.applyForm.dhcp_type[0].checked){	//DHCP
+			var modified = false;
 			if(parent.dual_ewan){
 				if(parent.cur_wan_unit == 0){
+					if(parent.document.QKform.wan0_proto.value != "dhcp" || verify_vlan_settings()){
+						modified = true;
+					}
 					document.applyForm.wan0_proto.value = "dhcp";
 					parent.document.QKform.wan0_proto.value = document.applyForm.wan0_proto.value;
 					parent.document.QKform.wan0_dhcpenable_x.value = 1;
 					parent.document.QKform.wan0_dnsenable_x.value = 1;
 				}
 				else{
+					if(parent.document.QKform.wan1_proto.value != "dhcp" || verify_vlan_settings()){
+						modified = true;
+					}
 					document.applyForm.wan1_proto.value = "dhcp";
 					parent.document.QKform.wan1_proto.value = document.applyForm.wan1_proto.value;
 					parent.document.QKform.wan1_dhcpenable_x.value = 1;
@@ -824,15 +831,16 @@ function next_step(flag){
 				}
 			}		
 			else{
+				if(parent.document.QKform.wan_proto.value != "dhcp" || verify_vlan_settings()){
+					modified = true;
+				}
 				document.applyForm.wan_proto.value = "dhcp";
 				parent.document.QKform.wan_proto.value = document.applyForm.wan_proto.value;
 				parent.document.QKform.wan_dhcpenable_x.value = 1;
 				parent.document.QKform.wan_dnsenable_x.value = 1;
 			}
 
-			//location.href = "QIS_verify_detect.htm";		// avoid redirect to internet_isp and internet_ip
-			//return true;
-			if(verify_vlan_settings()){
+			if(modified){
 				if(parent.dual_ewan){
 					if(parent.cur_wan_unit == 0)
 						parent.document.QKform.wan0_proto.value = document.applyForm.wan0_proto.value;
@@ -856,17 +864,20 @@ function next_step(flag){
 			if(parent.dual_ewan){
 				if(parent.cur_wan_unit == 0){
 					document.applyForm.wan0_proto.value = "static";
+					parent.document.QKform.wan0_proto.value = document.applyForm.wan0_proto.value;
 					parent.document.QKform.wan0_dhcpenable_x.value = 0;
 					parent.document.QKform.wan0_dnsenable_x.value = 0;
 				}
 				else{
 					document.applyForm.wan1_proto.value = "static";
+					parent.document.QKform.wan1_proto.value = document.applyForm.wan1_proto.value;
 					parent.document.QKform.wan1_dhcpenable_x.value = 0;
 					parent.document.QKform.wan1_dnsenable_x.value = 0;
 				}
 			}
 			else{
 				document.applyForm.wan_proto.value = "static";
+				parent.document.QKform.wan_proto.value = document.applyForm.wan_proto.value;
 				parent.document.QKform.wan_dhcpenable_x.value = 0;
 				parent.document.QKform.wan_dnsenable_x.value = 0;
 			}
@@ -875,15 +886,7 @@ function next_step(flag){
 			document.getElementById("dhcp_scenario_1").style.display = "none";
 			document.getElementById("dhcp_scenario_2").style.display = "none";
 		}
-		
-		if(parent.dual_ewan){
-			if(parent.cur_wan_unit == 0)
-				parent.document.QKform.wan0_proto.value = document.applyForm.wan0_proto.value;
-			else
-				parent.document.QKform.wan1_proto.value = document.applyForm.wan1_proto.value;
-		}
-		else
-			parent.document.QKform.wan_proto.value = document.applyForm.wan_proto.value;
+
 		location.href = document.applyForm.next_page.value;
 		return true;
 	}
@@ -964,13 +967,14 @@ function enable_ISP_special(){
 <input type="hidden" name="current_page" value="QIS_internet_type.htm">
 <input type="hidden" name="next_page" value="/qis/QIS_finish.htm">   
 <input type="hidden" name="prev_page" value="/qis/QIS_detect.htm">
+<input type="hidden" name="wan_unit" value="<% nvram_get("wan_unit"); %>">
 <input type="hidden" name="wan_proto" value="">
 <input type="hidden" name="switch_stb_x" value="">
 <input type="hidden" name="mr_enable_x" value="<% nvram_get("mr_enable_x"); %>">
 <input type="hidden" name="emf_enable" value="<% nvram_get("emf_enable"); %>">
 <input type="hidden" name="ttl_inc_enable" value="<% nvram_get("ttl_inc_enable"); %>">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_script" value="restart_wan_if">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="flag" value="">
 <input type="hidden" name="wan10_proto" value="<% nvram_get("wan10_proto"); %>">
@@ -990,7 +994,9 @@ function enable_ISP_special(){
 			</tr>
 		</table>
 	</div>
-	<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="../images/New_ui/export/line_export.png"></div>
+	<div style="margin:5px;" id="splitLine">
+		<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+	</div>
 </div>	
 <br/>
 <div id="field_general">
@@ -1117,7 +1123,7 @@ function enable_ISP_special(){
 
 				<div id="dualwan_settings">
 				<table class="iptvTable">
-					<tr id="dualwan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+					<tr id="dualwan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 					<tr><td colspan="2"><div style="margin: 0px 5px 0px 15px; color:#FC0;">You must select "Ethernet LAN" as the primary WAN to use the IPTV function.<!--untranslated--></div></td></tr>
 					<tr id="tr_wans_primary" style="">
 						<th width="30%"><#dualwan_primary#>:</th>
@@ -1135,12 +1141,12 @@ function enable_ISP_special(){
 
 				<div id="port_settings">
 				<table class="iptvTable">
-					<tr id="wan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+					<tr id="wan_voip_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 					<tr id="wan_voip_x">
 						<th><span id="voip_title">VoIP Port: </span></th>
 						<td>LAN3</td>
 					</tr>
-					<tr id="wan_iptv_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+					<tr id="wan_iptv_line"><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 					<tr id="wan_iptv_x">
 						<th><span id="iptv_title">IPTV STB Port: </span></th>
 						<td>LAN4</td>
@@ -1150,7 +1156,7 @@ function enable_ISP_special(){
 
 				<div id="manual_settings">
 					<table class="iptvTable">
-						<tr><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+						<tr><td colspan="2"><div style="margin: 5px 5px 5px 10px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 						<tr>
 							<th><#Internet#>:</th>
 							<td>
@@ -1176,13 +1182,13 @@ function enable_ISP_special(){
 				</div>
 
 				<div id="iptv_configuration">
-					<div style="margin: 5px 5px 5px 7px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div>
+					<div style="margin: 5px 5px 5px 7px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div>
 					<table class="iptvTable">
 						<tr>
 							<th>VoIP Port: </th>
 							<td>LAN3</td>
 						</tr>
-						<tr><td colspan="2"><div style="margin: 5px 5px 5px 11px;" id="splitLine"><img style="width: 350px; *width: 340px; height: 2px;" src="../images/New_ui/export/line_export.png"></div></td></tr>
+						<tr><td colspan="2"><div style="margin: 5px 5px 5px 11px;" id="splitLine"><div style="width: 350px; *width: 340px; height: 2px;" class="splitLine"></div></div></td></tr>
 						<tr>
 							<th>IPTV STB Port: </th>
 							<td>LAN4</td>
@@ -1221,7 +1227,7 @@ function enable_ISP_special(){
 							</td>
 						</tr>
 		            	<tr id="tr_pppoe_username" style="display:none;">
-		             	 	<th><#PPPConnection_UserName_itemname#>: </th>
+		             	 	<th><#Username#>: </th>
 		              		<td><input type="text" maxlength="64" class="input_15_table" name="wan10_pppoe_username" value="<% nvram_get("wan10_pppoe_username"); %>" onkeypress="return validator.isString(this, event)"></td>
 		            	</tr>
 		            	<tr id="tr_pppoe_password" style="display:none;">

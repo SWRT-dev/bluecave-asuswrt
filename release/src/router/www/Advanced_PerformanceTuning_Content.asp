@@ -285,7 +285,7 @@ function changeTempUnit(num){
 	                <td valign="top">
 									  <div>&nbsp;</div>
 									  <div class="formfonttitle"><#menu5_6#> - Performance tuning</div>
-									  <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									 <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									  <div class="formfontdesc">Fine tune the radio power to enhance/decrease the coverage and change the cooler spin mode.Please note: If the output power is increased for long distance signal transmission, the client also need to use high power card to get the best performance.</div>
 									</td>
 					  		</tr>
@@ -372,7 +372,7 @@ function changeTempUnit(num){
 												<th>Cooler rotate mode</th>
 												<td>
 													<select name="fanctrl_mode" class="input_option">
-														<option class="content_input_fd" value="0" <% nvram_match("fanctrl_mode", "0", "selected"); %>><#Automatic_cooler#></option>
+														<option class="content_input_fd" value="0" <% nvram_match("fanctrl_mode", "0", "selected"); %>>Auto</option>
 														<option class="content_input_fd" value="1" <% nvram_match("fanctrl_mode", "1", "selected"); %>>Manually</option>
 													</select>			
 												</td>

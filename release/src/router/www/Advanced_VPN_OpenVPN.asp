@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"> 
 <html xmlns:v>
 <head>
@@ -21,6 +21,7 @@
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script language="JavaScript" type="text/javascript" src="/form.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <style type="text/css">
 .contentM_qis{
 	width:740px;	
@@ -128,7 +129,7 @@ function initial(){
 	var current_server_igncrt = "<% nvram_get("vpn_server_igncrt"); %>";
 	var currentcipher = "<% nvram_get("vpn_server_cipher"); %>";
 
-	show_menu();		
+	show_menu();
 
 	formShowAndHide(vpn_server_enable, "openvpn");
 
@@ -174,10 +175,14 @@ function initial(){
 	setTimeout("show_warning_message();", 100);
 
 	//set FAQ URL
-	set_FAQ_link("faq_windows", "1004469", "OpenVPN");
-	set_FAQ_link("faq_macOS", "1004472", "OpenVPN");
-	set_FAQ_link("faq_iPhone", "1004471", "OpenVPN");
-	set_FAQ_link("faq_android", "1004466", "OpenVPN");
+	//	https://www.asus.com/support/FAQ/1004469
+	httpApi.faqURL("faq_windows", "1004469", "https://www.asus.com", "/support/FAQ/");
+	//	https://www.asus.com/support/FAQ/1004472
+	httpApi.faqURL("faq_macOS", "1004472", "https://www.asus.com", "/support/FAQ/");
+	//	https://www.asus.com/support/FAQ/1004471
+	httpApi.faqURL("faq_iPhone", "1004471", "https://www.asus.com", "/support/FAQ/");
+	//	https://www.asus.com/support/FAQ/1004466
+	httpApi.faqURL("faq_android", "1004466", "https://www.asus.com", "/support/FAQ/");	
 
 	updateVpnServerClientAccess();
 }
@@ -196,21 +201,24 @@ function show_warning_message(){
 			if(validator.isPrivateIP(wanlink_ipaddr())){
 				document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>";
 				document.getElementById("privateIP_notes").style.display = "";
-				set_FAQ_link("faq_port_forwarding", "1033906", "privateIP");//this id is include in string : #vpn_privateIP_hint#
+				//	http://www.asus.com/support/FAQ/1033906
+				httpApi.faqURL("faq_port_forwarding", "1033906", "https://www.asus.com", "/support/FAQ/");	//this id is include in string : #vpn_privateIP_hint#
 			}
 		}
 		else{
 			if(!external_ip){
 				document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>";
 				document.getElementById("privateIP_notes").style.display = "";
-				set_FAQ_link("faq_port_forwarding", "1033906", "privateIP");//this id is include in string : #vpn_privateIP_hint#
+				//	http://www.asus.com/support/FAQ/1033906
+				httpApi.faqURL("faq_port_forwarding", "1033906", "https://www.asus.com", "/support/FAQ/");	//this id is include in string : #vpn_privateIP_hint#
 			}
 		}
 	}
 	else if(validator.isPrivateIP(wanlink_ipaddr())){
 		document.getElementById("privateIP_notes").innerHTML = "<#vpn_privateIP_hint#>";
 		document.getElementById("privateIP_notes").style.display = "";
-		set_FAQ_link("faq_port_forwarding", "1033906", "privateIP");//this id is include in string : #vpn_privateIP_hint#
+		//	http://www.asus.com/support/FAQ/1033906
+		httpApi.faqURL("faq_port_forwarding", "1033906", "https://www.asus.com", "/support/FAQ/");	//this id is include in string : #vpn_privateIP_hint#
 	}
 }
 
@@ -235,10 +243,16 @@ function formShowAndHide(server_enable, server_type) {
 		document.getElementById("trRSAEncryptionBasic").style.display = ("<% nvram_get("vpn_server_crypt"); %>" == "secret")?"none":"";		
 		document.getElementById("trClientWillUseVPNToAccess").style.display = "";
 		document.getElementById('OpenVPN_setting').style.display = ("<% nvram_get("vpn_server_crypt"); %>" == "secret")?"none":"";
-		if(vpn_server_enable == '0')
+		if(vpn_server_enable == '0') {
 			document.getElementById('openvpn_export').style.display = "none";
-		else
+			document.getElementById('openvpn_export_cert').style.display = "none";
+			document.getElementById('openvpn_import_cert').style.display = "none";
+		}
+		else {
 			document.getElementById('openvpn_export').style.display = "";
+			document.getElementById('openvpn_export_cert').style.display = "";
+			document.getElementById('openvpn_import_cert').style.display = "";
+		}
 		document.getElementById("divAdvanced").style.display = "none";
 
 		if(service_state == false || service_state != '2')
@@ -259,6 +273,8 @@ function formShowAndHide(server_enable, server_type) {
 		document.getElementById("trRSAEncryptionBasic").style.display = "none";
 		document.getElementById("trClientWillUseVPNToAccess").style.display = "none";
 		document.getElementById("openvpn_export").style.display = "none";
+		document.getElementById('openvpn_export_cert').style.display = "none";
+		document.getElementById('openvpn_import_cert').style.display = "none";
 		document.getElementById("OpenVPN_setting").style.display = "none";
 		document.getElementById("divAdvanced").style.display = "none";
 		//if(vpn_server_mode != "openvpn") {
@@ -592,7 +608,7 @@ function validForm(){
 		valid_username.focus();
 		return false;		
 	}
-	else if(!Block_chars(valid_username, [" ", "@", "*", "+", "|", ":", "?", "<", ">", ",", ".", "/", ";", "[", "]", "\\", "=", "\"", "&" ])) {
+	else if(!Block_chars(valid_username, [" ", "@", "*", "+", "|", ":", "?", "<", ">", ",", ".", "/", ";", "[", "]", "\\", "=", "\"", "&", "#" ])) {
 		return false;		
 	}
 
@@ -688,7 +704,7 @@ function showopenvpnd_clientlist(){
 				}
 				else if(j ==1){
 					overlib_str3[i] += vpn_server_clientlist_col[1];
-					code +='<td width="35%" title="'+overlib_str3[i]+'">'+ vpn_server_clientlist_col[1] +'</td>';
+					code +='<td width="35%" title="'+overlib_str3[i]+'" style="text-align:center;pointer-events:none;">-</td>';
 				} 
 			}
 			
@@ -807,10 +823,16 @@ function switchMode(mode){
 		document.getElementById("trRSAEncryptionBasic").style.display = ("<% nvram_get("vpn_server_crypt"); %>" == "secret")?"none":"";		
 		document.getElementById("trClientWillUseVPNToAccess").style.display = "";
 		document.getElementById('OpenVPN_setting').style.display = ("<% nvram_get("vpn_server_crypt"); %>" == "secret")?"none":"";		
-		if(vpn_server_enable == '0')
+		if(vpn_server_enable == '0') {
 			document.getElementById('openvpn_export').style.display = "none";
-		else
+			document.getElementById('openvpn_export_cert').style.display = "none";
+			document.getElementById('openvpn_import_cert').style.display = "none";
+		}
+		else {
 			document.getElementById('openvpn_export').style.display = "";
+			document.getElementById('openvpn_export_cert').style.display = "";
+			document.getElementById('openvpn_import_cert').style.display = "";
+		}
 		document.getElementById("divAdvanced").style.display = "none";
 		updateVpnServerClientAccess();
 	}	
@@ -819,6 +841,8 @@ function switchMode(mode){
 		document.getElementById("trClientWillUseVPNToAccess").style.display = "none";
 		document.getElementById("OpenVPN_setting").style.display = "none";
 		document.getElementById("openvpn_export").style.display = "none";
+		document.getElementById('openvpn_export_cert').style.display = "none";
+		document.getElementById('openvpn_import_cert').style.display = "none";
 		document.getElementById("divAdvanced").style.display = "";		
 	}
 }
@@ -1072,7 +1096,7 @@ function enable_server_igncrt(flag){
 	update_visibility();
 	document.getElementById("Hint_fixed_tls_crypto").style.display = (flag==1)?"":"none";
 	document.getElementById("Fixed_tls_crypto").style.display = (flag==1)?"":"none";
-	document.getElementById("allowed_client_name").innerHTML = (flag==1)?"<#HSDPAConfig_Username_itemname#>":"Common Name(CN)";
+	document.getElementById("allowed_client_name").innerHTML = (flag==1)?"<#Username#>":"Common Name(CN)";
 }
 
 function vpnServerTlsKeysize(_obj) {
@@ -1131,6 +1155,34 @@ function updateVpnServerClientAccess() {
 		$(".client_access_custom").css("display", "");
 	}
 }
+function exportCert() {
+	location.href = 'server_ovpn.cert';
+}
+function selectImportFile() {
+	document.import_cert_form.import_cert_file.click();
+}
+function importCert() {
+	var import_file = document.import_cert_form.import_cert_file.value;
+	var import_subname = import_file.substring(import_file.indexOf('.') + 1);
+	if(import_subname != 'cert') {
+		alert("<#Setting_upload_hint#>");
+		document.import_cert_form.import_cert_file.value = "";
+		return false;
+	}
+	showLoading();
+	document.import_cert_form.submit();
+}
+function callback_upload_cert(_flag) {
+	if(_flag) {
+		var waiting_time = parseInt(document.form.action_wait.value);
+		showLoading(waiting_time);
+		setTimeout(function(){location.reload();}, waiting_time*1000);
+	}
+	else {
+		alert("<#SET_fail_desc#>");
+		hideLoading();
+	}
+}
 </script>
 </head>
 <body onload="initial();">
@@ -1145,7 +1197,7 @@ function updateVpnServerClientAccess() {
 		<input type="hidden" name="action_mode" value="apply">
 		<input type="hidden" name="action_script" value="saveNvram">
 		<input type="hidden" name="action_wait" value="1">
-		<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+		<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 		<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 		<input type="hidden" name="vpn_crt_server1_ca" value="" disabled>
 		<input type="hidden" name="vpn_crt_server1_crt" value="" disabled>
@@ -1160,7 +1212,7 @@ function updateVpnServerClientAccess() {
 				<p><#vpn_openvpn_KC_Edit1#> <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
 				<p><#vpn_openvpn_KC_Limit#>
 			</div>
-			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+			<div style="margin:5px;*margin-left:-5px;width: 730px; height: 2px;" class="splitLine"></div>
 		</tr>				
 		<tr>
 			<td valign="top">
@@ -1225,7 +1277,7 @@ function updateVpnServerClientAccess() {
 		<input type="hidden" name="action_mode" value="apply">
 		<input type="hidden" name="action_script" value="saveNvram">
 		<input type="hidden" name="action_wait" value="1">
-		<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+		<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 		<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 		<input type="hidden" name="vpn_crt_server1_static" value="<% nvram_get("vpn_crt_server1_static"); %>" disabled>
 		<tr>
@@ -1236,7 +1288,7 @@ function updateVpnServerClientAccess() {
 				<p><#vpn_openvpn_KC_Edit1#> <span style="color:#FFCC00;">----- BEGIN xxx ----- </span>/<span style="color:#FFCC00;"> ----- END xxx -----</span> <#vpn_openvpn_KC_Edit2#>
 				<p><#vpn_openvpn_KC_Limit#>
 			</div>
-			<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+			<div style="margin:5px;*margin-left:-5px;width: 730px; height: 2px;" class="splitLine"></div>
 		</tr>	
 		<tr>
 			<td valign="top">
@@ -1306,7 +1358,7 @@ function updateVpnServerClientAccess() {
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#BOP_isp_heart_item#> - OpenVPN</div>
 									<div id="divSwitchMenu" style="margin-top:-40px;float:right;"></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div id="privateIP_notes" class="formfontdesc" style="display:none;color:#FFCC00;"></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 										<thead>
@@ -1385,15 +1437,27 @@ function updateVpnServerClientAccess() {
               									<div id="openvpn_error_message" style="display:none;margin-left:5px;"></div>	
             								</td>
           								</tr>
+										<tr id="openvpn_export_cert" style="display:none;">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(32,27);">Export Current Certification<!--untranslated--></a></th>
+											<td>
+												<input id="exportCertToLocal" class="button_gen" type="button" value="<#btn_Export#>" onClick="exportCert();"/>
+											</td>
+										</tr>
+										<tr id="openvpn_import_cert" style="display:none;">
+											<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(32,28);">Import Original Certification<!--untranslated--></a></th>
+											<td>
+												<input class="button_gen" type="button" value="<#CTL_upload#>" onClick="selectImportFile();"/>
+											</td>
+										</tr>
 									</table>
 									<div id="OpenVPN_setting" style="display:none;margin-top:8px;">
 										<div class="formfontdesc">
 											<#vpn_openvpn_desc1#>&nbsp;<#vpn_openvpn_desc3#>&nbsp;<#vpn_openvpn_desc4#>&nbsp;<#vpn_openvpn_desc2#><br>
 											<ol>
-												<li><a id="faq_windows" href="https://www.asus.com/support/FAQ/1004469/" target="_blank" style="text-decoration:underline;">Windows</a></li>
-												<li><a id="faq_macOS" href="https://www.asus.com/support/FAQ/1004472/" target="_blank" style="text-decoration:underline;">Mac OS</a></li>
-												<li><a id="faq_iPhone" href="https://www.asus.com/support/FAQ/1004471/" target="_blank" style="text-decoration:underline;">iPhone/iPad</a></li>
-												<li><a id="faq_android" href="https://www.asus.com/support/FAQ/1004466/" target="_blank" style="text-decoration:underline;">Android</a></li>
+												<li><a id="faq_windows" href="" target="_blank" style="text-decoration:underline;">Windows</a></li>
+												<li><a id="faq_macOS" href="" target="_blank" style="text-decoration:underline;">Mac OS</a></li>
+												<li><a id="faq_iPhone" href="" target="_blank" style="text-decoration:underline;">iPhone/iPad</a></li>
+												<li><a id="faq_android" href="" target="_blank" style="text-decoration:underline;">Android</a></li>
 											</ol>
 										</div>										
 										<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" class="FormTable_table" style="margin-top:8px;">
@@ -1404,7 +1468,7 @@ function updateVpnServerClientAccess() {
 											</thead>								
 											<tr>
 												<th><#PPPConnection_x_WANLink_itemname#></th>
-												<th><#HSDPAConfig_Username_itemname#></th>
+												<th><#Username#></th>
 												<th><#HSDPAConfig_Password_itemname#></th>
 												<th><#list_add_delete#></th>
 											</tr>			  
@@ -1691,7 +1755,7 @@ function updateVpnServerClientAccess() {
 											</tr>
 											</thead>
 											<tr>
-												<th width="36%"><a id="allowed_client_name" class="hintstyle" href="javascript:void(0);" onClick="openHint(32,22);">Common Name(CN)</a></th>	<!-- #HSDPAConfig_Username_itemname# -->
+												<th width="36%"><a id="allowed_client_name" class="hintstyle" href="javascript:void(0);" onClick="openHint(32,22);">Common Name(CN)</a></th>	<!-- #Username# -->
 												<th width="20%"><a id="allowed_client_name" class="hintstyle" href="javascript:void(0);" onClick="openHint(32,23);"><#Subnet#></a></th>
 												<th width="20%"><a id="allowed_client_name" class="hintstyle" href="javascript:void(0);" onClick="openHint(32,24);">Mask</a></th>
 												<th width="12%"><a id="allowed_client_name" class="hintstyle" href="javascript:void(0);" onClick="openHint(32,25);"><#Push#></a></th>
@@ -1764,10 +1828,9 @@ function updateVpnServerClientAccess() {
 			<input type="hidden" name="PM_MAIL_SUBJECT" value="My ovpn file">
 			<input type="hidden" name="PM_MAIL_FILE" value="/www/client.ovpn">
 			<input type="hidden" name="PM_LETTER_CONTENT" value="Here is the ovpn file.">
-
 			<div class="panelTableTitle">
 				<div>Send</div>
-				<img style="width: 100%; height: 2px;" src="/images/New_ui/export/line_export.png">
+				<div style="margin:10px 0 10px 5px;height: 2px;width: 100%;padding:0;" class="splitLine"></div>
 			</div>
 
 			<table border=0 align="center" cellpadding="5" cellspacing="0" class="FormTable panelTable">
@@ -1818,7 +1881,7 @@ function updateVpnServerClientAccess() {
 	
 			<div class="panelTableTitle">
 				<div>Setup mail server</div>
-				<img style="width: 100%; height: 2px;" src="/images/New_ui/export/line_export.png">
+				<div style="margin:10px 0 10px 5px;height: 2px;width: 100%;padding:0;" class="splitLine"></div>
 			</div>
 
 			<table border=0 align="center" cellpadding="5" cellspacing="0" class="FormTable panelTable">
@@ -1911,6 +1974,10 @@ function updateVpnServerClientAccess() {
 		</form>
 	</div>
 </div>
+<iframe name="hidden_import_cert_frame" id="hidden_import_cert_frame" src="" width="0" height="0" frameborder="0"></iframe>
+<form method="post" name="import_cert_form" action="upload_server_ovpn_cert.cgi" target="hidden_import_cert_frame" enctype="multipart/form-data">
+<input type="file" name="import_cert_file" style="display:none;" onchange="importCert();"/>
+</form>
 <div id="footer"></div>
 </body>
 </html>

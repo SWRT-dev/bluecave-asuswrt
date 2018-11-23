@@ -316,7 +316,7 @@ int clean_pinhole_list(unsigned int * next_timestamp)
 		syslog(LOG_ERR, "pf device is not open");
 		return -1;
 	}
-	current_time = time(NULL);
+	current_time = upnp_time();
 	memset(&pr, 0, sizeof(pr));
 	strlcpy(pr.anchor, anchor_name, MAXPATHLEN);
 #ifndef PF_NEWSTYLE

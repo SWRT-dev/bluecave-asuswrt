@@ -76,7 +76,10 @@
 #include "gatt-database.h"
 #include "advertising.h"
 #include "eir.h"
-#include "bleencrypt/blepack.h"
+#define TYPEDEF_BOOL
+#include <bcmnvram.h>
+#include <bcmparams.h>
+#include <shared.h>
 
 #define ADAPTER_INTERFACE	"org.bluez.Adapter1"
 

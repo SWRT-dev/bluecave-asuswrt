@@ -234,7 +234,7 @@ endif
 
 OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o
 OBJS += firewall.o ppp.o services.o common.o
-OBJS += watchdog.o ntp.o btnsetup.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
+OBJS += watchdog.o ntp.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
 OBJS += format.o
 
 ifeq ($(RTCONFIG_NETOOL),y)
@@ -257,7 +257,10 @@ endif
 
 ifeq ($(CONFIG_BCMWL5),y)
 OBJS += init-broadcom.o wps-broadcom.o broadcom.o ate-broadcom.o
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200))
+ifeq ($(RTCONFIG_AMAS),y)
+OBJS += obd-broadcom.o
+endif
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U))
 OBJS += cfe.o
 endif
 ifeq ($(RTCONFIG_ADTBW),y)
@@ -268,8 +271,14 @@ OBJS += init-broadcom-dsl.o
 endif
 else ifeq ($(RTCONFIG_REALTEK),y)
 OBJS += init-realtek.o wps-realtek.o realtek.o rtk_wifi_drvmib.o ate-realtek.o
+ifeq ($(RTCONFIG_AMAS),y)
+OBJS += obd-realtek.o
+endif
 else ifeq ($(RTCONFIG_RALINK),y)
 OBJS += init-ralink.o wps-ralink.o ralink.o ate-ralink.o
+ifeq ($(RTCONFIG_AMAS),y)
+OBJS += obd-ralink.o
+endif
 ifeq ($(RTCONFIG_CONCURRENTREPEATER),y)
 OBJS += air_monitor.o
 endif
@@ -278,14 +287,23 @@ OBJS += init-ralink-dsl.o
 endif
 else ifeq ($(RTCONFIG_QCA),y)
 OBJS += init-qca.o wps-qca.o qca.o ate-qca.o $(if $(wildcard sysdeps/qca/ctl.c),ctl.obj,prebuild/ctl.obj)
+ifeq ($(RTCONFIG_AMAS),y)
+OBJS += obd-qca.o
+endif
 ifeq ($(RTCONFIG_WIFI_SON),y)
 OBJS += repacd.o
 endif
 else ifeq ($(RTCONFIG_ALPINE),y)
 OBJS += init-alpine.o wps-alpine.o alpine.o ate-alpine.o
+ifeq ($(RTCONFIG_AMAS),y)
+OBJS += obd-alpine.o
+endif
 else ifeq ($(RTCONFIG_LANTIQ),y)
 OBJS += init-lantiq.o lantiq.o ate-lantiq.o lantiq-wave.o
-OBJS += $(if $(wildcard sysdeps/lantiq/wps-lantiq.c),wps-lantiq.o,prebuild/wps-lantiq.o)
+OBJS += $(if $(wildcard sysdeps/wps-lantiq.c),wps-lantiq.o,prebuild/wps-lantiq.o)
+ifeq ($(RTCONFIG_AMAS),y)
+OBJS += $(if $(wildcard sysdeps/lantiq/obd-lantiq.c),obd-lantiq.o,prebuild/obd-lantiq.o)
+endif
 endif
 
 OBJS += $(if $(wildcard private.c),private.o,prebuild/private.o)
@@ -306,7 +324,9 @@ endif
 
 ifeq ($(RTCONFIG_USB),y)
 OBJS += usb.o
+ifneq ($(RTCONFIG_NO_USBPORT),y)
 OBJS += usbled.o
+endif
 OBJS += usb_devices.o
 endif
 
@@ -349,6 +369,7 @@ ifeq ($(RTCONFIG_OPENVPN),y)
 CFLAGS += -DRTCONFIG_CROND
 CFLAGS += -I$(TOP)/libvpn
 LDFLAGS += -L$(TOP)/libvpn -lvpn
+OBJS += ovpn.o
 endif
 
 ifeq ($(RTCONFIG_IPSEC),y)
@@ -380,22 +401,22 @@ ifeq ($(RTCONFIG_DSL_TCLINUX),y)
 OBJS += dsl_diag.o
 endif
 endif
-
-ifeq ($(RTCONFIG_BCMWL6),y)
+ifeq ($(or $(RTCONFIG_BCMWL6),$(RTCONFIG_LANTIQ),$(RTCONFIG_QCA)),y)
 ifeq ($(RTCONFIG_PROXYSTA),y)
+ifeq ($(RTCONFIG_LANTIQ),y)
+OBJS += $(if $(wildcard psta_monitor.c),psta_monitor.o,prebuild/psta_monitor.o)
+else
 OBJS += psta_monitor.o
 endif
+endif
 ifeq ($(RTCONFIG_AMAS),y)
 ifneq ($(RTCONFIG_DISABLE_REPEATER_UI),y)
+vpath %.c sysdeps/amas
 OBJS += obd.o
-endif
-endif
-endif
-
-ifeq ($(RTCONFIG_LANTIQ),y)
-ifeq ($(RTCONFIG_AMAS),y)
-ifneq ($(RTCONFIG_DISABLE_REPEATER_UI),y)
-OBJS += obd_bluecave.o
+OBJS += obd_eth.o
+OBJS += obd_monitor.o
+CFLAGS  += -I$(TOP)/openssl/include
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
 endif
 endif
 endif
@@ -497,6 +518,8 @@ endif
 ifeq ($(RTCONFIG_HTTPS),y)
 ifeq ($(or $(RTCONFIG_PUSH_EMAIL),$(RTCONFIG_NOTIFICATION_CENTER)),y)
 OBJS += pwdec.o
+CFLAGS += -I$(TOP)/json-c
+LDFLAGS += -L$(TOP)/json-c/.libs -ljson-c
 endif
 endif
 
@@ -533,6 +556,9 @@ ifeq ($(RTCONFIG_AMAS),y)
 OBJS += ../hostapd-2.6/src/common/wpa_ctrl.o
 OBJS += ../hostapd-2.6/src/utils/os_unix.o
 endif
+endif
+ifeq ($(RTCONFIG_QCA),y)
+OBJS += roamast-qca.o
 endif
 endif
 
@@ -614,13 +640,13 @@ OBJS += amas_wlcconnect.o
 OBJS += amas_bhctrl.o
 endif
 OBJS += amas_lanctrl.o
+endif
 ifeq ($(RTCONFIG_LIBASUSLOG),y)
 LDFLAGS += -L$(TOP)/libasuslog -lasuslog
 CFLAGS += -I$(TOP)/libasuslog
 endif
-endif
 
-all: rc
+all: rc init.prep
 
 rc: $(OBJS)
 	@echo " [rc] CC $@"
@@ -669,7 +695,7 @@ else
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-unlock
 endif
-	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
+#	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wave_monitor
 ifeq ($(RTCONFIG_LANTIQ),y)
@@ -691,13 +717,22 @@ endif
 ifeq ($(RTCONFIG_FANCTRL),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc phy_tempsense
 endif
-ifeq ($(RTCONFIG_BCMWL6),y)
+ifeq ($(or $(RTCONFIG_BCMWL6),$(RTCONFIG_LANTIQ),$(RTCONFIG_QCA)),y)
 ifeq ($(RTCONFIG_PROXYSTA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc psta_monitor
 endif
 ifeq ($(RTCONFIG_AMAS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc obd
+	@cd $(INSTALLDIR)/sbin && ln -sf rc obd_eth
+	@cd $(INSTALLDIR)/sbin && ln -sf rc obd_monitor
 endif	
+endif
+ifeq ($(RTCONFIG_LANTIQ),y)
+ifeq ($(RTCONFIG_AMAS),y)
+ifneq ($(RTCONFIG_DISABLE_REPEATER_UI),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc obd
+endif
+endif
 endif
 ifeq ($(RTCONFIG_QTN),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc qtn_monitor
@@ -777,7 +812,9 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc tcpcheck
 	@cd $(INSTALLDIR)/sbin && ln -sf rc auto_macclone
 ifeq ($(RTCONFIG_USB),y)
+ifneq ($(RTCONFIG_NO_USBPORT),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc usbled
+endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_apps_name
 ifeq ($(BCM_MMC),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc asus_mmc
@@ -846,6 +883,9 @@ endif
 
 ifeq ($(or $(CONFIG_BCMWL5),$(RTCONFIG_RALINK),$(RTCONFIG_QCA),$(RTCONFIG_REALTEK)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc set_factory_mode
+endif
+ifeq ($(or $(RTCONFIG_OPENPLUS_TFAT),$(RTCONFIG_OPENPLUSPARAGON_NTFS),$(RTCONFIG_OPENPLUSTUXERA_NTFS),$(RTCONFIG_OPENPLUSPARAGON_HFS),$(RTCONFIG_OPENPLUSTUXERA_HFS)),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc set_fs_coexist
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc run_telnetd
 ifeq ($(RTCONFIG_SSH),y)
@@ -971,8 +1011,13 @@ ifeq ($(RTCONFIG_ADTBW),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc adtbw
 endif
 
+ifeq ($(or $(RTAC68U),$(RT4GAC68U)),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_enc_crc
+	@cd $(INSTALLDIR)/sbin && ln -sf rc fw_check
+endif
+
 clean:
-	rm -f rc *.o .*.depend
+	rm -f rc *.o .*.depend *.prep
 
 size: rc
 	mipsel-uclibc-nm --print-size --size-sort rc
@@ -1056,7 +1101,7 @@ ifneq ($(wildcard ./prebuild/ate.o),)
 ate.o:
 	@-cp -f ./prebuild/ate.o .
 endif
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200))
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U))
 ifneq ($(wildcard ./prebuild/cfe.o),)
 cfe.o:
 	@-cp -f ./prebuild/cfe.o .
@@ -1078,6 +1123,12 @@ ifneq ($(wildcard ./prebuild/broadcom.o),)
 broadcom.o:
 	@-cp -f ./prebuild/broadcom.o .
 endif
+ifeq ($(RTCONFIG_AMAS),y)
+ifneq ($(wildcard ./prebuild/obd-broadcom.o),)
+obd-broadcom.o:
+	@-cp -f ./prebuild/obd-broadcom.o .
+endif
+endif
 endif
 
 ifeq ($(RTCONFIG_RALINK),y)
@@ -1097,12 +1148,24 @@ ifneq ($(wildcard ./prebuild/roamast-ralink.o),)
 roamast-ralink.o:
 	@-cp -f ./prebuild/roamast-ralink.o .
 endif
+ifeq ($(RTCONFIG_AMAS),y)
+ifneq ($(wildcard ./prebuild/obd-ralink.o),)
+obd-ralink.o:
+	@-cp -f ./prebuild/obd-ralink.o .
+endif
+endif
 endif
 
 ifeq ($(RTCONFIG_QCA),y)
 ifneq ($(wildcard ./prebuild/ate-qca.o),)
 ate-qca.o:
 	@-cp -f ./prebuild/ate-qca.o .
+endif
+ifeq ($(RTCONFIG_AMAS),y)
+ifneq ($(wildcard ./prebuild/obd-qca.o),)
+obd-qca.o:
+	@-cp -f ./prebuild/obd-qca.o .
+endif
 endif
 endif
 
@@ -1118,6 +1181,12 @@ endif
 ifneq ($(wildcard ./prebuild/rtk_wifi_drvmib.o),)
 rtk_wifi_drvmib.o:
 	@-cp -f ./prebuild/rtk_wifi_drvmib.o .
+endif
+ifeq ($(RTCONFIG_AMAS),y)
+ifneq ($(wildcard ./prebuild/obd-realtek.o),)
+obd-realtek.o:
+	@-cp -f ./prebuild/obd-realtek.o .
+endif
 endif
 endif
 
@@ -1188,11 +1257,27 @@ ifneq ($(wildcard ./prebuild/client.o),)
 client.o:
 	@-cp -f ./prebuild/client.o .
 endif
+ifeq ($(RTCONFIG_AMAS),y)
+ifneq ($(wildcard ./prebuild/obd-lantiq.o),)
+obd-lantiq.o:
+	@-cp -f ./prebuild/obd-lantiq.o .
+endif
+endif
 endif
 
 ifneq ($(wildcard ./prebuild/obd.o),)
 obd.o:
 	@-cp -f ./prebuild/obd.o .
+endif
+
+ifneq ($(wildcard ./prebuild/obd_eth.o),)
+obd_eth.o:
+	@-cp -f ./prebuild/obd_eth.o .
+endif
+
+ifneq ($(wildcard ./prebuild/obd_monitor.o),)
+obd_monitor.o:
+	@-cp -f ./prebuild/obd_monitor.o .
 endif
 
 ifeq ($(RTCONFIG_NEW_USER_LOW_RSSI),y)
@@ -1238,6 +1323,9 @@ endif
 
 .%.depend: %.c
 	@$(CC) $(CFLAGS) -M $< > $@
+
+init.prep: init.c
+	@$(CC) $(CFLAGS) -E $< > $@
 
 ifeq ($(RTCONFIG_QCA),y)
 -include sysdeps/qca/Makefile.hook

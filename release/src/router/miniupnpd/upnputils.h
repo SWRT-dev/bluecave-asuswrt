@@ -29,6 +29,22 @@ set_non_blocking(int fd);
 struct lan_addr_s *
 get_lan_for_peer(const struct sockaddr * peer);
 
+/**
+ * get the time for upnp (release expiration, etc.)
+ * Similar to a monotonic time(NULL)
+ */
+time_t upnp_time(void);
+
+/**
+ * return either the machine or the daemon uptime
+ */
+time_t upnp_get_uptime(void);
+
+/**
+ * get the time for upnp
+ * Similar to a monotonic gettimeofday(tv, NULL)
+ */
+int upnp_gettimeofday(struct timeval * tv);
 
 /**
  * define portability macros

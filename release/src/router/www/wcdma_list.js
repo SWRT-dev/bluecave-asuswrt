@@ -65,12 +65,12 @@ function gen_list(){
 	var country = document.form.modem_country.value;
 
 	if(country == "AU"){
-		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1", "1", "1");
-		isplist = new Array("Telstra", "Optus", "3", "3 PrePaid", "Vodafone", "iburst", "Dodo", "Exetel", "Internode", "TPG");
-		apnlist = new Array("telstra.internet", "Internet", "3netaccess", "3services", "vfprepaymbb", "internet", "DODOLNS1", "exetel1", "splns333a1", "internet")
-		daillist = new Array("*99#", "*99#", "*99***1#", "*99***1#", "*99#", "*99***1#", "*99#", "*99***1#", "*99***1#", "*99***1#")
-		userlist = new Array("", "", "", "", "", "", "", "", "", "");
-		passlist = new Array("", "", "", "", "", "", "", "", "", "");
+		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1", "1");
+		isplist = new Array("Telstra", "Optus", "3", "3 PrePaid", "Vodafone", "iburst", "Dodo", "Exetel", "Internode", "TPG", "AldiMobile", "Woolworth Mobile");
+		apnlist = new Array("telstra.internet", "Internet", "3netaccess", "3services", "vfprepaymbb", "internet", "DODOLNS1", "exetel1", "splns333a1", "internet", "mdata.net.au", "mdata.net.au");
+		daillist = new Array("*99#", "*99#", "*99***1#", "*99***1#", "*99#", "*99***1#", "*99#", "*99***1#", "*99***1#", "*99***1#", "*99#", "*99#");
+		userlist = new Array("", "", "", "", "", "", "", "", "", "", "", "");
+		passlist = new Array("", "", "", "", "", "", "", "", "", "", "", "");
 	}
 	else if(country == "AT"){
 		protolist = new Array("1", "1", "1", "1", "1", "1", "1", "1");
@@ -377,12 +377,12 @@ function gen_list(){
 		passlist = new Array("internet", "", "", "", "", "", "internet", "", "000000", "IT", "3G_TURBO", "", "", "freshtel", "");
 	}
 	else if(country == "UK"){
-		protolist = new Array("1", "1", "1", "1");
-		isplist = new Array("3", "O2", "Vodafone", "Orange");
-		apnlist = new Array("orangenet", "m-bb.o2.co.uk", "PPBUNDLE.INTERNET", "internetvpn");
-		daillist = new Array("*99#", "*99#", "*99#", "*99#");
-		userlist = new Array("", "o2bb", "web", "");
-		passlist = new Array("", "password", "web", "");
+		protolist = new Array("1", "1", "1", "1", "1");
+		isplist = new Array("3", "O2", "Orange", "Vodafone Monthly", "Vodafone PAYG");
+		apnlist = new Array("orangenet", "m-bb.o2.co.uk", "internetvpn", "wap.vodafone.co.uk", "pp.vodafone.co.uk");
+		daillist = new Array("*99#", "*99#", "*99#", "*99#", "*99#");
+		userlist = new Array("", "o2bb", "", "", "");
+		passlist = new Array("", "password", "", "", "");
 	}
 	else if(country == "US"){
 		protolist = new Array("1", "1", "1", "1", "1", "2", "1", "2");

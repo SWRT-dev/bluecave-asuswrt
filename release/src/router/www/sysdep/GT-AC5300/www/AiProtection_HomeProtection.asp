@@ -16,6 +16,8 @@
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style>
 .weakness{
 	width:650px;
@@ -101,9 +103,6 @@ window.onresize = function() {
 	if(document.getElementById("alert_preference").style.display == "block") {
 		cal_panel_block("alert_preference", 0.25);
 	}
-	if(document.getElementById("agreement_panel").style.display == "block") {
-		cal_panel_block("agreement_panel", 0.25);
-	}
 }
 <% get_AiDisk_status(); %>
 var AM_to_cifs = get_share_management_status("cifs");  // Account Management for Network-Neighborhood
@@ -127,6 +126,7 @@ function initial(){
 	getEventTime();
 	getEventData();
 	check_weakness();
+	$("#all_security_btn").hide();
 }
 
 function getEventTime(){
@@ -703,19 +703,6 @@ function check_TM_feature(){
 	}
 }
 
-function show_tm_eula(){
-	$.get("tm_eula.htm", function(data){
-		document.getElementById('agreement_panel').innerHTML= data;
-		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
-		$("#eula_url").attr("href",url);
-		adjust_TM_eula_height("agreement_panel");
-	});
-
-	dr_advise();
-	cal_panel_block("agreement_panel", 0.25);
-	$("#agreement_panel").fadeIn(300);
-}
-
 function cancel(){
 	refreshpage();
 }
@@ -847,10 +834,9 @@ function shadeHandle(flag){
 </script>
 </head>
 
-<body onload="initial();" onunload="unload_body();" onselectstart="return false;">
+<body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="eula_panel_container"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5.]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -968,7 +954,7 @@ function shadeHandle(flag){
 							<input class="button_gen" type="button" onclick="close_weakness_status();" value="<#CTL_close#>">
 						</td>
 						<td>
-							<input class="button_gen_long" type="button" onclick="enable_whole_security();" value="<#CTL_secure#>">
+							<input id="all_security_btn" class="button_gen" type="button" onclick="enable_whole_security();" value="<#CTL_secure#>">
 						</td>
 					</tr>
 				</table>
@@ -1040,7 +1026,7 @@ function shadeHandle(flag){
 			<td>
 				<div style="text-align:center;margin-top:20px;">
 					<input class="button_gen" type="button" onclick="close_alert_preference();" value="<#CTL_close#>">
-					<input class="button_gen_long" type="button" onclick="apply_alert_preference();" value="<#CTL_apply#>">
+					<input class="button_gen" type="button" onclick="apply_alert_preference();" value="<#CTL_apply#>">
 				</div>
 			</td>
 		</tr>
@@ -1112,7 +1098,7 @@ function shadeHandle(flag){
 											</tr>
 										</table>
 									</div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
 									<div id="PC_desc">
 										<table width="700px" style="margin-left:25px;">
 											<tr>
@@ -1153,14 +1139,13 @@ function shadeHandle(flag){
 														<script type="text/javascript">
 															$('#radio_protection_enable').iphoneSwitch('<% nvram_get("wrs_protect_enable"); %>',
 																function(){
-																	if(document.form.TM_EULA.value == 0){
-																		show_tm_eula();
-																		return;
-																	}
+																	ASUS_EULA.config(eula_confirm, cancel);
 
-																	document.form.wrs_protect_enable.value = "1";
-																	shadeHandle("1");
-																	applyRule();
+																	if(ASUS_EULA.check("tm")){
+																		document.form.wrs_protect_enable.value = "1";
+																		shadeHandle("1");
+																		applyRule();
+																	}
 																},
 																function(){
 																	document.form.wrs_protect_enable.value = "0";
@@ -1182,14 +1167,14 @@ function shadeHandle(flag){
 													<div style="text-align:center;background: url('/images/New_ui/AiProtection_01.png');width:34px;height:34px;margin: 0 5px;"></div>
 												</td>
 												 <td width="6px">
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="padding:10px;">
 													<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_scan#></div>
 													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;padding-top:5px;"><#AiProtection_scan_desc#></div>
 												</td>
 												 <td width="6px">
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div>
@@ -1197,7 +1182,7 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td>
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;">
 													<div id="router_scan_status" style="text-align:center;">
@@ -1212,7 +1197,7 @@ function shadeHandle(flag){
 													<div style="text-align:center;background: url('/images/New_ui/AiProtection_02.png');width:34px;height:34px;margin: 0 5px;"></div>
 												</td>
 												 <td width="6px">
-													<div style="background:url('/images/line.png') no-repeat;width:6px;height:102px;background-size:4px 185px;";></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="padding:10px;cursor:pointer;" onclick="location.href='AiProtection_MaliciousSitesBlocking.asp'">
 													<div>
@@ -1221,7 +1206,7 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												 <td width="6px">
-													<div><img src="/images/line.png"></div>
+													v<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div style="position:relative;">
@@ -1244,7 +1229,7 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td >
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;cursor:pointer;">
 													<div style="position:relative" onclick="location.href='AiProtection_MaliciousSitesBlocking.asp'">
@@ -1265,7 +1250,7 @@ function shadeHandle(flag){
 													<div style="text-align:center;background: url('/images/New_ui/AiProtection_02.png');width:34px;height:34px;margin: 0 5px;"></div>
 												</td>
 												 <td width="6px">
-													<div style="background:url('/images/line.png') no-repeat;width:6px;height:102px;background-size:4px 185px;";></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="padding:10px;cursor:pointer;" onclick="location.href='AiProtection_IntrusionPreventionSystem.asp'">
 													<div>
@@ -1274,7 +1259,7 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												 <td width="6px">
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div style="position:relative">
@@ -1297,7 +1282,7 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td >
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;cursor:pointer;">
 													<div style="position:relative" onclick="location.href='AiProtection_IntrusionPreventionSystem.asp'">
@@ -1317,14 +1302,14 @@ function shadeHandle(flag){
 													<div style="text-align:center;background: url('/images/New_ui/AiProtection_03.png');width:34px;height:34px;margin: 0 5px;"></div>
 												</td>
 												 <td width="6px">
-													<div style="background:url('/images/line.png') no-repeat;width:6px;height:102px;background-size:4px 185px;";></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="padding:10px;cursor:pointer" onclick="location.href='AiProtection_InfectedDevicePreventBlock.asp'">
 													<div style="font-size:18px;text-shadow:1px 1px 0px black;"><#AiProtection_detection_blocking#></div>
 													<div style="font-style: italic;font-size: 14px;color:#FC0;height:auto;;padding-top:5px;"><#AiProtection_detection_block_desc#></div>
 												</td>
 												 <td>
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;">
 													<div style="position:relative">
@@ -1347,7 +1332,7 @@ function shadeHandle(flag){
 													</div>
 												</td>
 												<td>
-													<div><img src="/images/line.png"></div>
+													<div class="line_vertical"></div>
 												</td>
 												<td style="width:20%;border-radius:0px 10px 10px 0px;cursor:pointer;">
 													<div style="position:relative" onclick="location.href='AiProtection_InfectedDevicePreventBlock.asp'">
@@ -1364,7 +1349,7 @@ function shadeHandle(flag){
 									</div>
 									<div style=";margin:20px 0;text-align:right">
 										<div style="display:inline-block">
-											<input class="button_gen_long" type="button" onclick="show_alert_preference();" value="<#AiProtection_alert_pref#>">
+											<input class="button_gen" type="button" onclick="show_alert_preference();" value="<#AiProtection_alert_pref#>">
 										</div>
 									</div>
 									<div style="width:135px;height:55px;margin: -10px 0 0 600px;background-image:url('images/New_ui/tm_logo_power.png');"></div>

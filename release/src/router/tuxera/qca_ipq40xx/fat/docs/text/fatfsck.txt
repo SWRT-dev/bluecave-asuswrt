@@ -51,10 +51,24 @@ OPTIONS
               check/repair. If specified, this sets an upper limit on the exe‐
               cution  time  of fatfsck. After the timeout occurs, fatfsck will
               clear all its pending tasks and return as soon as possible.
+              As a special case, a timeout value of 0 means that there  is  no
+              timeout,  i.e.  it  is  equivalent to not specifying the timeout
+              option at all.
+
+       -B, --progress-fd FD
+              Enables progress reporting through the dedicated file descriptor
+              FD  using  the  same  format  as  the one emitted by e2fsck's -C
+              option.
+
+       --cp CODEPAGE
+              Use the given code page to decode the  volume  label  and  short
+              file  names.  The  following code pages are supported: 437, 737,
+              775, 850, 852, 855, 857, 860, 861, 862, 863, 864, 865, 866, 869,
+              874, 932, 936, 949, 950. The default is 437.
 
        -v, --verbose
-              Verbose output. This makes fatfsck print more information  about
-              what  it's  doing,  for  instance which directory/file it's cur‐
+              Verbose  output. This makes fatfsck print more information about
+              what it's doing, for instance  which  directory/file  it's  cur‐
               rently processing.
 
 EXIT STATUS
@@ -65,19 +79,25 @@ EXIT STATUS
 
        2: Invalid arguments. An error was detected when parsing the options.
 
-       3:  FAT  volume  errors  were  detected (when checking) or could not be
+       3: FAT volume errors were detected (when  checking)  or  could  not  be
        repaired (when repairing)
+
+PLEASE NOTE
+       fatfsck currently does not support checking and repairing of FAT12 vol‐
+       umes.
 
 BUGS
        If you find a bug please send an email describing the problem  to  fat-
        support@tuxera.com.
 
 AUTHORS
-       fatfsck was written by Sougata Santra, Tuxera Inc.
+       fatfsck was written by
+               Erik Larsson, Tuxera Inc.
+               Sougata Santra, Tuxera Inc.
 
 AVAILABILITY
        fatfsck is part of the Tuxera FATprogs package.
 
 
 
-Tuxera TFATprogs 3014.9.11        March 2014                        FATFSCK(8)
+Tuxera TFATprogs 3017.7.17.3      March 2014                        FATFSCK(8)

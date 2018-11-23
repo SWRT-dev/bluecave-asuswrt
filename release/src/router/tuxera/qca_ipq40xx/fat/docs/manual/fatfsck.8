@@ -1,7 +1,7 @@
 .\" Copyright (c) 2014 Sougata Santra / Tuxera Inc.
 .\" Copyright (c) 2011-2012 Erik Larsson / Tuxera Inc.
 .\"
-.TH FATFSCK 8 "March 2014" "Tuxera TFATprogs 3014.9.11"
+.TH FATFSCK 8 "March 2014" "Tuxera TFATprogs 3017.7.17.3"
 .SH NAME
 fatfsck \- check and repair a FAT volume
 .SH SYNOPSIS
@@ -52,6 +52,18 @@ Timeout in seconds before fatfsck will abort the volume check/repair. If
 specified, this sets an upper limit on the execution time of fatfsck. After the
 timeout occurs, fatfsck will clear all its pending tasks and return as soon as
 possible.
+.br
+As a special case, a timeout value of 0 means that there is no timeout, i.e. it
+is equivalent to not specifying the timeout option at all.
+.TP
+\fB\-B\fR, \fB\-\-progress\-fd\fR FD
+Enables progress reporting through the dedicated file descriptor \fBFD\fR using
+the same format as the one emitted by e2fsck's \fB\-C\fR option.
+.TP
+\fB\--cp\fR CODEPAGE
+Use the given code page to decode the volume label and short file names. The
+following code pages are supported: 437, 737, 775, 850, 852, 855, 857, 860,
+861, 862, 863, 864, 865, 866, 869, 874, 932, 936, 949, 950. The default is 437.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Verbose output. This makes fatfsck print more information about what it's doing,
@@ -64,13 +76,21 @@ for instance which directory/file it's currently processing.
 \fB2\fR: Invalid arguments. An error was detected when parsing the options.
 .TP
 \fB3\fR: FAT volume errors were detected (when checking) or could not be repaired (when repairing)
+.SH PLEASE NOTE
+.B fatfsck
+currently does not support checking and repairing of FAT12 volumes.
 .SH BUGS
 If you find a bug please send an email describing the problem to
 fat-support@tuxera.com.
 .hy
 .SH AUTHORS
 .B fatfsck
-was written by Sougata Santra, Tuxera Inc.
+was written by
+.RS 8
+Erik Larsson, Tuxera Inc.
+.br
+Sougata Santra, Tuxera Inc.
+.RE
 .SH AVAILABILITY
 .B fatfsck
 is part of the

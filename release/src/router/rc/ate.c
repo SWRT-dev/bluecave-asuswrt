@@ -550,6 +550,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	/*** ATE Set function ***/
 	if (!strcmp(command, "Set_StartATEMode")) {
 		asus_ate_StartATEMode();
+#if defined(MAPAC1750)
+		set_rgbled(RGBLED_ATE_MODE);
+#endif
 		puts("1");
 		return 0;
 	}
@@ -1147,7 +1150,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
-#if defined(RTAC85U)
+#if defined(RTAC85U) || defined(RTN800HP)
 	else if (!strcmp(command, "Set_DisableStp")) {
 		FWrite("1", OFFSET_BR_STP, 1);
 		puts("1");
@@ -1176,7 +1179,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	/*** ATE Get functions ***/
 	else if (!strcmp(command, "Get_FWVersion")) {
 		char fwver[16];
-		snprintf(fwver, sizeof(fwver), "%s.%s%s%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"), nvram_get("rcno")?"rc":"", nvram_get("rcno")?:"");
+		snprintf(fwver, sizeof(fwver), "%s.%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"));
 		puts(fwver);
 		return 0;
 	}
@@ -1355,8 +1358,9 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 #if defined(RTCONFIG_EXT_RTL8365MB) || defined(RTCONFIG_EXT_RTL8370MB)
 		GetPhyStatus(1);
 #else
-		if (!GetPhyStatus(1))
+		if (!GetPhyStatus(1) && nvram_match("ATEMODE", "1")) {
 			puts("ATE_ERROR");
+		}
 #endif
 
 		return 0;
@@ -1418,7 +1422,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #ifdef RTCONFIG_RALINK
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U) && !defined(RTN56UB2) && !defined(RTAC54U) && !defined(RTAC1200) && !defined(RTAC1200GA1) && !defined(RTAC1200GU) && !defined(RTN11P_B1) && !defined(RTN10P_V3) && !defined(RTAC51UP) && !defined(RTAC53) && !defined(RPAC87) && !defined(RTAC85U) && !defined(RTAC65U)
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U) && !defined(RTN56UB2) && !defined(RTAC54U) && !defined(RTAC1200) && !defined(RTAC1200GA1) && !defined(RTAC1200GU) && !defined(RTN11P_B1) && !defined(RTN10P_V3) && !defined(RTAC51UP) && !defined(RTAC53) && !defined(RPAC87) && !defined(RTAC85U) && !defined(RTAC65U) && !defined(RTN800HP) 
 	else if (!strcmp(command, "Ra_FWRITE")) {
 		return FWRITE(value, value2);
 	}
@@ -1684,9 +1688,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			puts("ATE_ERROR_INCORRECT_PARAMETER");
 			return EINVAL;
 		}
-#ifndef CONFIG_BCMWL5
-		getPSK();
-#endif
+		puts(value);
 		return 0;
 	}
 	else if (!strcmp(command, "Get_PSK")) {
@@ -1729,6 +1731,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 	}
 #endif
 #ifdef RTCONFIG_DEFAULT_AP_MODE
+#if defined(RTCONFIG_QCA) || defined(RTCONFIG_ALPINE) || defined(RTCONFIG_LANTIQ)
 	else if (!strcmp(command, "Set_ForceDisableDHCP")) {
 		FWrite("1", OFFSET_FORCE_DISABLE_DHCP, 1);
 		puts("1");
@@ -1743,6 +1746,21 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 			buf[1] = '\0';
 			puts(buf);
 		}
+		return 0;
+	}
+#endif
+#endif
+#ifdef RTCONFIG_AMAS
+	else if (!strcmp(command, "Set_AB")) {
+		set_amas_bdl();
+		return 0;
+	}
+	else if (!strcmp(command, "Unset_AB")) {
+		unset_amas_bdl();
+		return 0;
+	}
+	else if (!strcmp(command, "Get_AB")) {
+		get_amas_bdl();
 		return 0;
 	}
 #endif
@@ -1988,6 +2006,56 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		puts(get_label_mac());
 		return 0;
 	}
+	else if (!strcmp(command, "Set_IpAddr_Lan")) {
+		if(value == NULL || strlen(value) <= 0){
+			printf("ATE_ERROR_INCORRECT_PARAMETER\n");
+			return EINVAL;
+		}
+
+		set_IpAddr_Lan(value);
+	}
+	else if (!strcmp(command, "Get_IpAddr_Lan")) {
+		get_IpAddr_Lan();
+	}
+	else if (!strcmp(command, "Set_MRFLAG")) {
+		if(value == NULL || strlen(value) <= 0){
+			printf("ATE_ERROR_INCORRECT_PARAMETER\n");
+			return EINVAL;
+		}
+
+		set_MRFLAG(value);
+	}
+	else if (!strcmp(command, "Get_MRFLAG")) {
+		get_MRFLAG();
+	}
+	else if (!strcmp(command, "Get_Default")) {
+		char *p = NULL;
+
+		if (value == NULL)
+			return 0;
+
+		if (!(p = nvram_default_get(value)))
+			puts("NULL");
+		else
+			puts(p);
+
+		return 0;
+	}
+	else if (!strcmp(command, "Get_txBurst")) {
+		if (nvram_match("wl_frameburst", "on"))
+			puts("1");
+		else if (nvram_match("wl_frameburst", "off"))
+			puts("0");
+		return 0;
+	}
+	else if (!strcmp(command, "Get_RDG")) {
+#ifdef RTCONFIG_RALINK
+		puts(nvram_safe_get("wl_HT_RDG"));
+#else
+		puts("NA");
+#endif
+		return 0;
+	}
 	else
 	{
 		puts("ATE_UNSUPPORT");
@@ -2032,8 +2100,10 @@ int ate_dev_status(void)
 
 		if(wl_band == 1)
 			len = snprintf(p, remain, ",2G=%c", result);
-		else
+		else if(wl_band == 2)
 			len = snprintf(p, remain, ",5G=%c", result);
+		else
+			len = snprintf(p, remain, ",5G2=%c", result);
 
 		p += len;
 		remain -= len;
@@ -2118,9 +2188,9 @@ int ate_get_fw_upgrade_state(void) {
 	char buf[64];
 
 #ifdef CONFIG_BCMWL5
-                if (!factory_debug() && !nvram_match(ATE_UPGRADE_MODE_STR(), "1"))
+		if (!factory_debug() && !nvram_match(ATE_UPGRADE_MODE_STR(), "1"))
 #else
-                if (!IS_ATE_FACTORY_MODE() && !nvram_match(ATE_UPGRADE_MODE_STR(), "1"))
+		if (!IS_ATE_FACTORY_MODE() && !nvram_match(ATE_UPGRADE_MODE_STR(), "1"))
 #endif
 		{
 			puts("ATEMODE ONLY");

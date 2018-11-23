@@ -57,6 +57,27 @@ function disable_dsl_pvc() {
 	document.form.fw_pt_pppoerelay.disabled = true;	
 }
 
+function disable_dsl_atm_pvc() {
+	document.form.dsl0_enable.disabled = true;
+	document.form.dsl0_vpi.disabled = true;
+	document.form.dsl0_vci.disabled = true;
+	document.form.dsl0_proto.disabled = true;
+	document.form.dsl0_encap.disabled = true;
+	document.form.dsl0_dot1q.disabled = true;
+	document.form.dsl0_vid.disabled = true;
+	document.form.dsl0_svc_cat.disabled = true;
+	document.form.dsl0_pcr.disabled = true;
+	document.form.dsl0_scr.disabled = true;
+	document.form.dsl0_mbs.disabled = true;
+}
+
+function disable_dsl_ptm_pvc() {
+	document.form.dsl8_enable.disabled = true;
+	document.form.dsl8_proto.disabled = true;
+	document.form.dsl8_dot1q.disabled = true;
+	document.form.dsl8_vid.disabled = true;
+}
+
 function QKWireless_load_body(){
 	parent.document.title = "<#Web_Title#> - <#QKSet_wireless_webtitle#>";
 	parent.set_step("t3");
@@ -126,10 +147,13 @@ function submitForm(){
 
 	document.form.flag.value = "finish";
 
-	if(transfer_mode == "atm")
+	if(transfer_mode == "atm") {
 		document.form.dsl0_enable.value = 1;
+		disable_dsl_ptm_pvc();
+	}
 	else {//PTM
 		document.form.dsl8_enable.value = 1;
+		disable_dsl_atm_pvc();
 	}
 
 	if(is_reboot_flag_set == "1")
@@ -168,7 +192,7 @@ function gotoHome(){
 		location.href = '/qis/QIS_wireless.htm';
 	}
 	else {
-		parent.location.href = "<% abs_index_page(); %>";
+		parent.location.href = "/";
 	}
 }
 </script>
@@ -261,7 +285,7 @@ function gotoHome(){
 						</tr>
 					</table>
 				</div>
-				<div style="margin:5px;"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+				<div style="margin: 5px;width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>	
 		</div>
 <div class="QISGeneralFont"><#qis_wireless_setting#></div>
 <br/>

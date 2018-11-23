@@ -102,7 +102,7 @@ function detect_if_wan_plug(flag){
 			   (second_wanstate == 2 && second_wansbstate == 0 && second_wanauxstate == 0)){
 				redirect_page("wireless");
 			}
-			else if(autodet_state == 4 && autodet1_state == 4 && parent.hadPlugged("modem")){ // ethernet did not plug
+			else if(autodet_state == 4 && autodet1_state == 4 && parent.hadModem()){ // ethernet did not plug
 				redirect_page("modem");
 			}			
 			else if(autodet_state == 4 || autodet1_state == 4){
@@ -160,7 +160,9 @@ function update_wan_info(flag){
 						</tr>
 					</table>
 				</div>
-				<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+				<div style="margin:5px;" id="splitLine">
+					<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+				</div>
 		</div>
 		<table id="tblsetting_1" class="QISform" width="auto" border=0 align="center" cellpadding="5" cellspacing="0">
 		  <tr>
@@ -182,7 +184,7 @@ function update_wan_info(flag){
 
 		<div class='apply_gen'>
 			<div id="fresharea">
-				<input type="button" id="detectAgain" class="button_gen_long" onclick="update_wan_info();" value="<#CTL_Detect_Again#>">
+				<input type="button" id="detectAgain" class="button_gen" onclick="update_wan_info();" value="<#CTL_Detect_Again#>">
 				<input type="button" id="next" value="<#CTL_next#>" onclick="redirect_page('wireless');" class="button_gen">
 				<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif">
 			</div>

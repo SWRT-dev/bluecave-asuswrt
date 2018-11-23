@@ -16,8 +16,27 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script>function initial(){
-	show_menu();	
+<script>
+var classObj= {
+	ToHexCode:function(str){
+		return encodeURIComponent(str).replace(/%/g,"\\x").toLowerCase();
+	},
+	UnHexCode:function(str){
+		return decodeURIComponent(str.replace(/\\x/g, "%"));
+	}
+}
+
+var nvram_dump_String = function(){/*
+<% nvram_dump("wlan11b_2g.log",""); %>
+*/}.toString().slice(14,-3);
+
+function initial(){
+	show_menu();
+	try {
+		document.getElementById("wl_log").innerHTML = classObj.UnHexCode(nvram_dump_String);
+	} catch(e) {
+		document.getElementById("wl_log").innerHTML = nvram_dump_String;
+	}
 }
 </script>
 </head>
@@ -57,10 +76,10 @@
 								<td valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#System_Log#> - <#menu5_7_4#></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div class="formfontdesc"><#WLLog_title#></div>
 									<div style="margin-top:8px"> 
-										<textarea  cols="63" rows="30" class="textarea_ssh_table" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;" readonly="readonly" wrap="off"><% nvram_dump("wlan11b_2g.log",""); %></textarea>
+										<textarea  id="wl_log" cols="63" rows="30" class="textarea_ssh_table" style="width:99%;font-family:'Courier New', Courier, mono; font-size:13px;" readonly="readonly" wrap="off"></textarea>
 									</div>
 									<div class="apply_gen">
 										<input type="button" onClick="location.href=location.href" value="<#CTL_refresh#>" class="button_gen" >

@@ -92,7 +92,6 @@ function QKWireless_load_body(){
 		parent.set_step("t3");
 		document.getElementById("theFieldset").style.display = "none";
 		hideLinkTag();
-		flash_button();
 		show_prev_button();
 		
 		if(is_KR_sku){	// MODELDEP by Territory_code
@@ -782,7 +781,7 @@ function submitForm(){
 
 	// no need to restart wireless
 	if(document.form.action_script.value == "restart_wireless"){
-		document.form.action_script.value = "saveNvram";
+		document.form.action_script.value = "";
 		document.form.action_wait.value = "0";
 		
 		if(document.form.sw_mode.value == "1" && !document.form.wl0_ssid.disabled) 
@@ -800,11 +799,6 @@ function submitForm(){
 	}
 
 	document.form.submit();
-	if((document.form.sw_mode.value == "1" || document.form.sw_mode.value == "3") && !(!parent.flag_manual && parent.pppoe_failed_flag)){
-		setTimeout(function(){
-			location.href = "/qis/QIS_finish.htm";
-		}, 500)
-	}
 }
 
 function reset_wl_hwaddr(prefix){
@@ -899,7 +893,7 @@ function gotoIndex_wireless(){
 		return false;
 	}
 	else
-		parent.location.href = '<% abs_index_page(); %>';
+		parent.location.href = '/';
 }
 
 var retValHandler = {
@@ -933,7 +927,7 @@ var retValHandler = {
 
 	"__checkWlcStatus" : function(_status){
 		if(_status.wlc_state == 2 && _status.wlc_sbstate == 0){ // connected
-			top.location.href = '<% abs_index_page(); %>';
+			top.location.href = '/';
 		}
 		else{
 			top.location.href = '/error_page.htm?flag=8';
@@ -1421,13 +1415,12 @@ function detect_LANStatus(_flag){
 							<td align="left">
 								<div class="description_down"><#QKSet_wireless_webtitle#></div>
 							</td>
-							<!--td align="right">
-								<img id="HomeImg" onclick="gotoIndex_wireless();" style="cursor:pointer;" align="right" title="Go to Home" src="/images/backtohome.png" onMouseOver="this.src='/images/backtohomeclick.png'" onMouseOut="this.src='/images/backtohome.png'">
-							</td-->
 						</tr>
 					</table>
 				</div>
-				<div style="margin:5px;" id="splitLine"><img style="width: 720px; *width: 710px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+				<div style="margin:5px;" id="splitLine">
+					<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+				</div>
 		</div>
 
 <div style="display:none;" id="field_mobile">

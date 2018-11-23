@@ -533,7 +533,7 @@ function initial(){
 		$("#reason_field").hide();
 	}
 	else{
-		parent.location = '<% abs_index_page(); %>';
+		parent.location = '/';
 	}
 
 	$("#case_content")[0].innerHTML  = html_code;
@@ -608,7 +608,7 @@ function detect_general(){
 		if(dsl_support)
 			top.location.href = '/Advanced_DSL_Content.asp';
 		else if(sw_mode == 3)
-			top.location.href = '<% abs_index_page(); %>';
+			top.location.href = '/';
 		else
 			top.location.href = '/Advanced_WAN_Content.asp';
 	}
@@ -624,7 +624,7 @@ function detect_ppp_connect(){
 		success: function(response){
 			if( wanstate == "2"  && wansbstate == "0" && wanauxstate == "0"){
 				//history.go(-1);
-				top.location.href = '<% abs_index_page(); %>';
+				top.location.href = '/';
 			}
 			else{
 				setTimeout(detect_ppp_connect, 1000);

@@ -374,7 +374,7 @@ function debugMessage(msg){
 }
 </script>
 </head>
-<body onload="initial();" onunload="unload_body();" onSelectStart="event.returnValue=false">
+<body onload="initial();" onunload="unload_body();">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
@@ -405,7 +405,7 @@ function debugMessage(msg){
 								<td bgcolor="#4D595D" colspan="3" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#Menu_TrafficManager#> - ROG First</div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
 									<div>
 										<table style="width:99%;">
 											<tr>

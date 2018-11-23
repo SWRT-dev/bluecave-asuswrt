@@ -24,6 +24,8 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" src="client_function.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/asus_eula.js"></script>
 <style>
 .QISform_wireless{
 	width:600px;
@@ -267,7 +269,7 @@ var ctf_fa_mode = '<% nvram_get("ctf_fa_mode"); %>';
 var qos_bw_rulelist = "<% nvram_get("qos_bw_rulelist"); %>".replace(/&#62/g, ">").replace(/&#60/g, "<");
 var select_all_checked = 0;
 
-if(based_modelid == "RT-AC68A"){	//MODELDEP : Spec special fine tune
+if(based_modelid == "RT-AC68A" || based_modelid == "MAP-AC1750"){	//MODELDEP : Spec special fine tune
 	bwdpi_support = false;
 }
 
@@ -346,6 +348,9 @@ if(pm_support) {
 
 function initial(){
 	show_menu();
+	// http://www.asus.com/support/FAQ/1008718/
+	httpApi.faqURL("faq", "1008718", "https://www.asus.com", "/support/FAQ/");
+
 	if(downsize_4m_support || downsize_8m_support)
 		document.getElementById("guest_image").parentNode.style.display = "none";
 
@@ -629,7 +634,9 @@ function submitQoS(){
 	if(validForm()){
 
 		if(document.form.qos_enable.value == 1 && document.form.qos_type.value == 1 && document.form.TM_EULA.value == 0){
-			show_tm_eula();
+			ASUS_EULA
+				.config(eula_confirm, cancel)
+				.show("tm")
 		}
 		else{
 			if(ctf_disable == 1 || (fc_disable_orig != '' && runner_disable_orig != '')){	//HW NAT [OFF] or HND ROUTER
@@ -1106,7 +1113,7 @@ function genMain_table(){
 	code += '<table width="100%" border="1" cellspacing="0" cellpadding="4" align="center" class="FormTable_table" id="mainTable_table">';
 	code += '<thead><tr>';
 	if(pm_support)
-		code += '<td colspan="5">Rule List&nbsp;(<#List_limit#>&nbsp;32)</td>';
+		code += '<td colspan="5"><#PM_Rule_List#>&nbsp;(<#List_limit#>&nbsp;32)</td>';
 	else
 		code += '<td colspan="5"><#ConnectedClient#>&nbsp;(<#List_limit#>&nbsp;32)</td>';
 	code += '</tr></thead>';
@@ -1275,19 +1282,6 @@ function check_field(){
 	}
 }
 
-function show_tm_eula(){
-	$.get("tm_eula.htm", function(data){
-		document.getElementById('agreement_panel').innerHTML= data;
-		var url = "https://www.asus.com/Microsite/networks/Trend_Micro_EULA/";
-		$("#eula_url").attr("href",url);
-		adjust_TM_eula_height("agreement_panel");
-	});
-
-	dr_advise();
-	cal_panel_block("agreement_panel", 0.25);
-	$("#agreement_panel").fadeIn(300);
-}
-
 function eula_confirm(){
 	document.form.TM_EULA.value = 1;
 	submitQoS();
@@ -1321,7 +1315,6 @@ function setGroup(name){
 <body onload="initial();" id="body_id" onunload="unload_body();" onClick="">
 <div id="TopBanner"></div>
 <div id="Loading" class="popup_bg"></div>
-<div id="agreement_panel" class="eula_panel_container"></div>
 <div id="hiddenMask" class="popup_bg" style="z-index:999;">
 	<table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center"></table>
 	<!--[if lte IE 6.5.]><script>alert("<#ALERT_TO_CHANGE_BROWSER#>");</script><![endif]-->
@@ -1350,7 +1343,7 @@ function setGroup(name){
 					<input type="hidden" name="action_mode" value="apply">
 					<input type="hidden" name="action_script" value="saveNvram">
 					<input type="hidden" name="action_wait" value="1">
-					<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+					<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 					<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 					<input type="hidden" name="bwdpi_app_rulelist_edit" value="<% nvram_get("bwdpi_app_rulelist"); %>">
 					<tr>
@@ -1360,7 +1353,7 @@ function setGroup(name){
 						<div style="margin-left:30px; margin-top:10px;">
 							<div class="formfontdesc" style="line-height:20px;font-size:14px;"><#Adaptive_QoS_desc#></div>
 						</div>
-						<div style="margin:5px;*margin-left:-5px;"><img style="width: 730px; height: 2px;" src="/images/New_ui/export/line_export.png"></div>
+						<div style="margin:5px;*margin-left:-5px;width: 730px; height: 2px;" class="splitLine"></div>
 					</tr>
 					<tr>
 						<td valign="top">
@@ -1444,7 +1437,9 @@ function setGroup(name){
 								</td>
 							</tr>
 							<tr>
-								<td height="5" bgcolor="#4D595D" valign="top"><img src="images/New_ui/export/line_export.png" /></td>
+								<td height="5" bgcolor="#4D595D" valign="top">
+									<div class="splitLine"></div>
+								</td>
 							</tr>
 							<tr>
 								<td height="30" align="left" valign="top" bgcolor="#4D595D">
@@ -1466,7 +1461,7 @@ function setGroup(name){
 														<#EzQoS_desc_note#>
 													</div>
 													<div class="formfontdesc">
-														<a id="faq" href="http://www.asus.com/support/FAQ/1008718/" target="_blank" style="text-decoration:underline;">QoS FAQ</a>
+														<a id="faq" href="" target="_blank" style="text-decoration:underline;">QoS FAQ</a>
 													</div>
 												</td>
 											</tr>

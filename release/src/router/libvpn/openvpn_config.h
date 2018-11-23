@@ -204,6 +204,7 @@ extern char* get_ovpn_key(ovpn_type_t type, int unit, ovpn_key_t key_type, char 
 extern int set_ovpn_key(ovpn_type_t type, int unit, ovpn_key_t key_type, char *buf, char *path);
 extern int ovpn_key_exists(ovpn_type_t type, int unit, ovpn_key_t key_type);
 
+extern int need_dnsmasq_serverfile();
 extern char* get_lan_cidr(char* buf, size_t len);
 extern char* get_ovpn_sconf_remote(char* buf, size_t len);
 extern void update_ovpn_status(ovpn_type_t type, int unit, ovpn_status_t status_type);

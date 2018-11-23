@@ -67,7 +67,7 @@ function LoadingProgress(seconds){
 			}
 			else if(location.pathname.indexOf("QIS_wizard.htm") < 0 && location.pathname.indexOf("Advanced_FirmwareUpgrade_Content") < 0 && location.pathname.indexOf("Advanced_SettingBackup_Content") < 0){
 				setTimeout("hideLoadingBar();",1000);
-				location.href = "<% abs_index_page(); %>";
+				location.href = "/";
 			}
 		}
 	}
@@ -200,17 +200,6 @@ function hideLoading(flag){
 	htmlbodyforIE = document.getElementsByTagName("html");  //this both for IE&FF, use "html" but not "body" because <!DOCTYPE html PUBLIC.......>
 	htmlbodyforIE[0].style.overflow = "";	  //hidden the Y-scrollbar for preventing from user scroll it.
 }             
-
-function simpleSSID(obj){
-	var SSID = document.loginform.wl_ssid.value;
-	
-	if(SSID.length < 16)
-		showtext(obj, SSID);
-	else{
-		obj.title = SSID;
-		showtext(obj, SSID.substring(0, 16)+"...");
-	}
-}
 
 function dr_advise(){
 	disableCheckChangedStatus();

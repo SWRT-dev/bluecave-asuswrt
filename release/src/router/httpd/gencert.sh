@@ -36,10 +36,4 @@ OPENSSL_CONF=/etc/openssl.cnf RANDFILE=/dev/urandom openssl x509 -in /tmp/cert.c
 # server.pem for WebDav SSL
 cat key.pem cert.pem > server.pem
 
-# cfg_pub.pem for cfg server
-IS_SUPPORT_CFG_SYNC=`nvram get rc_support|grep -i cfg_sync`
-if [ "$IS_SUPPORT_CFG_SYNC" != "" ]; then
-openssl rsa -in key.pem -outform PEM -pubout -out cfg_pub.pem
-fi
-
 rm -f /tmp/cert.csr /tmp/privkey.pem openssl.config

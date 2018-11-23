@@ -18,6 +18,7 @@
 <script type="text/javascript" src="help.js"></script>
 <script type="text/javascript" src="validator.js"></script>
 <script language="JavaScript" type="text/JavaScript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 
 <% wan_get_parameter(); %>
@@ -50,7 +51,8 @@ new Array("ICMPv6", "icmp6")
 
 function initial(){	
 	show_menu();	
-	
+	// https://www.asus.com/US/support/FAQ/113990
+	httpApi.faqURL("faq", "113990", "https://www.asus.com", "/support/FAQ/");
 	if(!IPv6_Passthrough_support){
 		$("#ipv61_service option[value='ipv6pt']").remove();
 		$("#ipv61_service option[value='flets']").remove();
@@ -70,7 +72,6 @@ function initial(){
 		}
 	}
 
-	addOnlineHelp(document.getElementById("faq"), ["ASUSWRT", "IPv6"]);
 	document.form.wan_selection.selectedIndex = parseInt(ipv6_unit);
 	genWANSoption();
 }
@@ -623,14 +624,12 @@ function GetIPv6_split(obj){
 	var return_prefix = "";
 	if(Split_1_IPv6.length >1){
 		if(Split_1_IPv6[0].substring(0,Split_1_IPv6_pos).split(":").length >4){	//get ipv6_prefix by Split_2_IPv6[0]~[3]
-			db(Split_1_IPv6[0].substring(0,Split_1_IPv6_pos).split(":").length);
 			for(i=0;i<4;i++){
 				return_prefix += Split_2_IPv6[i];
 				if(i<3)
 					return_prefix += ":";
 			}
 		}else{
-			db(Split_1_IPv6[0]);
 			return_prefix = Split_1_IPv6[0];
 		}		
 	}else if(Split_2_IPv6.length > 1){
@@ -680,7 +679,10 @@ function validForm(){
 	
 	if(document.form.ipv61_service.value=="other"){
 		if(!ipv6_valid(document.form.ipv61_ipaddr) || 
-				!validator.range(document.form.ipv61_prefix_len_wan, 3, 128) ||
+				!validator.range(document.form.ipv61_prefix_len_wan, 3, 128)){
+				return false;
+		}
+		if(document.form.ipv61_gateway.value != "" &&
 				!ipv6_valid(document.form.ipv61_gateway)){
 				return false;
 		}
@@ -994,7 +996,7 @@ function genWANSoption(){
 			<td bgcolor="#4D595D" valign="top">
 				<div>&nbsp;</div>
 				<div class="formfonttitle">IPv6</div>
-	      <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+	      		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 	      <div class="formfontdesc"><#LANHostConfig_display6_sectiondesc#></div>
 				<div class="formfontdesc" style="margin-top:-10px;">
 					<a id="faq" href="" target="_blank" style="font-family:Lucida Console;text-decoration:underline;">IPv6 FAQ</a>
@@ -1008,7 +1010,7 @@ function genWANSoption(){
 				  	</tr>
 			  	</thead>
 				<tr>
-					<th>WAN Selection</th>
+					<th><#IPv6_WAN_Selection#></th>
 		     		<td>
 		     			<select name="wan_selection" class="input_option" onchange="changeWANUnit(this);">
 		     			</select>

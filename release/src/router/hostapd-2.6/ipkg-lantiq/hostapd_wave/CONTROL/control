@@ -1,0 +1,8 @@
+Package: hostapd_wave
+Version: 2.6-1
+Depends: libc, libssp, libopenssl, libnl3, librt
+Source: /home/asus/asuswrt/UGW-7.2.4.4_05.04.00.131/ugw/feeds_ugw/wlan/wlan_wave_feed/hostapd_wave
+Section: net
+Architecture: lantiq
+Installed-Size: 862044
+Description:  IEEE 802.11 AP, IEEE 802.1X/WPA/WPA2/EAP/RADIUS Authenticator

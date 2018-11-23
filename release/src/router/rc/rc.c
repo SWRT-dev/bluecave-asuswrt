@@ -259,6 +259,11 @@ static int rctest_main(int argc, char *argv[])
 	else if (strcmp(argv[1], "rc_service")==0) {
 		notify_rc(argv[2]);
 	}
+#if defined(RTCONFIG_HTTPS) && defined(RTCONFIG_PUSH_EMAIL)
+	else if (strcmp(argv[1], "sendmail")==0) {
+		start_DSLsendmail();
+	}
+#endif
 #ifdef RTCONFIG_BCM_7114
 	else if (strcmp(argv[1], "spect")==0) {
 		start_dfs();
@@ -420,7 +425,7 @@ static int rctest_main(int argc, char *argv[])
 			else stop_psta_monitor();
 		}
 #endif
-#if defined(RTCONFIG_AMAS) && (defined(RTCONFIG_BCMWL6) || defined(RTCONFIG_LANTIQ))
+#if defined(RTCONFIG_AMAS) && (defined(RTCONFIG_BCMWL6) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA))
 		else if (strcmp(argv[1], "obd") == 0) {
 			if (on) start_obd();
 			else stop_obd();
@@ -476,7 +481,7 @@ static int rctest_main(int argc, char *argv[])
 					f_write_string("/proc/sys/net/ipv4/conf/all/force_igmp_version", "2", 0, 0);
 #endif
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined (RTAC1200GU) || defined(RTAC85U) || defined(RTAC51UP) || defined(RTAC53)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined (RTAC1200GU) || defined(RTAC85U) || defined(RTAC51UP) || defined(RTAC53) || defined(RTN800HP)
 					if (!(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")))
 #endif
 					{
@@ -729,6 +734,10 @@ static const applets_t applets[] = {
 	{ "ovpnc-route-up",	vpnc_ovpn_route_up_main			},
 #endif
 #endif
+#ifdef RTCONFIG_OPENVPN
+	{ "ovpn-up",			ovpn_up_main				},
+	{ "ovpn-down",			ovpn_down_main			},
+#endif
 #ifdef RTCONFIG_EAPOL
 	{ "wpa_cli",			wpacli_main			},
 #endif
@@ -760,8 +769,12 @@ static const applets_t applets[] = {
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
 	{ "psta_monitor",		psta_monitor_main		},
 #endif
-#if defined(RTCONFIG_AMAS) && (defined(RTCONFIG_BCMWL6) || defined(RTCONFIG_LANTIQ)) && !defined(RTCONFIG_DISABLE_REPEATER_UI)
-	{ "obd",			obd_main			},
+#if defined(RTCONFIG_AMAS) && (defined(RTCONFIG_BCMWL6) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA)) && !defined(RTCONFIG_DISABLE_REPEATER_UI)
+	{ "obd",			obd_main					},
+#endif
+#if defined(RTCONFIG_AMAS) && defined(RTCONFIG_ETHOBD)
+	{ "obd_eth",		obdeth_main					},
+	{ "obd_monitor",	obd_monitor_main			},
 #endif
 #ifdef RTCONFIG_IPERF
 	{ "monitor",			monitor_main			},
@@ -772,12 +785,11 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_LANTIQ
 	{ "wave_monitor",		wave_monitor_main		},
 #endif
-#ifdef RTCONFIG_USB
+#if defined(RTCONFIG_USB) && !defined(RTCONFIG_NO_USBPORT)
 	{ "usbled",			usbled_main			},
 #endif
 	{ "ddns_updated", 		ddns_updated_main		},
 	{ "radio",			radio_main			},
-	{ "ots",			ots_main			},
 	{ "udhcpc",			udhcpc_wan			},
 	{ "udhcpc_lan",			udhcpc_lan			},
 	{ "zcip",			zcip_wan			},
@@ -839,6 +851,10 @@ static const applets_t applets[] = {
 	{ "disk_remove",		diskremove_main			},
 #endif
 	{ "firmware_check",		firmware_check_main		},
+#ifdef RTAC68U
+	{ "firmware_enc_crc",		firmware_enc_crc_main		},
+	{ "fw_check",			fw_check_main			},
+#endif
 #ifdef BUILD_READMEM
 	{ "readmem",			readmem_main			},
 #endif
@@ -1058,7 +1074,7 @@ int main(int argc, char **argv)
 			}
                         else if (argv[1] && (!strcmp(argv[1], "3")))
                                 start_eth(3);
-			
+
 			nvram_set("eth_detect_proc","0");
 			nvram_set_int("prelink_pap_status", -1); // trigger LED to change
                 }
@@ -1075,7 +1091,7 @@ int main(int argc, char **argv)
 				nvram_set("eth_detect_proc","0");
 			}
 			nvram_set_int("prelink_pap_status", -1); // trigger LED to change
-		}	
+		}
                 else
         		printf("Error command.\n");
                 return 0;
@@ -1092,7 +1108,7 @@ int main(int argc, char **argv)
                 return 0;
        }
 #endif
-       if(!strcmp(base, "wifimon_check")){	
+       if(!strcmp(base, "wifimon_check")){
 		int default_sec=0;
                 if (nvram_get_int("sw_mode")==SW_MODE_AP && !nvram_match("cfg_master", "1")) {
 			if(argv[1] && strlen(argv[1]))
@@ -1607,6 +1623,13 @@ int main(int argc, char **argv)
 		return 0;
 	}
 #endif
+#if defined(RTCONFIG_OPENPLUS_TFAT) || defined(RTCONFIG_OPENPLUSPARAGON_NTFS) || defined(RTCONFIG_OPENPLUSTUXERA_NTFS) || defined(RTCONFIG_OPENPLUSPARAGON_HFS) || defined(RTCONFIG_OPENPLUSTUXERA_HFS)
+	else if(!strcmp(base, "set_fs_coexist")){
+		set_fs_coexist();
+		puts("1");
+		return 0;
+	}
+#endif
 	else if (!strcmp(base, "run_telnetd")) {
 		_start_telnetd(1);
 		return 0;
@@ -1691,11 +1714,11 @@ int main(int argc, char **argv)
 	else if (!strcmp(base, "amas_bhctrl")) {
 		return amas_bhctrl_main();
 	}
-#endif	
+#endif
 	else if (!strcmp(base, "amas_lanctrl")) {
 		return amas_lanctrl_main();
 	}
-#endif	
+#endif
 #ifdef CONFIG_BCMWL5
 	else if (!strcmp(base, "setup_dnsmq")) {
 		if (argc != 2)
@@ -1728,8 +1751,7 @@ int main(int argc, char **argv)
 		}
 	}
 	else if (!strcmp(base, "mtd_erase_image_update")) {
-		mtd_erase_image_update();
-		return 0;
+		return mtd_erase_image_update();
 	}
 #else
 	else if (!strcmp(base, "nvram_erase")) {

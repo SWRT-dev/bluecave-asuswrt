@@ -13,6 +13,7 @@
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 
 </script>
@@ -58,7 +59,6 @@ var secondary_expires = secondary_wanlink_expires();
 var wanstate = -1;
 var wansbstate = -1;
 var wanauxstate = -1;
-var old_link_internet = -1;
 var lanproto = '<% nvram_get("lan_proto"); %>';
 
 var wanproto = '<% nvram_get("wan_proto"); %>';
@@ -117,7 +117,6 @@ function format_time(seconds, error)
 }
 
 function initial(){
-	flash_button();
 	// if dualwan enabled , show dualwan status
 	if(parent.wans_flag){
 		var unit = parent.document.form.dual_wan_flag.value; // 0: Priamry WAN, 1: Secondary WAN
@@ -201,14 +200,15 @@ function initial(){
 		document.getElementById("ap_table").style.display = "";
 		if(sw_mode == 3)
 			document.getElementById('RemoteAPtd').style.display = "none";
-		
-		var wlc_ssid = decodeURIComponent("<% nvram_char_to_ascii("WLANConfig11b", "wlc_ssid"); %>");
-		var _wlc_ssid = wlc_ssid.replace(/\</g, "&lt;").replace(/\>/g, "&gt;");   //replace < to &lt and > to &gt	
-		if((sw_mode == 2 || sw_mode == 3 || sw_mode == 4) && wlc_ssid.length >= 28){
-			showtext(document.getElementById("RemoteAP"), _wlc_ssid.substring(0, 26)+"...");
-			document.getElementById("RemoteAPtd").title = wlc_ssid;
-		}else				
-			showtext(document.getElementById("RemoteAP"), _wlc_ssid);
+
+		showtext(document.getElementById("RemoteAP"), httpApi.getPAPStatus());
+
+		if(parent.concurrent_pap){
+			if(parent.pap_click_flag == 0)
+				showtext(document.getElementById("RemoteAP"), httpApi.getPAPStatus("0"));
+			else
+				showtext(document.getElementById("RemoteAP"), httpApi.getPAPStatus("1"));
+		}
 				
 		if(lanproto == "static")
 			showtext(document.getElementById("LanProto"), "<#BOP_ctype_title5#>");
@@ -386,11 +386,15 @@ function failover_form(fo_unit, primary_if, secondary_if){
 
 function update_all_ip(wanip, subnet_mask, wandns, wangateway, unit){
 	var dnsArray = wandns.split(" ");
+	var have_dns = (dnsArray[0] || dnsArray[1]);
+
 	if(unit == 0){
 		showtext($("#WANIP")[0], wanip);
 		showtext($("#primary_subnet_mask")[0], subnet_mask);
-		if(wandns.length == 0){
+		if(!have_dns){
+			$("#DNS1")[0].innerHTML = "";
 			$("#DNS1")[0].style.height = "20px";
+			$("#DNS2")[0].style.display = "none";
 		}
 		else{
 			showtext2($("#DNS1")[0], dnsArray[0], dnsArray[0]);
@@ -485,15 +489,6 @@ function update_all_xip(wanxip, wanxnetmask, wanxdns, wanxgateway, unit) {
 	}
 }
 
-function update_wan_state(state, auxstate){
-	if(state == "2" && auxstate == "0")
-		link_internet = 1;
-	else
-		link_internet = 0;
-		
-	return link_internet;
-}
-
 function update_wanip(e) {
   $.ajax({
     url: '/status.asp',
@@ -537,26 +532,18 @@ function update_wanip(e) {
 			wan_expires = wanlink_expires();
 		}
 
-		if(old_link_internet == -1)
-			old_link_internet = update_wan_state(wanstate, wanauxstate);
-
-		if(update_wan_state(wanstate, wanauxstate) != old_link_internet){
-			refreshpage();
+		if(parent.wans_flag){
+			update_all_ip(first_wanip, first_wannetmask, first_wandns, first_wangateway, 0);
+			update_all_xip(first_wanxip, first_wanxnetmask, first_wanxdns, first_wanxgateway, 0);
+			update_all_ip(secondary_wanip, secondary_wannetmask, secondary_wandns, secondary_wangateway, 1);
+			update_all_xip(secondary_wanxip, secondary_wanxnetmask, secondary_wanxdns, secondary_wanxgateway, 1);
 		}
 		else{
-			if(parent.wans_flag){
-				update_all_ip(first_wanip, first_wannetmask, first_wandns, first_wangateway, 0);
-				update_all_xip(first_wanxip, first_wanxnetmask, first_wanxdns, first_wanxgateway, 0);
-				update_all_ip(secondary_wanip, secondary_wannetmask, secondary_wandns, secondary_wangateway, 1);
-				update_all_xip(secondary_wanxip, secondary_wanxnetmask, secondary_wanxdns, secondary_wanxgateway, 1);
-			}
-			else{
-				update_all_ip(wanip, wannetmask, wandns, wangateway, 0);
-				update_all_xip(wanxip, wanxnetmask, wanxdns, wanxgateway, 0);
-			}
-
-			setTimeout("update_wanip();", 3000);
+			update_all_ip(wanip, wannetmask, wandns, wangateway, 0);
+			update_all_xip(wanxip, wanxnetmask, wanxdns, wanxgateway, 0);
 		}
+
+		setTimeout("update_wanip();", 3000);
     }
   });
 }
@@ -833,8 +820,8 @@ function appendLANoption2(obj){
 <body class="statusbody" onload="initial();">
 <iframe name="hidden_frame" id="hidden_frame" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="internetForm" id="form" action="/start_apply2.htm">
-<input type="hidden" name="current_page" value="<% abs_index_page(); %>">
-<input type="hidden" name="next_page" value="<% abs_index_page(); %>">
+<input type="hidden" name="current_page" value="/">
+<input type="hidden" name="next_page" value="/">
 <input type="hidden" name="flag" value="Internet">
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_script" value="restart_wan_if">
@@ -929,7 +916,7 @@ left:-1px;">
 							 }
 						);
 				</script>
-    		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    		<div style="margin-top:37px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -971,31 +958,31 @@ left:-1px;">
 							 }
 						);
 				</script>
-    		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    		<div style="margin-top:37px;" class="line_horizontal"></div>
     </td>
 </tr>
 
 <tr id="disableWAN_button">
 	<td height="50" style="padding:10px 15px 0px 15px;">
 		<p class="formfonttitle_nwm" style="float:left;width:116px;margin-bottom:3px;"><#Terminate_WAN#></p>
-		<input type="button" class="button_gen_long" onclick="disableWAN();" value="<#btn_disable#>" style="position:absolute;right:25px;top:52px;margin-top:-33px;margin-left:115px;">
-		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+		<input type="button" class="button_gen" onclick="disableWAN();" value="<#btn_disable#>" style="position:absolute;right:25px;top:52px;margin-top:-33px;margin-left:115px;">
+		<div style="margin-top:5px;" class="line_horizontal"></div>
 	</td>
 </tr>
 
 <tr id="dualwan_row_main" style="display:none">
-    <td style="padding:5px 10px 5px 15px;">
-    		<p id="wan_inf_title" class="formfonttitle_nwm">WAN Port</p>
-    		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_current"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
-    </td>
+	<td style="padding:5px 10px 5px 15px;">
+		<p id="wan_inf_title" class="formfonttitle_nwm"><#wan_port#></p>
+		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_current"></p>
+		<div style="margin-top:5px;" class="line_horizontal"></div>
+	</td>
 </tr>
 
 <tr id="dualwan_row_primary" style="display:none">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#wan_type#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_primary_if"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1003,7 +990,7 @@ left:-1px;">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#wan_type#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_secondary_if"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1013,14 +1000,14 @@ left:-1px;">
 
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="dualwan_mode"></p>
 
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr id="loadbalance_config_ctrl" style="display:none">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#dualwan_mode_lb_setting#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="loadbalance_config"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1028,7 +1015,7 @@ left:-1px;">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm" style="text-decoration: underline; cursor:pointer;" onclick="goToWAN();"><#Connectiontype#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="connectionType"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1038,14 +1025,14 @@ left:-1px;">
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="WANIP"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xWANIP"></p>
     		<span id="wan_status" style="display:none"></span>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr id="primary_subnet_mask_ctrl">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="primary_subnet_mask"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="secondary_WANIP_ctrl">
@@ -1054,14 +1041,14 @@ left:-1px;">
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_WANIP"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xWANIP"></p>
     		<span id="wan_status" style="display:none"></span>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="secondary_subnet_mask_ctrl">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_subnet_mask"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1073,7 +1060,7 @@ left:-1px;">
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="yadns_DNS1"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="yadns_DNS2"></p>
     		</a>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1084,7 +1071,7 @@ left:-1px;">
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="DNS2"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xDNS1"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xDNS2"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="secondary_DNS_ctrl">
@@ -1094,7 +1081,7 @@ left:-1px;">
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_DNS2"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xDNS1"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xDNS2"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1103,7 +1090,7 @@ left:-1px;">
     		<p class="formfonttitle_nwm"><#RouterConfig_GWStaticGW_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="gateway"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xgateway"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="secondary_gateway_ctrl">
@@ -1111,7 +1098,7 @@ left:-1px;">
     		<p class="formfonttitle_nwm"><#RouterConfig_GWStaticGW_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_gateway"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xgateway"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="primary_lease_ctrl">
@@ -1119,7 +1106,7 @@ left:-1px;">
     		<p class="formfonttitle_nwm"><#LANHostConfig_LeaseTime_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="lease"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xlease"></p>
-    	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="primary_expires_ctrl">
@@ -1127,7 +1114,7 @@ left:-1px;">
     		<p class="formfonttitle_nwm"><#LeaseExpires#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="expires"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="xexpires"></p>
-    	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="secondary_lease_ctrl">
@@ -1135,7 +1122,7 @@ left:-1px;">
     		<p class="formfonttitle_nwm"><#LANHostConfig_LeaseTime_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_lease"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xlease"></p>
-    	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr style="display:none;" id="secondary_expires_ctrl">
@@ -1143,20 +1130,20 @@ left:-1px;">
     		<p class="formfonttitle_nwm"><#LeaseExpires#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_expires"></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="secondary_xexpires"></p>
-    	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+    	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr id="goDualWANSetting">
 	<td height="50" style="padding:10px 15px 0px 15px;">
 		<p class="formfonttitle_nwm" style="float:left;width:116px;"><#Dualwan_setting#></p>
-		<input type="button" class="button_gen_long" onclick="goToDualWAN();" value="<#btn_go#>" style="position:absolute;right:25px;margin-top:-10px;margin-left:115px;">
-		<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+		<input type="button" class="button_gen" onclick="goToDualWAN();" value="<#btn_go#>" style="position:absolute;right:25px;margin-top:-10px;margin-left:115px;">
+		<div style="margin-top:30px;" class="line_horizontal"></div>
 	</td>
 </tr>
 <!--tr id="goSetting" style="display:none">
 	<td height="30" style="padding:10px 15px 0px 15px;">
 		<p class="formfonttitle_nwm" style="float:left;width:116px;"><#btn_to_WAN#></p>
-		<input type="button" class="button_gen_long" onclick="goToWAN();" value="<#btn_go#>" style="position:absolute;right:25px;margin-top:-10px;margin-left:115px;">
+		<input type="button" class="button_gen" onclick="goToWAN();" value="<#btn_go#>" style="position:absolute;right:25px;margin-top:-10px;margin-left:115px;">
 	</td>
 </tr-->
 
@@ -1173,7 +1160,7 @@ left:-1px;">
     <td style="padding:5px 10px 5px 15px;" id="RemoteAPtd">
     		<p class="formfonttitle_nwm"><#statusTitle_AP#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="RemoteAP"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1181,7 +1168,7 @@ left:-1px;">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#Connectiontype#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;" id="LanProto"></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1189,28 +1176,28 @@ left:-1px;">
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#LAN_IP#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;"><% nvram_get("lan_ipaddr"); %></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr>
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalSubnetMask_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;"><% nvram_get("lan_netmask"); %></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr>
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#IPConnection_x_ExternalGateway_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;"><% nvram_get("lan_gateway"); %></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 <tr>
     <td style="padding:5px 10px 5px 15px;">
     		<p class="formfonttitle_nwm"><#HSDPAConfig_DNSServers_itemname#></p>
     		<p style="padding-left:10px; margin-top:3px; background-color:#444f53; line-height:20px;"><% nvram_get("lan_dns"); %></p>
-      	<img style="margin-top:5px;" src="/images/New_ui/networkmap/linetwo2.png">
+      	<div style="margin-top:5px;" class="line_horizontal"></div>
     </td>
 </tr>
 
@@ -1220,7 +1207,7 @@ left:-1px;">
 		<br />
   	<input type="button" class="button_gen" onclick="gotoSiteSurvey();" value="<#QIS_rescan#>" style="float:right;">
   	<!--input type="button" class="button_gen" onclick="manualSetup();" value="<#Manual_Setting_btn#>" style="float:right;"-->
-		<img style="margin-top:5px; *margin-top:-10px;" src="/images/New_ui/networkmap/linetwo2.png">
+		<div style="margin-top:5px;" class="line_horizontal"></div>
   </td>
 </tr>
 

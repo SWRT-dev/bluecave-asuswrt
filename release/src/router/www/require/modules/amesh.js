@@ -22,7 +22,7 @@
 	}
 }
 function show_AMesh_status(num, flag) {
-	document.getElementById("ameshNumber").innerHTML = "AiMesh Node: <span>" + num + "</span>";/* untranslated */
+	document.getElementById("ameshNumber").innerHTML = "<#AiMesh_Node#>: <span>" + num + "</span>";
 }
 function initial_amesh_obj() {
 	//initial amesh obj
@@ -31,9 +31,6 @@ function initial_amesh_obj() {
 	}
 	if($('.amesh_popup_bg').length > 0) {
 		$('.amesh_popup_bg').remove();
-	}
-	if($('#edit_amesh_client_block_form').length == 1) {
-		$('#edit_amesh_client_block_form').remove();
 	}
 }
 function check_wl_auth_support(_wl_auth_mode_x, _obj) {
@@ -49,7 +46,7 @@ function check_wl_auth_support(_wl_auth_mode_x, _obj) {
 	}
 	if(!support_flag) {
 		var auth_text = _obj.text();
-		var confirm_msg = "If the <#WLANConfig11b_AuthenticationMethod_itemname#> used the " + auth_text + ", it will affect the AiMesh wifi connectivity.\nAre you sure to process?";/*untranslated*/
+		var confirm_msg = "When using " + auth_text + " Authentication, AiMesh system will become invalid.\nAre you sure to process?";/*untranslated*/
 		support_flag = confirm(confirm_msg);
 	}
 	return support_flag;
@@ -78,8 +75,8 @@ function AiMesh_confirm_msg(_name, _value) {
 		var current_psk = _value["current"]["psk"];
 		var original_ssid = _value["original"]["ssid"];
 		var original_psk = _value["original"]["psk"];
-		var current_node_count = <% get_cfg_clientlist(); %>.length - 1;
-		var total_node_count = <% get_onboardingstatus(); %>["cfg_obcount"];
+		var current_node_count = [<% get_cfg_clientlist(); %>][0].length - 1;
+		var total_node_count = [<% get_onboardingstatus(); %>][0]["cfg_obcount"];
 		if(total_node_count != "" && current_node_count < total_node_count) {
 			if(current_ssid == original_ssid && current_psk == original_psk)
 				return true;
@@ -92,6 +89,9 @@ function AiMesh_confirm_msg(_name, _value) {
 		}
 		else
 			return true;
+	};
+	var check_wireless_country_code = function() {
+		return confirm("By changing country code, AiMesh might not work properly.\nAre you sure to process?");/* untranslated */
 	};
 	var feature_value = {
 		"Wireless_WPS" : {
@@ -129,6 +129,9 @@ function AiMesh_confirm_msg(_name, _value) {
 			break;
 		case "Wireless_SSID_PSK" :
 			confirm_flag = check_wireless_ssid_psk(_value);
+			break;
+		case "Wireless_CountryCode" :
+			confirm_flag = check_wireless_country_code();
 			break;
 	}
 	return confirm_flag;

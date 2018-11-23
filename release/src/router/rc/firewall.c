@@ -722,9 +722,17 @@ no_match:
 
 char *str2time(char *str, char *buf, int buf_size, int flag){
 	if(START_TIME == flag)
+#ifndef IPTABLES_LEGACY
 		snprintf(buf, buf_size, "%c%c:%c%c:00", *(str), *(str+1), *(str+2), *(str+3));
+#else
+		snprintf(buf, buf_size, "%c%c:%c%c", *(str), *(str+1), *(str+2), *(str+3));
+#endif
 	else if(STOP_TIME == flag)
+#ifndef IPTABLES_LEGACY
 		snprintf(buf, buf_size, "%c%c:%c%c:59", *(str), *(str+1), *(str+2), *(str+3));
+#else
+		snprintf(buf, buf_size, "%c%c:%c%c", *(str), *(str+1), *(str+2), *(str+3));
+#endif
 	return (buf);
 }
 
@@ -1272,14 +1280,14 @@ void repeater_filter_setting(int mode){
 
 				fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 						word, BIT_RES_GUI, nvram_safe_get("lan_ipaddr"),
-						/*nvram_get_int("http_lanport") ? :*/ 80,
+						nvram_get_int("http_lanport") ? : 80,
 						nvram_get_int("https_lanport") ? : 443);
 			}
 		}
 		else{
 			fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 					nvram_safe_get("lan_ifname"), BIT_RES_GUI, nvram_safe_get("lan_ipaddr"),
-					/*nvram_get_int("http_lanport") ? :*/ 80,
+					nvram_get_int("http_lanport") ? : 80,
 					nvram_get_int("https_lanport") ? : 443);
 		}
 	}
@@ -1319,13 +1327,19 @@ void write_port_forwarding(FILE *fp, char *config, char *lan_ip, char *lan_if)
 		// need multiple instance for tis?
 		if (nvram_get_int("misc_http_x")) {
 #ifdef RTCONFIG_HTTPS
-			wan_port = nvram_get_int("misc_httpsport_x") ? : 8443;
-			fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n",
-				wan_port, lan_ip, nvram_get_int("https_lanport") ? : 443);
+			int enable = nvram_get_int("http_enable");
+			if (enable != 0) {
+				wan_port = nvram_get_int("misc_httpsport_x") ? : 8443;
+				fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n",
+					wan_port, lan_ip, nvram_get_int("https_lanport") ? : 443);
+			}
+			/* do not support http (enable != 1) */
 #else
-			wan_port = nvram_get_int("misc_httpport_x") ? : 8080;
-			fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n",
-				wan_port, lan_ip, 80);
+			{
+				wan_port = nvram_get_int("misc_httpport_x") ? : 8080;
+				fprintf(fp, "-A VSERVER -p tcp -m tcp --dport %d -j DNAT --to-destination %s:%d\n",
+					wan_port, lan_ip, nvram_get_int("http_lanport") ? : 80);
+			}
 #endif
 		}
 	}
@@ -1594,6 +1608,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	//if (nvram_match("misc_natlog_x", "1"))
 	// 	fprintf(fp, "-A PREROUTING -i %s -j LOG --log-prefix ALERT --log-level 4\n", wan_if);
 
+#if 0
 #ifdef RTCONFIG_AUTOCOVER_SIP
 	if(nvram_get_int("atcover_sip") == 1 && !strcmp(lan_ip, nvram_default_get("lan_ipaddr")) && strcmp(lan_ip, nvram_safe_get("atcover_sip_ip"))){
 		int dst_port;
@@ -1610,6 +1625,8 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 				);
 	}
 #endif
+#endif
+
 #ifdef RTCONFIG_IPSEC
 	if(is_nat_enabled() && dmz_enabled()) {
 		fprintf(fp, "-A PREROUTING -i %s -p udp -m udp --dport 500 -j REDIRECT --to-port 500\n", wan_if);
@@ -2272,6 +2289,7 @@ void redirect_setting(void)
 				":YADNS - [0:0]\n");
 #endif
 
+#if 0
 #ifdef RTCONFIG_AUTOCOVER_SIP
 		if(nvram_get_int("atcover_sip") == 1 && !strcmp(lan_ipaddr_t, nvram_default_get("lan_ipaddr")) && strcmp(lan_ipaddr_t, nvram_safe_get("atcover_sip_ip"))){
 			int dst_port;
@@ -2287,6 +2305,7 @@ void redirect_setting(void)
 					dst_port
 					);
 		}
+#endif
 #endif
 	}
 
@@ -2326,7 +2345,7 @@ void write_access_restriction(FILE *fp)
 		if (en != 1)
 #endif
 		{
-			http_port = 80;
+			http_port = nvram_get_int("http_lanport") ? : 80;
 		}
 		if (http_port != 0 && https_port != 0)
 			snprintf(webports, sizeof(webports), "%d,%d", http_port, https_port);
@@ -2437,7 +2456,7 @@ start_default_filter(int lanunit)
 
 		fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 				lan_if, BIT_RES_GUI, nvram_safe_get("lan_ipaddr"),
-				/*nvram_get_int("http_lanport") ? :*/ 80,
+				nvram_get_int("http_lanport") ? : 80,
 				nvram_get_int("https_lanport") ? : 443);
 	}
 #endif
@@ -2473,7 +2492,7 @@ start_default_filter(int lanunit)
 		if (en != 1)
 #endif
 		{
-			http_port = 80;
+			http_port = nvram_get_int("http_lanport") ? : 80;
 		}
 		if (http_port != 0 && https_port != 0)
 			snprintf(webports, sizeof(webports), "%d,%d", http_port, https_port);
@@ -2892,8 +2911,8 @@ filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 	char *setting = NULL;
 	char macaccept[32], chain[32];
 	char prefix[32], tmp[100], *wan_proto, *wan_ipaddr;
-	int i;
 #ifdef RTCONFIG_IPV6
+	int i;
 	FILE *fp_ipv6 = NULL;
 	int n;
 	char *ip, *protono;
@@ -3055,7 +3074,7 @@ TRACE_PT("writing Parental Control\n");
 
 		fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 				lan_if, BIT_RES_GUI, lan_ip,
-				/*nvram_get_int("http_lanport") ? :*/ 80,
+				nvram_get_int("http_lanport") ? : 80,
 				nvram_get_int("https_lanport") ? : 443);
 	}
 #endif
@@ -3139,6 +3158,10 @@ TRACE_PT("writing Parental Control\n");
 #else
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", lan_if, "ACCEPT");
 #endif
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+		if (nvram_get_int("pptpd_enable"))
+			fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", "pptp+", "ACCEPT");
+#endif
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", "lo", "ACCEPT");
 #ifdef RTCONFIG_IPV6
 		if (ipv6_enabled()) {
@@ -3167,11 +3190,17 @@ TRACE_PT("writing Parental Control\n");
 		// Firewall between WAN and Local
 		if (nvram_get_int("misc_http_x")) {
 #ifdef RTCONFIG_HTTPS
-			fprintf(fp, "-A INPUT -m conntrack --ctstate DNAT -p tcp -m tcp -d %s --dport %d -j %s\n",
-				lan_ip, nvram_get_int("https_lanport") ? : 443, logaccept);
+			int enable = nvram_get_int("http_enable");
+			if (enable != 0) {
+				fprintf(fp, "-A INPUT -m conntrack --ctstate DNAT -p tcp -m tcp -d %s --dport %d -j %s\n",
+					lan_ip, nvram_get_int("https_lanport") ? : 443, logaccept);
+			}
+			/* do not support http (enable != 1) */
 #else
-			fprintf(fp, "-A INPUT -m conntrack --ctstate DNAT -p tcp -m tcp -d %s --dport %d -j %s\n",
-				lan_ip, 80, logaccept);
+			{
+				fprintf(fp, "-A INPUT -m conntrack --ctstate DNAT -p tcp -m tcp -d %s --dport %d -j %s\n",
+					lan_ip, nvram_get_int("http_lanport") ? : 80, logaccept);
+			}
 #endif
 		}
 #ifdef RTCONFIG_SSH
@@ -3305,22 +3334,15 @@ TRACE_PT("writing Parental Control\n");
 		fprintf(fp, "-I INPUT -p tcp --dport %s:%s -j ACCEPT\n", nvram_safe_get("apps_dl_share_port_from"), nvram_safe_get("apps_dl_share_port_to"));
 	}
 
-#ifdef RTCONFIG_IPV6
-	if (ipv6_enabled())
-	{
-		if (nvram_match("ipv6_fw_enable", "1"))
-		{
-			fprintf(fp_ipv6, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
-		}
-	}
-#endif
-
 	/* Pass multicast */
 	if (nvram_get_int("mr_enable_x"))
 		fprintf(fp, "-A FORWARD -p udp -d 224.0.0.0/4 -j ACCEPT\n");
 
 	/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
-	if (
+	if (nvram_get_int("jumbo_frame_enable") ||
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+	    nvram_get_int("pptpd_enable") ||
+#endif
 #if defined(RTCONFIG_USB_MODEM)
 	    dualwan_unit__usbif(unit) ||
 #endif
@@ -3338,7 +3360,7 @@ TRACE_PT("writing Parental Control\n");
 #ifdef RTCONFIG_6RELAYD
 	case IPV6_PASSTHROUGH:
 #endif
-		if (
+		if (!nvram_get_int("jumbo_frame_enable") &&
 #if defined(RTCONFIG_USB_MODEM)
 		    dualwan_unit__nonusbif(unit) &&
 #endif
@@ -3356,9 +3378,16 @@ TRACE_PT("writing Parental Control\n");
 	}
 #endif
 
-// ~ oleg patch
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
-// ~ oleg patch
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled() && nvram_match("ipv6_fw_enable", "1"))
+		fprintf(fp_ipv6, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
+#endif
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+	if (nvram_get_int("pptpd_enable"))
+		fprintf(fp, "-A FORWARD -i %s -j %s\n", "pptp+", "ACCEPT");
+#endif
+
 	/* Filter out invalid WAN->WAN connections */
 #ifdef RTCONFIG_PORT_BASED_VLAN
 	/* Write forward rule for vlan */
@@ -4047,7 +4076,7 @@ TRACE_PT("writing Parental Control\n");
 
 		fprintf(fp, "-A INPUT -i %s -m mark --mark %s -d %s -p tcp -m multiport --dport 23,%d,%d,9999 -j DROP\n",
 				lan_if, BIT_RES_GUI, lan_ip,
-				/*nvram_get_int("http_lanport") ? :*/ 80,
+				nvram_get_int("http_lanport") ? : 80,
 				nvram_get_int("https_lanport") ? : 443);
 	}
 #endif
@@ -4141,6 +4170,10 @@ TRACE_PT("writing Parental Control\n");
 		}
 #endif
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", lan_if, "ACCEPT");
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+		if (nvram_get_int("pptpd_enable"))
+			fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", "pptp+", "ACCEPT");
+#endif
 		fprintf(fp, "-A INPUT -i %s -m state --state NEW -j %s\n", "lo", "ACCEPT");
 #ifdef RTCONFIG_IPV6
 		if (ipv6_enabled()) {
@@ -4196,11 +4229,17 @@ TRACE_PT("writing Parental Control\n");
 		// Firewall between WAN and Local
 		if (nvram_get_int("misc_http_x")) {
 #ifdef RTCONFIG_HTTPS
-			fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %d -j %s\n",
-				lan_ip, nvram_get_int("https_lanport") ? : 443, logaccept);
+			int enable = nvram_get_int("http_enable");
+			if (enable != 0) {
+				fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %d -j %s\n",
+					lan_ip, nvram_get_int("https_lanport") ? : 443, logaccept);
+			}
+			/* do not support http (enable != 1) */
 #else
-			fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %d -j %s\n",
-				lan_ip, 80, logaccept);
+			{
+				fprintf(fp, "-A INPUT -p tcp -m tcp -d %s --dport %d -j %s\n",
+					lan_ip, nvram_get_int("http_lanport") ? : 80, logaccept);
+			}
 #endif
 		}
 #ifdef RTCONFIG_SSH
@@ -4312,23 +4351,19 @@ TRACE_PT("writing Parental Control\n");
 		fprintf(fp, "-I INPUT -p tcp --dport %s:%s -j ACCEPT\n", nvram_safe_get("apps_dl_share_port_from"), nvram_safe_get("apps_dl_share_port_to"));
 	}
 
-#ifdef RTCONFIG_IPV6
-	if (ipv6_enabled())
-	{
-		if (nvram_match("ipv6_fw_enable", "1"))
-		{
-			fprintf(fp_ipv6, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
-		}
-	}
-#endif
-
 	/* Pass multicast */
 	if (nvram_get_int("mr_enable_x"))
 		fprintf(fp, "-A FORWARD -p udp -d 224.0.0.0/4 -j ACCEPT\n");
 
 	/* Clamp TCP MSS to PMTU of WAN interface before accepting RELATED packets */
-	for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
-		if(!is_wan_connect(unit))
+	if (nvram_get_int("jumbo_frame_enable"))
+		goto clamp_mss;
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+	if (nvram_get_int("pptpd_enable"))
+		goto clamp_mss;
+#endif
+	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; unit++) {
+		if (!is_wan_connect(unit))
 			continue;
 
 		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
@@ -4340,6 +4375,7 @@ TRACE_PT("writing Parental Control\n");
 		    strcmp(wan_proto, "pppoe") == 0 ||
 		    strcmp(wan_proto, "pptp") == 0 ||
 		    strcmp(wan_proto, "l2tp") == 0) {
+		clamp_mss:
 			fprintf(fp, "-A FORWARD -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n");
 			if (*macaccept)
 				fprintf(fp, "-A %s -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu\n", macaccept);
@@ -4353,7 +4389,7 @@ TRACE_PT("writing Parental Control\n");
 #ifdef RTCONFIG_6RELAYD
 	case IPV6_PASSTHROUGH:
 #endif
-		if (
+		if (!nvram_get_int("jumbo_frame_enable") &&
 #if defined(RTCONFIG_USB_MODEM)
 		    dualwan_unit__nonusbif(wan_primary_ifunit_ipv6()) &&
 #endif
@@ -4371,8 +4407,15 @@ TRACE_PT("writing Parental Control\n");
 	}
 #endif
 
-// ~ oleg patch
 	fprintf(fp, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
+#ifdef RTCONFIG_IPV6
+	if (ipv6_enabled() && nvram_match("ipv6_fw_enable", "1"))
+		fprintf(fp_ipv6, "-A FORWARD -m state --state ESTABLISHED,RELATED -j %s\n", logaccept);
+#endif
+#if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
+	if (nvram_get_int("pptpd_enable"))
+		fprintf(fp, "-A FORWARD -i %s -j %s\n", "pptp+", "ACCEPT");
+#endif
 
 	for(unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit){
 		if(!is_wan_connect(unit))
@@ -4407,7 +4450,6 @@ TRACE_PT("writing Parental Control\n");
 	vlan_subnet_deny_forward(fp);
 #endif
 
-// oleg patch ~
 	/* Drop the wrong state, INVALID, packets */
 	allow_sroutes(fp);
 	fprintf(fp, "-A FORWARD -m state --state INVALID -j %s\n", logdrop);
@@ -5021,9 +5063,10 @@ write_porttrigger(FILE *fp, char *wan_if, int is_nat)
 void
 mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *logaccept, char *logdrop)
 {
+#ifdef RTCONFIG_IPV6
 	int unit;
 	char chain[sizeof("QOSOxXXX")];
-
+#endif
 #ifdef CONFIG_BCMWL5 /* the only use so far */
 	char lan_class[32];
 
@@ -5163,6 +5206,22 @@ mangle_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *log
 			     "-p", "tcp", "--dport", "80",
 			     "-m", "state", "--state", "NEW", "-j", "MARK", "--set-mark", "0x01/0x7");
 		}
+
+		/* mark 5060 port connection for SIP signaling of VoIP, including UDP and TCP type */
+#ifdef CONFIG_BCMWL5
+		if (nvram_match("fw_pt_sip", "1")) {
+#ifdef HND_ROUTER
+			//do nothing
+#else
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+				"-p", "udp", "-m", "udp",
+				"--dport", "5060", "-j", "MARK", "--set-mark", "0x01/0x7");
+			eval("iptables", "-t", "mangle", "-A", "FORWARD",
+				"-p", "tcp", "-m", "tcp",
+				"--dport", "5060", "-j", "MARK", "--set-mark", "0x01/0x7");
+#endif /* HND_ROUTER */
+		}
+#endif /* CONFIG_BCMWL5 */
 
 		/* mark VTS loopback connections */
 		if (nvram_match("vts_enable_x", "1") || dmz_enabled() ||
@@ -5821,7 +5880,7 @@ int start_firewall(int wanunit, int lanunit)
 
 	if ((fp=fopen("/proc/sys/net/ipv4/tcp_tw_recycle", "w+")))
 	{
-#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_DUALWAN)
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_REALTEK)
 		fputs("0", fp);
 #else
 		fputs("1", fp);

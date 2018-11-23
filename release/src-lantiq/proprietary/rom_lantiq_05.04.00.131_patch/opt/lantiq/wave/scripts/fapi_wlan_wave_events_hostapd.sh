@@ -443,12 +443,22 @@ case $name in
 		sta_connection $interface_name disconnect $param3
 		update_client $param3 $interface_name 0
 	;;
+	"AP-STA-PROBEREQ")
+		cfg_obstatus=`nvram get cfg_obstatus`
+		if [ "$cfg_obstatus" = "2" ] && [ "${4:0:4}" = "0101" ]
+		then
+			hapdevent $name $4
+		fi
+	;;
+	"DFS-RADAR-DETECTED")
+		hapdevent $name $3 $4
+	;;
 	"WPS-OVERLAP-DETECTED")
 	#	WPS_STATE="WPS_IDLE"
 		wps_session_overlap $interface_name
 	;;
 	*)
-		echo "wave_wlan_hostapd_events: $name"
+		echo "wave_wlan_hostapd_events: $name" > /dev/null
 	;;
 esac
 #echo "WPS_STATE=$WPS_STATE" > /tmp/WPS_STATE

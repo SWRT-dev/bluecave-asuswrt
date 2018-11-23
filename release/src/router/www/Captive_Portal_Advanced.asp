@@ -606,7 +606,7 @@ function edit_del_component(_obj, event) {
 	}
 
 	if(component_click == del_component_id) {
-		var code = "<div class='edit_component_item_hint'>Select web component at the left side.</div>";/*untranslated*/
+		var code = "<div class='edit_component_item_hint'><#Captive_Portal_Select_Element#></div>";
 		$("#splash_page_container_edit").html(code);
 	}
 	reset_toolbar_component_css();
@@ -1441,8 +1441,8 @@ function edit_component_background() {
 	$("#splash_page_container_edit").html(code);
 
 	code += "<div class='edit_component_item_title'>";
-	code += "<input type='radio' name='edit_background_type' id='edit_background_image' value='image' onclick='showHideBackgroundType();' checked><label for='edit_background_image'>Background Image</label>";/*untranslated*/
-	code += "<input type='radio' name='edit_background_type' id='edit_background_color' value='color' onclick='showHideBackgroundType();'><label for='edit_background_color'>Background Color</label>";/*untranslated*/
+	code += "<input type='radio' name='edit_background_type' id='edit_background_image' value='image' onclick='showHideBackgroundType();' checked><label for='edit_background_image'><#Captive_Portal_Background_Image#></label>";
+	code += "<input type='radio' name='edit_background_type' id='edit_background_color' value='color' onclick='showHideBackgroundType();'><label for='edit_background_color'><#Captive_Portal_Background_Color#></label>";
 	code += "</div>";
 
 	code += "<div class='captive_portal_adv_line'></div>";
@@ -1454,7 +1454,7 @@ function edit_component_background() {
 		code += "</div>";
 		code += "<div class='edit_drag_drop_hint'><#FreeWiFi_ImageSize#>: < 10MB</div>";
 		code += "<div class='edit_drag_drop_hint'><#FreeWiFi_RecommendType#>: jpg, png</div>";
-		code += "<div class='edit_drag_drop_hint'><#FreeWiFi_RecommendResolution#>: 1152 x 864 px <#Captive_Portal_OR#> above</div>";
+		code += "<div class='edit_drag_drop_hint'><#FreeWiFi_RecommendResolution#>: 1152 x 864 px <#Captive_Portal_OR#> <#Captive_Portal_Above#></div>";
 	}
 	else {
 		code += "<div id='edit_drag_drop_bg' class='edit_drag_drop_bg'>";
@@ -1466,7 +1466,7 @@ function edit_component_background() {
 	code += "</div>";
 
 	code += "<div id='edit_background_color_bg' class='edit_background_bg' style='display:none;'>";
-		code += "<div class='edit_component_item_title'>Selected Color</div>";/*untranslated*/
+		code += "<div class='edit_component_item_title'><#Captive_Portal_Selected_Color#></div>";
 		code += "<div class='edit_component_item_content'><input name='edit_background_color_set' id='edit_background_color_set' class='jscolor " + jscolor_attr + " input_12_table auto_add_onblur' style='cursor:pointer;' value='616161' type='text' maxlength='6' autocorrect='off' autocapitalize='off'></div>";
 	code += "</div>";
 
@@ -1551,7 +1551,7 @@ function edit_component_image(_idx) {
 	code += "</div>";
 
 	code += "<div id='edit_color_bg' class='edit_background_bg' style='display:none;'>";
-		code += "<div class='edit_component_item_title'>Selected Color</div>";/*untranslated*/
+		code += "<div class='edit_component_item_title'><#Captive_Portal_Selected_Color#></div>";
 		code += "<div class='edit_component_item_content'><input name='edit_image_color_set' id='edit_image_color_set' class='jscolor " + jscolor_attr + " input_12_table auto_add_onblur' style='cursor:pointer;' value='FFFFFF' type='text' maxlength='6' autocorrect='off' autocapitalize='off'></div>";
 	code += "</div>";
 
@@ -2383,7 +2383,7 @@ function gen_account_settings() {
 	code += "<tr>";
 	code += "<th><#FreeWiFi_AccountSetting_Verification#></th>";
 	code += "<td>";
-	code += "<input type='radio' name='cpa_verification' id='cpa_verification_local' value='0' onclick='showHideVerification();' checked><label for='cpa_verification_local'>Local</label>";/*untranslated*/
+	code += "<input type='radio' name='cpa_verification' id='cpa_verification_local' value='0' onclick='showHideVerification();' checked><label for='cpa_verification_local'><#Captive_Portal_Local#></label>";
 	code += "<input type='radio' name='cpa_verification' id='cpa_verification_radius' value='1' onclick='showHideVerification();'><label for='cpa_verification_radius'>RADIUS</label>";/*untranslated*/
 	code += "</td>";
 	code += "</tr>";
@@ -2398,7 +2398,7 @@ function gen_account_settings() {
 	code += "</tr>";
 	code += "</thead>";
 	code += "<tr>";
-	code += "<th><#HSDPAConfig_Username_itemname#></th>";
+	code += "<th><#Username#></th>";
 	code += "<th><#HSDPAConfig_Password_itemname#></th>";
 	code += "<th><#list_add_delete#></th>";
 	code += "</tr>";
@@ -4831,7 +4831,7 @@ function reset_editing_area_css() {
 				break;
 			case "toolbar_editor" :
 				component_click = "";
-				var code = "<div class='edit_component_item_hint'>Select web component at the left side.</div>";/*untranslated*/
+				var code = "<div class='edit_component_item_hint'><#Captive_Portal_Select_Element#></div>";
 				$("#splash_page_container_edit").html(code);
 				break;
 		}
@@ -4986,14 +4986,14 @@ function remove_hint_msg() {
 								<td bgcolor="#4D595D" valign="top">
 									<div>&nbsp;</div>
 									<div class="formfonttitle"><#Guest_Network#> - <#Captive_Portal#></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<div class="captive_portal_adv_intro_icon"></div>
 									<div style='float:left;width:80%;'>
 									<div class="captive_portal_adv_intro_txt" style="color:#FC0;"><#Captive_Portal_desc1#></div>
 									<div class="captive_portal_adv_intro_txt"><#Captive_Portal_desc2#></div>
 									</div>
 									<div style="clear:both;"></div>
-									<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+									<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 									<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 										<thead>
 										<tr>
@@ -5081,7 +5081,7 @@ function remove_hint_msg() {
 <form method="post" name="splash_page_form" action="splash_page.cgi" target="hidden_frame_save" enctype="multipart/form-data">
 <input type="hidden" name="current_page" value="Captive_Portal.asp">
 <input type="hidden" name="next_page" value="Captive_Portal.asp">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="splash_page_id" value="">
 <input type="hidden" name="splash_page_attribute" value="">
@@ -5093,7 +5093,7 @@ function remove_hint_msg() {
 <form method="post" name="splash_page_form_del" action="splash_page_del.cgi" target="hidden_frame_save" enctype="multipart/form-data">
 <input type="hidden" name="current_page" value="Captive_Portal.asp">
 <input type="hidden" name="next_page" value="Captive_Portal.asp">
-<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
+<input type="hidden" name="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="splash_page_id_del" value="">
 </form>

@@ -49,7 +49,7 @@ function update_nt_action(){
 }
 
 function update_nt_action_check(xhr){
-	if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = '<% abs_index_page(); %>';
+	if(xhr.responseText.search("Main_Login.asp") !== -1) top.location.href = "/";
 	
 	var response = JSON.parse(xhr.responseText);
 	document.form.nc_web_app_enable.value = response.nc_web_app_enable;
@@ -406,7 +406,7 @@ function nt_action_click(flag){
 	   <td bgcolor="#4D595D" valign="top">
 		  <div>&nbsp;</div>
 		  <div class="formfonttitle">Notification - Notification Setting</div>
-      		<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+      		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
       	  	<div class="control_bg content_frame" style="width:auto;border solide: 1px #717171;border-radius:4px;height:120px;">
       	  	<div style="padding:6px;">
 	      	  	<div>

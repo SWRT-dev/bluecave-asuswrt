@@ -46,7 +46,11 @@ endif
 
 ifeq ($(RTCONFIG_LANTIQ),y)
 CFLAGS += -I./sysdeps/lantiq -I$(TOP)/wireless_tools/ -DWE_NOLIBM
+CFLAGS += -I$(TOP)/shared/sysdeps/lantiq -I$(TOP)/wireless_tools -I$(TOP)/fapi_wlan_common-1.0.0.1/include -I$(TOP)/libhelper-1.4.0.2/include -DPACKAGE_ID=\"fapi_wlan_common\" -DLOGGING_ID="fapi_wlan_common"
+CFLAGS += -I$(TOP)/wlc_nt
 endif
+
+
 
 ifeq ($(RTCONFIG_BCMWL6),y)
 CFLAGS += -I$(SRCBASE)/shared/bcmwifi/include
@@ -111,6 +115,7 @@ OBJS += bwdpi_utils.o
 OBJS += bwdpi_utils.o
 OBJS += mac_name_tab.o
 OBJS += stun.o
+OBJS += timer_utils.o
 OBJS += scripts.o
 ifeq ($(RTCONFIG_TRAFFIC_LIMITER),y)
 OBJS += tld_utils.o
@@ -140,7 +145,7 @@ OBJS += flash_mtd.o api-ralink.o
 ifeq ($(RTCONFIG_RALINK_RT3052),y)
 OBJS += ra3052.o
 endif
-ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTN56UB2)$(RTAC54U)$(RTAC1200GA1)$(RTAC1200GU)$(RPAC87)$(RTAC85U),y)
+ifeq ($(RTN14U)$(RTAC52U)$(RTAC51U)$(RTN11P)$(RTN300)$(RTN54U)$(RTAC1200HP)$(RTN56UB1)$(RTN56UB2)$(RTAC54U)$(RTAC1200GA1)$(RTAC1200GU)$(RPAC87)$(RTAC85U)$(RTN800HP),y)
 CFLAGS += -DRA_ESW
 OBJS += mt7620.o
 else
@@ -302,7 +307,7 @@ else ifeq ($(RTCONFIG_ALPINE),y)
 OBJS += private.o
 vpath %.c sysdeps sysdeps/alpine
 else ifeq ($(RTCONFIG_LANTIQ),y)
-OBJS	+= $(if $(wildcard sysdeps/lantiq/api-lantiq.c),api-lantiq.o,prebuild/api-lantiq.o)
+OBJS	+= $(if $(wildcard sysdeps/api-lantiq.c),api-lantiq.o,prebuild/api-lantiq.o)
 OBJS	+= $(if $(wildcard sysdeps/lantiq/lantiq.c),lantiq.o,prebuild/lantiq.o)
 OBJS	+= $(if $(wildcard sysdeps/lantiq/private.c),private.o,prebuild/private.o)
 vpath %.c sysdeps/lantiq
@@ -396,4 +401,3 @@ prebuild/%.o:
 	@$(CC) $(CFLAGS) -E $< > $@
 
 -include $(OBJS:%.o=.%.depend)
-

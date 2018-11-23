@@ -314,7 +314,10 @@ function submitForm(){
 	else if(parent.document.QKform.sw_mode.value == "1"){
 		if(autodet_state == "6" || autodet_auxstate == "6"){
 			if((wanstate  == 2 && wansbstate == 0 && wanauxstate == 0) && (link_internet == "2" || wan0_realip_state == "2" || wan1_realip_state == "2")){
-				document.form.action = "/qis/QIS_wireless.htm";
+				if(parent.isFirst)
+					document.form.action = "/qis/QIS_internet_type.htm";
+				else
+					document.form.action = "/qis/QIS_wireless.htm";
 			}
 			else{
 				parent.changeSubnet = false;
@@ -340,26 +343,27 @@ function submitForm(){
 }
 
 function uploadSetting(){
-  var file_obj = document.form.file;
+	var file_obj = document.form.file;
+	var file_obj_name = file_obj.value.toUpperCase();
 
-        if(file_obj.value == ""){
-                alert("<#JS_fieldblank#>");
-                file_obj.focus();
-        }
-        else if(file_obj.value.length < 6 ||
-                                        file_obj.value.lastIndexOf(".CFG")  < 0 ||
-                                        file_obj.value.lastIndexOf(".CFG") != (file_obj.value.length)-4){
-                alert("<#Setting_upload_hint#>");
-                file_obj.focus();
-        }
-        else{
-                stopFlag = 1;
-                parent.document.getElementById('proceeding_img_text').style.display = "";
-                parent.document.getElementById('connHint').innerHTML = "<#SET_ok_desc#>";
-                document.form.action = "/upload.cgi";
-                document.form.enctype = "multipart/form-data";
-                document.form.submit();
-        }
+	if(file_obj_name == ""){
+		alert("<#JS_fieldblank#>");
+		file_obj.focus();
+	}
+	else if(file_obj_name.length < 6 ||
+				file_obj_name.lastIndexOf(".CFG")  < 0 ||
+				file_obj_name.lastIndexOf(".CFG") != (file_obj_name.length)-4){
+			alert("<#Setting_upload_hint#>");
+			file_obj.focus();
+	}
+	else{
+		stopFlag = 1;
+		parent.document.getElementById('proceeding_img_text').style.display = "";
+		parent.document.getElementById('connHint').innerHTML = "<#SET_ok_desc#>";
+		document.form.action = "/upload.cgi";
+		document.form.enctype = "multipart/form-data";
+		document.form.submit();
+	}
 }
 
 function skipsetting(){

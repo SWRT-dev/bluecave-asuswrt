@@ -271,7 +271,7 @@ function overHint(itemNum){
 		if(isNaN(signal) || signal <= 0){
 			statusmenu += "<div class='StatusHint'><#Mobile_no_signal#></div>";
 		}
-		else if(usb_state == 2 && usb_sbstate == 0 && usb_auxstate == 0){
+		else if(usb_state == 2 && usb_sbstate == 0 && usb_auxstate != 1){
 			statusmenu += "<div class='StatusHint'><#Connected#> <#HSDPAConfig_ISP_itemname#>: </div><span>" + modem_act_provider + "</span>";
 		}
 		else{
@@ -1008,8 +1008,8 @@ function openHint(hint_array_id, hint_show_id, flag){
 			_caption = "System Diagnostic capture";
 		}
 		else if(hint_show_id == 9){	//2015.07 Viz add for bwdpi : Adaptive QoS mode
-			statusmenu = "<span class='StatusClickHint' onclick='priority_change();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Change priority mode</span><br>";	/* untranslated */
-			statusmenu += "<span class='StatusClickHint' onclick='qos_disable();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'>Disable QoS</span>";	/* untranslated */
+			statusmenu = "<span class='StatusClickHint' onclick='priority_change();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#Adaptive_ChangeMode#></span><br>";
+			statusmenu += "<span class='StatusClickHint' onclick='qos_disable();' onmouseout='this.className=\"StatusClickHint\"' onmouseover='this.className=\"StatusClickHint_mouseover\"'><#EzQoS_disable#></span>";
 			_caption = "<#Adaptive_QoS#>";
 		}
 		else if(hint_show_id == 8){	//2014.10 Viz add for dsl dslx_diag_state
@@ -2549,28 +2549,6 @@ function registerHook(fnHookTo, fnRef, hookType, optPm) {
 		}
 
 		return;
-	}
-}
-
-// Register a function that will set runtime variables.
-function registerRunTimeFunction(fn) {
-	if (isFunction(fn)) {
-		if (typeof fn == 'object') {
-			runTime = runTime.concat(fn);
-		} else {
-			runTime[runTime.length++] = fn;
-		}
-	}
-}
-
-// Register a function that will handle command parsing.
-function registerCmdLineFunction(fn){
-	if (isFunction(fn)) {
-		if (typeof fn == 'object') {
-			cmdLine = cmdLine.concat(fn);
-		} else {
-			cmdLine[cmdLine.length++] = fn;
-		}
 	}
 }
 
