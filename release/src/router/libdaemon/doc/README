@@ -175,15 +175,15 @@ git clone git://git.0pointer.de/libdaemon
 
 References
 
-   1. README#license
-   2. README#news
-   3. README#overview
-   4. README#status
-   5. README#documentation
-   6. README#requirements
-   7. README#installation
-   8. README#acks
-   9. README#download
+   1. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#license
+   2. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#news
+   3. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#overview
+   4. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#status
+   5. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#documentation
+   6. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#requirements
+   7. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#installation
+   8. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#acks
+   9. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/README.html#download
   10. http://0pointer.de/lennart/projects/libdaemon/libdaemon-0.14.tar.gz
   11. http://0pointer.de/lennart/projects/libdaemon/libdaemon-0.13.tar.gz
   12. http://0pointer.de/lennart/projects/libdaemon/libdaemon-0.12.tar.gz
@@ -203,7 +203,7 @@ References
   26. http://0pointer.de/lennart/projects/ivam2/
   27. http://gentoo.ovibes.net/nautilus-share/mediawiki-1.4.4/index.php/Accueil
   28. http://0pointer.de/lennart/projects/aeswepd/
-  29. reference/html/index.html
+  29. file:///home/paldier/bluecave/release/src/router/libdaemon/doc/reference/html/index.html
   30. http://0pointer.de/lennart/projects/libdaemon/
   31. http://git.or.cz/
   32. git://git.0pointer.de/libdaemon

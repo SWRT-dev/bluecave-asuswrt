@@ -15173,11 +15173,12 @@ do_appGet_cgi(char *url, FILE *stream)
 	free(dup_pattern);
 }
 
-static void
+
 static void
 do_applydb_cgi(char *url, FILE *stream)
 {
 	char substr[1024];
+	int i;
 	char *name = websGetVar(wp, "p","");
 	FILE *fp;
 	if (strlen(name) <= 0) {
@@ -15188,13 +15189,13 @@ do_applydb_cgi(char *url, FILE *stream)
 
 	if((fp = fopen("/tmp/dbusxxx", "r")) == NULL)
 		printf("No \"name\"!\n");
-	while(substr, sizeof(substr),fp)
+	while(fgets(substr, sizeof(substr),fp) != NULL)
 	{
-		for(int i=0; i<50; i++)
+		for(i=0; i<50; i++)
 		{
-			if(substr[i] == "=")
+			if(substr[i] == '=')
 			{
-			substr[i] = "\0";
+			substr[i] = '\0';
 			doSystem("dbus update %s", substr);
 			}
 		}
@@ -15919,7 +15920,7 @@ struct mime_handler mime_handlers[] = {
 #endif
 	{ "wlc_status.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "get_webdavInfo.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "ss_status", "text/javascript", no_cache_IE7, do_ss_status, do_auth , NULL },
+	{ "ss_status", "text/javascript", no_cache_IE7 , NULL , do_ss_status, do_auth},
 	{ "appGet_image_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_image_path_cgi, NULL },
 	{ "login.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_cgi, NULL },
 	{ "update_clients.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
