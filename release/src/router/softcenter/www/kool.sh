@@ -6,7 +6,12 @@ kool_sip=`nvram get koolproxy_srcip 2>/dev/null`
 kool_httpsip=`nvram get koolproxy_httpsip 2>/dev/null`
 kool_mon=`nvram get koolproxy_monitor 2>/dev/null`
 adblock_mode=`nvram get adblock_mode 2>/dev/null`
-mdisk=`nvram get k3c_disk 2>/dev/null`
+usb_uuid=`dbus get jffs_ext`
+if [ -n "$usb_uuid" ]; then
+mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+else
+mdisk=`nvram get k3c_disk`
+fi
 usb_disk="/tmp/mnt/$mdisk"
 
 cd /tmp

@@ -5,7 +5,12 @@ v2ray_user=`nvram get v2ray_user`
 v2ray_sip=`nvram get v2ray_srcip`
 dns_mode=`nvram get v2ray_dnsmode`
 ss_dns_china=`nvram get v2ray_dns`
+usb_uuid=`dbus get jffs_ext`
+if [ -n "$usb_uuid" ]; then
+mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+else
 mdisk=`nvram get k3c_disk`
+fi
 usb_disk="/tmp/mnt/$mdisk"
 usbmount=`ls /tmp/mnt/`
 V2RAY_CONFIG_FILE="/tmp/etc/v2rayconfig.json"
@@ -52,14 +57,14 @@ download_v2ray(){
 	Tmpv2ctl=v2ctl
 	tarfile=v2ray-linux-mips.zip
 	v2ray_bin=https://github.com/v2ray/v2ray-core/releases/download/"$PKG_VERSION"/$tarfile
-	v2ray_bin2=https://k3c.paldier.com/tools/$tarfile
+	v2ray_bin2=http://k3c.paldier.com/tools/$tarfile
 	d_rule() {
 		wget --no-check-certificate --timeout=10 --tries=3 -qO $1 $2
 	}
 	echo "$(date "+%F %T") 在线版本: $PKG_VERSION" >> /tmp/v2ray.log
-	echo "$(date "+%F %T") 本地版本: $V2RA_VER" >> /tmp/v2ray.log
+	echo "$(date "+%F %T") 本地版本: v$V2RA_VER" >> /tmp/v2ray.log
 	logger -t "【v2ray】" "在线版本 $PKG_VERSION"
-	logger -t "【v2ray】" "本地版本 $V2RA_VER"
+	logger -t "【v2ray】" "本地版本 v$V2RA_VER"
 	if [ "v$V2RA_VER" != "$PKG_VERSION" ]; then
 		logger -t "【v2ray】" "本地版本与在线版本不同，下载 $PKG_VERSION ......"
 		echo "$(date "+%F %T"): 本地版本与在线版本不同，下载 $PKG_VERSION ......" >> /tmp/v2ray.log
@@ -69,8 +74,8 @@ download_v2ray(){
 			[ "$?" != "0" ] && logger -t "【v2ray】" "$PKG_VERSION 下载失败" && echo "$(date "+%F %T"): $PKG_VERSION 下载失败" >> /tmp/v2ray.log && exit 1
 		mkdir /tmp/v2ray-"$PKG_VERSION"-linux-mips
 		unzip -o /tmp/$tarfile -d /tmp/v2ray-"$PKG_VERSION"-linux-mips
-		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ray_softfloat /jffs/softcenter/bin/v2ray && chmod 755 /jffs/softcenter/bin/v2ray
-		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ctl_softfloat /jffs/softcenter/bin/v2ctl && chmod 755 /jffs/softcenter/bin/v2ctl
+		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ray /jffs/softcenter/bin/v2ray && chmod 755 /jffs/softcenter/bin/v2ray
+		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ctl /jffs/softcenter/bin/v2ctl && chmod 755 /jffs/softcenter/bin/v2ctl
 		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/geosite.dat /jffs/softcenter/bin/geosite.dat && chmod 755 /jffs/softcenter/bin/geosite.dat
 		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/geoip.dat /jffs/softcenter/bin/geoip.dat && chmod 755 /jffs/softcenter/bin/geoip.dat
 		if [ ! -e "/jffs/softcenter/bin/jq" ] ;then
@@ -176,6 +181,7 @@ killall -q -9 v2ray_mon.sh >/dev/null 2>&1 && killall v2ray_mon.sh >/dev/null 2>
 killall -q -9 dns2socks 2>/dev/null && killall dns2socks 2>/dev/null
 killall -q -9 v2ray 2>/dev/null && killall v2ray 2>/dev/null
 killall -q pdnsd 2>/dev/null
+/usr/bin/v2ray-rules clean 2>/dev/null
 service restart_dnsmasq >/dev/null 2>&1
 
 }
@@ -259,8 +265,8 @@ restart() {
     if [ "$kenable" == "1" ] ;then
       start
     else 
-      logger -t "K3C" "K3C扩展设置挂载未开启！"
-      echo " $(date "+%F %T"):""K3C扩展设置挂载未开启！" >> /tmp/v2ray.log
+      logger -t "软件中心" "jffs扩展挂载未开启！"
+      echo " $(date "+%F %T"):""jffs扩展挂载未开启！" >> /tmp/v2ray.log
     fi
   fi
 }

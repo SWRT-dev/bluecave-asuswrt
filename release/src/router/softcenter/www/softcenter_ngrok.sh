@@ -1,6 +1,11 @@
 #!/bin/sh 
 
-mdisk=`nvram get k3c_disk 2>/dev/null`
+usb_uuid=`dbus get jffs_ext`
+if [ -n "$usb_uuid" ]; then
+mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+else
+mdisk=`nvram get k3c_disk`
+fi
 usb_disk="/tmp/mnt/$mdisk"
 usbmount=`ls /tmp/mnt/`
 
@@ -74,7 +79,7 @@ restart() {
   if [ "$menable" == "1" -a "$kenable" == "1" ] ;then
   start
   else if [ "$menable" == "1" ]
-    logger -t "K3C""K3C扩展设置挂载未开启！"
+    logger -t "软件中心""jffs扩展挂载未开启！"
   fi
 }
 

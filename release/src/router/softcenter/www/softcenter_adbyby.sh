@@ -1,6 +1,11 @@
 #!/bin/sh 
 
+usb_uuid=`dbus get jffs_ext`
+if [ -n "$usb_uuid" ]; then
+mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+else
 mdisk=`nvram get k3c_disk`
+fi
 usb_disk="/tmp/mnt/$mdisk"
 usbmount=`ls /tmp/mnt/`
 
@@ -57,8 +62,8 @@ restart() {
     if [ "$kenable" == "1" ] ;then
       start
     else 
-      logger -t "K3C" "K3C扩展设置挂载未开启！"
-      echo " $(date "+%F %T"):""K3C扩展设置挂载未开启！" >> /tmp/adbyby.log
+      logger -t "Softcenter" "jffs扩展挂载未开启！"
+      echo " $(date "+%F %T"):""jffs扩展挂载未开启！" >> /tmp/adbyby.log
     fi
   fi
 }

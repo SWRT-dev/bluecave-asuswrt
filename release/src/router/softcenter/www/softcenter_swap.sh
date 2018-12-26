@@ -34,9 +34,9 @@ if [ "$swapon" == "0" ];then
 			swap_warnning="4"
 			echo " $(date "+%F %T"):""已经挂载虚拟内存！" >> /tmp/swap.log
 		else
-			if [ "$ext_type" == "ext2" ] || [ "$ext_type" == "ext3" ] || [ "$ext_type" == "ext4" ];then
+			if [ "$ext_type" == "ext2" ] || [ "$ext_type" == "ext3" ] || [ "$ext_type" == "ext4" ] || [ "$ext_type" == "tfat" ] || [ "$ext_type" == "tntfs" ];then
 				swap_warnning="3"
-				echo " $(date "+%F %T"):""成功检测到ext格式磁盘,可以创建swap！" >> /tmp/swap.log
+				echo " $(date "+%F %T"):""成功检测到磁盘,可以创建swap！" >> /tmp/swap.log
 			else
 				swap_warnning="2"
 				nvram set swap_enable="0"
@@ -77,9 +77,8 @@ then
   start
 else
   stop
-  echo " $(date "+%F %T"):""虚拟内存关闭！" >> /tmp/swap.log
+  echo " $(date "+%F %T"):""虚拟内存已关闭！" >> /tmp/swap.log
 fi
 }
 
 restart
-

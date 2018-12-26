@@ -1,10 +1,27 @@
 #! /bin/sh
 
+usb_uuid=`dbus get jffs_ext`
+if [ -n "$usb_uuid" ]; then
+mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+else
 mdisk=`nvram get k3c_disk`
+fi
 usb_disk="/tmp/mnt/$mdisk"
 usbmount=`ls /tmp/mnt/`
-start(){
 
+check(){
+ndisk=`nvram get k3c_disk`
+nmount=`ls /tmp/mnt/ |grep $mdisk`
+if [ -n "$nmount" -a "$nmount" != "$mdisk" ]; then
+	uuid=`blkid |grep $ndisk |cut -d '"' -f 2`
+	dbus set jffs_ext="${uuid}"
+else if [ -n "$nmount" -a -z "$usb_uuid" ]; then
+	uuid=`blkid |grep $ndisk |cut -d '"' -f 2`
+	dbus set jffs_ext="${uuid}"
+fi
+}
+
+start(){
 #开机启动太早会卡？
 if [ "$usbmount" == "" ];then
     echo " $(date "+%F %T"):""系统正在启动，等待USB设备挂载中！" >> /tmp/k3c.log
@@ -14,13 +31,16 @@ do
 	sleep 5s
 	usbmount=`ls /tmp/mnt/ |grep $mdisk`
 done
-	if [ ! -e "$usb_disk" ];then
+	check
+	if [ ! -e "$usb_disk" ]; then
 		k3c_warnning="1"
 		nvram set k3c_enable="0"
+		nvram commit
 		echo " $(date "+%F %T"):""没有找到可用的USB磁盘！" >> /tmp/k3c.log
 	fi
 	if [ "$k3c_warnning" != "1" ];then
-		if [ ! -e "/jffs/softcenter" ] ;then
+		if [ ! -d "/jffs/softcenter" -a ! -h "/jffs/softcenter" ] ;then
+
 			ln -s $usb_disk /jffs/softcenter
 			if [ ! -e "/jffs/softcenter/webs" ] ;then
 				mkdir -p /jffs/softcenter/bin
@@ -33,25 +53,28 @@ done
 				cp -rf /usr/sbin/softcenter.xml /jffs/softcenter/webs
 				fi
 			fi
+		else
+			rm -rf /jffs/softcenter
+			ln -s $usb_disk /jffs/softcenter
 		fi
 	fi
 }
 
 stop(){
 	rm -rf /jffs/softcenter
+	dbus remove jffs_ext
 }
 
 restart() {
 senable=`nvram get k3c_enable`
 sleep 1
 if [ "$senable" == "1" ];then
-  echo " $(date "+%F %T"):""K3C扩展设置挂载启动！" >> /tmp/k3c.log
+  echo " $(date "+%F %T"):""jffs扩展挂载启动！" >> /tmp/k3c.log
   start
 else
   stop
-  echo " $(date "+%F %T"):""K3C扩展设置挂载关闭！" >> /tmp/k3c.log
+  echo " $(date "+%F %T"):""jffs扩展挂载关闭！" >> /tmp/k3c.log
 fi
 }
 
 restart
-

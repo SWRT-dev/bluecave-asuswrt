@@ -5,7 +5,7 @@ usbmount=`ls /tmp/mnt/`
 while [ "$usbmount" == "" ]
 do
 	sleep 5s
-	usbmount=`ls /tmp/mnt/ |grep $mdisk`
+	usbmount=`ls /tmp/mnt/`
 done
 for _file in /jffs/softcenter/etc/init.d/*; do
 	./$_file

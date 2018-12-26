@@ -14800,29 +14800,10 @@ release/src-lantiq/linux/linux-3.10.104/user_headers/
 	release/src/router/igmpproxy/doc/igmpproxy.8
 	release/src/router/igmpproxy/doc/igmpproxy.conf.5
 	release/src/router/igmpproxy/src/Makefile
-	release/src/router/igmpproxy/src/callout.o
-	release/src/router/igmpproxy/src/config.o
-	release/src/router/igmpproxy/src/confread.o
-	release/src/router/igmpproxy/src/ifvc.o
-	release/src/router/igmpproxy/src/igmp.o
-	release/src/router/igmpproxy/src/igmpproxy
-	release/src/router/igmpproxy/src/igmpproxy.o
-	release/src/router/igmpproxy/src/kern.o
-	release/src/router/igmpproxy/src/lib.o
-	release/src/router/igmpproxy/src/mcgroup.o
-	release/src/router/igmpproxy/src/mroute-api.o
-	release/src/router/igmpproxy/src/os.h
-	release/src/router/igmpproxy/src/request.o
-	release/src/router/igmpproxy/src/rttable.o
-	release/src/router/igmpproxy/src/syslog.o
-	release/src/router/igmpproxy/src/udpsock.o
+	release/src/router/igmpproxy/src/*.o
 	release/src/router/igmpproxy/stamp-h1
-	release/src/router/infosvr/common.o
+	release/src/router/infosvr/*.o
 	release/src/router/infosvr/infosvr
-	release/src/router/infosvr/infosvr.o
-	release/src/router/infosvr/interface.o
-	release/src/router/infosvr/packet.o
-	release/src/router/infosvr/storage.o
 	release/src/router/jansson-2.7/Makefile
 	release/src/router/jansson-2.7/Makefile.in
 	release/src/router/jansson-2.7/aclocal.m4
@@ -14846,30 +14827,10 @@ release/src-lantiq/linux/linux-3.10.104/user_headers/
 	release/src/router/jansson-2.7/src/.libs/
 	release/src/router/jansson-2.7/src/Makefile
 	release/src/router/jansson-2.7/src/Makefile.in
-	release/src/router/jansson-2.7/src/dump.lo
-	release/src/router/jansson-2.7/src/dump.o
-	release/src/router/jansson-2.7/src/error.lo
-	release/src/router/jansson-2.7/src/error.o
-	release/src/router/jansson-2.7/src/hashtable.lo
-	release/src/router/jansson-2.7/src/hashtable.o
-	release/src/router/jansson-2.7/src/hashtable_seed.lo
-	release/src/router/jansson-2.7/src/hashtable_seed.o
+	release/src/router/jansson-2.7/src/*.lo
+	release/src/router/jansson-2.7/src/*.o
 	release/src/router/jansson-2.7/src/jansson_config.h
 	release/src/router/jansson-2.7/src/libjansson.la
-	release/src/router/jansson-2.7/src/load.lo
-	release/src/router/jansson-2.7/src/load.o
-	release/src/router/jansson-2.7/src/memory.lo
-	release/src/router/jansson-2.7/src/memory.o
-	release/src/router/jansson-2.7/src/pack_unpack.lo
-	release/src/router/jansson-2.7/src/pack_unpack.o
-	release/src/router/jansson-2.7/src/strbuffer.lo
-	release/src/router/jansson-2.7/src/strbuffer.o
-	release/src/router/jansson-2.7/src/strconv.lo
-	release/src/router/jansson-2.7/src/strconv.o
-	release/src/router/jansson-2.7/src/utf.lo
-	release/src/router/jansson-2.7/src/utf.o
-	release/src/router/jansson-2.7/src/value.lo
-	release/src/router/jansson-2.7/src/value.o
 	release/src/router/jansson-2.7/stamp-h1
 	release/src/router/jansson-2.7/test-driver
 	release/src/router/jansson-2.7/test/Makefile
