@@ -108,6 +108,7 @@ if [ "$mtype" == "SSR" ] ;then
 		    "protocol_param": "$mpropara",
 		    "obfs": "$mobfs",
 		    "obfs_param": "$mobfspara",
+		    "reuse_port": true,
 		    "fast_open": false
 		}
 EOF
@@ -132,6 +133,7 @@ else
 		    "password": "$mpasswd",
 		    "timeout": $mtimeout,
 		    "method": "$mssencrypt",
+		    "reuse_port": true,
 		    "fast_open": false
 		}
 EOF
