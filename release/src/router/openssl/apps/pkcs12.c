@@ -129,9 +129,7 @@ int MAIN(int argc, char **argv)
     char *inrand = NULL;
     char *macalg = NULL;
     char *CApath = NULL, *CAfile = NULL;
-# ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
-# endif
 
     apps_startup();
 
@@ -406,9 +404,7 @@ int MAIN(int argc, char **argv)
                    "-LMK          Add local machine keyset attribute to private key\n");
         goto end;
     }
-# ifndef OPENSSL_NO_ENGINE
     e = setup_engine(bio_err, engine, 0);
-# endif
 
     if (passarg) {
         if (export_cert)
@@ -485,7 +481,7 @@ int MAIN(int argc, char **argv)
         CRYPTO_push_info("read MAC password");
 # endif
         if (EVP_read_pw_string
-            (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
+            (macpass, sizeof(macpass), "Enter MAC Password:", export_cert)) {
             BIO_printf(bio_err, "Can't read Password\n");
             goto end;
         }
@@ -633,13 +629,13 @@ int MAIN(int argc, char **argv)
 # endif
 
         if (!noprompt &&
-            EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
+            EVP_read_pw_string(pass, sizeof(pass), "Enter Export Password:",
                                1)) {
             BIO_printf(bio_err, "Can't read Password\n");
             goto export_end;
         }
         if (!twopass)
-            BUF_strlcpy(macpass, pass, sizeof macpass);
+            BUF_strlcpy(macpass, pass, sizeof(macpass));
 
 # ifdef CRYPTO_MDEBUG
         CRYPTO_pop_info();
@@ -702,7 +698,7 @@ int MAIN(int argc, char **argv)
     CRYPTO_push_info("read import password");
 # endif
     if (!noprompt
-        && EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
+        && EVP_read_pw_string(pass, sizeof(pass), "Enter Import Password:",
                               0)) {
         BIO_printf(bio_err, "Can't read Password\n");
         goto end;
@@ -712,7 +708,7 @@ int MAIN(int argc, char **argv)
 # endif
 
     if (!twopass)
-        BUF_strlcpy(macpass, pass, sizeof macpass);
+        BUF_strlcpy(macpass, pass, sizeof(macpass));
 
     if ((options & INFO) && p12->mac)
         BIO_printf(bio_err, "MAC Iteration %ld\n",
@@ -756,6 +752,7 @@ int MAIN(int argc, char **argv)
 # ifdef CRYPTO_MDEBUG
     CRYPTO_remove_all_info();
 # endif
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     if (canames)
@@ -1110,4 +1107,6 @@ static int set_pbe(BIO *err, int *ppbe, const char *str)
     return 1;
 }
 
+#else
+static void *dummy = &dummy;
 #endif

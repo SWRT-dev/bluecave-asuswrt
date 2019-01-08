@@ -193,13 +193,14 @@ Set Up Environment(Tested in Fedora 8/9 and Ubuntu)
 		make brt-ac828
 		( make rt-ad7200 )
 
-	h. rt-ac58u (/ rt-ac82u / map-ac1300 / map-ac2200 / vzw-ac1300 )
+	h. rt-ac58u (/ rt-ac82u / map-ac1300 / map-ac2200 / vzw-ac1300 / rt-ac92u )
 		cd release/src-qca-dakota
 		make rt-ac58u
 		( make rt-ac82u )
 		( make map-ac1300 )
 		( make map-ac2200 )
 		( make vzw-ac1300 )
+		( make rt-ac92u )
 
 	i. rt-ac85u (/ rt-ac85u / rt-ac65u / rp-ac87 )
 		cd release/src-ra-5010

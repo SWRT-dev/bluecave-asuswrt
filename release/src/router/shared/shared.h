@@ -323,6 +323,13 @@ enum {
 	WAVE_ACTION_CLIENT5G_OFF=17,
 	WAVE_ACTION_SET_WPS2G_CONFIGURED=18,
 	WAVE_ACTION_SET_WPS5G_CONFIGURED=19,
+#ifdef RTCONFIG_AMAS
+	WAVE_ACTION_ADD_BEACON_VSIE=20,
+	WAVE_ACTION_DEL_BEACON_VSIE=21,
+	WAVE_ACTION_ADD_PROBE_REQ_VSIE=22,
+	WAVE_ACTION_DEL_PROBE_REQ_VSIE=23,
+	WAVE_ACTION_CLEAR_ALL_PROBE_REQ_VSIE=24
+#endif
 };
 #endif
 
@@ -330,7 +337,7 @@ enum {
 #define GIF_PREFIXLEN  0x0002  /* return prefix length */
 #define GIF_PREFIX     0x0004  /* return prefix, not addr */
 
-#define EXTEND_AIHOME_API_LEVEL		17
+#define EXTEND_AIHOME_API_LEVEL		19
 
 #define EXTEND_HTTPD_AIHOME_VER		0
 
@@ -350,9 +357,16 @@ enum romaingEvent {
 	EID_RM_STA_FILTER,
 	EID_RM_MAX
 };
+enum conndiagEvent {
+	EID_CD_STA_CHK_ONE = 1,
+	EID_CD_STA_CHK_ONE_RSP,
+	EID_CD_MAX
+};
 #define RAST_IPC_MAX_CONNECTION		5
 #define RAST_IPC_SOCKET_PATH		"/etc/rast_ipc_socket"
+#define CONNDIAG_IPC_SOCKET_PATH	"/etc/conndiag_ipc_socket"
 #define RAST_PREFIX     "RAST"
+#define CHKSTA_PREFIX   "CHKSTA"
 /* key name of json from rast */
 #define RAST_EVENT_ID   "EID"
 #define RAST_STA        "STA"
@@ -367,6 +381,12 @@ enum romaingEvent {
 #define RAST_STA_RSSI	"STA_RSSI"
 #define RAST_CANDIDATE_AP_RSSI	"AP_RSSI"
 #define RAST_CANDIDATE_AP_RSSI_CRITERIA  "AP_RSSI_CRITERIA"
+#define RAST_ENABLE	"ENABLE"
+#define RAST_RATE       "RATE"
+#define RAST_TXRATE     "TXRATE"
+#define RAST_RXRATE     "RXRATE"
+#define RAST_DATA       "DATA"
+#define RAST_MODE       "MODE"
 #define RAST_SERVED_AP_BSSID	"SERVED_AP_BSSID"
 
 #define RAST_JVALUE_BAND_2G "2"
@@ -499,6 +519,7 @@ extern char *get_upper_str(const char *const str, char **target);
 extern int upper_strcmp(const char *const str1, const char *const str2);
 extern int upper_strncmp(const char *const str1, const char *const str2, int count);
 extern char *upper_strstr(const char *const str, const char *const target);
+extern int stricmp(char const *a, char const *b, int len);
 #if defined(HND_ROUTER)
 // defined (__GLIBC__) && !defined(__UCLIBC__)
 size_t strlcpy(char *dst, const char *src, size_t size);
@@ -579,6 +600,8 @@ extern int nvram_pf_match(char *prefix, char *name, char *match);
 extern int nvram_pf_invmatch(char *prefix, char *name, char *invmatch);
 extern double nvram_get_double(const char *key);
 extern int nvram_set_double(const char *key, double value);
+extern int nvram_get_hex(const char *key);
+extern int nvram_set_hex(const char *key, int value);
 
 //	extern long nvram_xget_long(const char *name, long min, long max, long def);
 extern int nvram_contains_word(const char *key, const char *word);
@@ -661,7 +684,8 @@ enum {
 	MODEL_MAPAC2200,
 	MODEL_VZWAC1300,
 	MODEL_MAPAC1750,
-	MODEL_MAPAC3000,
+	MODEL_RTAC92U,
+	MODEL_MAPAC2200V,
 	MODEL_RTN36U3,
 	MODEL_RTN56U,
 	MODEL_RTN65U,
@@ -709,6 +733,7 @@ enum {
 	MODEL_RTN11P_B1,
 	MODEL_RPAC87,
 	MODEL_RTAC85U,
+	MODEL_RTAC85P,
 	MODEL_RTN800HP,
 	MODEL_RTAC88N,
 	MODEL_BRTAC828,
@@ -1042,7 +1067,6 @@ static inline int have_usb3_led(int model)
 		case MODEL_RTAC82U:
 		case MODEL_RTAC55U:
 		case MODEL_RTAC55UHP:
-		case MODEL_MAPAC3000:
 #endif
 		case MODEL_DSLAC68U:
 		case MODEL_RTAC3200:
@@ -1095,7 +1119,7 @@ static inline int have_sata_led(__attribute__ ((unused)) int model) { return 0; 
 #define MAX_NR_WL_IF			4
 #elif defined(RTCONFIG_HAS_5G_2)
 #define MAX_NR_WL_IF			3
-#elif defined(MAPAC2200)
+#elif defined(MAPAC2200) || defined(RTAC92U)
 #define MAX_NR_WL_IF			3
 #elif defined(RTCONFIG_HAS_5G)
 #define MAX_NR_WL_IF			2
@@ -1413,6 +1437,10 @@ extern uint32_t get_phy_status(uint32_t portmask);
 extern uint32_t get_phy_speed(uint32_t portmask);
 extern uint32_t set_phy_ctrl(uint32_t portmask, int ctrl);
 #endif
+extern void pre_config_switch(void);
+extern void post_config_switch(void);
+extern void __pre_config_switch(void) __attribute__((weak));
+extern void __post_config_switch(void) __attribute__((weak));
 extern char *get_lan_mac_name(void);
 extern char *get_wan_mac_name(void);
 extern char *get_2g_hwaddr(void);
@@ -1426,6 +1454,7 @@ extern int get_wlsubnet(int band, const char *ifname);
 extern char *get_wififname(int band);
 extern char *get_staifname(int band);
 extern char *get_vphyifname(int band);
+extern const char *get_5ghigh_ifname(int *band);
 #ifdef IWLIB_H
 extern int get_ap_mac(const char *ifname, struct iwreq *pwrq);
 #endif
@@ -1433,11 +1462,17 @@ extern int chk_assoc(const char *ifname);
 extern int match_radio_status(int unit, int status);
 extern int get_ch(int freq);
 extern int get_channel(const char *ifname);
+extern int get_channel_list(const char *ifname, int ch_list[], int size);
+extern int get_radar_channel_list(const char *vphy, int radar_list[], int size);
+extern int get_bw_nctrlsb(const char *ifname, int *bw, int *nctrlsb);
 extern char *get_wpa_ctrl_sk(int band, char ctrl_sk[], int size);
-extern void set_wpa_cli_cmd(int band, const char *cmd);
+extern void set_wpa_cli_cmd(int band, const char *cmd, int chk_reply);
 #endif
 extern char *get_wlifname(int unit, int subunit, int subunit_x, char *buf);
 extern char *get_wlxy_ifname(int x, int y, char *buf);
+#ifdef CONFIG_BCMWL5
+extern char *wl_ifname(int unit, int subunit, char *buf);
+#endif
 #if defined(RTCONFIG_RALINK_MT7620)
 extern int get_mt7620_wan_unit_bytecount(int unit, unsigned long *tx, unsigned long *rx);
 #elif defined(RTCONFIG_RALINK_MT7621)
@@ -1609,7 +1644,6 @@ extern int with_non_dfs_chspec(char *wif);
 extern chanspec_t select_band1_chspec_with_same_bw(char *wif, chanspec_t chanspec);
 extern chanspec_t select_band4_chspec_with_same_bw(char *wif, chanspec_t chanspec);
 extern chanspec_t select_chspec_with_band_bw(char *wif, int band, int bw, chanspec_t chanspec);
-extern void wl_reset_ssid(char *wif);
 extern void wl_list_5g_chans(int unit, int band, char *buf, int len);
 #endif
 #ifdef RTCONFIG_AMAS
@@ -1801,8 +1835,11 @@ extern char *get_wl_led_gpio_nv(int band);
 extern char *get_wsup_drvname(int band);
 extern void disassoc_sta(char *ifname, char *sta_addr);
 /* mode: 0:disable, 1:allow, 2:deny */
+void set_maclist_mode(char *ifname, int mode);
 extern void set_maclist_add_kick(char *ifname, int mode, char *sta_addr);
 extern void set_maclist_del_kick(char *ifname, int mode, char *sta_addr);
+void set_macfilter_unit(int unit, int subnet, FILE *fp);
+void set_macfilter_all(FILE *fp);
 #else
 static inline char *get_wsup_drvname(__attribute__ ((unused)) int band) { return ""; }
 #endif
@@ -1829,7 +1866,9 @@ extern void run_postconf(char *name, char *config);
 extern void use_custom_config(char *config, char *target);
 extern void append_custom_config(char *config, FILE *fp);
 extern int isValidMacAddress(const char* mac);
+extern int isValidMacAddr_and_isNotMulticast(const char* mac);
 extern int isValidEnableOption(const char* option, int range);
+extern int isValid_digit_string(const char *string);
 
 /* mt7620.c */
 #if defined(RTCONFIG_RALINK_MT7620)
@@ -2060,11 +2099,11 @@ static inline void enable_wifi_bled(char *ifname)
 #if defined(RTCONFIG_QCA)
 		v = LED_OFF;	/* WiFi not ready. Don't turn on WiFi LED here. */		
 #endif
-#if defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined(RTAC1200GU) || defined(RTAC85U)
+#if defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined(RTAC1200GU) || defined(RTAC85U) || defined(RTAC85P)
 		if(!get_radio(1, 0) && unit==1) //*5G WiFi not ready. Don't turn on WiFi GPIO LED . */
 		 	v=LED_OFF;
 #endif		
-#if defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined(RTAC1200GU) || defined(RTAC85U) || defined(RTN800HP)
+#if defined(RTN56UB1) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined(RTAC1200GU) || defined(RTAC85U) || defined(RTAC85P) || defined(RTN800HP)
 		if(!get_radio(0, 0) && unit==0) //*2G WiFi not ready. Don't turn on WiFi GPIO LED . */
 		 	v=LED_OFF;
 #endif		
@@ -2418,5 +2457,40 @@ static inline int get_sw_mode(void)
 extern int getAmasSupportMode();
 
 #endif  /* defined(RTCONFIG_SW_HW_AUTH) && defined(RTCONFIG_AMAS) */
+
+#if defined(RTCONFIG_AMAS)
+
+typedef enum __amaslib_action__t_
+{
+	AMASLIB_ACTION_NODE_MAC_UPDATE = 0,
+	AMASLIB_ACTION_DEVICE_IP_QUERY
+} AMASLIB_ACTION_T;
+/*
+	AMAS_LIB define for event and socket
+*/
+typedef struct __amaslib_notification__t_
+{
+	AMASLIB_ACTION_T action;
+	char sta2g[18];     /* Node 2G MAC */
+	char sta5g[18];     /* Node 5G MAC */
+	int  flag;          /* Node status */
+	char ip[16];        /* Device IP */
+} AMASLIB_EVENT_T;
+
+#define AMASLIB_PID_PATH           "/var/run/amas_lib.pid"
+#define AMASLIB_SOCKET_PATH        "/etc/amas_lib_socket"
+#define MAX_AMASLIB_SOCKET_CLIENT  5
+
+/* DEBUG DEFINE */
+#define AMASLIB_DEBUG             "/tmp/AMASLIB_DEBUG"
+#define AMASLIB_DBG(fmt,args...) \
+	if(f_exists(AMASLIB_DEBUG) > 0) { \
+		_dprintf("[AMASLIB][%s:(%d)]"fmt, __FUNCTION__, __LINE__, ##args); \
+	}
+
+extern int AMAS_EVENT_TRIGGER(char *sta2g, char *sta5g, int flag);
+extern int is_amaslib_enabled();
+
+#endif /* defined(RTCONFIG_AMAS) */
 
 #endif	/* !__SHARED_H__ */

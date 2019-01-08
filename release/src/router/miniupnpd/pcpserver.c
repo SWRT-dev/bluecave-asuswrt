@@ -1450,7 +1450,7 @@ static int processPCPRequest(void * req, int req_size, pcp_info_t *pcp_msg_info)
 }
 
 
-static void createPCPResponse(unsigned char *response, pcp_info_t *pcp_msg_info)
+static void createPCPResponse(unsigned char *response, const pcp_info_t *pcp_msg_info)
 {
 	pcp_response_t *resp = (pcp_response_t*)response;
 
@@ -1465,7 +1465,7 @@ static void createPCPResponse(unsigned char *response, pcp_info_t *pcp_msg_info)
 		resp->ver = pcp_msg_info->version;
 	}
 
-	resp->r_opcode |= 0x80;
+	resp->r_opcode = pcp_msg_info->opcode | 0x80;
 	resp->result_code = pcp_msg_info->result_code;
 	resp->epochtime = htonl(upnp_time() - startup_time);
 	switch (pcp_msg_info->result_code) {

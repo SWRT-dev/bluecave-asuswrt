@@ -239,7 +239,7 @@ void add_usb_host_module(void)
 	tweak_usb_affinity(1);
 #endif
 #if defined(RTCONFIG_USB_XHCI)
-#if defined(RTN65U) || defined(RTCONFIG_QCA) || defined(RTAC85U)
+#if defined(RTN65U) || defined(RTCONFIG_QCA) || defined(RTAC85U) || defined(RTAC85P)
 	char *u3_param = "u3intf=0";
 #endif
 #endif
@@ -257,7 +257,7 @@ void add_usb_host_module(void)
 	modprobe(USBCORE_MOD);
 
 #if defined(RTCONFIG_USB_XHCI)
-#if defined(RTN65U) || defined(RTCONFIG_QCA) || defined(RTAC85U)
+#if defined(RTN65U) || defined(RTCONFIG_QCA) || defined(RTAC85U) || defined(RTAC85P)
 	if (nvram_get_int("usb_usb3") == 1)
 		u3_param = "u3intf=1";
 #if !defined(RTCONFIG_SOC_IPQ40XX)
@@ -633,7 +633,8 @@ int modem_data_main(int argc, char *argv[]){
 #endif // RTCONFIG_INTERNAL_GOBI
 #endif // RTCONFIG_USB_MODEM
 
-void start_usb(int orig)
+// mode: 0, no usb host/modem; 1, all usb host/modem; 2, usb host.
+void start_usb(int mode)
 {
 	char param[32];
 	int i;
@@ -656,11 +657,11 @@ void start_usb(int orig)
 	tune_bdflush();
 
 	if (nvram_get_int("usb_enable")) {
-		if(orig)
+		if(mode != 0)
 			add_usb_host_module();
 
 #ifdef RTCONFIG_USB_MODEM
-		if(orig)
+		if(mode == 1)
 			add_usb_modem_modules();
 #endif
 
@@ -787,10 +788,6 @@ void start_usb(int orig)
 #if defined(RTCONFIG_BT_CONN)
 		modprobe("btusb");
 		modprobe("ath3k");
-#if defined(MAPAC1300) || defined(MAPAC2200) || defined(VZWAC1300)
-		if (nvram_match("x_Setting", "0"))
-			system("/usr/bin/btchk.sh &"); /* workaround script */
-#endif
 #endif	/* RTCONFIG_BT_CONN */
 #ifdef HND_ROUTER
 		modprobe("btusbdrv");
@@ -1079,7 +1076,7 @@ void stop_usb(int f_force)
 #endif
 
 #if defined(RTCONFIG_USB_XHCI)
-#if defined(RTN65U) || defined(RTCONFIG_QCA) || defined(RTAC85U)
+#if defined(RTN65U) || defined(RTCONFIG_QCA) || defined(RTAC85U) || defined(RTAC85P)
 	if (disabled) {
 #if defined(RTCONFIG_SOC_IPQ8064)
 		modprobe_r("dwc3-ipq");
@@ -1169,7 +1166,7 @@ void start_usblpsrv(void)
 int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 {
 	struct mntent *mnt;
-	int ret;
+	int ret = -1;
 	char options[140];
 	char flagfn[128];
 	int dir_made;
@@ -1331,53 +1328,48 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 				f_write(flagfn, NULL, 0, 0, 0);
 			}
 
-			if(!strncmp(type, "vfat", 4)){
-#ifdef RTCONFIG_OPENPLUS_TFAT
-				if(nvram_match("usb_fatfs_mod", "tuxera"))
-					ret = eval("mount", "-t", "tfat", "-o", options, mnt_dev, mnt_dir);
-				else
-					ret = eval("mount", "-t", "vfat", "-o", options, mnt_dev, mnt_dir);
-#elif defined(RTCONFIG_TFAT)
-				ret = eval("mount", "-t", "tfat", "-o", options, mnt_dev, mnt_dir);
-#else
-				ret = eval("mount", "-t", "vfat", "-o", options, mnt_dev, mnt_dir);
-#endif
-				if(ret != 0){
-					syslog(LOG_INFO, "USB %s(%s) failed to mount at the first try!" , mnt_dev, type);
-					TRACE_PT("USB %s(%s) failed to mount at the first try!\n", mnt_dev, type);
-				}
-			}
-			else
-			{
+			if(!strncmp(type, "ext", 3)){
 				ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
 				if(ret != 0){
-					if(strncmp(type, "ext", 3)){
-						syslog(LOG_INFO, "USB %s(%s) failed to mount at the first try!", mnt_dev, type);
-						TRACE_PT("USB %s(%s) failed to mount At the first try!\n", mnt_dev, type);
-						logmessage("usb", "USB %s(%s) failed to mount At the first try!\n", mnt_dev, type);
+					if(!strcmp(type, "ext4")){
+						snprintf(type, 16, "ext3");
+						ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
 					}
-					else{
-						if(!strcmp(type, "ext4")){
-							snprintf(type, 16, "ext3");
-							ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
-						}
 
-						if(ret != 0 && !strcmp(type, "ext3")){
-							snprintf(type, sizeof(type), "ext2");
-							ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
-						}
-
-						if(ret != 0 && !strcmp(type, "ext2")){
-							snprintf(type, sizeof(type), "ext");
-							ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
-						}
-
-						if(ret != 0){
-							syslog(LOG_INFO, "USB %s(ext) failed to mount at the first try!", mnt_dev);
-							TRACE_PT("USB %s(ext) failed to mount at the first try!\n", mnt_dev);
-							logmessage("usb", "USB %s(ext) failed to mount at the first try!\n", mnt_dev);
-						}
+					if(ret != 0 && !strcmp(type, "ext3")){
+						snprintf(type, sizeof(type), "ext2");
+						ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
 					}
+
+					if(ret != 0 && !strcmp(type, "ext2")){
+						snprintf(type, sizeof(type), "ext");
+						ret = mount(mnt_dev, mnt_dir, type, flags, options[0] ? options : "");
+					}
+
+					if(ret != 0){
+						syslog(LOG_INFO, "USB %s(ext) failed to mount!", mnt_dev);
+						TRACE_PT("USB %s(ext) failed to mount!\n", mnt_dev);
+					}
+				}
+			}
+
+			if (ret != 0 && !strncmp(type, "vfat", 4)) {
+#if !defined(RTCONFIG_TFAT) || defined(RTCONFIG_OPENPLUS_TFAT)
+#if defined(RTCONFIG_OPENPLUS_TFAT)
+				if(nvram_match("usb_fatfs_mod", "open"))
+#endif
+					ret = eval("mount", "-t", "vfat", "-o", options, mnt_dev, mnt_dir);
+#endif
+#ifdef RTCONFIG_TFAT
+#ifdef RTCONFIG_OPENPLUS_TFAT
+				else
+#endif
+					ret = eval("mount", "-t", "tfat", "-o", options, mnt_dev, mnt_dir);
+#endif
+
+				if(ret != 0){
+					syslog(LOG_INFO, "USB %s(%s) failed to mount!" , mnt_dev, type);
+					TRACE_PT("USB %s(%s) failed to mount!\n", mnt_dev, type);
 				}
 			}
 
@@ -1389,25 +1381,30 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 #if defined(RTCONFIG_OPENPLUSPARAGON_NTFS) || defined(RTCONFIG_OPENPLUSTUXERA_NTFS)
 					if(nvram_match("usb_ntfs_mod", "open"))
 #endif
-					ret = eval("ntfs-3g", "-o", options, mnt_dev, mnt_dir);
+						ret = eval("ntfs-3g", "-o", options, mnt_dev, mnt_dir);
 #endif
 #if defined(RTCONFIG_TUXERA_NTFS)
 #if defined(RTCONFIG_OPENPLUSTUXERA_NTFS)
 					else
 #endif
-					ret = eval("mount", "-t", "tntfs", "-o", options, mnt_dev, mnt_dir);
+						ret = eval("mount", "-t", "tntfs", "-o", options, mnt_dev, mnt_dir);
 #endif
 #if defined(RTCONFIG_PARAGON_NTFS)
 #if defined(RTCONFIG_OPENPLUSPARAGON_NTFS)
 					else
 #endif
 					{
-					if(nvram_get_int("usb_fs_ntfs_sparse"))
-						ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", "-o", "sparse", mnt_dev, mnt_dir);
-					else
-						ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", mnt_dev, mnt_dir);
+						if(nvram_get_int("usb_fs_ntfs_sparse"))
+							ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", "-o", "sparse", mnt_dev, mnt_dir);
+						else
+							ret = eval("mount", "-t", "ufsd", "-o", options, "-o", "force", mnt_dev, mnt_dir);
 					}
 #endif
+
+					if(ret != 0){
+						syslog(LOG_INFO, "USB %s(%s) failed to mount!" , mnt_dev, type);
+						TRACE_PT("USB %s(%s) failed to mount!\n", mnt_dev, type);
+					}
 				}
 			}
 #endif
@@ -1421,22 +1418,27 @@ int mount_r(char *mnt_dev, char *mnt_dir, char *_type)
 					if(nvram_match("usb_hfs_mod", "open"))
 #endif
 					{
-					eval("fsck.hfsplus", "-f", mnt_dev);//Scan
-					ret = eval("mount", "-t", "hfsplus", "-o", options, mnt_dev, mnt_dir);
+						eval("fsck.hfsplus", "-f", mnt_dev);//Scan
+						ret = eval("mount", "-t", "hfsplus", "-o", options, mnt_dev, mnt_dir);
 					}
 #endif
 #if defined(RTCONFIG_TUXERA_HFS)
 #if defined(RTCONFIG_OPENPLUSTUXERA_HFS)
 					else
 #endif
-					ret = eval("mount", "-t", "thfsplus", "-o", options, mnt_dev, mnt_dir);
+						ret = eval("mount", "-t", "thfsplus", "-o", options, mnt_dev, mnt_dir);
 #endif
 #if defined(RTCONFIG_PARAGON_HFS)
 #if defined(RTCONFIG_OPENPLUSPARAGON_HFS)
 					else
 #endif
-					ret = eval("mount", "-t", "ufsd", "-o", options, mnt_dev, mnt_dir);
+						ret = eval("mount", "-t", "ufsd", "-o", options, mnt_dev, mnt_dir);
 #endif
+
+					if(ret != 0){
+						syslog(LOG_INFO, "USB %s(%s) failed to mount!" , mnt_dev, type);
+						TRACE_PT("USB %s(%s) failed to mount!\n", mnt_dev, type);
+					}
 				}
 			}
 #endif
@@ -2955,7 +2957,7 @@ static void kill_samba(int sig)
 void enable_gro(int interval)
 {
 	char *argv[3] = {"echo", "", NULL};
-	char lan_ifname[128], lan_ifnames[32], *next;
+	char lan_ifname[32], lan_ifnames[128], *next;
 	char path[64] = {0};
 	char parm[32] = {0};
 

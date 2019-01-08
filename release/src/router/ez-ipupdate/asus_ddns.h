@@ -20,6 +20,7 @@ extern int wildcard;
 extern char *mx;
 extern char *url;
 extern char *host;
+extern int ssl;
 extern char *cloak_title;
 extern char *interface;
 extern int ntrys;
@@ -35,6 +36,7 @@ extern char *notify_email;
 extern char *pid_file;
 extern int options;
 extern volatile int client_sockfd;
+extern volatile FILE * volatile client_sockfp;
 
 
 // function decl. (asus_ddns.c)
@@ -43,6 +45,6 @@ extern int asus_private(void);
 extern int asus_update_entry(void);
 
 // function decl. (ez-ipupdate.c)
-extern int do_connect(int *sock, char *host, char *port);
+extern int do_connect( FILE **fd, char *host, char *port, int ssl );
 
 #endif

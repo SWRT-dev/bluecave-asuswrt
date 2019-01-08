@@ -336,6 +336,7 @@ extern int web_read(void *buffer, int len);
 extern void set_cgi(char *name, char *value);
 
 /* httpd.c */
+extern int json_support;
 extern void start_ssl(void);
 extern char *gethost(void);
 extern void http_logout(unsigned int ip, char *cookies, int fromapp_flag);
@@ -407,7 +408,6 @@ extern void ifttt_log(char* url, char* file);
 extern int alexa_block_internet(int block);
 #endif
 
-extern unsigned int MAX_login;
 extern int cur_login_ip_type;
 extern time_t login_timestamp_tmp; // the timestamp of the current session.
 extern time_t last_login_timestamp; // the timestamp of the current session.
@@ -439,4 +439,5 @@ extern int wave_handle_app_flag(char *name, int wave_app_flag);
 #ifdef RTCONFIG_TCODE
 extern int change_location(char *lang);
 #endif
+extern void update_wlan_log(int sig);
 #endif /* _httpd_h_ */

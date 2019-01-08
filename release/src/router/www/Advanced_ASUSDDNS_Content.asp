@@ -72,7 +72,7 @@ var le_state = '<% nvram_get("le_state"); %>';
 
 function init(){
 	show_menu();
-	httpApi.faqURL("faq", "1034294", "https://www.asus.com", "/support/FAQ/");
+	httpApi.faqURL("1034294", function(url){document.getElementById("faq").href=url;});
     ddns_load_body();
 	update_ddns_wan_unit_option();
 
@@ -350,7 +350,7 @@ function validForm(){
 			}
 			
 			if(document.form.ddns_regular_period.value < 30){
-				alert(Untranslated.period_time_validation + " : 30");
+				alert("<#period_time_validation#> : 30");
 				document.form.ddns_regular_period.focus();
 				document.form.ddns_regular_period.select();
 				return false;
@@ -477,9 +477,9 @@ function change_cert_method(cert_method){
 
 			case "1":
 				document.getElementById("cert_desc").style.display = "";
-				document.getElementById("le_desc").innerHTML = "<#LANHostConfig_x_DDNSLetsEncrypt_desc#>"; //untranslated
+				document.getElementById("le_desc").innerHTML = "<#LANHostConfig_x_DDNSLetsEncrypt_desc#>";
 				html_code = '<div style="margin-top:5px;"><input type="checkbox" name="letsEncryptTerm_check" checked>';
-				html_code += "I agree to the Let's Encrypt";//untranslated
+				html_code += "<#DDNS_https_cert_LetsEncrypt_agree#>";
 				html_code += '<a href="https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf" target="_blank" style="margin-left: 5px; color:#FFF; text-decoration: underline;">Term of Service</a>'
 				html_code += "</div>";
 				document.getElementById("cert_act").innerHTML = html_code;
@@ -717,12 +717,12 @@ function save_cert_key(){
 				  	<input type="submit" maxlength="15" class="button_gen" onclick="showLoading();return onSubmitApply('ddnsclient');" size="12" name="LANHostConfig_x_DDNSStatus_button" value="<#LANHostConfig_x_DDNSStatus_buttonname#>" /></td>
 			</tr>
 			<tr id="https_cert" style="display:none;">
-				<th>HTTPS/SSL Certificate</th> <!--untranslated-->
+				<th><#DDNS_https_cert#></th>
 				<td>
 					<span id="le_crypt" style="color:#FFF;display:none;">
-					<input type="radio" value="1" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "1", "checked"); %>>Free Certificate form Let's Encrypt<!--untranslated-->
+					<input type="radio" value="1" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "1", "checked"); %>><#DDNS_https_cert_LetsEncrypt#>
 					</span>
-					<input type="radio" value="2" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "2", "checked"); %>>Import Your Own Certificate<!--untranslated-->
+					<input type="radio" value="2" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "2", "checked"); %>><#DDNS_https_cert_Import#>
 					<span id="self_signed" style="color:#FFF;">
 					<input type="radio" value="0" name="le_enable" onClick="change_cert_method(this.value);" <% nvram_match("le_enable", "0", "checked"); %>><#wl_securitylevel_0#>
 					</span>	

@@ -218,9 +218,7 @@ int MAIN(int argc, char **argv)
     char *checkhost = NULL;
     char *checkemail = NULL;
     char *checkip = NULL;
-#ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
-#endif
 
     reqfile = 0;
 
@@ -501,9 +499,7 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "%s", *pp);
         goto end;
     }
-#ifndef OPENSSL_NO_ENGINE
     e = setup_engine(bio_err, engine, 0);
-#endif
 
     if (need_rand)
         app_RAND_load_file(NULL, bio_err, 0);
@@ -821,10 +817,10 @@ int MAIN(int argc, char **argv)
                 char *m;
                 int y, z;
 
-                X509_NAME_oneline(X509_get_subject_name(x), buf, sizeof buf);
+                X509_NAME_oneline(X509_get_subject_name(x), buf, sizeof(buf));
                 BIO_printf(STDout, "/* subject:%s */\n", buf);
                 m = X509_NAME_oneline(X509_get_issuer_name(x), buf,
-                                      sizeof buf);
+                                      sizeof(buf));
                 BIO_printf(STDout, "/* issuer :%s */\n", buf);
 
                 z = i2d_X509(x, NULL);
@@ -1040,6 +1036,7 @@ int MAIN(int argc, char **argv)
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
+    release_engine(e);
     if (passin)
         OPENSSL_free(passin);
     apps_shutdown();

@@ -1135,6 +1135,11 @@ iw_print_bitrate(char *	buffer,
   char		scale;
   int		divisor;
 
+#ifdef QCA_NEW_DRIVER
+  /* Due to overrun, driver sends in Kbps, Convert in to bps */
+  rate = (double) bitrate * 1000;
+#endif
+
   if(rate >= GIGA)
     {
       scale = 'G';

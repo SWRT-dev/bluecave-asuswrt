@@ -28,6 +28,10 @@
 #include "codelength.h"
 #include "macros.h"
 
+#ifndef MIN
+#define MIN(x,y) (((x)<(y))?(x):(y))
+#endif /* MIN */
+
 /* SSDP ip/port */
 #define SSDP_PORT (1900)
 #define SSDP_MCAST_ADDR ("239.255.255.250")
@@ -172,7 +176,7 @@ OpenAndConfSSDPReceiveSocket(int ipv6)
 			{
 				syslog(LOG_WARNING,
 				       "Failed to add IPv6 multicast membership for interface %s",
-				       lan_addr->str ? lan_addr->str : "NULL");
+				       lan_addr->str && strlen(lan_addr->str) ? lan_addr->str : "NULL");
 			}
 		}
 	}
@@ -185,7 +189,7 @@ OpenAndConfSSDPReceiveSocket(int ipv6)
 			{
 				syslog(LOG_WARNING,
 				       "Failed to add multicast membership for interface %s",
-				       lan_addr->str ? lan_addr->str : "NULL");
+				       lan_addr->str && strlen(lan_addr->str) ? lan_addr->str : "NULL");
 			}
 		}
 	}
@@ -499,7 +503,7 @@ static struct {
 	{"urn:schemas-upnp-org:service:Layer3Forwarding:", 1, uuidvalue_igd},
 #endif
 #ifdef ENABLE_6FC_SERVICE
-	{"url:schemas-upnp-org:service:WANIPv6FirewallControl:", 1, uuidvalue_wcd},
+	{"urn:schemas-upnp-org:service:WANIPv6FirewallControl:", 1, uuidvalue_wcd},
 #endif
 /* we might want to support urn:schemas-wifialliance-org:device:WFADevice:1
  * urn:schemas-wifialliance-org:device:WFADevice:1
@@ -790,6 +794,7 @@ ProcessSSDPData(int s, const char *bufr, int n,
 	 * a multiple part response from the device, those multiple part
 	 * responses SHOULD be spread at random intervals through the time period
 	 * from 0 to the number of seconds specified in the MX header field. */
+	char atoi_buffer[8];
 
 	/* get the string representation of the sender address */
 	sockaddr_to_string(sender, sender_str, sizeof(sender_str));
@@ -820,14 +825,17 @@ ProcessSSDPData(int s, const char *bufr, int n,
 				st_len = 0;
 				while((*st == ' ' || *st == '\t') && (st < bufr + n))
 					st++;
-				while(st[st_len]!='\r' && st[st_len]!='\n'
-				     && (st + st_len < bufr + n))
+				while((st + st_len < bufr + n)
+				&& (st[st_len]!='\r' && st[st_len]!='\n'))
 					st_len++;
 				l = st_len;
 				while(l > 0 && st[l-1] != ':')
 					l--;
-				st_ver = atoi(st+l);
+				memset(atoi_buffer, 0, sizeof(atoi_buffer));
+				memcpy(atoi_buffer, st + l, MIN((int)(sizeof(atoi_buffer) - 1), st_len - l));
+				st_ver = atoi(atoi_buffer);
 				syslog(LOG_DEBUG, "ST: %.*s (ver=%d)", st_len, st, st_ver);
+
 				/*j = 0;*/
 				/*while(bufr[i+j]!='\r') j++;*/
 				/*syslog(LOG_INFO, "%.*s", j, bufr+i);*/
@@ -839,15 +847,36 @@ ProcessSSDPData(int s, const char *bufr, int n,
 				int mx_len;
 				mx = bufr+i+3;
 				mx_len = 0;
-				while((*mx == ' ' || *mx == '\t') && (mx < bufr + n))
+				while((mx < bufr + n) && (*mx == ' ' || *mx == '\t'))
 					mx++;
-				while(mx[mx_len]!='\r' && mx[mx_len]!='\n'
-				     && (mx + mx_len < bufr + n))
+				while((mx + mx_len < bufr + n)
+				&& (mx[mx_len]!='\r' && mx[mx_len]!='\n'))
 					mx_len++;
-				mx_value = atoi(mx);
+				memset(atoi_buffer, 0, sizeof(atoi_buffer));
+				memcpy(atoi_buffer, mx, MIN((int)(sizeof(atoi_buffer) - 1), mx_len));
+				mx_value = atoi(atoi_buffer);
 				syslog(LOG_DEBUG, "MX: %.*s (value=%d)", mx_len, mx, mx_value);
 			}
-#endif
+#endif /* defined(UPNP_STRICT) || defined(DELAY_MSEARCH_RESPONSE) */
+#if defined(UPNP_STRICT)
+			/* Fix UDA-1.2.10 Man header empty or invalid */
+			else if((i < n - 4) && (strncasecmp(bufr+i, "man:", 3) == 0))
+			{
+				const char * man;
+				int man_len;
+				man = bufr+i+4;
+				man_len = 0;
+				while((man < bufr + n) && (*man == ' ' || *man == '\t'))
+					man++;
+				while((man + man_len < bufr + n)
+					&& (man[man_len]!='\r' && man[man_len]!='\n'))
+					man_len++;
+				if((man_len < 15) || (strncmp(man, "\"ssdp:discover\"", 15) != 0)) {
+					syslog(LOG_INFO, "ignoring SSDP packet MAN empty or invalid header");
+					return;
+				}
+			}
+#endif /* defined(UPNP_STRICT) */
 		}
 #ifdef UPNP_STRICT
 		/* For multicast M-SEARCH requests, if the search request does
@@ -1237,6 +1266,7 @@ SubmitServicesToMiniSSDPD(const char * host, unsigned short port) {
 	}
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, minissdpdsocketpath, sizeof(addr.sun_path));
+	addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
 	if(connect(s, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) < 0) {
 		syslog(LOG_ERR, "connect(\"%s\"): %m", minissdpdsocketpath);
 		close(s);

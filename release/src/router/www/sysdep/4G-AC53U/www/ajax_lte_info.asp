@@ -1,1 +1,1 @@
-../../4G-AC55U/www/ajax_lte_info.asp
+../../4G-AC68U/www/ajax_lte_info.asp

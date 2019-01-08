@@ -145,7 +145,7 @@ int MAIN(int argc, char **argv)
         goto end;
 
     /* first check the program name */
-    program_name(argv[0], pname, sizeof pname);
+    program_name(argv[0], pname, sizeof(pname));
 
     md = EVP_get_digestbyname(pname);
 
@@ -537,6 +537,7 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(sigbuf);
     if (bmd != NULL)
         BIO_free(bmd);
+    release_engine(e);
     apps_shutdown();
     OPENSSL_EXIT(err);
 }

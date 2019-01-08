@@ -105,6 +105,11 @@ LDFLAGS += -L$(TOP)/shared -lshared -L$(TOP)/nvram${BCMEX}${EX7} -lnvram
 ifeq ($(HND_ROUTER),y)
 LDFLAGS += -L$(TOP)/wlcsm -lwlcsm
 endif
+ifeq ($(RTCONFIG_HTTPS),y)
+CFLAGS += -I$(TOP)/mssl -I$(TOP)/openssl/include -DHAVE_SSL
+LDFLAGS += -L$(TOP)/mssl -L$(TOP)/openssl
+LIBS += -lmssl -lssl -lcrypto -ldl
+endif
 
 #end of Yau add
 ifeq ($(RTCONFIG_BCMARM),y)

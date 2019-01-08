@@ -76,7 +76,8 @@ function initial(){
 		document.getElementById("attach_modem_span").style.display = "none";
 	}
 
-	setTimeout("check_wan_state();", 300);
+	//Renjie: do not check WAN connection
+	//setTimeout("check_wan_state();", 300);
 
 	if(dblog_support)
 		init_diag_feature();
@@ -347,13 +348,6 @@ function applyRule(){
 		return false;
 	}
 
-	//WAN connected check
-	if(sw_mode != 3 && document.getElementById("connect_status").className == "connectstatusoff"){
-                alert("<#USB_Application_No_Internet#>");
-                return false;
-        }
-	else{
-
 		/*if(document.form.feedbackresponse.value == "3"){
 				alert("Feedback report daily maximum(10) send limit reached.");
 				return false;
@@ -441,6 +435,9 @@ function applyRule(){
 			}
 		}
 
+		if(document.form.PM_attach_wlanlog.value == "1")
+			httpApi.update_wlanlog();
+
 		document.form.fb_browserInfo.value = navigator.userAgent;
 		if(dsl_support){
 			if(document.form.dslx_diag_enable[0].checked == true){
@@ -452,7 +449,6 @@ function applyRule(){
 		else
 			showLoading(60);
 		document.form.submit();
-	}
 }
 
 function isEmail(strE) {
@@ -477,7 +473,7 @@ function change_dsl_diag_enable(value) {
 			return;
 		}
 		else{
-			alert("While debug log capture in progress, please do not unplug the USB disk as the debug log would be stored in the disk. UI top right globe icon flashing in yellow indicating that debug log capture in progress. Click on the yellow globe icon could cancel the debug log capture. Please note that xDSL line would resync in one minute after Feedback form submitted.");/*untranslated*/
+			alert("<#feedback_capturing_note1#> <#feedback_capturing_note_DSL#>");
 		}
 		showhide("dslx_diag_duration",1);
 	}
@@ -772,7 +768,7 @@ function dblog_stop() {
 <div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
 <div id="fb_desc0" class="formfontdesc" style="display:none;"><#Feedback_desc0#></div>
 <div id="fb_desc1" class="formfontdesc" style="display:none;"><#Feedback_desc1#></div>
-<div id="fb_desc_disconnect" class="formfontdesc" style="display:none;color:#FC0;">Now this function can't work, because your ASUS Router isn't connected to the Internet. Please send your Feedback to this email address : <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a></div><!-- untranslated -->
+<div id="fb_desc_disconnect" class="formfontdesc" style="display:none;color:#FC0;"><#Feedback_desc_disconnect#> <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a></div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <tr>
 <th width="30%"><#feedback_country#> *</th>
@@ -811,18 +807,18 @@ function dblog_stop() {
 </tr>
 
 <tr>
-	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,11);">Enable DSL Line Diagnostic *</a></th>
+	<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(25,11);"><#feedback_debug_log_DSL#> *</a></th>
 	<td>
 		<input type="radio" name="dslx_diag_enable" class="input" value="1" onclick="change_dsl_diag_enable(1);"><#checkbox_Yes#>
 		<input type="radio" name="dslx_diag_enable" class="input" value="0" onclick="change_dsl_diag_enable(0);" checked><#checkbox_No#>
 		<br>	
-		<span id="storage_ready" style="display:none;color:#FC0">* USB disk is ready.</span>
+		<span id="storage_ready" style="display:none;color:#FC0">* <#USB_ready#></span>
 		<span id="be_lack_storage" style="display:none;color:#FC0">* <#no_usb_found#></span>
 	</td>
 </tr>
 
 <tr id="dslx_diag_duration">
-	<th>Diagnostic debug log capture duration *</th>
+	<th><#feedback_capturing_duration#> *</th>
 	<td>
 		<select id="" class="input_option" name="dslx_diag_duration">
 			<option value="0" selected><#Auto#></option>

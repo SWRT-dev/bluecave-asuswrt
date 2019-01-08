@@ -35,7 +35,7 @@ struct btd_gatt_database {
 	struct queue *profiles;
 	uint32_t amap_handle;
 	uint8_t amap_value[MAX_SIZE];
-	size_t amap_value_len;
+	int amap_value_len;
 	uint16_t amap_nvram_handle;
 	struct bt_att *amap_att;
 };

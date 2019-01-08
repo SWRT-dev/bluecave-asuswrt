@@ -194,17 +194,8 @@ if(parent.yadns_support){
 	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
 }
 
-var get_protocol = function() {
-	var protocol = "http:";
-	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
-		protocol = window.location.protocol;
-		return protocol;
-	}
-
-	return protocol;
-};
 var header_info = [<% get_header_info(); %>];
-var location_org = get_protocol() + "//" + header_info[0].host;
+var location_org = header_info[0].protocol + "://" + header_info.host + ":" + header_info.port;
 
 function yadns_change(need_apply){
 	var enable = document.getElementById("yadns_enable").checked;
@@ -426,10 +417,6 @@ function checkIsNewFirmware(){
 			$("#rog_feature_field").hide();
 		}
 
-		//force_upgrade_support : rc_support with "fupgrade"
-		if(!parent.is_CN && parent.force_upgrade_support){
-			doLiveUpdate(true);
-		}
 	}
 	else{
 		if((parent.based_modelid == "4G-AC55U" || parent.based_modelid == "4G-AC68U") && parent.wan_autodet_state == "4" && parent.usb_connected == 1 && wans_dualwan_orig == "wan usb"){
@@ -1938,10 +1925,8 @@ function cancel(){
 					<input id="enable_bwdpi" type="checkbox" onchange="check_eula(this);" <% nvram_match("wrs_protect_enable", "1", "checked"); %>><#AiProtection_GameISP_enable#>
 				</div>
 			</div>
-			<div style="margin:30px 0;">
-				<div class="qis_button" style="text-align: center;width:150px;height:36px;line-height: 36px;font-size: 16px;margin: 0 auto;border-radius:4px;cursor:pointer;" onclick="protection_next()"><#CTL_next#></div>
-			</div>
 		</div>
+		<div class="qis_button" onclick="protection_next()"><#CTL_next#></div>
 	</div>
 	<!-- END Stage Game Protection -->
 	<!-- Stage VR -->
@@ -1949,10 +1934,8 @@ function cancel(){
 		<div style="font-size: 32px;color:#FFF; margin: 60px 0 0 70px;"><#AiProtection_title_VR#></div>
 		<div style="display:inline-flex;margin:273px 0 0 70px;">
 			<div style="font-size: 18px;width:500px;"><#AiProtection_title_VR_desc#></div>
-			<div>
-				<div class="qis_button" style="text-align: center;width:150px;height:36px;line-height: 36px;font-size: 16px;margin: 0 auto;border-radius:4px;cursor:pointer;" onclick="vr_next();"><#CTL_next#></div>
-			</div>
 		</div>
+		<div class="qis_button" onclick="vr_next();"><#CTL_next#></div>
 	</div>
 	<!-- END Stage VR -->
 	<!-- Stage Dashboard -->
@@ -1960,10 +1943,8 @@ function cancel(){
 		<div style="font-size: 32px;color:rgb(207,10,44); margin: 60px 0 0 70px;"><#AiProtection_title_Dashboard#></div>
 		<div style="display:inline-flex;margin:280px 0 0 70px;">
 			<div style="font-size: 18px;width:500px;"><#AiProtection_title_Dashboard_desc#></div>
-			<div style="margin:30px 0;">
-				<div class="qis_button" style="text-align: center;width:150px;height:36px;line-height: 36px;font-size: 16px;margin: 0 auto;border-radius:4px;cursor:pointer;" onclick="dashboard_next();"><#CTL_next#></div>
-			</div>
 		</div>
+		<div class="qis_button" onclick="dashboard_next();"><#CTL_next#></div>
 	</div>
 	<!-- END Stage Dashboard -->
 	<!-- Stage Game Radar -->
@@ -1971,10 +1952,8 @@ function cancel(){
 		<div style="font-size: 32px;color:rgb(207,10,44); margin: 60px 0 0 70px;"><#AiProtection_title_Radar#></div>
 		<div style="display:inline-flex;margin:280px 0 0 70px;">
 			<div style="font-size: 18px;width:500px;"><#AiProtection_title_Radar_desc#></div>
-			<div style="margin:30px 0;">
-				<div class="qis_button" style="text-align: center;width:150px;height:36px;line-height: 36px;font-size: 16px;margin: 0 auto;border-radius:4px;cursor:pointer;" onclick="game_radar_next();"><#CTL_next#></div>
-			</div>
 		</div>
+		<div class="qis_button" onclick="game_radar_next();"><#CTL_next#></div>
 	</div>
 	<!-- END Stage Game Radar -->
 	<!-- Stage Game WiFi -->
@@ -1985,10 +1964,8 @@ function cancel(){
 				<div style="padding-bottom:10px;"><#AiProtection_title_GameWiFi_desc1#></div>
 				<div><#AiProtection_title_GameWiFi_desc2#></div>
 			</div>
-			<div style="margin:30px 0;">
-				<div class="qis_button" style="text-align: center;width:150px;height:36px;line-height: 36px;font-size: 16px;margin: 0 auto;border-radius:4px;cursor:pointer;" onclick="game_wifi_next();"><#CTL_next#></div>
-			</div>
 		</div>
+		<div class="qis_button" onclick="game_wifi_next();"><#CTL_next#></div>
 	</div>
 	<!-- Emd Stage Game WiFi -->
 	<!-- Stage Bandwidth Utilization -->
@@ -1998,10 +1975,8 @@ function cancel(){
 			<div style="font-size: 18px;width:500px;">
 				<div><#AiProtection_title_BandwidthUtil_desc1#> <#AiProtection_title_BandwidthUtil_desc2#></div>
 			</div>
-			<div style="margin:30px 0;">
-				<div class="qis_button" style="text-align: center;width:150px;height:36px;line-height: 36px;font-size: 16px;margin: 0 auto;border-radius:4px;cursor:pointer;" onclick="bandwidth_utilzation_next();"><#CTL_next#></div>
-			</div>
 		</div>
+		<div class="qis_button" onclick="bandwidth_utilzation_next();"><#CTL_next#></div>
 	</div>
 	<!-- END Stage Bandwidth Utilization  -->
 	<!-- ROG Finish state -->
@@ -2027,11 +2002,9 @@ function cancel(){
 			<div style="font-size: 18px;width:500px;">
 				<div><#ROG_finish_login_info#></div>
 			</div>
-			<div style="margin:30px 0;">
-				<div id="rog_next_btn" class="qis_button" style="text-align: center;width:150px;height:36px;line-height: 36px;font-size: 16px;margin: 0 auto;border-radius:4px;cursor:pointer;" onclick="rog_finish_next();"><#CTL_next#></div>
-				<img id="loadingIcon_ROG" style="margin-left: 65px;display:none;" src="/images/InternetScan.gif"></span>
-			</div>
 		</div>
+		<div id="rog_next_btn" class="qis_button" onclick="rog_finish_next();"><#CTL_next#></div>
+		<img id="loadingIcon_ROG" style="position:absolute;right:115px;bottom:80px;display:none;" src="/images/InternetScan.gif"></span>
 	</div>
 	<!-- END ROG Finish state -->
 </div>

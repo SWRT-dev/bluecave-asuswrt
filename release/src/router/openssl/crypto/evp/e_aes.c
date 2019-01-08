@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2001-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -155,10 +155,10 @@ void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
                        const unsigned char ivec[AES_BLOCK_SIZE]);
 # endif
 # ifdef AES_XTS_ASM
-void AES_xts_encrypt(const char *inp, char *out, size_t len,
+void AES_xts_encrypt(const unsigned char *inp, unsigned char *out, size_t len,
                      const AES_KEY *key1, const AES_KEY *key2,
                      const unsigned char iv[16]);
-void AES_xts_decrypt(const char *inp, char *out, size_t len,
+void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
                      const AES_KEY *key1, const AES_KEY *key2,
                      const unsigned char iv[16]);
 # endif
@@ -1089,6 +1089,8 @@ static int aes_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         CRYPTO_cfb128_1_encrypt(in, out, MAXBITCHUNK * 8, &dat->ks,
                                 ctx->iv, &ctx->num, ctx->encrypt, dat->block);
         len -= MAXBITCHUNK;
+        out += MAXBITCHUNK;
+        in  += MAXBITCHUNK;
     }
     if (len)
         CRYPTO_cfb128_1_encrypt(in, out, len * 8, &dat->ks,
@@ -1120,6 +1122,8 @@ BLOCK_CIPHER_generic_pack(NID_aes, 128, EVP_CIPH_FLAG_FIPS)
 static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 {
     EVP_AES_GCM_CTX *gctx = c->cipher_data;
+    if (gctx == NULL)
+        return 0;
     OPENSSL_cleanse(&gctx->gcm, sizeof(gctx->gcm));
     if (gctx->iv != c->iv)
         OPENSSL_free(gctx->iv);
@@ -1235,10 +1239,15 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         {
             unsigned int len = c->buf[arg - 2] << 8 | c->buf[arg - 1];
             /* Correct length for explicit IV */
+            if (len < EVP_GCM_TLS_EXPLICIT_IV_LEN)
+                return 0;
             len -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
             /* If decrypting correct for tag too */
-            if (!c->encrypt)
+            if (!c->encrypt) {
+                if (len < EVP_GCM_TLS_TAG_LEN)
+                    return 0;
                 len -= EVP_GCM_TLS_TAG_LEN;
+            }
             c->buf[arg - 2] = len >> 8;
             c->buf[arg - 1] = len & 0xff;
         }

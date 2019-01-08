@@ -275,6 +275,7 @@ GetExternalIPAddress(struct upnphttp * h, const char * action)
 	if(use_ext_ip_addr)
 	{
 		strncpy(ext_ip_addr, use_ext_ip_addr, INET_ADDRSTRLEN);
+		ext_ip_addr[INET_ADDRSTRLEN - 1] = '\0';
 	}
 	else if(getifaddr(ext_if_name, ext_ip_addr, INET_ADDRSTRLEN, NULL, NULL) < 0)
 	{
@@ -816,6 +817,7 @@ DeletePortMappingRange(struct upnphttp * h, const char * action)
 	{
 		SoapError(h, 730, "PortMappingNotFound");
 		ClearNameValueList(&data);
+		free(port_list);
 		return;
 	}
 
@@ -1915,8 +1917,8 @@ SendSetupMessage(struct upnphttp * h, const char * action)
 	const char * OutMessage = "";	/* base64 */
 
 	ParseNameValue(h->req_buf + h->req_contentoff, h->req_contentlen, &data);
-	ProtocolType = GetValueFromNameValueList(&data, "NewProtocolType");	/* string */
-	InMessage = GetValueFromNameValueList(&data, "NewInMessage");	/* base64 */
+	ProtocolType = GetValueFromNameValueList(&data, "ProtocolType");        /* string */
+	InMessage = GetValueFromNameValueList(&data, "InMessage");      /* base64 */
 
 	if(ProtocolType == NULL || InMessage == NULL)
 	{

@@ -130,6 +130,22 @@ src_libshared_mainloop_la_SOURCES = $(shared_sources) \
 				src/shared/timeout-mainloop.c \
 				src/shared/mainloop.h src/shared/mainloop.c
 
+if EXTAQIS
+noinst_LTLIBRARIES += profiles/aqis/bleencrypt/libaqis.la
+profiles_aqis_bleencrypt_libaqis_la_SOURCES = \
+			profiles/aqis/bleencrypt/gatt-amap.h \
+			profiles/aqis/bleencrypt/gatt-amap.c \
+			profiles/aqis/bleencrypt/bleencrypt.h \
+			profiles/aqis/bleencrypt/bleencrypt.c \
+			profiles/aqis/bleencrypt/encrypt.h \
+			profiles/aqis/bleencrypt/encrypt.c \
+			profiles/aqis/bleencrypt/blepack.h \
+			profiles/aqis/bleencrypt/blepack-server.c \
+			profiles/aqis/bleencrypt/utility.h
+profiles_aqis_bleencrypt_libaqis_la_LDFLAGS = $(AM_LDFLAGS) -avoid-version -no-undefined
+profiles_aqis_bleencrypt_libaqis_la_CFLAGS = $(AM_CFLAGS) -fvisibility=hidden -DENCRYPT
+endif
+
 attrib_sources = attrib/att.h attrib/att-database.h attrib/att.c \
 		attrib/gatt.h attrib/gatt.c \
 		attrib/gattrib.h attrib/gattrib.c \
@@ -192,6 +208,7 @@ src_bluetoothd_SOURCES = $(builtin_sources) \
 src_bluetoothd_LDADD = lib/libbluetooth-internal.la \
 			gdbus/libgdbus-internal.la \
 			src/libshared-glib.la \
+			profiles/aqis/bleencrypt/libaqis.la \
 			@BACKTRACE_LIBS@ @GLIB_LIBS@ @DBUS_LIBS@ -ldl -lrt
 src_bluetoothd_LDFLAGS = $(AM_LDFLAGS) -Wl,--export-dynamic \
 				-Wl,--version-script=$(srcdir)/src/bluetooth.ver
@@ -199,6 +216,7 @@ src_bluetoothd_LDFLAGS = $(AM_LDFLAGS) -Wl,--export-dynamic \
 src_bluetoothd_DEPENDENCIES = lib/libbluetooth-internal.la \
 				gdbus/libgdbus-internal.la \
 				src/libshared-glib.la \
+				profiles/aqis/bleencrypt/libaqis.la \
 				src/bluetooth.service
 
 src_bluetoothd_CFLAGS = $(AM_CFLAGS) -DBLUETOOTH_PLUGIN_BUILTIN \

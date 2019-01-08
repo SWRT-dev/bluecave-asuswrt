@@ -21,6 +21,7 @@ typedef struct StationsInfo
 	char MACAddress[18];
 	char connectedTo[6];
 	int  connectionTime;
+	int is_2G_supported;
 	int is_5G_supported;
 	char ifnameCheckIfConnected[6];
 	int  numOfTicks;
@@ -86,6 +87,7 @@ static void stationsInfoListPrint(void)
 		printf("-----------------------------------------------------\n");
 		printf("connectedTo= '%s'\n", stationsInfo->connectedTo);
 		printf("connectionTime= %d\n", stationsInfo->connectionTime);
+		printf("is_2G_supported= %d\n", stationsInfo->is_2G_supported);
 		printf("is_5G_supported= %d\n", stationsInfo->is_5G_supported);
 		printf("ifnameCheckIfConnected= '%s'\n", stationsInfo->ifnameCheckIfConnected);
 		printf("numOfTicks= %d\n", stationsInfo->numOfTicks);
@@ -212,7 +214,12 @@ static int fapiWlanCallBackBandSteeringFunc(char *opCode, const char *ifname, Ob
 			printf("%s; MACAddress= '%s'\n", __FUNCTION__, field);
 			strcpy(stationsInfo->MACAddress, field);
 
-			if (!strcmp(interfaceBandSteerInfo[idx].supportedFrequencyBands, "5GHz"))
+			if (!strcmp(interfaceBandSteerInfo[idx].supportedFrequencyBands, "2.4GHz"))
+			{
+				printf("%s; set 'is_2.4G_supported' to 'true'\n", __FUNCTION__);
+				stationsInfo->is_2G_supported = 1;  /*true*/
+			}
+			else if (!strcmp(interfaceBandSteerInfo[idx].supportedFrequencyBands, "5GHz"))
 			{
 				printf("%s; set 'is_5G_supported' to 'true'\n", __FUNCTION__);
 				stationsInfo->is_5G_supported = 1;  /*true*/
@@ -225,7 +232,8 @@ static int fapiWlanCallBackBandSteeringFunc(char *opCode, const char *ifname, Ob
 
 			strcpy(stationsInfo->ifnameCheckIfConnected, "NONE");
 			stationsInfo->numOfTicks = 0;
-			stationsInfo->isBandSteeringPossible = true;
+			if((stationsInfo->is_2G_supported == 1) && (stationsInfo->is_5G_supported == 1))
+				stationsInfo->isBandSteeringPossible = true;
 		}
 		else
 		{
@@ -301,9 +309,10 @@ static int fapiWlanCallBackBandSteeringFunc(char *opCode, const char *ifname, Ob
 			printf("%s; btm_supported is '%s'\n", __FUNCTION__, field);
 			if (!strcmp(field, "true"))
 			{
-				printf("%s; btm_supported is 'true' ==> update 'btm_supported' and 'is_5G_supported' to 'true'\n", __FUNCTION__);
+				// printf("%s; btm_supported is 'true' ==> update 'btm_supported' and 'is_5G_supported' to 'true'\n", __FUNCTION__);
+				printf("%s; btm_supported is 'true' ==> update 'btm_supported'\n", __FUNCTION__);
 				stationsInfo->btm_supported = true;
-				stationsInfo->is_5G_supported = 1;  /*true*/
+				// stationsInfo->is_5G_supported = 1;  /*true*/
 			}
 		}
 	}
@@ -432,6 +441,7 @@ static void allBandsStationAllowSet(char *MACAddress)
 static void bandSteeringPerform(char *ifname, char *MACAddress, char *ifnameToSteerTo, char *BSSID_ToSteerTo, bool btm_supported)
 {
 	ObjList *wlObjSteer = HELP_CREATE_OBJ(SOPT_OBJVALUE);
+	StationsInfo_t *stationsInfo = NULL;
 
 	printf("%s Entry; ifname= '%s', MACAddress= '%s', ifnameToSteerTo= '%s', BSSID_ToSteerTo= '%s', btm_supported= %d\n", __FUNCTION__, ifname, MACAddress, ifnameToSteerTo, BSSID_ToSteerTo, btm_supported);
 
@@ -440,6 +450,12 @@ static void bandSteeringPerform(char *ifname, char *MACAddress, char *ifnameToSt
 		printf("%s; create object (entry) ERROR ('wlObjSteer')\n", __FUNCTION__);
 		return;
 	}
+
+	stationsInfo = stationsInfoGet(MACAddress);
+
+	/* only steering the STA which has both 2.4G and 5G connection records in database */
+	if((stationsInfo->is_2G_supported != 1) || (stationsInfo->is_5G_supported != 1))
+		return;
 
 	if (btm_supported == true)
 	{

@@ -52,19 +52,19 @@ function initial(){
 
 	if(first_wanstate  == 2 && first_wansbstate == 0 && first_wanauxstate == 0){
 		document.getElementById("success_img").style.display = "";
-		document.getElementById("success_desc").innerHTML = "Successfully connected to the Primary Ethernet WAN network.";
+		document.getElementById("success_desc").innerHTML = "<#QIS_dualconnect_desc_Pri#>";
 		document.getElementById("success_desc").style.display = "";
 		hint_str = "<style style=\"text/css\"> a{text-decoration:underline;font-weight: bold; font-style: italic; cursor: pointer;} a:hover{text-decoration:underline;}</style>";
-		hint_str += "Note: If you want to connect to the internet service via \"Secondary Ethernet WAN\", check the connection of secondary ethernet wan and click \"Detect Again\".";
+		hint_str += "<#QIS_dualconnect_hint_Pri#>";
 		document.getElementById("dualwan_hint").innerHTML = hint_str;
 	}
 
 	if(second_wanstate == 2 && second_wansbstate == 0 && second_wanauxstate == 0){
 		document.getElementById("success_img").style.display = "";
-		document.getElementById("success_desc").innerHTML = "Successfully connected to the Secondary Ethernet WAN network.";
+		document.getElementById("success_desc").innerHTML = "<#QIS_dualconnect_desc_Sec#>";
 		document.getElementById("success_desc").style.display = "";
 		hint_str = "<style style=\"text/css\"> a{text-decoration:underline;font-weight: bold; font-style: italic; cursor: pointer;} a:hover{text-decoration:underline;}</style>";
-		hint_str += "Note: If you want to connect to the internet service via \"Primary Ethernet WAN\", check the connection of primary ethernet wan and click \"Detect Again\".";
+		hint_str += "<#QIS_dualconnect_hint_Sec#>";
 		document.getElementById("dualwan_hint").innerHTML = hint_str;
 	}
 }
@@ -155,7 +155,7 @@ function update_wan_info(flag){
 					<table width="730px">
 						<tr>
 							<td align="left">
-								<div class="description_down">Dual Ethernet WAN Connection Status</div>
+								<div class="description_down"><#Dualwan_Status#></div>
 							</td>
 						</tr>
 					</table>

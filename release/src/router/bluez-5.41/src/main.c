@@ -359,11 +359,13 @@ static void init_defaults(void)
 	main_opts.name = g_strdup_printf("ASUS_%02X_%s", mac_binary[5], nvram_safe_get("productid"));
 #elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_ALPINE)
 	main_opts.name = g_strdup_printf("ASUS_%02X", mac_binary[5]);
-#else
-	if (!strcmp(model, "VZW-AC1300"))
-		main_opts.name = g_strdup_printf("VZW_%02X", mac_binary[5]);
+#elif defined(VZWAC1300)
+	if (nvram_match("odmpid", "ASUSMESH-AC1300"))
+		main_opts.name = g_strdup_printf("ASUS_%02X_MESH", mac_binary[5]);
 	else
-		main_opts.name = g_strdup_printf("ASUS_%02X_AMAPS", mac_binary[5]);
+		main_opts.name = g_strdup_printf("VZW_%02X", mac_binary[5]);
+#else
+	main_opts.name = g_strdup_printf("ASUS_%02X_AMAPS", mac_binary[5]);
 #endif
 	main_opts.class = 0x000000;
 	main_opts.pairto = DEFAULT_PAIRABLE_TIMEOUT;
@@ -371,6 +373,9 @@ static void init_defaults(void)
 	main_opts.reverse_sdp = TRUE;
 	main_opts.name_resolv = TRUE;
 	main_opts.debug_keys = FALSE;
+#if 1
+	main_opts.mode = BT_MODE_LE;
+#endif
 
 	if (sscanf(VERSION, "%hhu.%hhu", &major, &minor) != 2)
 		return;

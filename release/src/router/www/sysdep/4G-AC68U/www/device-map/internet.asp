@@ -253,7 +253,13 @@ function initial(){
 	}
 
 	set_NM_height();
-	
+
+	if(based_modelid == "4G-AC53U"){
+		document.internetForm.wans_lanport1.remove(3);
+		document.internetForm.wans_lanport1.remove(2);
+		document.internetForm.wans_lanport2.remove(3);
+		document.internetForm.wans_lanport2.remove(2);
+	}
 }
 
 function update_connection_type(dualwan_unit){
@@ -637,7 +643,7 @@ function cancel_action(){
 
 function confirm_action(){
 	document.internetForm.wans_dualwan.value = document.internetForm.wans_primary.value +" "+ document.internetForm.wans_second.value;
-	if(!dsl_support && (document.internetForm.wans_dualwan.value == "usb lan" || document.internetForm.wans_dualwan.value == "lan usb")){
+	if(!dsl_support && !noWAN_support && (document.internetForm.wans_dualwan.value == "usb lan" || document.internetForm.wans_dualwan.value == "lan usb")){
 		alert("WAN port should be selected in Dual WAN.");
 		document.internetForm.wans_primary.focus();
 		return;
@@ -691,7 +697,7 @@ function dualwan_selection(v){
 				document.internetForm.wans_second.index = 2;	
 			}
 			else{
-				if(dsl_support){
+				if(dsl_support || noWAN_support){
 					document.internetForm.wans_second.value = "usb";
 					document.internetForm.wans_second.index = 1;
 				}	
@@ -736,7 +742,7 @@ function addWANOption(obj, wanscapItem){
 				wanscapName = "Ethernet WAN";
 			else if(wanscapName == "LAN")
 				wanscapName = "Ethernet LAN";
-			else if(wanscapName == "USB" && (based_modelid == "4G-AC55U" || based_modelid == "4G-AC68U"))
+			else if(wanscapName == "USB" && (based_modelid == "4G-AC53U" || based_modelid == "4G-AC55U" || based_modelid == "4G-AC68U"))
 				wanscapName = "<#Mobile_title#>";
 			obj.options[i] = new Option(wanscapName, wanscapItem[i]);
 		}	
@@ -751,22 +757,22 @@ function changeWANProto(dual_wan, obj){
 					document.internetForm.wans_second.value = "usb";
 					document.internetForm.wans_second.index = 1;
 				}else if (obj.value == "usb"){
-					if(!dsl_support){
-						document.internetForm.wans_second.value = "wan";
-						document.internetForm.wans_second.index = 0;
-					}
-					else{
+					if(dsl_support || noWAN_support){
 						document.internetForm.wans_second.value = "lan";
 						document.internetForm.wans_second.index = 2;
 					}
-				}else if (obj.value == "lan"){
-					if(!dsl_support){		//for DSL model, because DSL type can't set to secondary wan
+					else{
 						document.internetForm.wans_second.value = "wan";
 						document.internetForm.wans_second.index = 0;
 					}
-					else{
+				}else if (obj.value == "lan"){
+					if(dsl_support || noWAN_support){
 						document.internetForm.wans_second.value = "usb";
-						document.internetForm.wans_second.index = 1;				
+						document.internetForm.wans_second.index = 1;
+					}
+					else{
+						document.internetForm.wans_second.value = "wan";
+						document.internetForm.wans_second.index = 0;
 					}
 				}
 				else if (obj.value == "dsl"){
@@ -778,15 +784,32 @@ function changeWANProto(dual_wan, obj){
 				if(obj.value == "wan"){
 					document.internetForm.wans_primary.value = "usb";
 					document.internetForm.wans_primary.index = 1;
-				}else if (obj.value == "usb" || obj.value == "lan"){
-					if(!dsl_support){
-							document.internetForm.wans_primary.value = "wan";
-							document.internetForm.wans_primary.index = 0;
+				}else if (obj.value == "usb"){
+					if(dsl_support){
+						document.internetForm.wans_primary.value = "dsl";
+						document.internetForm.wans_primary.index = 0;
+					}
+					else if(noWAN_support){
+						document.internetForm.wans_primary.value = "lan";
+						document.internetForm.wans_primary.index = 2;
 					}
 					else{
-							document.internetForm.wans_primary.value = "dsl";
-							document.internetForm.wans_primary.index = 0;
-					}					
+						document.internetForm.wans_primary.value = "wan";
+						document.internetForm.wans_primary.index = 0;
+					}
+				}else if (obj.value == "lan"){
+					if(dsl_support){
+						document.internetForm.wans_primary.value = "dsl";
+						document.internetForm.wans_primary.index = 0;
+					}
+					else if(noWAN_support){
+						document.internetForm.wans_primary.value = "usb";
+						document.internetForm.wans_primary.index = 1;
+					}
+					else{
+						document.internetForm.wans_primary.value = "wan";
+						document.internetForm.wans_primary.index = 0;
+					}
 				}
 			}			
 		}
@@ -936,14 +959,21 @@ left:-1px;">
 							 function() {
 								if(wans_caps.split(" ").indexOf("wan") >= 0 && wans_dualwan_array[0] == "lan"){
 									var cur_parimary_wan = wans_dualwan_array[0].toUpperCase() + " Port " + wans_lanport_orig;
-									var confirm_str = "The current primary wan is \"" + cur_parimary_wan + "\". Disable dual wan will change primary wan to \"Ethernet WAN\", are you sure to do it?"; //untranslated
+									var confirm_str = "";
+									if(noWAN_support)
+										confirm_str = "The current primary wan is \"" + cur_parimary_wan + "\". Disable dual wan will change primary wan to \"Mobile Broadband\", are you sure to do it?"; //untranslated
+									else
+										confirm_str = "The current primary wan is \"" + cur_parimary_wan + "\". Disable dual wan will change primary wan to \"Ethernet WAN\", are you sure to do it?"; //untranslated
 									if(!confirm(confirm_str)){
 										curState = "1";
 										$('#nm_radio_dualwan_enable').find('.iphone_switch').animate({backgroundPosition: -37}, "slow");
 										return false;
 									}
 									else{
-										wans_dualwan_array[0] = "wan";
+										if(noWAN_support)
+											wans_dualwan_array[0] = "usb";
+										else
+											wans_dualwan_array[0] = "wan";
 									}
 								}
 								curState = "0";

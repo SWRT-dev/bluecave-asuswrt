@@ -1759,6 +1759,7 @@ static void cmd_setting(struct mgmt *mgmt, uint16_t index, uint16_t op,
 	if (index == MGMT_INDEX_NONE)
 		index = 0;
 
+	printf("[%s] op:0x%04x index:0x%04x val:%u\n", __func__, op, index, val);
 	if (send_cmd(mgmt, op, index, sizeof(val), &val, setting_rsp) == 0) {
 		error("Unable to send %s cmd", mgmt_opstr(op));
 		return noninteractive_quit(EXIT_FAILURE);

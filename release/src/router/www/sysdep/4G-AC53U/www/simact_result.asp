@@ -1,1 +1,1 @@
-../../4G-AC55U/www/simact_result.asp
+../../4G-AC68U/www/simact_result.asp

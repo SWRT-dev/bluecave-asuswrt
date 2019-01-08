@@ -5,7 +5,7 @@ prn(){
 	echo "BT: $*" | logger -c
 }
 
-sleep 30
+sleep 15
 
 hciconfig hci0 | grep 'UP RUNNING' >& /dev/null
 if [ $? != "0" ] ; then
@@ -18,4 +18,7 @@ if [ $? != "0" ] ; then
 	modprobe btusb
 	modprobe ath3k
 	modprobe xhci_hcd
+
+	sleep 5
+	start_bluetooth_service
 fi

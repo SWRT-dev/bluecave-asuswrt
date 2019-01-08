@@ -200,17 +200,8 @@ if(parent.yadns_support){
 	var yadns_mode = '<% nvram_get("yadns_mode"); %>';
 }
 
-var get_protocol = function() {
-	var protocol = "http:";
-	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
-		protocol = window.location.protocol;
-		return protocol;
-	}
-
-	return protocol;
-};
 var header_info = [<% get_header_info(); %>];
-var location_org = get_protocol() + "//" + header_info[0].host;
+var location_org = header_info[0].protocol + "://" + header_info.host + ":" + header_info.port;
 
 function yadns_change(need_apply){
 	var enable = document.getElementById("yadns_enable").checked;
@@ -221,25 +212,6 @@ function yadns_change(need_apply){
 	yadns_update.yadns_enable_x.value = enable ? "1" : "0";
 	yadns_update.yadns_mode.value = (enable && defmode) ? "1" : yadns_mode;
 	yadns_update.submit();
-}
-
-var get_protocol = function() {
-	var protocol = "http:";
-	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
-		protocol = window.location.protocol;
-		return protocol;
-	}
-
-	return protocol;
-};
-var header_info = [<% get_header_info(); %>];
-var location_org = get_protocol() + "//" + header_info[0].host;
-
-function yadns_change(need_apply){
-	var enable = document.getElementById("yadns_enable").checked;
-
-	parent.yadns_stage = need_apply ? 1 : 0;
-	document.getElementById("yadns_defmode").disabled = !enable;
 }
 
 /* Live update */
@@ -436,10 +408,6 @@ function checkIsNewFirmware(){
 			document.getElementById("liveUpdate_div_rightbutton").value = "<#CTL_UpgradeNow#>";
 		}
 
-		//force_upgrade_support : rc_support with "fupgrade"
-		if(!parent.is_CN && parent.force_upgrade_support){
-			doLiveUpdate(true);
-		}
 	}
 	else{
 		if((parent.based_modelid == "4G-AC55U" || parent.based_modelid == "4G-AC68U") && parent.wan_autodet_state == "4" && parent.usb_connected == 1 && wans_dualwan_orig == "wan usb"){

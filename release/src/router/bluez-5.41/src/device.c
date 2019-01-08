@@ -2553,6 +2553,7 @@ void device_add_connection(struct btd_device *dev, uint8_t bdaddr_type)
 	struct bearer_state *state = get_state(dev, bdaddr_type);
 
 	device_update_last_seen(dev, bdaddr_type);
+	DBG("First connection: %s", state->connected?"No":"Yes");
 
 	if (state->connected) {
 		char addr[18];

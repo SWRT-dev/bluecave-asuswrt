@@ -1256,7 +1256,7 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
   int q, ans, anscount = 0, addncount = 0;
   int dryrun = 0;
   struct crec *crecp;
-  int nxdomain = 0, auth = 1, trunc = 0, sec_data = 1;
+  int nxdomain = 0, refused = 0, auth = 1, trunc = 0, sec_data = 1;
   struct mx_srv_record *rec;
   size_t len;
 
@@ -1308,12 +1308,14 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
 	    {
 	      if (t->class == qclass && hostname_isequal(name, t->name))
 		{
+		  int ok = (t->txt || t->stat);
 		  ans = 1;
+		  if (!ok)
+		    refused = 1;
 		  if (!dryrun)
 		    {
 		      unsigned long ttl = daemon->local_ttl;
-		      int ok = 1;
-		      log_query(F_CONFIG | F_RRNAME, name, NULL, "<TXT>");
+		      log_query(F_CONFIG | F_RRNAME, name, NULL, ok ? "<TXT>" : "REFUSED");
 #ifndef NO_ID
 		      /* Dynamically generate stat record */
 		      if (t->stat != 0)
@@ -1935,6 +1937,8 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
   
   if (nxdomain)
     SET_RCODE(header, NXDOMAIN);
+  else if (refused && !anscount)
+    SET_RCODE(header, REFUSED);
   else
     SET_RCODE(header, NOERROR); /* no error */
   header->ancount = htons(anscount);

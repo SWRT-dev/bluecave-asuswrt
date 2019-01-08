@@ -1414,7 +1414,7 @@ function limit_auth_method(){
 					<table>
 						<tr>
 							<td>
-								<div style="font-family: Arial, Helvetica, sans-serif;font-weight: bolder;">LED Brightness</div>
+								<div style="font-family: Arial, Helvetica, sans-serif;font-weight: bolder;"><#LED_Brightness#></div>
 							</td>
 						</tr>
 						<tr>

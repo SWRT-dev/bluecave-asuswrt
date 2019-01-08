@@ -469,6 +469,10 @@
 	bottom: 0px;
 	right: 5px;
 }
+.amesh_interface_icon.static_info {
+	bottom: -26px;
+	right: 0px;
+}
 .amesh_scenario_slider_bg {
 	width: 570px;
 	height: 300px;
@@ -704,6 +708,26 @@
 	margin-top: 20px;
 	margin-left: 380px;
 }
+
+.aimesh_illustration_text.lan_to_wan.for_dsl {
+	margin-left: 200px;
+}
+.aimesh_illustration_text.modem.for_dsl {
+	margin-left: 100px;
+}
+.aimesh_illustration_text.router.for_dsl {
+	margin-left: 40px;
+}
+.aimesh_illustration_text.node.for_dsl {
+	margin-left: 320px;
+}
+.aimesh_illustration_text.backhaul_router.for_dsl {
+	margin-left: 35px;
+}
+.aimesh_illustration_text.backhaul_node.for_dsl {
+	margin-left: 300px;
+}
+
 .aimesh_illustration_icon {
 	background-image: url(/images/New_ui/amesh/AiMesh_component.svg);
 	background-repeat: no-repeat;
@@ -774,6 +798,29 @@
 	margin-left: 376px;
 	background-position: -313px -15px;
 }
+
+.aimesh_illustration_icon.router.for_dsl {
+	margin-left: 80px;
+}
+.aimesh_illustration_icon.router_right.for_dsl {
+	margin-left: 300px;
+}
+.aimesh_illustration_icon.ethernet_lan.for_dsl {
+	margin-left: 132px;
+}
+.aimesh_illustration_icon.ethernet_wan.for_dsl {
+	margin-left: 277px;
+}
+.aimesh_illustration_icon.wifi.for_dsl {
+	margin-left: 240px;
+}
+.aimesh_illustration_icon.router_back.for_dsl {
+	margin-left: 80px;
+}
+.aimesh_illustration_icon.router_back_right.for_dsl {
+	margin-left: 300px;
+}
+
 .aimesh_node_close_icon {
 	float: right;
 	background-image: url(/images/button-close.gif);
@@ -793,10 +840,13 @@
 	margin: 15px 10px 0px 10px;
 }
 .aimesh_node_static_info_title {
-	width: 40%;
+	width: 35%;
 	float: left;
 	height: 25px;
 	line-height: 25px;
+}
+.aimesh_node_static_info_title.moreconfig{
+	width: 100%;
 }
 .aimesh_node_setting_info_title {
 	width: 35%;
@@ -804,13 +854,18 @@
 }
 .aimesh_node_static_info_content {
 	float: left;
-	width: 60%;
+	width: 65%;
 	color: #569AC7;
 	font-size: 15px;
 	font-weight: bolder;
 	font-family: monospace, Courier New, Courier;
 	height: 25px;
 	line-height: 25px;
+}
+.aimesh_node_static_info_interface_bg {
+	float: left;
+	width: 10%;
+	position: relative;
 }
 .aimesh_node_setting_info_content {
 	float: left;
@@ -864,7 +919,7 @@
 	font-size: 14px;
 	border: 1px solid rgb(145,7,31);
 	outline: none;
-	width: 90%;
+	width: 85%;
 	padding-left: 5px;
 	line-height: 21px;
 	border-right: 0px;

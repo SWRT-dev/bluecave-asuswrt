@@ -146,7 +146,7 @@ li span {
 	font-weight: bolder;
 }
 .main_field_gap{
-	margin:100px auto 0;
+	margin: 100px auto 0;
 }
 ul{
 	margin: 0;
@@ -212,13 +212,10 @@ ul{
 	}
 	.button{
 		height: 50px;
-		width: 100%;
+		width: 50%;
 		font-size: 14pt;
-		text-align: center;
-		float:right;
-		margin: 25px -30px 0 0;
-		line-height:50px;
-		padding: 0 10px;
+		line-height: 50px;
+		margin: 35px 25% 0px 25%;
 	}
 	.nologin{
 		margin-left:10px;
@@ -231,9 +228,8 @@ ul{
 		margin-left:10px;
 	}
 	.main_field_gap{
-		width:80%;
-		margin:30px 0 0 0px;
-		/*margin:30px auto 0;*/
+		width: 60%;
+		margin-top: 30px;
 	}
 	.title_gap{
 		margin-left:15px;
@@ -307,19 +303,8 @@ if(wans_dualwan_orig.search(" ") == -1)
 	wans_flag = 0;
 
 var new_lan_ip = [<% get_next_lanip(); %>][0].next_lanip;
-
-var get_protocol = function() {
-	var protocol = "http:";
-	if(window.location.protocol == "http:" || window.location.protocol == "https:") {
-		protocol = window.location.protocol;
-		return protocol;
-	}
-
-	return protocol;
-};
 var header_info = [<% get_header_info(); %>];
-var location_org = get_protocol() + "//" + header_info[0].host;
-
+var location_org = header_info[0].protocol + "://" + header_info[0].host + ":" + header_info[0].port;
 
 function initial(){
 	<% login_state_hook(); %>
@@ -460,7 +445,7 @@ function initial(){
 			html_code += "<li><span><#web_redirect_case6_desc2#></span></li>";
 			html_code += "</ul>";
 
-		$("#wanLink").html("<#CTL_next#>");
+		$("#wanLink").html("<#CTL_next#>").show();
 		$("#wanLink").click(function(){
 			change_lan_subnet();
 		});

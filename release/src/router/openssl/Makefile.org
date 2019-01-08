@@ -137,7 +137,7 @@ FIPSCANLIB=
 
 BASEADDR=
 
-DIRS=   crypto ssl engines apps test tools
+DIRS=   crypto ssl engines apps tools # test
 ENGDIRS= ccgost
 SHLIBDIRS= crypto ssl
 
@@ -185,7 +185,7 @@ TARFILE=        ../$(NAME).tar
 EXHEADER=       e_os2.h
 HEADER=         e_os.h
 
-all: Makefile build_all
+all: build_all
 
 # as we stick to -e, CLEARENV ensures that local variables in lower
 # Makefiles remain local and variable. $${VAR+VAR} is tribute to Korn
@@ -201,7 +201,8 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 		$${ASFLAGS+ASFLAGS} $${AFLAGS+AFLAGS}		\
 		$${LDCMD+LDCMD} $${LDFLAGS+LDFLAGS} $${SCRIPTS+SCRIPTS}	\
 		$${SHAREDCMD+SHAREDCMD} $${SHAREDFLAGS+SHAREDFLAGS}	\
-		$${SHARED_LIB+SHARED_LIB} $${LIBEXTRAS+LIBEXTRAS}
+		$${SHARED_LIB+SHARED_LIB} $${LIBEXTRAS+LIBEXTRAS}	\
+		$${APPS+APPS}
 
 # LC_ALL=C ensures that error [and other] messages are delivered in
 # same language for uniform treatment.
@@ -403,11 +404,6 @@ openssl.pc: Makefile
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-Makefile: Makefile.org Configure config
-	@echo "Makefile is older than Makefile.org, Configure or config."
-	@echo "Reconfigure the source tree (via './config' or 'perl Configure'), please."
-	@false
-
 libclean:
 	rm -f *.map *.so *.so.* *.dylib *.dll engines/*.so engines/*.dll engines/*.dylib *.a engines/*.a */lib */*/lib
 
@@ -422,6 +418,14 @@ clean:	libclean
 	do \
 	rm -fr $$i/*; \
 	done
+
+distclean: clean
+	-$(RM) `find . -name .git -prune -o -type l -print`
+	$(RM) apps/CA.pl
+	$(RM) test/evptests.txt test/newkey.pem test/testkey.pem test/testreq.pem
+	$(RM) tools/c_rehash
+	$(RM) crypto/opensslconf.h
+	$(RM) Makefile Makefile.bak
 
 makefile.one: files
 	$(PERL) util/mk1mf.pl >makefile.one; \

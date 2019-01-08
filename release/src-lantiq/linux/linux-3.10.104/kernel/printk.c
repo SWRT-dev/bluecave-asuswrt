@@ -2638,6 +2638,9 @@ EXPORT_SYMBOL_GPL(kmsg_dump_unregister);
 
 static bool always_kmsg_dump;
 module_param_named(always_kmsg_dump, always_kmsg_dump, bool, S_IRUGO | S_IWUSR);
+static int got_previous_oops = 0;
+module_param(got_previous_oops, int, S_IRUGO);
+MODULE_PARM_DESC(got_previous_oops, "See if there is the previous OOPS");
 
 /**
  * kmsg_dump - dump kernel log to kernel message dumpers.
@@ -2669,6 +2672,7 @@ void kmsg_dump(enum kmsg_dump_reason reason)
 		dumper->next_seq = log_next_seq;
 		dumper->next_idx = log_next_idx;
 		raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+		got_previous_oops = 1;
 
 		/* invoke dumper which will iterate over records */
 		dumper->dump(dumper, reason);

@@ -388,6 +388,7 @@ case $name in
 	#	fi
 		sta_connection $interface_name connect $param3
 		update_client $param3 $interface_name 1
+		hapdevent $name $param3 $interface_name
 	;;
 	"WPS-TIMEOUT")
 	#	WPS_STATE="WPS_IDLE"
@@ -442,6 +443,7 @@ case $name in
 	#	fi
 		sta_connection $interface_name disconnect $param3
 		update_client $param3 $interface_name 0
+		hapdevent $name $param3 $interface_name
 	;;
 	"AP-STA-PROBEREQ")
 		cfg_obstatus=`nvram get cfg_obstatus`

@@ -1,1 +1,1 @@
-../../4G-AC55U/www/Advanced_MobileBroadband_Content.asp
+../../4G-AC68U/www/Advanced_MobileBroadband_Content.asp

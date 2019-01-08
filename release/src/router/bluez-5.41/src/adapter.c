@@ -579,7 +579,7 @@ static bool set_mode(struct btd_adapter *adapter, uint16_t opcode,
 	memset(&cp, 0, sizeof(cp));
 	cp.val = mode;
 
-	DBG("sending set mode command for index %u", adapter->dev_id);
+	DBG("sending set mode[%u] command for index %u opcode 0x%04x", mode, adapter->dev_id, opcode);
 
 	if (mgmt_send(adapter->mgmt, opcode,
 				adapter->dev_id, sizeof(cp), &cp,
@@ -801,6 +801,7 @@ struct btd_device *btd_adapter_find_device(struct btd_adapter *adapter,
 
 	device = list->data;
 
+	DBG("Type : %s", bdaddr_type==BDADDR_BREDR?"BR/EDR":"LE");
 	/*
 	 * If we're looking up based on public address and the address
 	 * was not previously used over this bearer we may need to
@@ -828,6 +829,7 @@ static bool is_supported_uuid(const uuid_t *uuid)
 {
 	uuid_t tmp;
 
+	DBG("");
 	/* mgmt versions from 1.3 onwards support all types of UUIDs */
 	if (MGMT_VERSION(mgmt_version, mgmt_revision) >= MGMT_VERSION(1, 3))
 		return true;
@@ -848,6 +850,7 @@ static void add_uuid_complete(uint8_t status, uint16_t length,
 {
 	struct btd_adapter *adapter = user_data;
 
+	DBG("");
 	if (status != MGMT_STATUS_SUCCESS) {
 		btd_error(adapter->dev_id, "Failed to add UUID: %s (0x%02x)",
 						mgmt_errstr(status), status);
@@ -872,6 +875,7 @@ static int add_uuid(struct btd_adapter *adapter, uuid_t *uuid, uint8_t svc_hint)
 	uuid_t uuid128;
 	uint128_t uint128;
 
+	DBG("");
 	if (!is_supported_uuid(uuid)) {
 		btd_warn(adapter->dev_id,
 				"Ignoring unsupported UUID for addition");
@@ -1116,6 +1120,7 @@ static struct btd_device *adapter_create_device(struct btd_adapter *adapter,
 {
 	struct btd_device *device;
 
+	DBG("create Client");
 	device = device_create(adapter, bdaddr, bdaddr_type);
 	if (!device)
 		return NULL;
@@ -1160,6 +1165,7 @@ void btd_adapter_remove_device(struct btd_adapter *adapter,
 	adapter->discovery_found = g_slist_remove(adapter->discovery_found,
 									dev);
 
+	DBG("");
 	adapter->connections = g_slist_remove(adapter->connections, dev);
 
 	if (adapter->connect_le == dev)
@@ -1190,6 +1196,7 @@ struct btd_device *btd_adapter_get_device(struct btd_adapter *adapter,
 {
 	struct btd_device *device;
 
+	DBG("get Client");
 	if (!adapter)
 		return NULL;
 
@@ -5662,7 +5669,15 @@ static void adapter_remove_connection(struct btd_adapter *adapter,
 						struct btd_device *device,
 						uint8_t bdaddr_type)
 {
-//	int conn_len;
+#if defined(RTCONFIG_LP5523)
+	int conn_len;
+#endif
+#if defined(MAPAC1750)
+	char buf[256];
+
+	memset(buf, '\0', sizeof(buf));
+	strncpy(buf, nvram_safe_get("bt_turn_off_service"), sizeof(buf));
+#endif
 	DBG("");
 
 	if (!g_slist_find(adapter->connections, device)) {
@@ -5682,11 +5697,12 @@ static void adapter_remove_connection(struct btd_adapter *adapter,
 	adapter->connections = g_slist_remove(adapter->connections, device);
 
 #if defined(RTCONFIG_LP5523)
-//	conn_len = g_slist_length(adapter->connections);
-//	if(!conn_len)
+	conn_len = g_slist_length(adapter->connections);
+	if(!conn_len)
 		lp55xx_leds_proc(LP55XX_WHITE_LEDS, LP55XX_ACT_NONE);
 #elif defined(MAPAC1750)
-	set_rgbled(RGBLED_WHITE);
+	if (strstr(buf, "ble_qis_done") == NULL)
+		set_rgbled(RGBLED_WHITE);
 #endif
 
 	if (device_is_temporary(device) && !device_is_retrying(device)) {
@@ -7922,6 +7938,10 @@ static void read_info_complete(uint8_t status, uint16_t length,
 			goto failed;
 		}
 
+		DBG("%s mode, \n missing_settings:0x%08x MGMT_SETTING_LE:0x%08x, \ncurrent_settings:0x%08x MGMT_SETTING_BREDR:0x%08x",
+				main_opts.mode==0?"DUEL":main_opts.mode==1?"BREDR":"LE",
+				missing_settings, MGMT_SETTING_LE,
+				adapter->current_settings, MGMT_SETTING_BREDR);
 		if (missing_settings & MGMT_SETTING_LE)
 			set_mode(adapter, MGMT_OP_SET_LE, 0x01);
 		if (adapter->current_settings & MGMT_SETTING_BREDR)
@@ -8062,7 +8082,9 @@ static void read_info_complete(uint8_t status, uint16_t length,
 	else if (adapter->current_settings & MGMT_SETTING_CONNECTABLE)
 		set_mode(adapter, MGMT_OP_SET_CONNECTABLE, 0x00);
 
+#if 0	/*Enable discoverable*/
 	if (adapter->stored_discoverable && !adapter->discoverable_timeout)
+#endif
 		set_discoverable(adapter, 0x01, 0);
 
 	if (adapter->current_settings & MGMT_SETTING_POWERED)

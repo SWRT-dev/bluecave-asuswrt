@@ -4,7 +4,7 @@
  * project.
  */
 /* ====================================================================
- * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2012-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -152,7 +152,7 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x0007, "SSL_RSA_WITH_IDEA_CBC_SHA"},
     {0x0008, "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA"},
     {0x0009, "SSL_RSA_WITH_DES_CBC_SHA"},
-    //{0x000A, "SSL_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {0x000A, "SSL_RSA_WITH_3DES_EDE_CBC_SHA"},
     {0x000B, "SSL_DH_DSS_EXPORT_WITH_DES40_CBC_SHA"},
     {0x000C, "SSL_DH_DSS_WITH_DES_CBC_SHA"},
     {0x000D, "SSL_DH_DSS_WITH_3DES_EDE_CBC_SHA"},
@@ -300,9 +300,9 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC00F, "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA"},
     {0xC010, "TLS_ECDHE_RSA_WITH_NULL_SHA"},
     {0xC011, "TLS_ECDHE_RSA_WITH_RC4_128_SHA"},
-    //{0xC012, "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA"},
-    //{0xC013, "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"},
-    //{0xC014, "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
+    {0xC012, "TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {0xC013, "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA"},
+    {0xC014, "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"},
     {0xC015, "TLS_ECDH_anon_WITH_NULL_SHA"},
     {0xC016, "TLS_ECDH_anon_WITH_RC4_128_SHA"},
     {0xC017, "TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA"},
@@ -645,6 +645,8 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
         BIO_puts(bio, "No Extensions\n");
         return 1;
     }
+    if (msglen < 2)
+        return 0;
     extslen = (msg[0] << 8) | msg[1];
     if (extslen != msglen - 2)
         return 0;
@@ -1021,6 +1023,8 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
     msglen -= xlen + 2;
 
  skip_sig:
+    if (msglen < 2)
+        return 0;
     xlen = (msg[0] << 8) | msg[1];
     BIO_indent(bio, indent, 80);
     if (msglen < xlen + 2)
@@ -1209,7 +1213,15 @@ void SSL_trace(int write_p, int version, int content_type,
     switch (content_type) {
     case SSL3_RT_HEADER:
         {
-            int hvers = msg[1] << 8 | msg[2];
+            int hvers;
+
+            /* avoid overlapping with length at the end of buffer */
+            if (msglen < (SSL_IS_DTLS(ssl) ? 13 : 5)) {
+                        BIO_puts(bio, write_p ? "Sent" : "Received");
+                        ssl_print_hex(bio, 0, " too short message", msg, msglen);
+                        break;
+                    }
+            hvers = msg[1] << 8 | msg[2];
             BIO_puts(bio, write_p ? "Sent" : "Received");
             BIO_printf(bio, " Record\nHeader:\n  Version = %s (0x%x)\n",
                        ssl_trace_str(hvers, ssl_version_tbl), hvers);
@@ -1247,13 +1259,15 @@ void SSL_trace(int write_p, int version, int content_type,
         break;
 
     case SSL3_RT_ALERT:
-        if (msglen != 2)
+        if (msglen != 2) {
             BIO_puts(bio, "    Illegal Alert Length\n");
-        else {
+        } else {
             BIO_printf(bio, "    Level=%s(%d), description=%s(%d)\n",
                        SSL_alert_type_string_long(msg[0] << 8),
                        msg[0], SSL_alert_desc_string_long(msg[1]), msg[1]);
         }
+        break;
+
     case TLS1_RT_HEARTBEAT:
         ssl_print_heartbeat(bio, 4, msg, msglen);
         break;

@@ -118,16 +118,7 @@ endif
 
 if EXTAQIS
 builtin_modules += aqis
-builtin_sources += profiles/aqis/aqis.c \
-			profiles/aqis/bleencrypt/gatt-amap.h \
-			profiles/aqis/bleencrypt/gatt-amap.c \
-			profiles/aqis/bleencrypt/bleencrypt.h \
-			profiles/aqis/bleencrypt/bleencrypt.c \
-			profiles/aqis/bleencrypt/encrypt.h \
-			profiles/aqis/bleencrypt/encrypt.c \
-			profiles/aqis/bleencrypt/blepack.h \
-			profiles/aqis/bleencrypt/blepack-server.c \
-			profiles/aqis/bleencrypt/utility.h
+builtin_sources += profiles/aqis/aqis.c
 endif
 
 if SIXAXIS

@@ -125,15 +125,6 @@ a{
 	width: 90%;
 	max-width: 1000px;
 }
-.tosDesc{
-	font-family: Helvetica, Arial;
-	font-size: 1.6em;
-	color: #555;
-	margin: 30px 0 20px 45px;
-	text-align: left;
-	width: 90%;
-	max-width: 1000px;
-}
 .inputTitle{
 	font-family: HelveticaNeueLT45_Light_regular, Helvetica_regular, Arial;
 	font-size:1.8em;
@@ -239,20 +230,6 @@ a{
 	margin-top: -25px;
 	font-size: 1.4em;
 	font-style: italic;
-}
-.tos{
-    color: #000;
-    font-size: 1.8em;
-    text-align: left;
-    padding: 10%;
-	padding-left: 15%;
-    padding-top: 0px;
-    margin-top: 80px;
-    max-width: 1000px;
-}
-#tosCheckbox{
-	margin-top:5px;
-	margin-left: -45px;
 }
 .footHeight{
 	height: 100px;
@@ -390,14 +367,6 @@ a{
 		display:table-cell;
 		width:70% !important;
 		max-width: 1000px;
-	}
-	.tos{
-		margin: auto;
-		margin-top: 50px;
-		width: 650px;
-	}
-	.tosDesc{
-		width: 80%;
 	}
 	.pageDesc{
 		min-width: 800px;

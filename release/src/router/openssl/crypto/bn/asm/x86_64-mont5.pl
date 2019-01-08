@@ -405,18 +405,19 @@ $code.=<<___;
 	jnz	.Lsub
 
 	sbb	\$0,%rax		# handle upmost overflow bit
+	mov	\$-1,%rbx
+	xor	%rax,%rbx
 	xor	$i,$i
-	and	%rax,$ap
-	not	%rax
-	mov	$rp,$np
-	and	%rax,$np
 	mov	$num,$j			# j=num
-	or	$np,$ap			# ap=borrow?tp:rp
-.align	16
-.Lcopy:					# copy or in-place refresh
-	mov	($ap,$i,8),%rax
+
+.Lcopy:					# conditional copy
+	mov	($rp,$i,8),%rcx
+	mov	(%rsp,$i,8),%rdx
+	and	%rbx,%rcx
+	and	%rax,%rdx
 	mov	$i,(%rsp,$i,8)		# zap temporary vector
-	mov	%rax,($rp,$i,8)		# rp[i]=tp[i]
+	or	%rcx,%rdx
+	mov	%rdx,($rp,$i,8)		# rp[i]=tp[i]
 	lea	1($i),$i
 	sub	\$1,$j
 	jnz	.Lcopy
@@ -1925,6 +1926,7 @@ __bn_sqr8x_reduction:
 
 .align	32
 .L8x_tail_done:
+	xor	%rax,%rax
 	add	(%rdx),%r8		# can this overflow?
 	adc	\$0,%r9
 	adc	\$0,%r10
@@ -1932,10 +1934,8 @@ __bn_sqr8x_reduction:
 	adc	\$0,%r12
 	adc	\$0,%r13
 	adc	\$0,%r14
-	adc	\$0,%r15		# can't overflow, because we
-					# started with "overhung" part
-					# of multiplication
-	xor	%rax,%rax
+	adc	\$0,%r15
+	adc	\$0,%rax
 
 	neg	$carry
 .L8x_no_tail:
@@ -3091,11 +3091,19 @@ $code.=<<___;
 
 .align	32
 .Lsqrx8x_break:
-	sub	16+8(%rsp),%r8		# consume last carry
+	xor	$zero,$zero
+	sub	16+8(%rsp),%rbx		# mov 16(%rsp),%cf
+	adcx	$zero,%r8
 	mov	24+8(%rsp),$carry	# initial $tptr, borrow $carry
+	adcx	$zero,%r9
 	mov	0*8($aptr),%rdx		# a[8], modulo-scheduled
-	xor	%ebp,%ebp		# xor	$zero,$zero
+	adc	\$0,%r10
 	mov	%r8,0*8($tptr)
+	adc	\$0,%r11
+	adc	\$0,%r12
+	adc	\$0,%r13
+	adc	\$0,%r14
+	adc	\$0,%r15
 	cmp	$carry,$tptr		# cf=0, of=0
 	je	.Lsqrx8x_outer_loop
 
@@ -3375,6 +3383,7 @@ __bn_sqrx8x_reduction:
 
 .align	32
 .Lsqrx8x_tail_done:
+	xor	%rax,%rax
 	add	24+8(%rsp),%r8		# can this overflow?
 	adc	\$0,%r9
 	adc	\$0,%r10
@@ -3382,10 +3391,8 @@ __bn_sqrx8x_reduction:
 	adc	\$0,%r12
 	adc	\$0,%r13
 	adc	\$0,%r14
-	adc	\$0,%r15		# can't overflow, because we
-					# started with "overhung" part
-					# of multiplication
-	mov	$carry,%rax		# xor	%rax,%rax
+	adc	\$0,%r15
+	adc	\$0,%rax
 
 	sub	16+8(%rsp),$carry	# mov 16(%rsp),%cf
 .Lsqrx8x_no_tail:			# %cf is 0 if jumped here
@@ -3400,7 +3407,7 @@ __bn_sqrx8x_reduction:
 	adc	8*5($tptr),%r13
 	adc	8*6($tptr),%r14
 	adc	8*7($tptr),%r15
-	adc	%rax,%rax		# top-most carry
+	adc	\$0,%rax		# top-most carry
 
 	mov	32+8(%rsp),%rbx		# n0
 	mov	8*8($tptr,%rcx),%rdx	# modulo-scheduled "%r8"

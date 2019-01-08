@@ -1150,7 +1150,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
-#if defined(RTAC85U) || defined(RTN800HP)
+#if defined(RTAC85U) || defined(RTAC85P) || defined(RTN800HP)
 	else if (!strcmp(command, "Set_DisableStp")) {
 		FWrite("1", OFFSET_BR_STP, 1);
 		puts("1");
@@ -1422,7 +1422,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #ifdef RTCONFIG_RALINK
-#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U) && !defined(RTN56UB2) && !defined(RTAC54U) && !defined(RTAC1200) && !defined(RTAC1200GA1) && !defined(RTAC1200GU) && !defined(RTN11P_B1) && !defined(RTN10P_V3) && !defined(RTAC51UP) && !defined(RTAC53) && !defined(RPAC87) && !defined(RTAC85U) && !defined(RTAC65U) && !defined(RTN800HP) 
+#if !defined(RTN14U) && !defined(RTAC52U) && !defined(RTAC51U) && !defined(RTN11P) && !defined(RTN300) && !defined(RTN54U) && !defined(RTAC1200HP) && !defined(RTN56UB1) && !defined(RTAC54U) && !defined(RTN56UB2) && !defined(RTAC54U) && !defined(RTAC1200) && !defined(RTAC1200GA1) && !defined(RTAC1200GU) && !defined(RTN11P_B1) && !defined(RTN10P_V3) && !defined(RTAC51UP) && !defined(RTAC53) && !defined(RPAC87) && !defined(RTAC85U) && !defined(RTAC85P) && !defined(RTAC65U) && !defined(RTN800HP) 
 	else if (!strcmp(command, "Ra_FWRITE")) {
 		return FWRITE(value, value2);
 	}
@@ -1609,7 +1609,7 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 #endif
-#if defined(MAPAC1300) || defined(MAPAC2200) || defined(VZWAC1300) /* for Lyra */
+#if defined(MAPAC1300) || defined(MAPAC2200) || defined(VZWAC1300) || defined(RTAC92U) /* for Lyra */
 	else if (!strcmp(command, "Set_DisableWifiDrv")) {
 		if (setDisableWifiDrv(value))
 		{
@@ -2042,9 +2042,12 @@ int asus_ate_command(const char *command, const char *value, const char *value2)
 		return 0;
 	}
 	else if (!strcmp(command, "Get_txBurst")) {
-		if (nvram_match("wl_frameburst", "on"))
+#ifdef RTCONFIG_LANTIQ
+		update_txburst_status();
+#endif
+		if (nvram_match("wl1_frameburst", "on"))
 			puts("1");
-		else if (nvram_match("wl_frameburst", "off"))
+		else if (nvram_match("wl1_frameburst", "off"))
 			puts("0");
 		return 0;
 	}
