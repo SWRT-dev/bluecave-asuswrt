@@ -139,7 +139,6 @@ define(function(){
 					{url: "Tools_Sysinfo.asp", tabName: "<#K3C_Sysinfo#>"},
 					/*{url: "Tools_OtherSettings.asp", tabName: "Other Settings"},*/
 					{url: "Softcenter.asp", tabName: "<#Softcenter#>"},
-					{url: "Tools_aimesh.asp", tabName: "Aimesh"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				]
 			},

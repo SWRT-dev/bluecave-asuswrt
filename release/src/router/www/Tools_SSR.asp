@@ -668,7 +668,7 @@ function reload_Soft_Center() {
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_wait" value="2">
 <input type="hidden" name="action_mode" value="toolscript">
-<input type="hidden" name="action_script" value="/usr/sbin/softcenter_ssr.sh">
+<input type="hidden" name="action_script" value="/usr/sbin/k3c_ssr.sh">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>" disabled>
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="ssr_enable" value="<% nvram_get("ssr_enable"); %>">
