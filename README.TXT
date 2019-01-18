@@ -86,6 +86,11 @@ Set Up Environment(Tested in Fedora 8/9 and Ubuntu)
 
    3. setup development system
 
+	Lantiq/Intel SoC models
+	===================
+
+	nothing to do
+
 	Broadcom SoC models
 	===================
 
@@ -223,3 +228,6 @@ Set Up Environment(Tested in Fedora 8/9 and Ubuntu)
 		( make rp-ac53 )
 		( make rp-ac55 )
 
+	l. bluecave
+		cd release/src-lantiq
+		make bluecave

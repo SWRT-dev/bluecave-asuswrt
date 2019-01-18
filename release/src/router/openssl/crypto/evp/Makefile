@@ -198,7 +198,7 @@ e_aes.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 e_aes.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 e_aes.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 e_aes.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-e_aes.o: ../arm_arch.h ../modes/modes_lcl.h e_aes.c evp_locl.h
+e_aes.o: ../modes/modes_lcl.h e_aes.c evp_locl.h
 e_aes_cbc_hmac_sha1.o: ../../e_os.h ../../include/openssl/aes.h
 e_aes_cbc_hmac_sha1.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_aes_cbc_hmac_sha1.o: ../../include/openssl/crypto.h
