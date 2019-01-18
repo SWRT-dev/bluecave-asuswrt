@@ -148,6 +148,7 @@ endif
 
 OBJS += $(if $(wildcard web_hook.c), web_hook.o, prebuild/web_hook.o)
 OBJS += $(if $(wildcard sysinfo.c), sysinfo.o, prebuild/sysinfo.o)
+OBJS += dbapi.o
 
 LIBS = -L$(TOP)/nvram${BCMEX}$(EX7) -lnvram -L$(TOP)/shared -lshared
 ifeq ($(HND_ROUTER),y)

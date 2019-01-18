@@ -196,8 +196,10 @@ extern int ssl_stream_fd;
 #else
 #error Unknown endian
 #endif
-
 #include <sysinfo.h>
+#include "dbapi.h"
+char softcenter_cfg[] = "/jffs/softcenter/configs";
+char softcenter_web[] = "/jffs/softcenter/webs";
 
 extern int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
@@ -1017,11 +1019,11 @@ ej_dbus_get(int eid, webs_t wp, int argc, char_t **argv)
 static int
 ej_dbus_get_def(int eid, webs_t wp, int argc, char_t **argv)
 {
-	char *name, c[512];
+	char *name, c[512], *output;
 	int ret = 0;
 //	char sid_dummy = "",
 
-	if (ejArgs(argc, argv, "%s", &name) < 1) {
+	if (ejArgs(argc, argv, "%s %s", &name, &output) < 2) {
 		websError(wp, 400, "Insufficient args\n");
 		return -1;
 	}
@@ -1029,14 +1031,18 @@ ej_dbus_get_def(int eid, webs_t wp, int argc, char_t **argv)
 	char *buffer = read_whole_file("/tmp/dbusxxx");
 	if (buffer) {
 		sscanf(buffer, "%[^\n]", c);
+		if (strcasecmp(c, ""))
+			ret += websWrite(wp, c);
+		else
+			ret += websWrite(wp, output);
 		free(buffer);
 	} else {
-		strcpy(c, "");
+		ret += websWrite(wp, output);
 	}
 	unlink("/tmp/dbusxxx");
 	//doSystem("rm -rf /tmp/dbusxxx");
 	//for (; *c; c++) {
-			ret += websWrite(wp, c);
+			//ret += websWrite(wp, c);
 	//}
 
 	return ret;
@@ -4509,13 +4515,6 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv) {
 		nvram_set("freeze_duck", "5");
 		strncpy(notify_cmd, action_script, 128);
 		_dprintf("Scrip_Cmd: [%s]\n", notify_cmd);
-		//FILE *fp;
-		//if ((fp = fopen("/tmp/toolscript.txt", "w")) == NULL)
-		//	printf("Scrip_Temp_File: ERROR\n");
-		//fprintf(fp, fscanf(wp,"%s"));
-		//fclose(fp);
-		//_dprintf("Scrip_V: %s\n", wp);
-		//
 		validate_apply(wp, NULL);
 		strlcpy(SystemCmd, notify_cmd, sizeof(SystemCmd));
 		sys_script("syscmd.sh");
@@ -12868,7 +12867,6 @@ err:
 
 }
 
-
 static void
 do_upload_cert_key_cgi(char *url, FILE *stream)
 {
@@ -12876,6 +12874,143 @@ do_upload_cert_key_cgi(char *url, FILE *stream)
 }
 #endif
 
+static int ssupload = 0;
+static void
+do_ssupload_post(char *url, FILE *stream, int len, char *boundary)
+{
+	do_html_get(url, len, boundary);
+	char *name = websGetVar(wp, "a","");
+	char upload_fifo[64];
+	memset(upload_fifo, 0, 64);
+	strcpy(upload_fifo, name);
+	FILE *fifo = NULL;
+	char buf[4096];
+	int ch, ret = EINVAL;
+	int count, cnt;
+	long filelen;
+	int offset;
+	char cmpHeader;
+
+	/* Look for our part */
+	while (len > 0)
+	{
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream))
+		{
+			goto err;
+		}
+
+		len -= strlen(buf);
+
+		if (!strncasecmp(buf, "Content-Disposition:", 20) && strstr(buf, "name=\"file\""))
+			break;
+	}
+
+	/* Skip boundary and headers */
+	while (len > 0) {
+		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream))
+		{
+			goto err;
+		}
+		len -= strlen(buf);
+		if (!strcmp(buf, "\n") || !strcmp(buf, "\r\n"))
+		{
+			break;
+		}
+	}
+
+
+	if (!(fifo = fopen(upload_fifo, "a+"))) goto err;
+	filelen = len;
+	cnt = 0;
+	offset = 0;
+
+	/* Pipe the rest to the FIFO */
+	while (len>0 && filelen>0)
+	{
+
+#ifdef RTCONFIG_HTTPS
+		if(do_ssl){
+			if (waitfor(ssl_stream_fd, (len >= 0x4000)? 3 : 1) <= 0)
+				break;
+		}
+		else{
+			if (waitfor (fileno(stream), 10) <= 0)
+			{
+				break;
+			}
+		}
+#else
+		if (waitfor (fileno(stream), 10) <= 0)
+		{
+			break;
+		}
+#endif
+
+		count = fread(buf + offset, 1, MIN(len, sizeof(buf)-offset), stream);
+
+		if(count <= 0)
+			goto err;
+
+		len -= count;
+
+		if(cnt==0) {
+			if(count + offset < 8)
+			{
+				offset += count;
+				continue;
+			}
+
+			count += offset;
+			offset = 0;
+			_dprintf("read from stream: %d\n", count);
+			cnt++;
+		}
+		filelen-=count;
+		fwrite(buf, 1, count, fifo);
+	}
+
+	/* Slurp anything remaining in the request */
+	while (len-- > 0)
+	{
+		if((ch = fgetc(stream)) == EOF)
+			break;
+
+		if (filelen>0)
+		{
+			fputc(ch, fifo);
+			filelen--;
+		}
+	}
+	fclose(fifo);
+	fifo = NULL;
+	ssupload = 1;
+err:
+	if (fifo)
+		fclose(fifo);
+
+	/* Slurp anything remaining in the request */
+	while (len-- > 0)
+		if((ch = fgetc(stream)) == EOF)
+			break;
+}
+
+
+static void
+do_ssupload_cgi(char *url, FILE *stream)
+{
+	int i;
+	for (i=0; i<10; i++)
+	{
+		if(ssupload == 1)
+		{
+			websWrite(stream,"<script>parent.upload_ok(1);</script>\n" );
+			break;
+		} else
+			sleep(1);
+	}
+	if (i == 10)
+		websWrite(stream,"<script>parent.upload_ok(0);</script>\n" );
+}
 static void
 do_download_cert_key_cgi(char *url, FILE *stream)
 {
@@ -15218,37 +15353,244 @@ do_appGet_cgi(char *url, FILE *stream)
 	free(dup_pattern);
 }
 
+static void
+do_applyss_cgi(char *url, FILE *stream)
+{
+	char *action_mode;
+	char *action_script;
+	//char *current_url;
+	char dbjson[100][2048];
+	char dbvar[2048];
+	char dbval[2048];
+	char notify_cmd[128];
+	int i, j;
+	char *result = NULL;
+	char *temp = NULL;
+	char *name = websGetVar(wp, "p","");
+	char *userm = strstr(url, "use_rm=1");
+	char scPath[128];
+	char *post_db_buf = post_json_buf;
+
+	action_mode = websGetVar(wp, "action_mode", "");
+	action_script = websGetVar(wp, "action_script", "");
+
+	dbclient client;
+	dbclient_start(&client);
+	if (strlen(name) <= 0) {
+		printf("No \"name\"!\n");
+	}
+	unescape(post_db_buf);
+	//logmessage("HTTPD", "name: %s post: %s", name, post_json_buf);
+	//logmessage("HTTPD", "name: %s post: %s", name, post_db_buf);
+	strcpy(post_json_buf, post_db_buf);
+	result = strtok( post_json_buf, "&" );
+	i =0;
+	while( result != NULL )
+	{
+		if (result!=NULL)
+		{
+		strcpy(dbjson[i], result);
+		i++;
+			result = strtok( NULL, "&" );
+		}
+	}
+	for (j =0; j < i; j++)
+	{
+		if(!strncasecmp(dbjson[j], name, strlen(name))){
+
+		temp = strtok( dbjson[j], "=" );
+		strcpy (dbvar, temp);
+		while( temp != NULL ) {
+			//unescape(temp);
+			strcpy(dbval, temp);
+			//logmessage("HTTPD", "name: %s post: %s", dbvar, dbval);
+			//if((dbval[strlen(dbval)-1] =='\n')||(dbval[strlen(dbval)-1] =='\r')||(dbval[strlen(dbval)-1] =='\r\n'))
+			//		dbval[strlen(dbval)-1]='\0';
+			temp = strtok(NULL,"=");
+		}
+			if(userm)
+				doSystem("dbus remove %s", dbvar);
+			else
+				dbclient_bulk(&client, "set", dbvar, strlen(dbvar), dbval, strlen(dbval));
+		}
+	}
+	dbclient_end(&client);
+	if(!strcmp(action_mode, "toolscript")){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
+		strncpy(notify_cmd, action_script, 128);
+		strcat(scPath, notify_cmd);
+		//_dprintf("Scrip_Cmd: [%s]\n", notify_cmd);
+		//validate_applydb(wp, NULL);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
+	else if(!strcmp(action_mode, " Refresh ")){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
+		strncpy(notify_cmd, action_script, 128);
+		strcat(scPath, notify_cmd);
+		//_dprintf("Scrip_Cmd: [%s]\n", notify_cmd);
+		//validate_applydb(wp, NULL);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
+	//websWrite(wp,"%s %d %s\r\n", PROTOCOL, 200, "OK" );
+	//websWrite(wp,"Server: %s\r\n", SERVER_NAME );
+	//websWrite(wp, "Cache-Control: no-store\r\n");
+	//websWrite(wp, "Pragma: no-cache\r\n");
+	//(void) strftime( timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &now ) );
+	//websWrite(wp,"Date: %s\r\n", timebuf );
+	//websWrite(wp,"Content-Type: %s\r\n", "text/html");
+	//websWrite(wp,"Connection: close\r\n" );
+	//websWrite(wp,"\r\n" );
+	websWrite(stream,"<script>parent.done_validating('', '');</script>\n" );
+	//return 0;
+}
+
+static int
+applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
+		char_t *url, char_t *path, char_t *query)
+{
+	char *action_mode;
+	char *action_script;
+	//char *current_url;
+	char dbjson[100][2048];
+	char dbvar[2048];
+	char dbval[2048];
+	char notify_cmd[128];
+	int i, j;
+	char *result = NULL;
+	char *temp = NULL;
+	char *name = websGetVar(wp, "p","");
+	char *userm = strstr(url, "use_rm=1");
+	char scPath[128];
+	char *post_db_buf = post_json_buf;
+
+	action_mode = websGetVar(wp, "action_mode", "");
+	action_script = websGetVar(wp, "action_script", "");
+
+	dbclient client;
+	dbclient_start(&client);
+	if (strlen(name) <= 0) {
+		printf("No \"name\"!\n");
+	}
+	unescape(post_db_buf);
+	//logmessage("HTTPD", "name: %s post: %s", name, post_json_buf);
+	//logmessage("HTTPD", "name: %s post: %s", name, post_db_buf);
+	strcpy(post_json_buf, post_db_buf);
+	result = strtok( post_json_buf, "&" );
+	i =0;
+	while( result != NULL )
+	{
+		if (result!=NULL)
+		{
+		strcpy(dbjson[i], result);
+		i++;
+			result = strtok( NULL, "&" );
+		}
+	}
+	for (j =0; j < i; j++)
+	{
+		if(!strncasecmp(dbjson[j], name, strlen(name))){
+
+		temp = strtok( dbjson[j], "=" );
+		strcpy (dbvar, temp);
+		while( temp != NULL ) {
+			//unescape(temp);
+			strcpy(dbval, temp);
+			//logmessage("HTTPD", "name: %s post: %s", dbvar, dbval);
+			//if((dbval[strlen(dbval)-1] =='\n')||(dbval[strlen(dbval)-1] =='\r')||(dbval[strlen(dbval)-1] =='\r\n'))
+			//		dbval[strlen(dbval)-1]='\0';
+			temp = strtok(NULL,"=");
+		}
+			if(userm)
+				doSystem("dbus remove %s", dbvar);
+			else
+				dbclient_bulk(&client, "set", dbvar, strlen(dbvar), dbval, strlen(dbval));
+		}
+	}
+	dbclient_end(&client);
+	if(!strcmp(action_mode, "toolscript")){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
+		strncpy(notify_cmd, action_script, 128);
+		strcat(scPath, notify_cmd);
+		//_dprintf("Scrip_Cmd: [%s]\n", notify_cmd);
+		//validate_applydb(wp, NULL);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
+	else if(!strcmp(action_mode, " Refresh ")){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
+		strncpy(notify_cmd, action_script, 128);
+		strcat(scPath, notify_cmd);
+		//_dprintf("Scrip_Cmd: [%s]\n", notify_cmd);
+		//validate_applydb(wp, NULL);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
+	//websWrite(wp,"%s %d %s\r\n", PROTOCOL, 200, "OK" );
+	//websWrite(wp,"Server: %s\r\n", SERVER_NAME );
+	//websWrite(wp, "Cache-Control: no-store\r\n");
+	//websWrite(wp, "Pragma: no-cache\r\n");
+	//(void) strftime( timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &now ) );
+	//websWrite(wp,"Date: %s\r\n", timebuf );
+	//websWrite(wp,"Content-Type: %s\r\n", "text/html");
+	//websWrite(wp,"Connection: close\r\n" );
+	//websWrite(wp,"\r\n" );
+	websWrite(wp,"<script>parent.done_validating('', '');</script>\n" );
+	return 0;
+}
 
 static void
 do_applydb_cgi(char *url, FILE *stream)
 {
-	char substr[1024];
-	int i;
-	char *name = websGetVar(wp, "p","");
+    applydb_cgi(stream, NULL, NULL, 0, url, NULL, NULL);
+}
+
+static void
+do_dbconf(char *url, FILE *stream)
+{
+	char substr[2048];
+	char dbvar[2048];
+	char dbval[2048];
 	FILE *fp;
-	if (strlen(name) <= 0) {
-		printf("No \"name\"!\n");
-	}
-
+	//int firstRow = 1;
+	//char *substr = NULL;
+	char *name = NULL;
+	char * delim = "&";
+	char *pattern = websGetVar(wp, "p","");
+	char *dup_pattern = strdup(pattern);
+	char *sepstr = dup_pattern;
+	if(strstr(sepstr,delim))
+		name = strsep(&sepstr, delim);
+	else
+		name= strdup(pattern);
+	free(dup_pattern);
+	websWrite(stream,"var db_%s=(function() {\nvar o={};\n", name);
 	doSystem("dbus list %s > /tmp/dbusxxx", name);
-
 	if((fp = fopen("/tmp/dbusxxx", "r")) == NULL)
 		printf("No \"name\"!\n");
 	while(fgets(substr, sizeof(substr),fp) != NULL)
 	{
-		for(i=0; i<50; i++)
-		{
-			if(substr[i] == '=')
-			{
-			substr[i] = '\0';
-			doSystem("dbus update %s", substr);
-			}
+		char *result = NULL;
+		result = strtok( substr, "=" );
+		strcpy (dbvar, result);
+		while( result != NULL ) {
+			strcpy(dbval, result);
+			dbval[strlen(dbval)-1]='\0';
+			result = strtok(NULL,"***");
 		}
+		websWrite(stream,"o['%s']='%s';\n", dbvar, dbval );
 	}
 	fclose(fp);
-	return 1;
+	
+	websWrite(stream,"return o;\n})();\n" );
 }
 
+static void
+do_ss_conf(char *url, FILE *stream)
+{
+
+}
 
 static void
 do_ss_status(char *url, FILE *stream)
@@ -15982,7 +16324,9 @@ struct mime_handler mime_handlers[] = {
 #endif
 	{ "wlc_status.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "get_webdavInfo.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
-	{ "ss_status", "text/javascript", no_cache_IE7 , NULL , do_ss_status, do_auth},
+	{ "dbconf", "text/javascript", no_cache_IE7 , do_html_post_and_get, do_dbconf, NULL },
+	{ "ss_conf", "text/javascript", no_cache_IE7 , do_html_post_and_get , do_ss_conf, NULL },
+	{ "ss_status", "text/javascript", no_cache_IE7 , do_html_post_and_get , do_ss_status, NULL },
 	{ "appGet_image_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_image_path_cgi, NULL },
 	{ "login.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_cgi, NULL },
 	{ "update_clients.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
@@ -16055,12 +16399,14 @@ struct mime_handler mime_handlers[] = {
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "appGet.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_cgi, do_auth },
+	{ "applyss.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_applyss_cgi, do_auth },
 	{ "applydb.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_applydb_cgi, do_auth },
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},
 	{ "upload.cgi*", "text/html", no_cache_IE7, do_upload_post, do_upload_cgi, do_auth },
 	{ "set_ASUS_EULA.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_set_ASUS_EULA_cgi, do_auth },
 	{ "set_TM_EULA.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_set_TM_EULA_cgi, do_auth },
 	{ "unreg_ASUSDDNS.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_unreg_ASUSDDNS_cgi, do_auth },
+	{ "ssupload.cgi*", "text/html", no_cache_IE7, do_ssupload_post, do_ssupload_cgi, do_auth },
 #ifdef RTCONFIG_HTTPS
 	{ "upload_cert_key.cgi*", "text/html", no_cache_IE7, do_upload_cert_key, do_upload_cert_key_cgi, do_auth },
 #endif
@@ -16179,6 +16525,8 @@ struct except_mime_handler except_mime_handlers[] = {
 #endif
 	{ "athX_state.cgi", MIME_EXCEPTION_NOAUTH_FIRST},
 #endif
+	{ "applydb.cgi", MIME_EXCEPTION_NOAUTH_FIRST},
+	{ "applyss.cgi", MIME_EXCEPTION_NOAUTH_FIRST},
 	{ NULL, 0 }
 };
 

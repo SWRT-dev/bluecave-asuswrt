@@ -369,10 +369,10 @@ function loadxml() {
                                                                         <dd class="icon-pic">
                                                                                 <img src="/images/New_ui/tools.png">
                                                                         </dd>
-                                                                         <dt class="icon-title">扩展设置</dt>
+                                                                         <dt class="icon-title">jffs扩展设置</dt>
                                                                          <dd class="icon-desc">
                                                                                 <a class="text" href="/Tools_softcenter.asp">
-                                                                                        扩展设置
+                                                                                        jffs扩展设置
                                                                                 </a>
                                                                         </dd>
                                                                 </dl>

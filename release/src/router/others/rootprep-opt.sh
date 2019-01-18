@@ -38,8 +38,6 @@ ln -sf /www/ext/proxy.pac www/proxy.pac
 ln -sf /www/ext/proxy.pac www/wpad.dat
 #kp
 ln -sf /jffs/koolproxy/data/certs/ca.crt www/kool.crt
-#k3cex
-ln -sf /jffs/softcenter www/softcenter
 
 
 # link dir under opt to /tmp/opt

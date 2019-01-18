@@ -5,13 +5,7 @@ v2ray_user=`nvram get v2ray_user`
 v2ray_sip=`nvram get v2ray_srcip`
 dns_mode=`nvram get v2ray_dnsmode`
 ss_dns_china=`nvram get v2ray_dns`
-usb_uuid=`dbus get jffs_ext`
-if [ -n "$usb_uuid" ]; then
-mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
-else
 mdisk=`nvram get k3c_disk`
-fi
-usb_disk="/tmp/mnt/$mdisk"
 usbmount=`ls /tmp/mnt/`
 V2RAY_CONFIG_FILE="/tmp/etc/v2rayconfig.json"
 TEMP_CONFIG_FILE="/tmp/v2rayconfig.pb"
@@ -51,33 +45,42 @@ json_data="$json_new_data" && echo "$json_data" > $V2RAY_CONFIG_FILE
 
 download_v2ray(){
 #
-	PKG_VERSION=$(wget --no-check-certificate https://api.github.com/repos/v2ray/v2ray-core/releases/latest -q -O -|grep tag_name|awk {'print $2'}|cut -d '"' -f 2)
+	PKG_VERSION=$(wget --no-check-certificate https://raw.githubusercontent.com/paldier/softcenter/master/v2ray/config.json.js -q -O -|grep version |awk {'print $1'}|cut -d '"' -f 4)
 	V2RA_VER=`/jffs/softcenter/bin/v2ray --version 2>/dev/null | head -n1 | awk '{print $2}'` || 0
-	Tmpv2ray=v2ray
-	Tmpv2ctl=v2ctl
-	tarfile=v2ray-linux-mips.zip
-	v2ray_bin=https://github.com/v2ray/v2ray-core/releases/download/"$PKG_VERSION"/$tarfile
-	v2ray_bin2=http://k3c.paldier.com/tools/$tarfile
-	d_rule() {
-		wget --no-check-certificate --timeout=10 --tries=3 -qO $1 $2
-	}
 	echo "$(date "+%F %T") 在线版本: $PKG_VERSION" >> /tmp/v2ray.log
-	echo "$(date "+%F %T") 本地版本: v$V2RA_VER" >> /tmp/v2ray.log
+	echo "$(date "+%F %T") 本地版本: $V2RA_VER" >> /tmp/v2ray.log
 	logger -t "【v2ray】" "在线版本 $PKG_VERSION"
-	logger -t "【v2ray】" "本地版本 v$V2RA_VER"
-	if [ "v$V2RA_VER" != "$PKG_VERSION" ]; then
+	logger -t "【v2ray】" "本地版本 $V2RA_VER"
+	if [ "$V2RA_VER" != "$PKG_VERSION" ]; then
 		logger -t "【v2ray】" "本地版本与在线版本不同，下载 $PKG_VERSION ......"
 		echo "$(date "+%F %T"): 本地版本与在线版本不同，下载 $PKG_VERSION ......" >> /tmp/v2ray.log
 		cd /tmp
-		d_rule $tarfile $v2ray_bin
-		[ "$?" != "0" ] && sleep 2 && d_rule $tarfile $v2ray_bin2 && \
-			[ "$?" != "0" ] && logger -t "【v2ray】" "$PKG_VERSION 下载失败" && echo "$(date "+%F %T"): $PKG_VERSION 下载失败" >> /tmp/v2ray.log && exit 1
-		mkdir /tmp/v2ray-"$PKG_VERSION"-linux-mips
-		unzip -o /tmp/$tarfile -d /tmp/v2ray-"$PKG_VERSION"-linux-mips
-		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ray /jffs/softcenter/bin/v2ray && chmod 755 /jffs/softcenter/bin/v2ray
-		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ctl /jffs/softcenter/bin/v2ctl && chmod 755 /jffs/softcenter/bin/v2ctl
-		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/geosite.dat /jffs/softcenter/bin/geosite.dat && chmod 755 /jffs/softcenter/bin/geosite.dat
-		mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/geoip.dat /jffs/softcenter/bin/geoip.dat && chmod 755 /jffs/softcenter/bin/geoip.dat
+		wget --no-check-certificate --timeout=10 --tries=3 -qO v2ray.tar.gz https://raw.githubusercontent.com/paldier/softcenter/master/v2ray/v2ray.tar.gz
+		if [ "$?" == "0" ]; then
+			tar -zxvf /tmp/v2ray.tar.gz
+			mv /tmp/v2ray/bin/v2ray /jffs/softcenter/bin/v2ray && chmod 755 /jffs/softcenter/bin/v2ray
+			mv /tmp/v2ray/bin/v2ctl /jffs/softcenter/bin/v2ctl && chmod 755 /jffs/softcenter/bin/v2ctl
+			mv /tmp/v2ray/bin/geosite.dat /jffs/softcenter/bin/geosite.dat && chmod 755 /jffs/softcenter/bin/geosite.dat
+			mv /tmp/v2ray/bin/geoip.dat /jffs/softcenter/bin/geoip.dat && chmod 755 /jffs/softcenter/bin/geoip.dat
+			rm -rf /tmp/v2ray.tar.gz /tmp/v2ray >/dev/null 2>&1
+		else
+			sleep 2
+			wget --no-check-certificate --timeout=10 --tries=3 -qO v2ray-linux-mips.zip http://k3c.paldier.com/tools/v2ray-linux-mips.zip
+			if [ "$?" == "0" ]; then
+				mkdir /tmp/v2ray-"$PKG_VERSION"-linux-mips
+				unzip -o /tmp/$tarfile -d /tmp/v2ray-"$PKG_VERSION"-linux-mips
+				mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ray /jffs/softcenter/bin/v2ray && chmod 755 /jffs/softcenter/bin/v2ray
+				mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/v2ctl /jffs/softcenter/bin/v2ctl && chmod 755 /jffs/softcenter/bin/v2ctl
+				mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/geosite.dat /jffs/softcenter/bin/geosite.dat && chmod 755 /jffs/softcenter/bin/geosite.dat
+				mv /tmp/v2ray-"$PKG_VERSION"-linux-mips/geoip.dat /jffs/softcenter/bin/geoip.dat && chmod 755 /jffs/softcenter/bin/geoip.dat
+				rm -rf /tmp/v2ray-linux-mips.zip /tmp/v2ray-"$PKG_VERSION"-linux-mips >/dev/null 2>&1
+			else
+				logger -t "【v2ray】" "$PKG_VERSION 下载失败"
+				echo "$(date "+%F %T"): $PKG_VERSION 下载失败" >> /tmp/v2ray.log
+				exit 1
+			fi
+		fi
+
 		if [ ! -e "/jffs/softcenter/bin/jq" ] ;then
 		wget --no-check-certificate --timeout=10 --tries=3 -qO /jffs/softcenter/bin/jq http://k3c.paldier.com/tools/jq
 		wget --no-check-certificate --timeout=10 --tries=3 -qO /jffs/softcenter/bin/dns2socks http://k3c.paldier.com/tools/dns2socks
@@ -92,7 +95,6 @@ download_v2ray(){
 		fi
 		logger -t "【v2ray】" "$PKG_VERSION 下载成功!"
 		echo "$(date "+%F %T"): $PKG_VERSION 下载成功" >> /tmp/v2ray.log
-		rm -rf /tmp/$tarfile /tmp/v2ray-"$PKG_VERSION"-linux-mips >/dev/null 2>&1
 	fi
 }
 
@@ -187,14 +189,6 @@ service restart_dnsmasq >/dev/null 2>&1
 }
 
 start() {
-killall -q -9 v2ray_mon.sh >/dev/null 2>&1
-icount=`ps -w|grep v2rayconfig |grep -v grep|wc -l`
-
-if [ $icount != 0 ] ;then
-	stop
-	sleep 2s
-fi
-
 if [ "$usbmount" == "" ];then
     echo " $(date "+%F %T"):""系统正在启动，等待USB设备挂载中！" >> /tmp/v2ray.log
 fi
@@ -203,6 +197,14 @@ do
 	sleep 5s
 	usbmount=`ls /tmp/mnt/ |grep $mdisk`
 done
+	killall -q -9 v2ray_mon.sh >/dev/null 2>&1
+	icount=`ps -w|grep v2rayconfig |grep -v grep|wc -l`
+
+if [ $icount != 0 ] ;then
+	stop
+	sleep 2s
+fi
+
 [ "$ss_dns_china" == "0" ] && GFWCDN="208.67.222.222"
 [ "$ss_dns_china" == "1" ] && GFWCDN="8.8.8.8"
 
@@ -272,4 +274,3 @@ restart() {
 }
 
 restart
-

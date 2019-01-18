@@ -119,14 +119,14 @@ document.form.k3c_enable.value = "0";
 								<tr>
 									<td bgcolor="#4D595D" colspan="3" valign="top">
 										<div>&nbsp;</div>
-										<div style="float:left;" class="formfonttitle">K3C扩展设置</div>
+										<div style="float:left;" class="formfonttitle">jffs扩展设置</div>
 										<div style="float:right; width:15px; height:25px;margin-top:10px"><img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img></div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc">K3C扩展设置</div>
+										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc">jffs扩展设置</div>
 										<div style="color:#FC0;padding-top:5px;margin-top:25px;margin-left:0px;float: left;" id="NoteBox" >
                                                                                         <li style="margin-top:5px;">部分插件必须设置挂载U盘或移动硬盘 </li>
                                                                                         <li style="margin-top:5px;">剩余空间不得小于1G</li>
-                                                                                        <li style="margin-top:5px;">其他待续</li>
+                                                                                        <li style="margin-top:5px;">更换挂载分区必须先禁用再切换新分区</li>
 										</div>
 										<table style="margin:10px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="routing_table">
 											<thead>

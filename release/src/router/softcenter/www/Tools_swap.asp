@@ -218,7 +218,7 @@ document.form.swap_enable.value = "0";
 	<input type="hidden" name="group_id" value=""/>
 	<input type="hidden" name="modified" value="0"/>
 	<input type="hidden" name="action_mode" value="toolscript"/>
-	<input type="hidden" name="action_script" value="k3c_swap.sh"/>
+	<input type="hidden" name="action_script" value="softcenter_swap.sh"/>
 	<input type="hidden" name="action_wait" value=""/>
 	<input type="hidden" name="first_time" value=""/>
 	<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>"/>

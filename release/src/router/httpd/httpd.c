@@ -1124,27 +1124,27 @@ handle_request(void)
         HTTPD_DBG("file = %s", file);
 //softcenter
 	char scPath[128];
-	if ((strncmp(file, "Main_S", 6)==0) || (strncmp(file, "Module_", 7)==0) || (strncmp(file, "softcenter.xml", 14)==0))
+	if ((strncmp(file, "Main_S", 6)==0) || (strncmp(file, "Module_", 7)==0))
 	{
-	snprintf(scPath, sizeof(scPath), "/jffs/softcenter/webs/");
-	strcat(scPath, file);
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/webs/");
+		strcat(scPath, file);
 	//logmessage("[httpd] ### GET ### scPath: %s\n", scPath);
-    if(check_if_file_exist(scPath)){
+    	if(check_if_file_exist(scPath)){
 	//snprintf(scPath, 128, "/jffs/softcenter/webs/");
 	//strcat(scPath, file);
-	file = scPath;
+			file = scPath;
+		}
 	}
-	}
-	if ((strncmp(file, "ss_icon_", 8)==0) || (strncmp(file, "ss_js_", 6)==0 ))
+	if ((strncmp(file, "res/icon-", 9)==0) || (strncmp(file, "res/upgrade.png", 15)==0) || strstr(url, "icon-") || strstr(url, "upgrade.png") || strstr(url, "res"))
 	{
-	snprintf(scPath, sizeof(scPath), "/jffs/softcenter/res/");
-	strcat(scPath, file);
-	//logmessage("[httpd] ### GET ### scPath: %s\n", scPath);
-    if(check_if_file_exist(scPath)){
-	//snprintf(scPath, 128, "/jffs/softcenter/webs/");
-	//strcat(scPath, file);
-	file = scPath;
-	}
+		if(!check_if_file_exist(file)){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/");
+		strcat(scPath, file);
+		//logmessage("HTTPD","[httpd] ### GET ### scPath: %s\n", scPath);
+		if(check_if_file_exist(scPath)){
+			file = scPath;
+		}
+		}
 	}
 //softcenter end
 	mime_exception = 0;

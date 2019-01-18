@@ -88,6 +88,9 @@ install:
 	install -m 0755 www/softcenter_frpc.sh $(INSTALLDIR)/usr/sbin
 # softcenter v2ray
 	install -m 0755 www/Tools_v2ray.asp $(INSTALLDIR)/www
+	install -m 0755 www/softcenter_v2ray.sh $(INSTALLDIR)/usr/sbin
+	install -m 0755 www/v2ray_mon.sh $(INSTALLDIR)/usr/sbin
+	install -m 0755 www/v2ray-rules $(INSTALLDIR)/usr/sbin
 # softcenter swap
 	install -m 0755 www/Tools_swap.asp $(INSTALLDIR)/www
 	install -m 0755 www/softcenter_swap.sh $(INSTALLDIR)/usr/sbin
@@ -99,6 +102,9 @@ install:
 	install -m 0755 www/softcenter_script.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 www/softcenter_script_ch.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 www/Tools_Script.asp $(INSTALLDIR)/www
+# K3C helper
+	install -m 0755 www/helper.sh $(INSTALLDIR)/usr/sbin
 
 clean:
+
 

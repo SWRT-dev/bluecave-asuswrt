@@ -114,14 +114,12 @@ if [ "$mtype" == "SSR" ] ;then
 EOF
 
 if [ "$udp_enable" == "1" ] ;then
-	/usr/sbin/ssr-redir  -u -c /tmp/shadowsocksr.json -f /var/run/ssr-reudp.pid
+	/usr/sbin/ssr-redir  -u -c /tmp/shadowsocksr.json -f /var/run/ssr-reudp.pid >/dev/null 2>&1
 fi
 	for i in 1 2 3
 	do 
 		/usr/sbin/ssr-redir  -c /tmp/shadowsocksr.json -f /var/run/ssr-retcp_$i.pid >/dev/null 2>&1
 	done
-
-
 else
 		cat <<-EOF >/tmp/shadowsocks.json
 		{
@@ -139,7 +137,7 @@ else
 EOF
 
 if [ "$udp_enable" == "1" ] ;then
-	/usr/sbin/ss-redir  -u -c /tmp/shadowsocks.json -f /var/run/ssr-reudp.pid
+		/usr/sbin/ss-redir  -u -c /tmp/shadowsocks.json -f /var/run/ssr-reudp.pid >/dev/null 2>&1
 fi
 	for i in 1 2 3
 	do 

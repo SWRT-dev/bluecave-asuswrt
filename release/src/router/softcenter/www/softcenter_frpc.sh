@@ -3,13 +3,7 @@
 frpc_sip=`nvram get frpc_srcip 2>/dev/null`
 frpc_user=`nvram get frpc_user 2>/dev/null`
 frpc_vernum=`nvram get frpc_vernum 2>/dev/null`
-usb_uuid=`dbus get jffs_ext`
-if [ -n "$usb_uuid" ]; then
-mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
-else
 mdisk=`nvram get k3c_disk`
-fi
-usb_disk="/tmp/mnt/$mdisk"
 usbmount=`ls /tmp/mnt/`
 
 stop() {
@@ -31,6 +25,13 @@ do
 	sleep 5s
 	usbmount=`ls /tmp/mnt/ |grep $mdisk`
 done
+	usb_uuid=`dbus get jffs_ext`
+	if [ -n "$usb_uuid" ]; then
+		mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+	else
+		mdisk=`nvram get k3c_disk`
+	fi
+	usb_disk="/tmp/mnt/$mdisk"
 lan_ipaddr=$(nvram get lan_ipaddr)
 mserver=`nvram get frpc_server`
 mport=`nvram get frpc_port`
@@ -164,7 +165,7 @@ restart() {
 		if [ "$kenable" == "1" ] ;then
 			start
 		else
-			logger -t "Softcenter""jffs扩展挂载未开启！"
+			logger -t "软件中心""jffs扩展挂载未开启！"
 			echo "$(date "+%F %T"):"  "jffs扩展挂载未开启！" >> /tmp/frpc.log
 			exit 0
 		fi

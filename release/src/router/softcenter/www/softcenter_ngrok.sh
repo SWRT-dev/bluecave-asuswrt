@@ -1,12 +1,6 @@
 #!/bin/sh 
 
-usb_uuid=`dbus get jffs_ext`
-if [ -n "$usb_uuid" ]; then
-mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
-else
 mdisk=`nvram get k3c_disk`
-fi
-usb_disk="/tmp/mnt/$mdisk"
 usbmount=`ls /tmp/mnt/`
 
 stop() {
@@ -24,6 +18,13 @@ do
 	sleep 5s
 	usbmount=`ls /tmp/mnt/ |grep $mdisk`
 done
+	usb_uuid=`dbus get jffs_ext`
+	if [ -n "$usb_uuid" ]; then
+		mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+	else
+		mdisk=`nvram get k3c_disk`
+	fi
+	usb_disk="/tmp/mnt/$mdisk"
 #不重复启动
 icount=`ps -w|grep ngrokc|grep -v grep|wc -l`
 
@@ -56,11 +57,16 @@ mrport=`echo "$mstr"|awk -F'>' '{printf $5}'`
 if [ -z "$mstr"  ] ;then
 exit 0
 fi
-
+if [ ! -e "/jffs/softcenter/bin/ngrokc" ]; then
+wget --no-check-certificate --timeout=10 --tries=3 -qO /jffs/softcenter/bin/ngrokc http://k3c.paldier.com/tools/ngrokc
+if [ "$?" == "0" ]; then
+chmod 755 /jffs/softcenter/bin/ngrokc
+logger -t "【ngrok】" "下载成功!"
+fi
 if [ "$mtype" = "tcp" ] ;then
-/usr/sbin/ngrokc -SER[Shost:$mserver,Sport:$mport,Atoken:$mtoken] -AddTun[Type:$mtype,Lhost:$mhost,Lport:$mlport,Rport:$mrport,Sdname:$mname] &
+/jffs/softcenter/bin/ngrokc -SER[Shost:$mserver,Sport:$mport,Atoken:$mtoken] -AddTun[Type:$mtype,Lhost:$mhost,Lport:$mlport,Rport:$mrport,Sdname:$mname] &
 else
-/usr/sbin/ngrokc -SER[Shost:$mserver,Sport:$mport,Atoken:$mtoken] -AddTun[Type:$mtype,Lhost:$mhost,Lport:$mlport,Sdname:$mname] &
+/jffs/softcenter/bin/ngrokc -SER[Shost:$mserver,Sport:$mport,Atoken:$mtoken] -AddTun[Type:$mtype,Lhost:$mhost,Lport:$mlport,Sdname:$mname] &
 fi 
 
 let icount=icount+1 

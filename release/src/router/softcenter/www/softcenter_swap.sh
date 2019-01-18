@@ -1,8 +1,6 @@
 #! /bin/sh
 
 mdisk=`nvram get swap_disk`
-usb_disk="/tmp/mnt/$mdisk"
-ext_type=`/bin/mount | grep -E "$usb_disk" | sed -n 1p | cut -d" " -f5`
 swap_size=`nvram get swap_size`
 usbmount=`ls /tmp/mnt/`
 start(){
@@ -21,6 +19,14 @@ do
 	sleep 5s
 	usbmount=`ls /tmp/mnt/ |grep $mdisk`
 done
+	usb_uuid=`dbus get jffs_ext`
+	if [ -n "$usb_uuid" ]; then
+		mdisk=`blkid |grep "${usb_uuid}" |cut -c6-9`
+	else
+		mdisk=`nvram get k3c_disk`
+	fi
+	usb_disk="/tmp/mnt/$mdisk"
+	ext_type=`/bin/mount | grep -E "$usb_disk" | sed -n 1p | cut -d" " -f5`
 	swapon=`free | grep Swap | awk '{print $2}'`
 	
 if [ "$swapon" == "0" ];then
@@ -64,6 +70,7 @@ if [ "$swap_warnning" == "3" ];then
 
 
 stop(){
+	usb_disk="/tmp/mnt/$mdisk"
 	swapoff $usb_disk/swapfile
 	rm -rf $usb_disk/swapfile
 }
@@ -82,3 +89,4 @@ fi
 }
 
 restart
+
