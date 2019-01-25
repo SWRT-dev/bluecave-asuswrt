@@ -31,7 +31,7 @@ if [ "$kenable" == "1" ];then
 /usr/sbin/softcenter_frpc.sh &
 /usr/sbin/softcenter_adbyby.sh &
 /usr/sbin/softcenter_v2ray.sh &
-/usr/sbin/softcenter-start.sh &
+/usr/sbin/softcenter_start.sh &
 else
   logger -t "软件中心" "jffs扩展挂载未开启！"
 fi
