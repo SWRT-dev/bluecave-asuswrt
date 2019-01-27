@@ -17,17 +17,6 @@
 #include "shutils.h"
 #include "shared.h"
 
-int replace_char(char *str, const char from, const char to)
-{
-	char *p = str;
-	while (*p) {
-		if (*p == from)
-			*p = to;
-		p++;
-	}
-	return 1;
-}
-
 #if defined(RTCONFIG_UTF8_SSID)
 int is_utf8(const char * string)
 {
@@ -327,6 +316,44 @@ int remove_word(char *buffer, const char *word)
 	return 1;
 }
 
+int replace_char(char *str, const char from, const char to)
+{
+	char *p = str;
+	while (*p) {
+		if (*p == from)
+			*p = to;
+		p++;
+	}
+	return 1;
+}
+
+/* Escape characters that could break a Javascript array */
+int str_escape_quotes(const char *output, const char *input, int outsize)
+{
+	char *src = (char *)input;
+	char *dst = (char *)output;
+	char *end = (char *)output + outsize - 1;
+	char *escape = "'\"\\";
+
+	if (src == NULL || dst == NULL || outsize <= 0)
+		return 0;
+
+	for ( ; *src && dst < end; src++) {
+		if (strchr(escape, *src)) {
+			if (dst + 2 > end)
+				break;
+			*dst++ = '\\';
+			*dst++ = *src;
+		} else {
+			*dst++ = *src;
+		}
+	}
+	if (dst <= end)
+		*dst = '\0';
+
+	return dst - output;
+}
+
 void trim_space(char *str)
 {
 	char *pt;
@@ -353,3 +380,4 @@ void toUpperCase(char *str) {
 	for(p = str; *p != '\0'; p++)
 		if(*p >= 'a' && *p <='z') *p -= 32;
 }
+

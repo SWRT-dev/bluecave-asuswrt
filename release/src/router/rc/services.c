@@ -1672,10 +1672,12 @@ void start_dnsmasq(void)
 #elif (defined(RTCONFIG_TR069) && !defined(RTCONFIG_TR181))
 	fprintf(fp, "dhcp-script=/sbin/dhcpc_lease\n");
 #endif
-
+	append_custom_config("dnsmasq.conf", fp);
 	/* close fp move to the last */
 	fclose(fp);
-
+	use_custom_config("dnsmasq.conf", "/etc/dnsmasq.conf");
+	run_postconf("dnsmasq", "/etc/dnsmasq.conf");
+	chmod("/etc/dnsmasq.conf", 0644);
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
 	/* Create resolv.dnsmasq with empty server list */
@@ -15851,4 +15853,3 @@ void reset_led(void)
 	setCentralLedLv(brightness_level);
 }
 #endif
-

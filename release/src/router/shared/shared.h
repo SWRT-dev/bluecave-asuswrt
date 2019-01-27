@@ -1685,6 +1685,8 @@ extern int discover_interface(const char *current_wan_ifname, int dhcp_det);
 extern int discover_all(int wan_unit);
 
 // strings.c
+extern int replace_char(char *str, const char from, const char to);
+extern int str_escape_quotes(const char *output, const char *input, int outsize);
 extern int char_to_ascii_safe(const char *output, const char *input, int outsize);
 extern void char_to_ascii(const char *output, const char *input);
 #if defined(RTCONFIG_UTF8_SSID)
@@ -1843,7 +1845,6 @@ void set_macfilter_all(FILE *fp);
 #else
 static inline char *get_wsup_drvname(__attribute__ ((unused)) int band) { return ""; }
 #endif
-extern int replace_char(char *str, const char from, const char to);
 #ifdef RTCONFIG_TRAFFIC_LIMITER
 extern unsigned int traffic_limiter_read_bit(const char *type);
 extern void traffic_limiter_set_bit(const char *type, int unit);
