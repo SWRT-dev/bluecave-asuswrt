@@ -1,7 +1,7 @@
 #!/bin/sh 
 
 modecheck=`nvram get sw_mode`
-[ "$modecheck" != "1" ] && logger -t "软件中心" "非路由模式不支持插件！" && exit 1
+[ "$modecheck" != "1" ] && logger -t "软件中心" "非路由模式不支持插件！" && exit 0
 #载入iptables模块
 insmod /lib/modules/3.10.104/kernel/net/netfilter/nfnetlink.ko
 insmod /lib/modules/3.10.104/kernel/net/netfilter/ipset/ip_set.ko
