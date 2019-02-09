@@ -97,7 +97,7 @@ install:
 # softcenter swap
 	install -m 0755 www/Tools_softcenter.asp $(INSTALLDIR)/www
 	install -m 0755 www/softcenter_tools.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/softcenterex_start.sh $(INSTALLDIR)/usr/sbin
+	install -m 0755 www/softcenter_start.sh $(INSTALLDIR)/usr/sbin
 # softcenter script
 	install -m 0755 www/softcenter_script.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 www/softcenter_script_ch.sh $(INSTALLDIR)/usr/sbin
