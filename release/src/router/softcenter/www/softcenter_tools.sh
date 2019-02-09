@@ -55,7 +55,7 @@ done
 				ln -s $usb_disk/scripts /jffs/softcenter/scripts
 				wget --no-check-certificate --timeout=10 --tries=3 -qO /tmp/softcenter.tar.gz http://sc.paldier.com/softcenter/softcenter.tar.gz
 				if [ "$?" == "0" ]; then
-					tar -zxvf /tmp/softcenter.tar.gz
+					tar -zxvf /tmp/softcenter.tar.gz -C /tmp
 					cp -rf /tmp/softcenter/scripts/* /jffs/softcenter/scripts/
 					cp -rf /tmp/softcenter/res/* /jffs/softcenter/res/
 					cp -rf /tmp/softcenter/webs/* /jffs/softcenter/webs/
