@@ -12879,6 +12879,7 @@ do_upload_cert_key_cgi(char *url, FILE *stream)
 }
 #endif
 
+#ifdef RTCONFIG_SOFTCENTER
 static int ssupload = 0;
 static void
 do_ssupload_post(char *url, FILE *stream, int len, char *boundary)
@@ -13016,6 +13017,8 @@ do_ssupload_cgi(char *url, FILE *stream)
 	if (i == 10)
 		websWrite(stream,"<script>parent.upload_ok(0);</script>\n" );
 }
+#endif
+
 static void
 do_download_cert_key_cgi(char *url, FILE *stream)
 {
