@@ -196,10 +196,13 @@ extern int ssl_stream_fd;
 #else
 #error Unknown endian
 #endif
+
 #include <sysinfo.h>
+#ifdef RTCONFIG_SOFTCENTER
 #include "dbapi.h"
 char softcenter_cfg[] = "/jffs/softcenter/configs";
 char softcenter_web[] = "/jffs/softcenter/webs";
+#endif
 
 extern int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
@@ -990,6 +993,7 @@ ej_nvram_match(int eid, webs_t wp, int argc, char_t **argv)
  * <% nvram_match("wan_proto", "dhcp", "selected"); %> produces "selected"
  * <% nvram_match("wan_proto", "static", "selected"); %> does not produce
  */
+#ifdef RTCONFIG_SOFTCENTER
 static int
 ej_dbus_get(int eid, webs_t wp, int argc, char_t **argv)
 {
@@ -1074,6 +1078,7 @@ ej_dbus_match(int eid, webs_t wp, int argc, char_t **argv)
 
 	return 0;
 }
+#endif
 
 static int
 ej_nvram_match_x(int eid, webs_t wp, int argc, char_t **argv)
@@ -15352,7 +15357,7 @@ do_appGet_cgi(char *url, FILE *stream)
 	websWrite(stream,"\n}\n" );
 	free(dup_pattern);
 }
-
+#ifdef RTCONFIG_SOFTCENTER
 static int
 applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char_t *url, char_t *path, char_t *query)
@@ -15532,12 +15537,6 @@ do_dbconf(char *url, FILE *stream)
 }
 
 static void
-do_ss_conf(char *url, FILE *stream)
-{
-
-}
-
-static void
 do_ss_status(char *url, FILE *stream)
 {
 
@@ -15555,6 +15554,7 @@ do_ss_status(char *url, FILE *stream)
 	websWrite(stream,"[\"%s\", ", nvram_get("ss_foreign_state") );
 	websWrite(stream,"\"%s\"]", nvram_get("ss_china_state") );
 }
+#endif
 
 static void
 do_appGet_image_path_cgi(char *url, FILE *stream)
@@ -16269,9 +16269,10 @@ struct mime_handler mime_handlers[] = {
 #endif
 	{ "wlc_status.json", "application/json", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
 	{ "get_webdavInfo.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, NULL },
+#ifdef RTCONFIG_SOFTCENTER
 	{ "dbconf", "text/javascript", no_cache_IE7 , do_html_post_and_get, do_dbconf, NULL },
-	{ "ss_conf", "text/javascript", no_cache_IE7 , do_html_post_and_get , do_ss_conf, NULL },
 	{ "ss_status", "text/javascript", no_cache_IE7 , do_html_post_and_get , do_ss_status, NULL },
+#endif
 	{ "appGet_image_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_image_path_cgi, NULL },
 	{ "login.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_cgi, NULL },
 	{ "update_clients.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
@@ -16344,13 +16345,15 @@ struct mime_handler mime_handlers[] = {
 	{ "apply.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "applyapp.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_apply_cgi, do_auth },
 	{ "appGet.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_cgi, do_auth },
+#ifdef RTCONFIG_SOFTCENTER
 	{ "applydb.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_applydb_cgi, do_auth },
+	{ "ssupload.cgi*", "text/html", no_cache_IE7, do_ssupload_post, do_ssupload_cgi, do_auth },
+#endif
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},
 	{ "upload.cgi*", "text/html", no_cache_IE7, do_upload_post, do_upload_cgi, do_auth },
 	{ "set_ASUS_EULA.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_set_ASUS_EULA_cgi, do_auth },
 	{ "set_TM_EULA.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_set_TM_EULA_cgi, do_auth },
 	{ "unreg_ASUSDDNS.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_unreg_ASUSDDNS_cgi, do_auth },
-	{ "ssupload.cgi*", "text/html", no_cache_IE7, do_ssupload_post, do_ssupload_cgi, do_auth },
 #ifdef RTCONFIG_HTTPS
 	{ "upload_cert_key.cgi*", "text/html", no_cache_IE7, do_upload_cert_key, do_upload_cert_key_cgi, do_auth },
 #endif
@@ -16469,7 +16472,9 @@ struct except_mime_handler except_mime_handlers[] = {
 #endif
 	{ "athX_state.cgi", MIME_EXCEPTION_NOAUTH_FIRST},
 #endif
+#ifdef RTCONFIG_SOFTCENTER
 	{ "applydb.cgi", MIME_EXCEPTION_NOAUTH_FIRST},
+#endif
 	{ NULL, 0 }
 };
 
@@ -24056,9 +24061,11 @@ struct ej_handler ej_handlers[] = {
 #endif
 	{ "get_sw_mode", ej_get_sw_mode},
 	{ "get_iptvSettings", ej_get_iptvSettings },
+#ifdef RTCONFIG_SOFTCENTER
 	{ "dbus_get", ej_dbus_get},
 	{ "dbus_get_def", ej_dbus_get_def},
 	{ "dbus_match", ej_dbus_match},
+#endif
 	{ NULL, NULL }
 };
 

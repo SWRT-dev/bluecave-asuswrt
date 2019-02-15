@@ -1122,7 +1122,7 @@ handle_request(void)
         }
 #endif
         HTTPD_DBG("file = %s", file);
-//softcenter
+#ifdef RTCONFIG_SOFTCENTER
 	char scPath[128];
 	if ((strncmp(file, "Main_S", 6)==0) || (strncmp(file, "Module_", 7)==0))
 	{
@@ -1146,7 +1146,7 @@ handle_request(void)
 		}
 		}
 	}
-//softcenter end
+#endif
 	mime_exception = 0;
 	do_referer = 0;
 

@@ -2633,6 +2633,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_DWB/d" $(1); \
 		echo "RTCONFIG_DWB=y" >>$(1); \
 	fi; \
+	if [ "$(SOFTCENTER)" = "y" ]; then \
+		sed -i "/RTCONFIG_SOFTCENTER/d" $(1); \
+		echo "RTCONFIG_SOFTCENTER=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef

@@ -712,7 +712,10 @@ obj-$(RTCONFIG_OPENVPN) += libvpn
 obj-y += rc
 obj-y += rom
 obj-y += others
-obj-y += softcenter libev-4.22 skipdbv2 dbus-1.8.8 libpcap
+ifeq ($(RTCONFIG_SOFTCENTER),y)
+obj-y += skipdbv2 libev-4.22
+endif
+obj-y += dbus-1.8.8 libpcap softcenter
 obj-y += readline-6.2
 obj-y += libpasswd
 obj-y += httpd json-c
@@ -6802,6 +6805,7 @@ udev-173-install: udev-173
 		ln -sf libudev.so.0.12.0 libudev.so.0 && \
 		ln -sf libudev.so.0.12.0 libudev.so
 
+ifeq ($(RTCONFIG_SOFTCENTER),y)
 libev-4.22/configure:
 	cd libev-4.22 && ./autogen.sh
 
@@ -6846,7 +6850,7 @@ skipdbv2-install: skipdbv2
 	install -D skipdbv2/bin/dbus $(INSTALLDIR)/skipdbv2/usr/sbin/dbus
 	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/skipd
 	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/dbus
-
+endif
 libical-2.0.0/Makefile: libical-2.0.0/CMakeLists.txt
 	cd libical-2.0.0 && cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_BUILD_TYPE=Release \
