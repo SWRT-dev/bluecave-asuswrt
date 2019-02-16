@@ -4161,6 +4161,7 @@ stop_telnetd(void)
 		killall_tk("telnetd");
 }
 
+#ifdef RTCONFIG_SOFTCENTER
 int
 start_skipd(void)
 {
@@ -4174,6 +4175,7 @@ stop_skipd(void)
 	if (pids("skipd"))
 		killall_tk("skipd");
 }
+#endif
 
 void
 start_httpd(void)
@@ -7922,9 +7924,10 @@ start_services(void)
 #if defined(RTCONFIG_AMAS)
 	start_amas_lib();
 #endif
-
+#ifdef RTCONFIG_SOFTCENTER
 	start_skipd();
-	doSystem("/usr/sbin/k3c-init.sh");
+#endif
+	doSystem("/usr/sbin/softcenter-init.sh");
 	run_custom_script("services-start", NULL);
 	
 	return 0;
@@ -7943,7 +7946,9 @@ void
 stop_services(void)
 {
 	run_custom_script("services-stop", NULL);
+#ifdef RTCONFIG_SOFTCENTER
 	stop_skipd();
+#endif
 #if defined(RTCONFIG_AMAS)
 	stop_amas_lib();
 #endif
