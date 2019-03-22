@@ -145,7 +145,7 @@ int dbclient_bulk(dbclient* client, const char* command, const char* key, int nk
     int n1,n2,nc;
 
     nc = strlen(command);
-    if(nk <= 0 || nv <= 0) {
+    if(nk < 0 || nv < 0) {
         return -1;
     }
 

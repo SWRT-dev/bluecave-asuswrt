@@ -47,29 +47,25 @@ done
 			mkdir -p /jffs/softcenter/init.d
 			mkdir -p /jffs/softcenter/configs
 			mkdir -p /jffs/softcenter/ss
+			mkdir -p /jffs/softcenter/lib
 			mkdir -p /jffs/softcenter/perp
 			if [ ! -e "/jffs/softcenter/init.d/S10softcenter.sh" ]; then
 				ln -s $usb_disk/bin /jffs/softcenter/bin
 				ln -s $usb_disk/res /jffs/softcenter/res
 				ln -s $usb_disk/webs /jffs/softcenter/webs
 				ln -s $usb_disk/scripts /jffs/softcenter/scripts
-				wget --no-check-certificate --timeout=10 --tries=3 -qO /tmp/softcenter.tar.gz http://sc.paldier.com/softcenter/softcenter.tar.gz
-				if [ "$?" == "0" ]; then
-					tar -zxvf /tmp/softcenter.tar.gz -C /tmp
-					cp -rf /tmp/softcenter/scripts/* /jffs/softcenter/scripts/
-					cp -rf /tmp/softcenter/res/* /jffs/softcenter/res/
-					cp -rf /tmp/softcenter/webs/* /jffs/softcenter/webs/
-					cp -rf /tmp/softcenter/bin/* /jffs/softcenter/bin/
-					cp -rf /tmp/softcenter/perp/* /jffs/softcenter/perp/
-					chmod 755 /jffs/softcenter/scripts/*.sh
-					chmod 755 /jffs/softcenter/bin/*
-					chmod 755 /jffs/softcenter/perp/*
-					ln -sf /jffs/softcenter/scripts/ks_app_install.sh /jffs/softcenter/init.d/S10softcenter.sh
-					cp -rf /jffs/softcenter/scripts/ks_app_install.sh /jffs/softcenter/scripts/ks_app_remove.sh
-					echo " $(date "+%F %T"):""安装完成，重启后生效！" >> /tmp/k3c.log
-				else
-					echo " $(date "+%F %T"):""下载失败！" >> /tmp/k3c.log
-				fi
+				cp -rf /rom/etc/softcenter/scripts/* /jffs/softcenter/scripts/
+				cp -rf /rom/etc/softcenter/res/* /jffs/softcenter/res/
+				cp -rf /rom/etc/softcenter/webs/* /jffs/softcenter/webs/
+				cp -rf /rom/etc/softcenter/bin/* /jffs/softcenter/bin/
+				cp -rf /rom/etc/softcenter/perp/* /jffs/softcenter/perp/
+				chmod 755 /jffs/softcenter/scripts/*.sh
+				chmod 755 /jffs/softcenter/bin/*
+				chmod 755 /jffs/softcenter/perp/*
+				chmod 755 /jffs/softcenter/init.d/*
+				cp -rf /jffs/softcenter/scripts/ks_app_install.sh /jffs/softcenter/init.d/S10softcenter.sh
+				cp -rf /jffs/softcenter/scripts/ks_app_install.sh /jffs/softcenter/scripts/ks_app_remove.sh
+				echo " $(date "+%F %T"):""安装完成，重启后生效！" >> /tmp/k3c.log
 			fi
 		fi
 		ln -s $usb_disk/bin /jffs/softcenter/bin
@@ -81,7 +77,7 @@ done
 }
 
 stop(){
-	#rm -rf /jffs/softcenter
+	rm -rf /jffs/softcenter
 	dbus remove jffs_ext
 }
 
