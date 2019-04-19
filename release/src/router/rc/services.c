@@ -3184,7 +3184,7 @@ start_ddns(void)
 	} 
 	else if (strcmp(server, "WWW.3322.ORG")==0)
 		service = "qdns dynamic";
-        else if (strcmp(server, "CUSTOM")==0)
+    else if (strcmp(server, "CUSTOM")==0)
                 service = "";
 	else {
 		logmessage("start_ddns", "Error ddns server name: %s\n", server);
@@ -3252,11 +3252,11 @@ start_ddns(void)
 		_eval(argv, NULL, 0, &pid);
 	} else {	// Custom DDNS
 		// Block until it completes and updates the DDNS update results in nvram
-		run_custom_script_blocking("ddns-start", wan_ip, NULL);
+		run_custom_script("ddns-start", 120, wan_ip, NULL);
 		return 0;
 
 	}
-	run_custom_script("ddns-start", wan_ip);
+	run_custom_script("ddns-start", 0, wan_ip, NULL);
 	return 0;
 }
 
@@ -7928,7 +7928,7 @@ start_services(void)
 	start_skipd();
 #endif
 	doSystem("/usr/sbin/softcenter-init.sh");
-	run_custom_script("services-start", NULL);
+	run_custom_script("services-start", 0, NULL, NULL);
 	
 	return 0;
 }
@@ -9154,7 +9154,7 @@ void factory_reset(void)
 void handle_notifications(void)
 {
 	char nv[256], nvtmp[32], *cmd[8], *script;
-	char *nvp, *b, *nvptr;
+	char *nvp, *b, *nvptr, *actionstr;;
 	int action = 0;
 	int count;
 	int i;
@@ -9194,21 +9194,26 @@ again:
 	if(strncmp(cmd[0], "start_", 6)==0) {
 		action |= RC_SERVICE_START;
 		script = &cmd[0][6];
+		actionstr = "start";
 	}
 	else if(strncmp(cmd[0], "stop_", 5)==0) {
 		action |= RC_SERVICE_STOP;
 		script = &cmd[0][5];
+		actionstr = "stop";
 	}
 	else if(strncmp(cmd[0], "restart_", 8)==0) {
 		action |= (RC_SERVICE_START | RC_SERVICE_STOP);
 		script = &cmd[0][8];
+		actionstr = "restart";
 	}
 	else {
 		action = 0;
 		script = cmd[0];
+		actionstr = "";
 	}
 
 	TRACE_PT("running: %d %s\n", action, script);
+	run_custom_script("service-event", 120, actionstr, script);
 
 #ifdef RTCONFIG_USB_MODEM
 	if(!strcmp(script, "simauth")
@@ -13022,7 +13027,7 @@ _dprintf("goto again(%d)...\n", getpid());
 		unsetenv("unit");
 	}
 #endif
-
+	run_custom_script("service-event-end", 0, actionstr, script);
 	nvram_set("rc_service", "");
 	nvram_set("rc_service_pid", "");
 _dprintf("handle_notifications() end\n");
@@ -13601,6 +13606,7 @@ _dprintf("nat_rule: the nat rule file was not ready. wait %d seconds...\n", retr
 	setup_ct_timeout(TRUE);
 	setup_udp_timeout(TRUE);
 
+	run_custom_script("nat-start", 0, NULL, NULL);
 	return NAT_STATE_NORMAL;
 }
 

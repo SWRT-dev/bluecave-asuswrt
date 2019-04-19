@@ -861,6 +861,7 @@ static int add_qos_rules(char *pcWANIF)
 //		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
 	}
 #endif
+	run_custom_script("qos-start", 0, "rules", NULL);
 	QOSDBG("[qos] iptables DONE!\n");
 
 	return 0;
@@ -1137,6 +1138,7 @@ static int start_tqos(void)
 
 	fclose(f);
 	chmod(qosfn, 0700);
+	run_custom_script("qos-start", 0, "init", NULL);
 	eval((char *)qosfn, "start");
 	QOSDBG("[qos] tc done!\n");
 

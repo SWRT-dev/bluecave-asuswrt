@@ -546,6 +546,12 @@ function openLink(s){
 			tourl = "http://www.no-ip.com/newUser.php";
 		else if (document.form.ddns_server_x.value == 'WWW.ORAY.COM')
 			tourl = "http://www.oray.com/";
+		else if (document.form.ddns_server_x.value == '3322')
+			tourl = "http://www.pubyun.com/";
+		else if (document.form.ddns_server_x.value == 'oray')
+			tourl = "http://www.oray.com/";
+		else if (document.form.ddns_server_x.value == 'changeip')
+			tourl = "https://www.changeip.com/";
 		else if (document.form.ddns_server_x.value == 'DOMAINS.GOOGLE.COM')
 			tourl = "https://domains.google/";
 		else	tourl = "";
