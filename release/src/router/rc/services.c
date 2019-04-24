@@ -7945,7 +7945,7 @@ stop_logger(void)
 void
 stop_services(void)
 {
-	run_custom_script("services-stop", NULL);
+	run_custom_script("services-stop", 0, NULL, NULL);
 #ifdef RTCONFIG_SOFTCENTER
 	stop_skipd();
 #endif
