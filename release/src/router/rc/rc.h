@@ -1647,6 +1647,7 @@ extern void start_DSLsenddiagmail(void);
 extern void start_snmpd(void);
 extern void stop_snmpd(void);
 #endif
+int ddns_custom_updated_main(int argc, char *argv[]);
 #ifdef RTCONFIG_TIMEMACHINE
 extern int start_timemachine(void);
 extern void stop_timemachine(void);

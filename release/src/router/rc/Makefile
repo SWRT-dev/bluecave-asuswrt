@@ -698,6 +698,7 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
 	@cd $(INSTALLDIR)/sbin && ln -sf rc netool
+	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_custom_updated
 ifeq ($(HND_ROUTER),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hnd-write
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hnd-erase
