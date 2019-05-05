@@ -714,6 +714,9 @@ obj-y += rom
 obj-y += others
 ifeq ($(RTCONFIG_SOFTCENTER),y)
 obj-y += skipdbv2 libev-4.22
+ifeq ($(RTCONFIG_SOFTCENTER_EXT),y)
+obj-y += httpdb
+endif
 endif
 obj-y += dbus-1.8.8 libpcap softcenter
 obj-y += readline-6.2
@@ -6853,6 +6856,28 @@ skipdbv2-install: skipdbv2
 	install -D skipdbv2/bin/dbus $(INSTALLDIR)/skipdbv2/usr/sbin/dbus
 	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/skipd
 	$(STRIP) $(INSTALLDIR)/skipdbv2/usr/sbin/dbus
+ifeq ($(RTCONFIG_SOFTCENTER_EXT),y)
+httpdb/Makefile: httpdb/CMakeLists.txt
+	cd httpdb && cmake -DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_EXE_LINKER_FLAGS="-L$(STAGEDIR)/usr/lib" 
+
+httpdb: httpdb/Makefile
+	$(MAKE) -C $@
+
+httpdb-clean:
+	[ ! -f httpdb/Makefile ] || $(MAKE) -C httpdb clean
+	@rm -rf httpdb/bin
+	@rm -rf httpdb/lib
+	@rm -rf httpdb/CMakeFiles
+	@rm -f httpdb/CMakeCache.txt
+	@rm -f httpdb/cmake_install.cmake
+	@rm -f httpdb/Makefile
+
+httpdb-install: httpdb
+	install -D httpdb/bin/httpdb $(INSTALLDIR)/httpdb/usr/sbin/httpdb
+	$(STRIP) $(INSTALLDIR)/httpdb/usr/sbin/httpdb
+endif
 endif
 libical-2.0.0/Makefile: libical-2.0.0/CMakeLists.txt
 	cd libical-2.0.0 && cmake -DCMAKE_INSTALL_PREFIX=/usr \
@@ -7786,5 +7811,4 @@ $(obj-y) $(obj-n) $(obj-clean) $(obj-install): dummy
 .PHONY: all clean distclean mrproper install package image
 .PHONY: conf mconf oldconf kconf kmconf config menuconfig oldconfig
 .PHONY: dummy libnet libpcap
-
 
