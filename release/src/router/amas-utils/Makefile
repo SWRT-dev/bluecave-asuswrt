@@ -10,9 +10,10 @@ endif
 LDFLAGS		= -L$(OPENSSL_DIR) -L$(NVRAM_DIR) -L$(SHARED_DIR) -L$(JSON_C_DIR)/.libs
 LIBS		= -ljson-c -lcrypto -lnvram -lshared
 
-LIBS += -ldl -lm
+LIBS += -ldl -lm -pthread
 
 ifeq ($(HND_ROUTER),y)
+CFLAGS += -DHND_ROUTER
 LDFLAGS += -L$(TOP)/wlcsm -lwlcsm
 endif
 

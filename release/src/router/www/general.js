@@ -1441,12 +1441,11 @@ function check_hwaddr_flag(obj){  //check_hwaddr() remove alert()
 			return 0;
 	}else{
 		var hwaddr = new RegExp("(([a-fA-F0-9]{2}(\:|$)){6})", "gi");
-		//var legal_hwaddr = new RegExp("(^([a-fA-F0-9][aAcCeE02468])(\:))", "gi"); // for legal MAC, unicast & globally unique (OUI enforced)
-
+		var legal_hwaddr = new RegExp("(^([a-fA-F0-9][cC048])(\:))", "gi"); // for legal MAC, unicast & globally unique (OUI enforced)
 		if(!hwaddr.test(obj.value))
     		return 1;
-  		/*else if(!legal_hwaddr.test(obj.value))
-    		return 2;*/
+  		else if(!legal_hwaddr.test(obj.value))
+    		return 2;
 		else
 			return 0;
   }

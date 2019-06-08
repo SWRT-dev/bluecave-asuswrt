@@ -1122,6 +1122,7 @@ handle_request(void)
         }
 #endif
         HTTPD_DBG("file = %s", file);
+
 #ifdef RTCONFIG_SOFTCENTER
 	char scPath[128];
 	if ((strncmp(file, "Main_S", 6)==0) || (strncmp(file, "Module_", 7)==0))
@@ -1948,12 +1949,6 @@ search_desc (pkw_t pkw, char *name)
 #endif
 #endif //TRANSLATE_ON_FLY
 
-void reapchild()	// 0527 add
-{
-	signal(SIGCHLD, reapchild);
-	wait(NULL);
-}
-
 int main(int argc, char **argv)
 {
 	usockaddr usa;
@@ -2018,7 +2013,7 @@ int main(int argc, char **argv)
 
 	/* Ignore broken pipes */
 	signal(SIGPIPE, SIG_IGN);
-	signal(SIGCHLD, reapchild);	// 0527 add
+	signal(SIGCHLD, chld_reap);
 	signal(SIGUSR1, update_wlan_log);
 
 #ifdef RTCONFIG_HTTPS

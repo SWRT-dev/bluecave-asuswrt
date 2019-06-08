@@ -253,7 +253,8 @@ FILE *ssl_client_fopen_name(int sd, const char *name)
 	return _ssl_fopen(sd, 1, name);
 }
 
-#if defined(SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
+#ifndef SSL_OP_NO_RENEGOTIATION
+#if OPENSSL_VERSION_NUMBER < 0x10100000L && defined(SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
 static void ssl_info_cb(const SSL *ssl, int where, int ret)
 {
 	if ((where & SSL_CB_HANDSHAKE_DONE) != 0 && SSL_is_server((SSL *) ssl)) {
@@ -261,6 +262,7 @@ static void ssl_info_cb(const SSL *ssl, int where, int ret)
 		ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
 	}
 }
+#endif
 #endif
 
 int mssl_init(char *cert, char *priv)
@@ -361,7 +363,7 @@ int mssl_init(char *cert, char *priv)
 		// Disable renegotiation
 #ifdef SSL_OP_NO_RENGOTIATION
 		SSL_CTX_set_options(ctx, SSL_OP_NO_RENGOTIATION);
-#elif defined(SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
+#elif OPENSSL_VERSION_NUMBER < 0x10100000L && defined(SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
 		SSL_CTX_set_info_callback(ctx, ssl_info_cb);
 #endif
 	}

@@ -70,8 +70,8 @@ if(yadns_support){
 
 function initial(){
 	show_menu();
-	//id="faq" href="https://www.asus.com/US/support/FAQ/1000906"
-	httpApi.faqURL("1000906", function(url){document.getElementById("faq").href=url;});
+	//id="faq" href="https://www.asus.com/US/support/FAQ/1036677"
+	httpApi.faqURL("1036677", function(url){document.getElementById("faq").href=url;});
 
 	var dhcp_staticlist_row = dhcp_staticlist_array.split('&#60');
 	for(var i = 1; i < dhcp_staticlist_row.length; i += 1) {

@@ -3377,6 +3377,7 @@ int32_t ppa_get_ct_stats(PPA_SESSION *p_session, PPA_CT_COUNTER *pCtCounter)
         else
 		ret = PPA_FAILURE;
 
+	__ppa_session_put(p_item);
   } 
 
   if ( __ppa_session_find_by_ct(p_session, 1, &p_item) == PPA_SESSION_EXISTS ) {
@@ -3394,6 +3395,7 @@ int32_t ppa_get_ct_stats(PPA_SESSION *p_session, PPA_CT_COUNTER *pCtCounter)
         else
 		ret = PPA_FAILURE;
 
+	__ppa_session_put(p_item);
   }
 
   ppa_session_list_unlock();

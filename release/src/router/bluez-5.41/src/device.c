@@ -4792,7 +4792,9 @@ bool device_attach_att(struct btd_device *dev, GIOChannel *io)
 	dst = device_get_address(dev);
 	ba2str(dst, dstaddr);
 
-	//gatt_client_init(dev);
+#if !defined(RTCONFIG_BT_CONN)
+	gatt_client_init(dev);
+#endif
 	gatt_server_init(dev, btd_gatt_database_get_db(database));
 
 	if (gatt_db_isempty(dev->db))

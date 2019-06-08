@@ -12,9 +12,10 @@ interface_name=$1
 pid=$$
 
 re_mode=`nvram get re_mode`
+sw_mode=`nvram get sw_mode`
 
 radio_name=${interface_name%%.*}
-if [ $re_mode != "1" ] && [ -e "$INIT_FLAG" ] && [ -e ${USE_CURRENT_CONF}_${radio_name} ]
+if [ $re_mode != "1" ] && [ $sw_mode != "2" ] && [ -e "$INIT_FLAG" ] && [ -e ${USE_CURRENT_CONF}_${radio_name} ]
 then
 	echo "####### $script_name: init flow with conf from previous setting" > /dev/console
 	# Create the output configuration file
@@ -502,7 +503,8 @@ then
 	if [ "$auto_channel" = "1" ]
 	then
 		channel="acs_smart"
-		if [ "$re_mode" = "1" ]
+		#If it is re mode or repeater mode, set channel as acs_sta_mode.
+		if [ "$re_mode" = "1" ] || [ "$sw_mode" = "2" ]
 		then
 			channel="acs_sta_mode"
 		fi

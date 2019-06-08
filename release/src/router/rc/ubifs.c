@@ -162,7 +162,7 @@ void start_ubifs(void)
 		_dprintf("*** ubifs: ubi volume not found\n");
 
 		/* mtd erase on UBIFS_VOL_NAME first */
-		if (!mtd_erase(JFFS2_MTD_NAME)) {
+		if (mtd_erase(JFFS2_MTD_NAME)) {
 			error("formatting");
 			return;
 		}
@@ -292,8 +292,7 @@ void start_ubifs(void)
 		_dprintf("%s: bind mount " UBIFS_MNT_DIR "/firmware fail! (r = %d)\n", __func__, r);
 #endif
 #endif
-	if (!check_if_dir_exist("/jffs/scripts/")) mkdir("/jffs/scripts/", 0755);
-	if (!check_if_dir_exist("/jffs/configs/")) mkdir("/jffs/configs/", 0755);
+
 }
 
 void stop_ubifs(int stop)
@@ -340,4 +339,3 @@ void stop_ubifs(int stop)
 		start_syslogd();
 #endif
 }
-

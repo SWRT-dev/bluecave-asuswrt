@@ -1,7 +1,5 @@
 /* Various utility functions.
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 Free Software
-   Foundation, Inc.
+   Copyright (C) 1996-2011, 2015, 2018 Free Software Foundation, Inc.
 
 This file is part of GNU Wget.
 
@@ -49,10 +47,7 @@ as that of the covered work.  */
 
 #if HAVE_UTIME
 # include <sys/types.h>
-# ifdef HAVE_UTIME_H
-#  include <utime.h>
-# endif
-
+# include <utime.h>
 # ifdef HAVE_SYS_UTIME_H
 #  include <sys/utime.h>
 # endif
@@ -73,7 +68,10 @@ as that of the covered work.  */
 #include <setjmp.h>
 
 #include <regex.h>
-#ifdef HAVE_LIBPCRE
+#ifdef HAVE_LIBPCRE2
+# define PCRE2_CODE_UNIT_WIDTH 8
+# include <pcre2.h>
+#elif defined HAVE_LIBPCRE
 # include <pcre.h>
 #endif
 
@@ -108,7 +106,7 @@ as that of the covered work.  */
 #endif /* def __VMS */
 
 #ifdef TESTING
-#include "test.h"
+#include "../tests/unit-tests.h"
 #endif
 
 #include "exits.h"
@@ -474,7 +472,7 @@ fork_to_background (void)
 #else /* def __VMS */
 
 #if !defined(WINDOWS) && !defined(MSDOS)
-void
+bool
 fork_to_background (void)
 {
   pid_t pid;
@@ -519,6 +517,8 @@ fork_to_background (void)
     DEBUGP (("Failed to redirect stdout to /dev/null.\n"));
   if (freopen ("/dev/null", "w", stderr) == NULL)
     DEBUGP (("Failed to redirect stderr to /dev/null.\n"));
+
+  return logfile_changed;
 }
 #endif /* !WINDOWS && !MSDOS */
 
@@ -532,40 +532,13 @@ fork_to_background (void)
 void
 touch (const char *file, time_t tm)
 {
-#if HAVE_UTIME
-# ifdef HAVE_STRUCT_UTIMBUF
   struct utimbuf times;
-# else
-  struct {
-    time_t actime;
-    time_t modtime;
-  } times;
-# endif
+
   times.modtime = tm;
   times.actime = time (NULL);
+
   if (utime (file, &times) == -1)
     logprintf (LOG_NOTQUIET, "utime(%s): %s\n", file, strerror (errno));
-#else
-  struct timespec timespecs[2];
-  int fd;
-
-  fd = open (file, O_WRONLY);
-  if (fd < 0)
-    {
-      logprintf (LOG_NOTQUIET, "open(%s): %s\n", file, strerror (errno));
-      return;
-    }
-
-  timespecs[0].tv_sec = time (NULL);
-  timespecs[0].tv_nsec = 0L;
-  timespecs[1].tv_sec = tm;
-  timespecs[1].tv_nsec = 0L;
-
-  if (futimens (fd, timespecs) == -1)
-    logprintf (LOG_NOTQUIET, "futimens(%s): %s\n", file, strerror (errno));
-
-  close (fd);
-#endif
 }
 
 /* Checks if FILE is a symbolic link, and removes it if it is.  Does
@@ -592,6 +565,9 @@ bool
 file_exists_p (const char *filename, file_stats_t *fstats)
 {
   struct stat buf;
+
+  if (!filename)
+	  return false;
 
 #if defined(WINDOWS) || defined(__VMS)
     int ret = stat (filename, &buf);
@@ -878,7 +854,12 @@ fopen_stat(const char *fname, const char *mode, file_stats_t *fstats)
   FILE *fp;
   struct stat fdstats;
 
+#if defined FUZZING && defined TESTING
+  fp = fopen_wgetrc (fname, mode);
+  return fp;
+#else
   fp = fopen (fname, mode);
+#endif
   if (fp == NULL)
   {
     logprintf (LOG_NOTQUIET, _("Failed to Fopen file %s\n"), fname);
@@ -946,6 +927,7 @@ open_stat(const char *fname, int flags, mode_t mode, file_stats_t *fstats)
   if (fstat (fd, &fdstats) == -1)
   {
     logprintf (LOG_NOTQUIET, _("Failed to stat file %s, error: %s\n"), fname, strerror(errno));
+    close (fd);
     return -1;
   }
 #if !(defined(WINDOWS) || defined(__VMS))
@@ -1178,7 +1160,7 @@ accdir (const char *directory)
 bool
 match_tail (const char *string, const char *tail, bool fold_case)
 {
-  int pos = strlen (string) - strlen (tail);
+  int pos = (int) strlen (string) - (int) strlen (tail);
 
   if (pos < 0)
     return false;  /* tail is longer than string.  */
@@ -1304,6 +1286,7 @@ wget_read_file (const char *file)
 
   /* Some magic in the finest tradition of Perl and its kin: if FILE
      is "-", just use stdin.  */
+#ifndef FUZZING
   if (HYPHENP (file))
     {
       fd = fileno (stdin);
@@ -1312,6 +1295,7 @@ wget_read_file (const char *file)
          redirected from a regular file, mmap() will still work.  */
     }
   else
+#endif
     fd = open (file, O_RDONLY);
   if (fd < 0)
     return NULL;
@@ -2448,6 +2432,23 @@ wget_base64_decode (const char *base64, void *dest, size_t size)
   return n;
 }
 
+#ifdef HAVE_LIBPCRE2
+/* Compiles the PCRE2 regex. */
+void *
+compile_pcre2_regex (const char *str)
+{
+  int errornumber;
+  PCRE2_SIZE erroroffset;
+  pcre2_code *regex = pcre2_compile((PCRE2_SPTR) str, PCRE2_ZERO_TERMINATED, 0, &errornumber, &erroroffset, NULL);
+  if (! regex)
+    {
+      fprintf (stderr, _("Invalid regular expression %s, PCRE2 error %d\n"),
+               quote (str), errornumber);
+    }
+  return regex;
+}
+#endif
+
 #ifdef HAVE_LIBPCRE
 /* Compiles the PCRE regex. */
 void *
@@ -2460,7 +2461,6 @@ compile_pcre_regex (const char *str)
     {
       fprintf (stderr, _("Invalid regular expression %s, %s\n"),
                quote (str), errbuf);
-      return false;
     }
   return regex;
 }
@@ -2471,6 +2471,11 @@ void *
 compile_posix_regex (const char *str)
 {
   regex_t *regex = xmalloc (sizeof (regex_t));
+#ifdef TESTING
+  /* regcomp might be *very* cpu+memory intensive,
+   *  see https://sourceware.org/glibc/wiki/Security%20Exceptions */
+  str = "a";
+#endif
   int errcode = regcomp ((regex_t *) regex, str, REG_EXTENDED | REG_NOSUB);
   if (errcode != 0)
     {
@@ -2486,6 +2491,34 @@ compile_posix_regex (const char *str)
 
   return regex;
 }
+
+#ifdef HAVE_LIBPCRE2
+/* Matches a PCRE2 regex.  */
+bool
+match_pcre2_regex (const void *regex, const char *str)
+{
+  int rc;
+  pcre2_match_data *match_data;
+
+  match_data = pcre2_match_data_create_from_pattern(regex, NULL);
+
+  if (match_data)
+    {
+      rc = pcre2_match(regex, (PCRE2_SPTR) str, strlen(str), 0, 0, match_data, NULL);
+      pcre2_match_data_free(match_data);
+    }
+  else
+	  rc = PCRE2_ERROR_NOMEMORY;
+
+  if (rc < 0 && rc != PCRE2_ERROR_NOMATCH)
+    {
+      logprintf (LOG_VERBOSE, _("Error while matching %s: %d\n"),
+                 quote (str), rc);
+    }
+
+  return rc >= 0;
+}
+#endif
 
 #ifdef HAVE_LIBPCRE
 #define OVECCOUNT 30
@@ -2819,7 +2852,7 @@ wg_pin_peer_pubkey (const char *pinnedpubkey, const char *pubkey, size_t pubkeyl
             }
           else
             logprintf (LOG_VERBOSE, _ ("Skipping key with wrong size (%d/%d): %s\n"),
-                       (strlen (begin_pos + 8) * 3) / 4, SHA256_DIGEST_SIZE,
+                       (int) (strlen (begin_pos + 8) * 3) / 4, SHA256_DIGEST_SIZE,
                        quote (begin_pos + 8));
 
           /*

@@ -176,6 +176,7 @@ OBJS += ipq40xx.o
 else
 OBJS += qca8337.o
 endif
+OBJS += qca.o
 else ifeq ($(RTCONFIG_ALPINE),y)
 OBJS += flash_mtd.o api-alpine.o
 ifeq ($(RTCONFIG_EXT_RTL8370MB),y)
@@ -290,8 +291,9 @@ ifeq ($(RTCONFIG_DWB),y)
 ifeq ($(RTCONFIG_BCMBSD),y)
 CFLAGS += -DSMART_CONNECT
 endif
-OBJS += $(if $(wildcard sysdeps/amas/amas_dwb.c),sysdeps/amas/amas_dwb.o,prebuild/amas_dwb.o)
+OBJS += $(if $(wildcard sysdeps/amas/amas_dwb.c),amas_dwb.o,prebuild/amas_dwb.o)
 endif
+vpath %.c sysdeps/amas
 endif
 
 vpath %.c sysdeps $(SRCBASE)/shared/ $(WLAN_ComponentSrcDirs)

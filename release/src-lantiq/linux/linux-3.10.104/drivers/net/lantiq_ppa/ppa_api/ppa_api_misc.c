@@ -2846,6 +2846,7 @@ int32_t ppa_ioctl_set_sw_session_enable(unsigned int cmd, unsigned long arg, PPA
       ppa_debug(DBG_ENABLE_MASK_DEBUG_PRINT,"No point to enable or disable session in sw accel.\n");
       res = PPA_SUCCESS; // No point to enable/disable
     }
+	__ppa_session_put(p_item);
   } else {
     ppa_debug(DBG_ENABLE_MASK_DEBUG_PRINT,"Session 0x%x does not exist!!!\n", pSwSessEnableInfo->session);
   }

@@ -24,9 +24,17 @@ span{
 	margin-left: 10px;
 }
 </style>
-<script type="text/JavaScript" src="/js/jquery.js"></script>
+<script type="text/JavaScript" src="/state.js"></script>
+<script type="text/javascript" src="/qis/QISMobilePlugin.js"></script>
+<script type="text/javascript" src="/popup.js"></script>
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
+<script type="text/javascript" src="/help.js"></script>
 <script>
 <% wanlink(); %>
+String.prototype.splice = function(idx, rem, s) {
+    return (this.slice(0,idx) + s + this.slice(idx + Math.abs(rem)));
+};
 var sw_mode = '<% nvram_get("sw_mode"); %>';
 if((sw_mode == 2 || sw_mode == 3) && '<% nvram_get("wlc_psta"); %>' == 1)
 	sw_mode = 4;
@@ -348,10 +356,7 @@ function gotoASUS(){
 }
 
 function goto_index(){
-	parent.document.getElementById("btn_gotoindex").onclick = "";
-	parent.document.getElementById("btn_gotoindex").style.cursor = "";
-	parent.document.getElementById("btn_gotoindex").className = "m_qis_r_blocked";
-	
+		
 	var isWLclient = function () {  //detect login client is by wireless or wired
 		<% login_state_hook(); %>
 		var wireless = [<% wl_auth_list(); %>];	// [[MAC, associated, authorized], ...]
@@ -378,13 +383,17 @@ function goto_index(){
 		}
 	}
 	
-	if(isWLclient()){
-		document.getElementById('nextButton').onclick = '';
-		document.getElementById('loadingIcon').style.display = '';
+	if(document.restartForm.action_script.value == "reboot"){
+		parent.showLoading(wait_time);
 	}
 	else{
-		parent.showLoading(wait_time);		
-	}	
+		document.getElementById('nextButton').onclick = '';
+		document.getElementById('nextButton').style.display = 'none';
+		document.getElementById('loadingDesc').innerHTML = "<#Modem_connect_waiting_1m#>";
+		document.getElementById('loadingDesc').style.display = '';
+		document.getElementById('loadingIcon').style.display = '';
+	}
+	
 	
 	document.restartForm.action_wait.value = wait_time;
 	document.restartForm.submit();
@@ -427,6 +436,161 @@ function redirect_page(redirect_flag){
 	document.redirectForm.action = "/qis/QIS_"+redirect_flag+".htm";
 	document.redirectForm.submit();
 }
+
+var isNewFw=0;
+var redirect_count=0;
+function startLiveUpdate(){
+	document.getElementById('loadingDesc').innerHTML = "<#QIS_detect_desc5#>";
+	var linkLnternet = httpApi.isConnected();
+	if(redirect_count >= 180){
+		top.location.href = "/";
+	}
+	else if(!linkLnternet){
+		redirect_count++;
+		setTimeout(arguments.callee, 1000);
+		//console.log("False connected");
+	}
+	else{
+		//console.log("Well connected");
+		httpApi.nvramSet({"action_mode":"apply", "rc_service":"start_webs_update"}, function(){
+			setTimeout(function(){
+				var fwInfo = httpApi.nvramGet(["webs_state_update", "webs_state_info", "webs_state_flag", "firmver", "buildno", "extendno"], true);
+
+				if(fwInfo.webs_state_update == "0" || fwInfo.webs_state_update == ""){
+					setTimeout(arguments.callee, 1000);
+				}
+				else if(fwInfo.webs_state_info !== ""){
+					
+					isNewFw = fwInfo.webs_state_flag;
+					var newFwVersion = fwInfo.webs_state_info;
+					newFwVersion = newFwVersion.splice(3,0,".");
+					newFwVersion = newFwVersion.splice(2,0,".");
+					newFwVersion = newFwVersion.splice(1,0,".");
+					if(isNewFw != 0){
+
+						document.getElementById("QISmain").style.display = "none";
+						document.getElementById("liveUpdate_div").style.display = "";
+						document.getElementById("current_fw_div").style.display = "";
+						document.getElementById("Latest_fw_div").style.display = "";
+						document.getElementById("currentFW").innerHTML = fwInfo.firmver + "_" + fwInfo.buildno + "_" + fwInfo.extendno; 
+						document.getElementById("latestFW").innerHTML = newFwVersion;
+
+						if(isNewFw == 2){
+							document.getElementById("liveUpdate_div_leftbutton").value = "<#CTL_UpgradeNight#>";
+							document.getElementById("liveUpdate_div_rightbutton").value = "<#CTL_UpgradeNow#>";
+						}
+					}
+					else{
+						top.location.href = "/";
+					}
+				}
+			}, 1000);
+		});
+	}
+}
+
+/* Live update */
+function doLiveUpdate(_do){
+	if(_do){
+		document.getElementById("newFWDetected").style.display = "none";
+		document.getElementById("progressBar").style.display = "";
+		document.start_update.action_mode.value="apply";
+		document.start_update.action_script.value="start_webs_upgrade";
+		document.start_update.action_wait.value="300";
+		document.start_update.submit();
+	}
+	else{
+		setTimeout("parent.location.href='/'", 3000);
+	}
+}
+function returnNewFWDetected(){
+	document.getElementById("newFWDetected").style.display = "";
+	document.getElementById("newFWCancel").style.display = "none";
+}
+
+function showCancel(){
+	document.getElementById("newFWDetected").style.display = "none";
+	document.getElementById("newFWCancel").style.display = "";
+	if(isNewFw==2){
+		document.getElementById("newFWCancelDesc").innerHTML = "<#exist_new_force#>";
+	} 	
+}
+
+var dead = 0;
+function detect_httpd(){
+	$.ajax({
+		url: '/detect_firmware.asp',
+		dataType: 'script',
+		timeout: 2000,
+		error: function(xhr){
+			dead++;
+			if(dead < 70)
+				setTimeout("detect_httpd();", 1000);
+			else{
+				progressBar = 100;
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";
+				// document.getElementById("newFWgradedFail").style.display = "";
+				document.getElementById("hidden_frame").contentWindow.showWlHint(1);
+			}
+		},
+		success: function(){
+			if(webs_state_error == "1"){
+				progressBar = 100;
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";
+				document.getElementById("liveUpdateResult").innerHTML = "<#connect_failed#>";
+				document.getElementById("newFWgraded").style.display = "";
+				return false;
+			}else if(webs_state_error == "2"){
+				progressBar = 100;
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";
+				document.getElementById("liveUpdateResult").innerHTML = "Memory space is NOT enough to upgrade on internet. Please wait for rebooting.<br><#FW_desc1#>";	/* untranslated */	/* Need to fine tune error cases */
+				document.getElementById("newFWgraded").style.display = "";
+				return false;				
+			}else if(webs_state_error == "3"){
+				progressBar = 100;
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";
+				document.getElementById("liveUpdateResult").innerHTML = "<#FIRM_fail_desc#><br><#FW_desc1#>";
+				document.getElementById("newFWgraded").style.display = "";
+			}
+
+			if(webs_state_upgrade == ""){	//after reboot
+				progressBar = 100;
+				document.getElementById('progress_bar_no').innerHTML = "100%";
+				document.getElementById("updateProgress").style.width = "100%";				
+				document.getElementById("newFWgraded").style.display = "";		
+			}
+			else{
+				setTimeout("detect_httpd();", 1000);
+			}
+		}
+	});
+}
+
+var progressBar = 0;
+function showLoadingUpdate(){
+	if(progressBar == 100){
+		return false;
+	}
+	else if(progressBar == 10){
+		detect_httpd();
+		setTimeout("showLoadingUpdate();", 2700);
+	}
+	else if(progressBar == 80){
+		detect_httpd();
+		return false;
+	}
+	else{	
+		document.getElementById("updateProgress").style.width = progressBar+"%";
+		document.getElementById('progress_bar_no').innerHTML = progressBar+"%";
+		setTimeout("showLoadingUpdate();", 2700);
+	}
+	
+	progressBar++;	
+}
 </script>
 </head>
 
@@ -439,7 +603,7 @@ function redirect_page(redirect_flag){
 <input type="hidden" name="action_script" value="">
 <input type="hidden" name="action_wait" value="">
 </form>
-<div class="QISmain">
+<div id="QISmain" class="QISmain">
 		<div>
 			<table width="730px">
 				<tr>
@@ -562,6 +726,7 @@ function redirect_page(redirect_flag){
 
 <div class="apply_gen" style="margin-top:5px">
 	<input type="button" id="nextButton" value="<#Main_alert_proceeding_desc3#>" onclick="goto_index();" class="button_gen">
+	<span><a id="loadingDesc" style="display:none;"></a>
 	<img id="loadingIcon" style="display:none;" src="/images/InternetScan.gif"></span>
 </div>
 
@@ -570,6 +735,110 @@ function redirect_page(redirect_flag){
 	<div id="main_manual" style="padding-left:20px;margin-top:10px">
 		<span><#ASUS_Registration#></span>
 	</div>	
+</div>
+
+</div>
+
+<div id="liveUpdate_div" style="display:none">
+	<div id="liveUpdateTitle">
+		<div>
+			<table width="100%">
+				<tr>
+					<td align="left">
+						<div class="description_down"><#menu5_6_3#></div>
+					</td>
+					<td align="right">
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="margin:5px;">
+			<div style="width: 720px; *width: 710px; height: 2px;" class="splitLine"></div>
+		</div>
+		<br>
+		<br>
+	</div>
+
+	<div id="newFWDetected">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;line-height:180%;font-size:18px;">
+			<div style="text-align:left;" id="showLiveUpdateResult_div">
+				<#exist_new#><br><#Main_alert_proceeding_desc5#>
+				<br>
+				<div id="current_fw_div" style="display:none;"><#ADSL_FW_item1#> : <span style="font-family:Segoe UI, Arial, sans-serif;" id="currentFW"></span></div>
+				<div id="Latest_fw_div" style="display:none;"><#ADSL_FW_item3#> : <span style="font-family:Segoe UI, Arial, sans-serif;" id="latestFW"></span></div>	
+			</div>
+		</div>
+		<br>
+		<br>
+		<div class="apply_gen" style="margin-top:5px">
+			<input type="button" id="liveUpdate_div_leftbutton" value="<#CTL_Cancel#>" onclick="showCancel();" class="button_gen">
+			<input type="button" id="liveUpdate_div_rightbutton" value="<#checkbox_Yes#>" onclick="doLiveUpdate(true);" class="button_gen">
+		</div>
+	</div>
+		
+	<div id="newFWCancel" style="display:none;">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;line-height: 180%;font-size:18px;">
+			<div id="newFWCancelDesc" style="text-align:left;">
+				<#newFW_cancel#>
+			</div>
+		</div>
+		<br>
+		<br>
+		<div class="apply_gen" style="margin-top:5px">
+			<input type="button" value="<#CTL_prev#>" onclick="returnNewFWDetected();" class="button_gen">
+			<input type="button" value="OK" onclick="doLiveUpdate(false);" class="button_gen">
+			<img id="doRestartIcon" style="display:none" src="/images/InternetScan.gif">
+		</div>
+	</div>
+
+	<div id="progressBar" class="QISGeneralFont" style="margin-top:5px;text-align:center;display:none;*margin-left:70px;line-height: 180%;font-size:18px;">
+		<div style="text-align:left;">
+		<#FIRM_ok_desc#><br><#Main_alert_proceeding_desc5#>
+		</div>
+		<br>
+		<div id="updateProgress_bg" style="text-align:left;*margin-left:-65px;">
+			<div align="left">
+				<style>
+					#updateProgress_bg{
+						margin-top:5px;
+						width:90%;
+						height:30px;
+						background: #596E74;
+						border-top: 1px solid #929EA1;
+						border-bottom: 1px solid #929eA1;
+					}
+				</style>
+				<span id="progress_bar_no" style="display:none;position:absolute;margin-left:285px;margin-top:7px;*margin-left:290px">0%</span>
+				<div id="updateProgress" class="quotabar" style="width:0%;height:30px;"></div>
+			</div>
+		</div>
+		<br>
+		<br>
+		<div style="text-align:left;line-height: 25px;display:none;">
+			<#FW_n1#>
+			<br>
+		</div>
+	</div>
+	<br>
+	<div id="newFWgraded" style="margin-top:5px;text-align:center;display:none;line-height: 180%;font-size:18px;">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;">
+			<div id="liveUpdateResult" style="text-align:left;color:#FC0;line-height: 25px;">
+			<#is_latest#>
+			</div>
+		</div>
+		<br>
+		<div class="apply_gen" style="margin-top:5px">
+			<input type="button" value="<#CTL_next#>" onclick="doLiveUpdate(false);" class="button_gen">
+		</div>
+	</div>
+
+	<div id="newFWgradedFail" style="margin-top:5px;text-align:center;display:none;line-height: 180%;font-size:18px;">
+		<div class="QISGeneralFont" style="margin-top:5px;text-align:center;">
+			<div style="text-align:left;color:#FC0">
+			<#FIRM_reboot_manually#>
+			</div>
+		</div>
+	</div>
 </div>
 
 <form name="form" style="display:none;">
@@ -589,6 +858,17 @@ function redirect_page(redirect_flag){
 	<input type="hidden" name="action_script" value="reboot">
 	<input type="hidden" name="action_wait" value="0">
 	<input type="hidden" name="x_Setting" value="1">
+</form>
+
+<form method="post" name="start_update" action="/start_apply2.htm" target="hidden_frame">
+<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+<input type="hidden" name="flag" value="upgrading">
+<input type="hidden" name="current_page" value="">
+<input type="hidden" name="next_page" value="">
+<input type="hidden" name="action_mode" value="">
+<input type="hidden" name="action_script" value="">
+<input type="hidden" name="action_wait" value="">
+<input type="hidden" name="x_Setting" value="1">
 </form>
 
 </body>

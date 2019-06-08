@@ -120,6 +120,7 @@ function check_wan_state(){
 		document.getElementById("fb_desc_disconnect").style.display = "";
 		document.form.fb_country.disabled = "true";
 		document.form.fb_email.disabled = "true";
+		document.form.fb_serviceno.disabled = "true";
 		document.form.attach_syslog.disabled = "true";
 		document.form.attach_cfgfile.disabled = "true";
 		document.form.attach_modemlog.disabled = "true";
@@ -145,6 +146,7 @@ function check_wan_state(){
 		document.getElementById("fb_desc_disconnect").style.display = "none";
 		document.form.fb_country.disabled = "";
 		document.form.fb_email.disabled = "";
+		document.form.fb_serviceno.disabled = "";
 		document.form.attach_syslog.disabled = "";
 		document.form.attach_modemlog.disabled = "";
 		document.form.attach_wlanlog.disabled = "";
@@ -792,6 +794,13 @@ function dblog_stop() {
 <th><#feedback_email#> *</th>
 <td>
 	<input type="text" name="fb_email" maxlength="50" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
+</td>
+</tr>
+
+<tr>
+<th>ASUS Service No./Case#</th>
+<td>
+	<input type="text" name="fb_serviceno" maxlength="50" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
 </td>
 </tr>
 

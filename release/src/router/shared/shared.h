@@ -328,8 +328,9 @@ enum {
 	WAVE_ACTION_DEL_BEACON_VSIE=21,
 	WAVE_ACTION_ADD_PROBE_REQ_VSIE=22,
 	WAVE_ACTION_DEL_PROBE_REQ_VSIE=23,
-	WAVE_ACTION_CLEAR_ALL_PROBE_REQ_VSIE=24
+	WAVE_ACTION_CLEAR_ALL_PROBE_REQ_VSIE=24,
 #endif
+	WAVE_ACTION_SET_STA_CONFIG=25,
 };
 #endif
 
@@ -1119,8 +1120,6 @@ static inline int have_sata_led(__attribute__ ((unused)) int model) { return 0; 
 #define MAX_NR_WL_IF			4
 #elif defined(RTCONFIG_HAS_5G_2)
 #define MAX_NR_WL_IF			3
-#elif defined(MAPAC2200) || defined(RTAC92U)
-#define MAX_NR_WL_IF			3
 #elif defined(RTCONFIG_HAS_5G)
 #define MAX_NR_WL_IF			2
 #else	/* ! RTCONFIG_HAS_5G */
@@ -1135,6 +1134,33 @@ enum wl_band_id {
 
 	WL_NR_BANDS				/* Maximum number of Wireless bands of all models. */
 };
+
+static inline int absent_band(enum wl_band_id band)
+{
+	if (band < WL_2G_BAND || band >= WL_NR_BANDS)
+		return 1;
+#if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
+	if (band >= MAX_NR_WL_IF)
+		return 1;
+#if !defined(RTCONFIG_HAS_5G)
+	if (band == WL_5G_BAND)
+		return 1;
+#if !defined(RTCONFIG_HAS_5G_2)
+	if (band == WL_5G_2_BAND)
+		return 1;
+#endif	/* RTCONFIG_HAS_5G_2 */
+#endif	/* RTCONFIG_HAS_5G */
+#endif	/* RTCONFIG_RALINK || RTCONFIG_QCA */
+#if !defined(RTCONFIG_WIGIG)
+	if (band == WL_60G_BAND)
+		return 1;
+#endif
+
+	if (!nvram_get(wl_nvname("nband", band, 0)))
+		return 1;
+
+	return 0;
+}
 
 #define SKIP_ABSENT_FAKE_IFACE(iface)		if (!strncmp(iface, "FAKE", 4)) { continue; }
 #define SKIP_ABSENT_BAND(u)			if (!nvram_get(wl_nvname("nband", u, 0))) { continue; }
@@ -1254,6 +1280,11 @@ static inline int client_mode()
 static inline int dpsta_mode()
 {
 	return ((sw_mode() == SW_MODE_AP) && (nvram_get_int("wlc_psta") == 2) && (nvram_get_int("wlc_dpsta") == 1));
+}
+#else
+static inline int dpsta_mode()
+{
+	return 0;
 }
 #endif
 
@@ -1451,6 +1482,7 @@ extern char *get_label_mac(void);
 #if defined(RTCONFIG_QCA)
 extern char *__get_wlifname(int band, int subunit, char *buf);
 extern int get_wlsubnet(int band, const char *ifname);
+extern int get_wlif_unit(const char *wlifname, int *unit, int *subunit);
 extern char *get_wififname(int band);
 extern char *get_staifname(int band);
 extern char *get_vphyifname(int band);
@@ -1495,7 +1527,13 @@ extern int get_wl_sta_list(void);
 //extern int get_maxassoc(char *ifname);
 extern int get_psta_status(int unit);
 #endif
+extern int wl_get_bw(int unit);
+
 #if defined(RTCONFIG_BCMWL6) && defined(RTCONFIG_PROXYSTA)
+extern int get_psta_status(int unit);
+#endif
+
+#if defined(RTCONFIG_QCA)
 extern int get_psta_status(int unit);
 #endif
 
@@ -1645,6 +1683,7 @@ extern chanspec_t select_band1_chspec_with_same_bw(char *wif, chanspec_t chanspe
 extern chanspec_t select_band4_chspec_with_same_bw(char *wif, chanspec_t chanspec);
 extern chanspec_t select_chspec_with_band_bw(char *wif, int band, int bw, chanspec_t chanspec);
 extern void wl_list_5g_chans(int unit, int band, char *buf, int len);
+extern int wl_cap(int unit, char *cap_check);
 #endif
 #ifdef RTCONFIG_AMAS
 //extern char *get_pap_bssid(int unit, char bssid_str[]);
@@ -2073,7 +2112,7 @@ extern void set_wifiled(int mode);
 #define RGBLED_3ON3OFF			0x80
 #define RGBLED_BLINK_MESK		RGBLED_SBLINK | RGBLED_3ON1OFF | RGBLED_ATE_MODE | RGBLED_3ON3OFF
 /* color+blink */
-#define RGBLED_BLUE_3ON1OFF		RGBLED_BLUE | RGBLED_3ON1OFF
+#define RGBLED_GREEN_3ON1OFF		RGBLED_GREEN | RGBLED_3ON1OFF
 #define RGBLED_BLUE_3ON3OFF		RGBLED_BLUE | RGBLED_3ON3OFF
 #define RGBLED_PURPLE_3ON1OFF		RGBLED_PURPLE | RGBLED_3ON1OFF
 #define RGBLED_WHITE_SBLINK		RGBLED_WHITE | RGBLED_SBLINK
@@ -2311,7 +2350,6 @@ extern int init_enc_nvram(void);
 
 /* amas_utils.c */
 #ifdef RTCONFIG_AMAS
-extern int is_wlsta_exist(int unit, int vidx);
 extern int is_wlsta_connect(int unit, int vidx, char *macaddr);
 extern void set_deauth_sta(int bssidx, int vifidx, char *mac_addr);
 #endif
@@ -2491,4 +2529,5 @@ extern int is_amaslib_enabled();
 
 #endif /* defined(RTCONFIG_AMAS) */
 
+extern int get_chance_to_control(void);
 #endif	/* !__SHARED_H__ */

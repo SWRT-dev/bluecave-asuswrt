@@ -1,6 +1,6 @@
 /* Look up an environment variable, returning NULL in insecure situations.
 
-   Copyright 2013-2017 Free Software Foundation, Inc.
+   Copyright 2013-2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published
@@ -13,7 +13,7 @@
    General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -38,7 +38,7 @@ secure_getenv (char const *name)
   if (geteuid () != getuid () || getegid () != getgid ())
     return NULL;
   return getenv (name);
-#elif (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__ /* native Windows */
+#elif defined _WIN32 && ! defined __CYGWIN__ /* native Windows */
   /* On native Windows, there is no such concept as setuid or setgid binaries.
      - Programs launched as system services have high privileges, but they don't
        inherit environment variables from a user.

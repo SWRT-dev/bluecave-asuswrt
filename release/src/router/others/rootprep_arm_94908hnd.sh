@@ -10,7 +10,8 @@ mkdir -p -m 0755 cifs1
 mkdir -p -m 0755 cifs2
 mkdir -p -m 0755 sysroot
 mkdir -p -m 0755 var
-#ln -sf tmp/opt opt
+rm -rf opt
+ln -sf tmp/opt opt
 
 # tmp
 mkdir -p -m 0755 tmp
@@ -25,6 +26,7 @@ rm -rf tmp/etc/*
 rm -rf etc && ln -sf tmp/etc etc
 echo "/lib" > rom/etc/ld.so.conf
 echo "/usr/lib" >> rom/etc/ld.so.conf
+echo "/lib/aarch64" >> rom/etc/ld.so.conf
 /sbin/ldconfig -r $ROOTDIR
 mv tmp/etc/* rom/etc
 rm -f etc/ld.so.conf etc/ld.so.cache

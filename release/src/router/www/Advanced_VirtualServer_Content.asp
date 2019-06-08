@@ -86,8 +86,7 @@ if(support_dual_wan_unit_flag){
 var profileMaxNum = 64;
 function initial(){
 	show_menu();
-	// https://www.asus.com/support/FAQ/114093/
-	httpApi.faqURL("114093", function(url){document.getElementById("faq").href=url;});
+	httpApi.faqURL("1037906", function(url){document.getElementById("faq").href=url;});
 	//parse nvram to array
 	var parseNvramToArray = function(oriNvram) {
 		var parseArray = [];
@@ -604,7 +603,7 @@ function saveProfile(_mode, _wanIdx, _rowIdx) {
 	}
 	if(!validator.validIPForm(document.getElementById("vts_ipaddr_x"), 0))
 		return false;
-	if(!validator.validIPForm(document.getElementById("vts_target_x"), 0))
+	if(!validator.ipv4cidr(document.getElementById("vts_target_x"), 0))
 		return false;
 
 	var profileArray = new Array();
@@ -830,7 +829,7 @@ function cancelProfile() {
 		<tr>
 			<th><#IPConnection_VSList_SourceTarget#></th>
 			<td>
-				<input type="text" maxlength="15" class="input_25_table" id="vts_target_x" onKeyPress="return validator.isIPAddr(this, event);" autocomplete="off" autocorrect="off" autocapitalize="off"/>
+				<input type="text" maxlength="18" class="input_25_table" id="vts_target_x" onKeyPress="return validator.isIPAddrPlusNetmask(this, event)" autocomplete="off" autocorrect="off" autocapitalize="off"/>
 				<span><#feedback_optional#></span>
 			</td>
 		</tr>

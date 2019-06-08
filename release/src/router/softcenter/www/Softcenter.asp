@@ -376,6 +376,19 @@ function loadxml() {
                                                                                 </a>
                                                                         </dd>
                                                                 </dl>
+                                                                <!--模板：下面添加插件-->
+                                                                <dl class="icon install-status-ssr" data-name="ssr">
+                                                                        <dd class="icon-pic">
+                                                                                <img src="/images/New_ui/ssr.png">
+                                                                        </dd>
+                                                                         <dt class="icon-title">科学上网</dt>
+                                                                         <dd class="icon-desc">
+                                                                                <a class="text" href="/Tools_SSR.asp">
+                                                                                        科学上网
+                                                                                </a>
+                                                                        </dd>
+                                                                </dl>
+                                                                <!--模板：添加结束-->
                                                                 <dl class="icon install-status-kp" data-name="kp">
                                                                         <dd class="icon-pic">
                                                                                 <img src="/images/New_ui/koolproxy.png">
@@ -461,6 +474,17 @@ function loadxml() {
 																	<dd class="icon-desc">
 																		<a class="text" href="/Tools_Script.asp">
 																			自定义脚本
+																		</a>
+																	</dd>
+																	</dl>
+																	<dl class="icon install-status-v2ray" data-name="v2ray">
+																	<dd class="icon-pic">
+																		<img src="/images/New_ui/ssr.png">
+																	</dd>
+																	<dt class="icon-title">v2ray</dt>
+																	<dd class="icon-desc">
+																		<a class="text" href="/Tools_v2ray.asp">
+																			v2ray
 																		</a>
 																	</dd>
 																	</dl>

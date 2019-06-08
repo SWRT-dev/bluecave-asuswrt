@@ -126,21 +126,23 @@ int klogd_main(int argc UNUSED_PARAM, char **argv)
 				if (*start == '>')
 					start++;
 			}
+#if defined(BWDPI_LOGWAR)
+			/* Ignore annoying BWDPI messages */
+			opt_c = start;
+			while (*opt_c == '[')
+				opt_c++;
+			if (strncmp(opt_c, "tdts_shell_ioctl", sizeof("tdts_shell_ioctl") - 1) == 0 ||
+			    strncmp(opt_c, "udb_ioctl", sizeof("udb_ioctl") - 1) == 0)
+				;
+			else
+#endif
 			/* Log (only non-empty lines) */
 			if (*start) {
-#if defined(MAPAC1750) /* remove annoying message: udb_ioctl_copy_out: no handler for ioctl 0x8:0x2 */
-				if ((memcmp(start, "udb_ioctl_copy_out:", 19)==0) && (memcmp(start+20, "no handler for ioctl 0x8:0x2", 28)==0))
-					; /* skip */
-				else {
-#endif
 				syslog(priority, "%s", start);
 				/* give syslog time to catch up */
 				++cnt;
 				if ((cnt & 0x07) == 0 && (cnt < 300 || (eor - start) > 200))
 					usleep(50 * 1000);
-#if defined(MAPAC1750) /* remove annoying message: udb_ioctl_copy_out: no handler for ioctl 0x8:0x2 */
-				}
-#endif
 			}
 
 			if (!newline)

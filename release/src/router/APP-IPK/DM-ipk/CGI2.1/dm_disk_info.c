@@ -284,12 +284,12 @@ int test_if_System_folder(const char *const dirname){
     int i;
 
     for(i = 0; MS_System_folder[i] != NULL; ++i){
-        if(!upper_strcmp(dirname, MS_System_folder[i]))
+        if(strcasecmp(dirname, MS_System_folder[i]) == 0)
             return 1;
     }
 
     for(i = 0; Linux_System_folder[i] != NULL; ++i){
-        if(!upper_strcmp(dirname, Linux_System_folder[i]))
+        if(strcasecmp(dirname, Linux_System_folder[i]) == 0)
             return 1;
     }
 
@@ -304,20 +304,4 @@ int test_if_dir(const char *dir){
 
     closedir(dp);
     return 1;
-}
-
-int upper_strcmp(const char *const str1, const char *const str2){
-    int len1, len2, i;
-
-    len1 = strlen(str1);
-    len2 = strlen(str2);
-    if(len1 != len2)
-        return len1-len2;
-
-    for(i = 0; i < len1; ++i){
-        if(toupper(str1[i]) != toupper(str2[i]))
-            return i+1;
-    }
-
-    return 0;
 }

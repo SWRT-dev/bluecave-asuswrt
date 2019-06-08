@@ -1,5 +1,5 @@
 /* Program name management.
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -64,7 +64,7 @@ getprogname (void)
   /* https://www.gnu.org/software/libc/manual/html_node/Error-Messages.html */
   return last_component (program_invocation_name);
 # elif HAVE_GETEXECNAME                                     /* Solaris */
-  /* http://docs.oracle.com/cd/E19253-01/816-5168/6mbb3hrb1/index.html */
+  /* https://docs.oracle.com/cd/E19253-01/816-5168/6mbb3hrb1/index.html */
   const char *p = getexecname ();
   if (!p)
     p = "?";
@@ -74,7 +74,7 @@ getprogname (void)
   const char *p = __argv && __argv[0] ? __argv[0] : "?";
   return last_component (p);
 # elif HAVE_VAR___PROGNAME                                  /* OpenBSD, QNX */
-  /* http://man.openbsd.org/style.9 */
+  /* https://man.openbsd.org/style.9 */
   /* http://www.qnx.de/developers/docs/6.5.0/index.jsp?topic=%2Fcom.qnx.doc.neutrino_lib_ref%2Fp%2F__progname.html */
   /* Be careful to declare this only when we absolutely need it
      (OpenBSD 5.1), rather than when it's available.  Otherwise,
@@ -85,9 +85,8 @@ getprogname (void)
   return p && p[0] ? p : "?";
 # elif _AIX                                                 /* AIX */
   /* Idea by Bastien ROUCARIÈS,
-     http://lists.gnu.org/archive/html/bug-gnulib/2010-12/msg00095.html
-     Reference: http://
-   ibm.biz/knowctr#ssw_aix_53/com.ibm.aix.basetechref/doc/basetrf1/getprocs.htm
+     https://lists.gnu.org/r/bug-gnulib/2010-12/msg00095.html
+     Reference: https://www.ibm.com/support/knowledgecenter/en/ssw_aix_61/com.ibm.aix.basetrf1/getprocs.htm
   */
   static char *p;
   static int first = 1;
@@ -111,9 +110,73 @@ getprogname (void)
       first = 0;
       pid_t pid = getpid ();
       struct pst_status status;
-      p = (0 < pstat_getproc (&status, sizeof status, 0, pid)
-           ? strdup (status.pst_ucomm)
-           : NULL);
+      if (pstat_getproc (&status, sizeof status, 0, pid) > 0)
+        {
+          char *ucomm = status.pst_ucomm;
+          char *cmd = status.pst_cmd;
+          if (strlen (ucomm) < PST_UCOMMLEN - 1)
+            p = ucomm;
+          else
+            {
+              /* ucomm is truncated to length PST_UCOMMLEN - 1.
+                 Look at cmd instead.  */
+              char *space = strchr (cmd, ' ');
+              if (space != NULL)
+                *space = '\0';
+              p = strrchr (cmd, '/');
+              if (p != NULL)
+                p++;
+              else
+                p = cmd;
+              if (strlen (p) > PST_UCOMMLEN - 1
+                  && memcmp (p, ucomm, PST_UCOMMLEN - 1) == 0)
+                /* p is less truncated than ucomm.  */
+                ;
+              else
+                p = ucomm;
+            }
+          p = strdup (p);
+        }
+      else
+        {
+#  if !defined __LP64__
+          /* Support for 32-bit programs running in 64-bit HP-UX.
+             The documented way to do this is to use the same source code
+             as above, but in a compilation unit where '#define _PSTAT64 1'
+             is in effect.  I prefer a single compilation unit; the struct
+             size and the offsets are not going to change.  */
+          char status64[1216];
+          if (__pstat_getproc64 (status64, sizeof status64, 0, pid) > 0)
+            {
+              char *ucomm = status64 + 288;
+              char *cmd = status64 + 168;
+              if (strlen (ucomm) < PST_UCOMMLEN - 1)
+                p = ucomm;
+              else
+                {
+                  /* ucomm is truncated to length PST_UCOMMLEN - 1.
+                     Look at cmd instead.  */
+                  char *space = strchr (cmd, ' ');
+                  if (space != NULL)
+                    *space = '\0';
+                  p = strrchr (cmd, '/');
+                  if (p != NULL)
+                    p++;
+                  else
+                    p = cmd;
+                  if (strlen (p) > PST_UCOMMLEN - 1
+                      && memcmp (p, ucomm, PST_UCOMMLEN - 1) == 0)
+                    /* p is less truncated than ucomm.  */
+                    ;
+                  else
+                    p = ucomm;
+                }
+              p = strdup (p);
+            }
+          else
+#  endif
+            p = NULL;
+        }
       if (!p)
         p = "?";
     }
@@ -165,7 +228,7 @@ getprogname (void)
       if (ioctl_ok)
         {
           char *name = buf.pr_fname;
-          char *namesize = sizeof buf.pr_fname;
+          size_t namesize = sizeof buf.pr_fname;
           char *namenul = memchr (name, '\0', namesize);
           size_t namelen = namenul ? namenul - name : namesize;
           char *namecopy = malloc (namelen + 1);
@@ -183,3 +246,10 @@ getprogname (void)
 }
 
 #endif
+
+/*
+ * Hey Emacs!
+ * Local Variables:
+ * coding: utf-8
+ * End:
+ */

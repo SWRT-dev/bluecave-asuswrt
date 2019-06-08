@@ -348,7 +348,6 @@ static void init_defaults(void)
 {
 	uint8_t major, minor;
 	char *macp = NULL;
-	char *model = nvram_safe_get("productid");
 	unsigned char mac_binary[6];
 	macp = get_2g_hwaddr();
 	ether_atoe(macp, mac_binary);

@@ -49,7 +49,6 @@ class HTTPSServer(StoppableHTTPServer):
                                                'server-key.pem'))
         self.socket = ssl.wrap_socket(
             sock=socket.socket(self.address_family, self.socket_type),
-            ssl_version=ssl.PROTOCOL_TLSv1,
             certfile=CERTFILE,
             keyfile=KEYFILE,
             server_side=True
@@ -425,8 +424,16 @@ class _Handler(BaseHTTPRequestHandler):
             except ServerError as ae:
                 # self.log_error("%s", ae.err_message)
                 if ae.err_message == "Range Overflow":
+                    try:
+                        self.overflows += 1
+                    except AttributeError as s:
+                        self.overflows = 0
                     self.send_response(416)
+                    if self.overflows > 0:
+                        self.add_header("Content-Length", 17)
                     self.finish_headers()
+                    if self.overflows > 0:
+                        return("Range Unsatisfied", 0)
                     return(None, None)
                 else:
                     self.range_begin = None

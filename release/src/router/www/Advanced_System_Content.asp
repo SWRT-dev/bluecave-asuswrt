@@ -1773,9 +1773,9 @@ function pullPingTargetList(obj){
 					<th><#Enable_ncb_notice#></th>
 					<td>
 						<select name="ncb_enable_option" class="input_option">
-							<option value="0" <% nvram_match("ncb_enable", "0", "selected"); %>>All Non-Block</option>
-							<option value="1" <% nvram_match("ncb_enable", "1", "selected"); %>>Limited Block</option>
-							<option value="2" <% nvram_match("ncb_enable", "2", "selected"); %>>All Block</option>
+							<option value="0" <% nvram_match("ncb_enable", "0", "selected"); %>><#Enable_ncb_Non_Block#></option>
+							<option value="1" <% nvram_match("ncb_enable", "1", "selected"); %>><#Enable_ncb_Limited_Block#></option>
+							<option value="2" <% nvram_match("ncb_enable", "2", "selected"); %>><#Enable_ncb_All_Block#></option>
 						</select>
 					</td>
 				</tr>
@@ -1854,7 +1854,7 @@ function pullPingTargetList(obj){
 				<tr id="auth_keys_tr">
 					<th><#Authorized_Keys#></th>
 					<td>
-						<textarea rows="5" cols="55" class="textarea_ssh_table"  name="sshd_authkeys" maxlength="2999"><% nvram_get("sshd_authkeys"); %></textarea>
+						<textarea rows="5" class="textarea_ssh_table" style="width:98%; overflow:auto; word-break:break-all;" name="sshd_authkeys" maxlength="2999"><% nvram_get("sshd_authkeys"); %></textarea>
 					</td>
 				</tr>
 				<tr>

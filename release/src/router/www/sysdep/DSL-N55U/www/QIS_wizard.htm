@@ -30,6 +30,8 @@
 </style>
 <script type="text/JavaScript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
+<script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <script>
 var targeturl = "/index.htm";
 var firmver = '<% nvram_get("firmver"); %>';
@@ -192,8 +194,11 @@ function QIS_load_body(){
 	}
 }
 
-function gotoIndex(){
-	if(w_Setting_tmp == '0'){
+function gotoIndex(flag){
+	if(flag==1){
+		location.href = "/";
+	}
+	else if(w_Setting_tmp == '0'){
 		alert("<#QIS_recommand_encryption#>");
 		with(document.redirectForm){    
                         action = "/qis/QIS_wireless.htm";
@@ -201,8 +206,9 @@ function gotoIndex(){
                 }
                 return;
 	}
-	else
+	else{
 		location.href = "/";
+	}
 }
 </script>
 </head>
