@@ -5,12 +5,6 @@ kenable=`nvram get k3c_enable`
 mdisk=`nvram get k3c_disk`
 usbmount=`ls /tmp/mnt/`
 [ "$kenable" == "0" ] && exit 1
-while [ "$usbmount" == "" ]
-do
-	sleep 5s
-	usbmount=`ls /tmp/mnt/ |grep $mdisk`
-done
-sleep 3s
 
 ACTION=$1
 
@@ -18,6 +12,12 @@ if [ $# -lt 1 ]; then
     printf "Usage: $0 {start|stop|restart|reconfigure|check|kill}\n" >&2
     exit 1
 fi
+
+while [ "$usbmount" == "" ]
+do
+	sleep 5s
+	usbmount=`ls /tmp/mnt/ |grep $mdisk`
+done
 
 [ $ACTION = stop -o $ACTION = restart -o $ACTION = kill ] && ORDER="-r"
 
@@ -39,3 +39,4 @@ do
             ;;
     esac
 done
+

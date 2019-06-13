@@ -1105,7 +1105,7 @@ void gen_apmode_dnsmasq(void)
 	fprintf(fp,"servers-file=/tmp/resolv.dnsmasq\n");
 	fprintf(fp,"no-poll\n");
 	fprintf(fp,"no-negcache\n");
-	fprintf(fp,"cache-size=5000\n");
+	fprintf(fp,"cache-size=1500\n");
 	fprintf(fp,"min-port=4096\n");
 	fprintf(fp,"dhcp-range=guest,%s2,%s254,%s,%ds\n",
 		glan,glan, nvram_safe_get("lan_netmask_rt"), 86400);
@@ -1241,7 +1241,7 @@ void start_dnsmasq(void)
 				/* Faster for moving clients, if authoritative */
 				fprintf(fp, "dhcp-authoritative\n");
 				/* caching */
-				fprintf(fp, "cache-size=5000\n"
+				fprintf(fp, "cache-size=1500\n"
 					    "no-negcache\n");
 				fclose(fp);
 			}
@@ -1349,7 +1349,7 @@ void start_dnsmasq(void)
 		    "no-negcache\n"		// don't cace nxdomain
 		    "cache-size=%u\n"		// dns cache size
 		    "min-port=%u\n",		// min port used for random src port
-		dmservers, 5000, nvram_get_int("dns_minport") ? : 4096);
+		dmservers, 1500, nvram_get_int("dns_minport") ? : 4096);
 
 	/* limit number of outstanding requests */
 	{
@@ -4161,19 +4161,27 @@ stop_telnetd(void)
 }
 
 #ifdef RTCONFIG_SOFTCENTER
-int
+void
 start_skipd(void)
 {
 	char *skipd_argv[] = { "skipd", NULL };
 	pid_t pid;
-	logmessage(LOGNAME, "start skipd");
-	return _eval(skipd_argv, NULL, 0, &pid);
+	if (getpid() != 1) {
+		notify_rc("start_skipd");
+		return;
+	}
+	logmessage(LOGNAME, "start skipd:%d", pid);
+	_eval(skipd_argv, NULL, 0, &pid);
 
 }
 
 void
 stop_skipd(void)
 {
+	if (getpid() != 1) {
+		notify_rc("stop_skipd");
+		return;
+	}
 	if (pids("skipd"))
 		killall_tk("skipd");
 }
@@ -7618,6 +7626,9 @@ stop_netool(void)
 int
 start_services(void)
 {
+#ifdef RTCONFIG_SOFTCENTER
+	start_skipd();
+#endif
 #ifdef RTCONFIG_LANTIQ
 	start_wave_monitor();
 #endif
@@ -7925,9 +7936,6 @@ start_services(void)
 
 #if defined(RTCONFIG_AMAS)
 	start_amas_lib();
-#endif
-#ifdef RTCONFIG_SOFTCENTER
-	start_skipd();
 #endif
 	doSystem("/usr/sbin/softcenter-init.sh");
 	run_custom_script("services-start", 0, NULL, NULL);
@@ -9159,7 +9167,7 @@ void factory_reset(void)
 void handle_notifications(void)
 {
 	char nv[256], nvtmp[32], *cmd[8], *script;
-	char *nvp, *b, *nvptr, *actionstr;;
+	char *nvp, *b, *nvptr, *actionstr;
 	int action = 0;
 	int count;
 	int i;
@@ -9629,16 +9637,6 @@ again:
 #ifdef RTCONFIG_WIRELESSREPEATER
 			if(sw_mode() == SW_MODE_REPEATER)
 			stop_wlcconnect();
-#endif
-#if defined(RTCONFIG_SOFTCENTER)
-#if defined(RTCONFIG_LANTIQ)
-	if(nvram_get_int("k3c_enable"))
-		doSystem("/usr/sbin/softcenter_start.sh stop");
-#elif defined(RTCONFIG_BCMARM)
-	doSystem("/usr/sbin/plugin.sh stop");
-#elif defined(RTCONFIG_QCA)
-#elif defined(RTCONFIG_MTK)
-#endif
 #endif
 			stop_hour_monitor_service();
 #if defined(RTCONFIG_USB_MODEM) && (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
@@ -11905,6 +11903,13 @@ check_ddr_done:
 		if(action & RC_SERVICE_STOP) stop_dnsmasq();
 		if(action & RC_SERVICE_START) start_dnsmasq();
 	}
+#ifdef RTCONFIG_SOFTCENTER
+	else if (strcmp(script, "skipd") == 0)
+	{
+		if(action & RC_SERVICE_STOP) stop_skipd();
+		if(action & RC_SERVICE_START) start_skipd();
+	}
+#endif
 #ifdef RTCONFIG_DHCP_OVERRIDE
 	else if (strcmp(script, "dhcpd") == 0)
 	{
