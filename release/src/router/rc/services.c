@@ -4170,6 +4170,8 @@ start_skipd(void)
 		notify_rc("start_skipd");
 		return;
 	}
+	if (pids("skipd"))
+		killall_tk("skipd");
 	logmessage(LOGNAME, "start skipd:%d", pid);
 	_eval(skipd_argv, NULL, 0, &pid);
 
