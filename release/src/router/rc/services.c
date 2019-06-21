@@ -9628,6 +9628,19 @@ again:
 		}
 	}
 	else if(strcmp(script, "upgrade") == 0) {
+//we must make sure that usb can umount and do not start skipd again
+#if defined(RTCONFIG_SOFTCENTER)
+#if defined(RTCONFIG_LANTIQ)
+	if(nvram_get_int("k3c_enable"))
+		doSystem("/usr/sbin/softcenter_start.sh stop");
+#elif defined(RTCONFIG_BCMARM)
+	doSystem("/usr/sbin/plugin.sh stop");
+#elif defined(RTCONFIG_QCA)
+	doSystem("/usr/sbin/plugin.sh stop");
+#elif defined(RTCONFIG_MTK)
+	doSystem("/usr/sbin/plugin.sh stop");
+#endif
+#endif
 		int stop_commit;
 		stop_commit = nvram_get_int(ASUS_STOP_COMMIT);
 		if(stop_commit == 0) {

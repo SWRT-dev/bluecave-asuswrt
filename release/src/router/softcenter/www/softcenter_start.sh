@@ -13,7 +13,7 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-while [ "$usbmount" == "" ]
+while [ -z "$usbmount" ]
 do
 	sleep 5s
 	usbmount=`ls /tmp/mnt/ |grep $mdisk`

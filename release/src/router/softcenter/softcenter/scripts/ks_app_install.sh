@@ -241,6 +241,9 @@ start)
 	sh /jffs/softcenter/perp/perp.sh start
 	dbus set softcenter_installing_status=1
 	;;
+stop)
+	sh /jffs/softcenter/perp/perp.sh stop
+	;;
 update)
 	install_module
 	;;
