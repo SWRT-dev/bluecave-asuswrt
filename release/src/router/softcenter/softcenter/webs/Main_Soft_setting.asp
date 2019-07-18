@@ -14,6 +14,7 @@
 <link rel="stylesheet" type="text/css" href="ParentalControl.css">
 <link rel="stylesheet" type="text/css" href="css/icon.css">
 <link rel="stylesheet" type="text/css" href="css/element.css">
+<link rel="stylesheet" type="text/css" href="/res/softcenter.css">
 <script type="text/javascript" src="/state.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
 <script type="text/javascript" src="/help.js"></script>
@@ -73,7 +74,7 @@ function upload_software() {
 	}
 }
 function upload_ok(isok) {
-	var info = $G('file_info');
+	var info = E('file_info');
 	if(isok==1){
 		info.innerHTML="上传完成";
 		checkCmdRet();
@@ -83,7 +84,7 @@ function upload_ok(isok) {
 		info.innerHTML="上传失败";
 	}
 	info.style.display = "block";
-	$G('loadingicon').style.display = "none";
+	E('loadingicon').style.display = "none";
 }
 function start_install() {
 	document.form.action_mode.value = ' Refresh ';
@@ -96,7 +97,7 @@ function start_install() {
 var _responseLen;
 var noChange = 0;
 function checkCmdRet(){
-	$j.ajax({
+	$.ajax({
 		url: '/cmdRet_check.htm',
 		dataType: 'html',
 		
@@ -104,7 +105,7 @@ function checkCmdRet(){
 			setTimeout("checkCmdRet();", 1000);
 			},
 		success: function(response){
-			var retArea = $G("log_content1");
+			var retArea = E("log_content1");
 			if(response.search("XU6J03M6") != -1){
 				retArea.value = response.replace("XU6J03M6", " ");
 				retArea.scrollTop = retArea.scrollHeight;

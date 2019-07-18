@@ -15649,6 +15649,7 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char dbvar[2048];
 	char dbval[2048];
 	char notify_cmd[128];
+	char db_cmd[128];
 	int i, j;
 	char *result = NULL;
 	char *temp = NULL;
@@ -15731,17 +15732,47 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	}
 	}
 	dbclient_end(&client);
-	if(!strcmp(action_mode, "toolscript")){
+	memset(db_cmd,'\0',sizeof(db_cmd));
+	if(!strcmp(action_mode, "toolscript") || !strcmp(action_mode, " Refresh ")){
 		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
 		strncpy(notify_cmd, action_script, 128);
 		strcat(scPath, notify_cmd);
 		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
 		sys_script("syscmd.sh");
 	}
-	else if(!strcmp(action_mode, " Refresh ")){
+	else if(!strcmp(action_mode, "restart")){
 		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
 		strncpy(notify_cmd, action_script, 128);
 		strcat(scPath, notify_cmd);
+		snprintf(db_cmd, sizeof(db_cmd), " restart");
+		strcat(scPath, db_cmd);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
+	else if(!strcmp(action_mode, "start")){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
+		strncpy(notify_cmd, action_script, 128);
+		strcat(scPath, notify_cmd);
+		snprintf(db_cmd, sizeof(db_cmd), " start");
+		strcat(scPath, db_cmd);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
+	else if(!strcmp(action_mode, "stop")){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
+		strncpy(notify_cmd, action_script, 128);
+		strcat(scPath, notify_cmd);
+		snprintf(db_cmd, sizeof(db_cmd), " stop");
+		strcat(scPath, db_cmd);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
+	else if(!strcmp(action_mode, "clean")){
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
+		strncpy(notify_cmd, action_script, 128);
+		strcat(scPath, notify_cmd);
+		snprintf(db_cmd, sizeof(db_cmd), " clean");
+		strcat(scPath, db_cmd);
 		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
 		sys_script("syscmd.sh");
 	}
@@ -15830,6 +15861,37 @@ do_ss_status(char *url, FILE *stream)
 	sleep(1);
 	websWrite(stream,"[\"%s\", ", nvram_get("ss_foreign_state") );
 	websWrite(stream,"\"%s\"]", nvram_get("ss_china_state") );
+}
+
+static int
+do_logread(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
+		char_t *url, char_t *path, char_t *query)
+{
+	char buf[4096];
+	char logpath[100];
+	FILE *fp;
+	//char filename[100];
+	//sscanf(url, "logreaddb.cgi?%s", filename);
+	char *filename = websGetVar(wp, "p","");
+	sprintf(logpath, "/tmp/%s", filename);
+	//logmessage("HTTPD", "logread: %s, url: %s", logpath, url);
+	sleep(1);//
+	if(check_if_file_exist(logpath)){
+		if((fp = fopen(logpath, "r"))!= NULL){
+			while(fgets(buf, sizeof(buf),fp) != NULL){
+				websWrite(wp,"%s\n", buf);
+			}
+		}
+		fclose(fp);
+		//doSystem("rm -rf %s", path);
+	} else
+		websWrite(wp,"not found log file\n");
+	return 0;
+}
+static void
+do_logread_cgi(char *url, FILE *stream)
+{
+    do_logread(stream, NULL, NULL, 0, url, NULL, NULL);
 }
 #endif
 
@@ -16626,6 +16688,7 @@ struct mime_handler mime_handlers[] = {
 	{ "appGet.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_cgi, do_auth },
 #ifdef RTCONFIG_SOFTCENTER
 	{ "applydb.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_applydb_cgi, do_auth },
+	{ "logreaddb.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_logread_cgi, do_auth },
 	{ "ssupload.cgi*", "text/html", no_cache_IE7, do_ssupload_post, do_ssupload_cgi, do_auth },
 #endif
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},

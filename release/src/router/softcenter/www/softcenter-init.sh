@@ -22,8 +22,8 @@ insmod /lib/modules/3.10.104/kernel/net/netfilter/xt_TPROXY.ko
 /usr/sbin/softcenter_webshell.sh &
 /usr/sbin/softcenter_xunlei.sh &
 /usr/sbin/softcenter_kms.sh &
-/usr/sbin/softcenter_tools.sh &
 /usr/sbin/softcenter_ssr.sh &
+/usr/sbin/softcenter_tools.sh &
 kenable=`nvram get k3c_enable`
 if [ "$kenable" == "1" ];then
 /usr/sbin/softcenter_swap.sh &

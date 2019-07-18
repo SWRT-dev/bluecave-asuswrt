@@ -9632,7 +9632,7 @@ again:
 #if defined(RTCONFIG_SOFTCENTER)
 #if defined(RTCONFIG_LANTIQ)
 	if(nvram_get_int("k3c_enable"))
-		doSystem("/usr/sbin/softcenter_start.sh stop");
+		doSystem("/usr/sbin/plugin.sh stop");
 #elif defined(RTCONFIG_BCMARM)
 	doSystem("/usr/sbin/plugin.sh stop");
 #elif defined(RTCONFIG_QCA)
@@ -13674,16 +13674,6 @@ _dprintf("nat_rule: the nat rule file was not ready. wait %d seconds...\n", retr
 	setup_udp_timeout(TRUE);
 
 	run_custom_script("nat-start", 0, NULL, NULL);
-#if defined(RTCONFIG_SOFTCENTER)
-#if defined(RTCONFIG_LANTIQ)
-	if(nvram_get_int("k3c_enable"))
-		doSystem("/usr/sbin/softcenter_start.sh start");
-#elif defined(RTCONFIG_BCMARM)
-	doSystem("/usr/sbin/plugin.sh start");
-#elif defined(RTCONFIG_QCA)
-#elif defined(RTCONFIG_MTK)
-#endif
-#endif
 	return NAT_STATE_NORMAL;
 }
 

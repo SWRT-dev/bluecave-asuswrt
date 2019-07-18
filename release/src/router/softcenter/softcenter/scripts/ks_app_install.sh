@@ -72,7 +72,8 @@ install_module() {
 	# Just ignore the old installing_module
 	export softcenter_installing_module=$softcenter_installing_todo
 	export softcenter_installing_tick=`date +%s`
-	export softcenter_installing_status="2"
+	dbus set softcenter_installing_status="2"
+	sleep 1
 	dbus save softcenter_installing_
 
 	URL_SPLIT="/"
@@ -95,17 +96,18 @@ install_module() {
 	cd /tmp
 	rm -f $FNAME
 	rm -rf "/tmp/$softcenter_installing_module"
+	dbus set softcenter_installing_status="3"
+	sleep 1
 	wget --no-check-certificate --tries=1 --timeout=15 $TAR_URL
 	RETURN_CODE=$?
 
 	if [ "$RETURN_CODE" != "0" ]; then
-	dbus set softcenter_installing_status="12"
-	sleep 2
-
-	dbus set softcenter_installing_status="0"
-	dbus set softcenter_installing_module=""
-	dbus set softcenter_installing_todo=""
-	LOGGER "wget error, $RETURN_CODE"
+		dbus set softcenter_installing_status="12"
+		sleep 2
+		dbus set softcenter_installing_status="0"
+		dbus set softcenter_installing_module=""
+		dbus set softcenter_installing_todo=""
+		LOGGER "wget $TAR_URL error, $RETURN_CODE"
 	exit 4
 	fi
 
@@ -231,7 +233,12 @@ uninstall_module() {
 		rm -f /jffs/softcenter/webs/Module_$softcenter_installing_todo.asp
         rm -f /jffs/softcenter/init.d/S*$softcenter_installing_todo.sh
 	fi
-	curl -s http://sc.paldier.com/"$softcenter_installing_module"/"$softcenter_installing_module"/install.sh >/dev/null 2>&1
+	[ -z "$softcenter_server_tcode" ] && dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
+	if [ "$(dbus get softcenter_server_tcode)" == "CN" ]; then
+		curl -s http://update.wifi.com.cn/mips/"$softcenter_installing_module"/"$softcenter_installing_module"/install.sh >/dev/null 2>&1
+	else
+		curl -s https://sc.paldier.com/"$softcenter_installing_module"/"$softcenter_installing_module"/install.sh >/dev/null 2>&1
+	fi
 }
 
 #LOGGER $BIN_NAME
@@ -240,9 +247,6 @@ start)
 	sh /jffs/softcenter/perp/perp.sh stop
 	sh /jffs/softcenter/perp/perp.sh start
 	dbus set softcenter_installing_status=1
-	;;
-stop)
-	sh /jffs/softcenter/perp/perp.sh stop
 	;;
 update)
 	install_module

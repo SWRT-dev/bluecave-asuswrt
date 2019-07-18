@@ -1,7 +1,9 @@
 include ../common.mak
 
-all:
+all: versioncmp
 
+versioncmp:
+	$(CC) versioncmp.c -o versioncmp
 install:
 	install -d $(INSTALLDIR)/sbin
 	install -d $(INSTALLDIR)/usr/sbin
@@ -15,16 +17,28 @@ install:
 	install -d $(INSTALLDIR)/usr/kms
 	install -d $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -d $(INSTALLDIR)/rom/etc/softcenter/res
+	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer
+	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer/mobile
+	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer/mobile/need
+	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme
+	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
 	install -d $(INSTALLDIR)/rom/etc/softcenter/webs
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp
 	install -d $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp/.boot
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp/.control
+# softcenter versioncmp
+	install -m 0755 versioncmp $(INSTALLDIR)/usr/sbin
 
 # softcenter update uboot&ubootconfig tool
 	install -m 0755 mtd $(INSTALLDIR)/sbin
 # softcenter softcenter
 	install -m 0755 www/Softcenter.asp $(INSTALLDIR)/www
+	install -m 0755 softcenter/bin/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin/softcenter.sh $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin/softcenter-mount.sh $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin/softcenter-net.sh $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin/softcenter-wan.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/perpboot $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/perpctl $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/perpd $(INSTALLDIR)/rom/etc/softcenter/bin
@@ -37,6 +51,17 @@ install:
 	install -m 0755 softcenter/res/icon-default.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/upgrade.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/softcenter.js $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/proceding.gif $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/layer/layer.js $(INSTALLDIR)/rom/etc/softcenter/res/layer
+	install -m 0755 softcenter/res/layer/mobile/layer.js $(INSTALLDIR)/rom/etc/softcenter/res/layer/mobile
+	install -m 0755 softcenter/res/layer/mobile/need/layer.css $(INSTALLDIR)/rom/etc/softcenter/res/layer/mobile/need
+	install -m 0755 softcenter/res/layer/theme/default/icon.png $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
+	install -m 0755 softcenter/res/layer/theme/default/icon-ext.png $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
+	install -m 0755 softcenter/res/layer/theme/default/layer.css $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
+	install -m 0755 softcenter/res/layer/theme/default/loading-0.gif $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
+	install -m 0755 softcenter/res/layer/theme/default/loading-1.gif $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
+	install -m 0755 softcenter/res/layer/theme/default/loading-2.gif $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
 	install -m 0755 softcenter/webs/Main_Soft_center.asp $(INSTALLDIR)/rom/etc/softcenter/webs
 	install -m 0755 softcenter/webs/Main_Soft_setting.asp $(INSTALLDIR)/rom/etc/softcenter/webs
 	install -m 0755 softcenter/perp/perp.sh $(INSTALLDIR)/rom/etc/softcenter/perp
@@ -46,6 +71,7 @@ install:
 	install -m 0755 softcenter/scripts/base.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_tar_intall.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
+	install -m 0755 plugin.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 # softcenter SSR and adbyby plus
 	install -m 0755 base64 $(INSTALLDIR)/usr/bin
@@ -135,5 +161,4 @@ install:
 	install -m 0755 www/helper.sh $(INSTALLDIR)/usr/sbin
 
 clean:
-
 
