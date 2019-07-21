@@ -50,6 +50,7 @@ done
 			chmod 755 /jffs/softcenter/perp/.control/*
 			chmod 755 /jffs/softcenter/init.d/*
 			cp -rf /jffs/softcenter/scripts/ks_app_install.sh /jffs/softcenter/scripts/ks_app_remove.sh
+			cp -r /jffs/softcenter/bin/softcenter.sh /jffs/.asusrouter
 			echo 1.2.0 > /jffs/softcenter/.soft_ver
 			dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
 			echo " $(date "+%F %T"):""安装完成，重启后生效！" >> /tmp/k3c.log
