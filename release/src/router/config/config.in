@@ -1800,3 +1800,7 @@ endchoice
 config RTCONFIG_SOFTCENTER
 	bool "softcenter"
 	default n
+
+config RTCONFIG_SMARTDNS
+	bool "smart dns"
+	default n

@@ -82,10 +82,12 @@ restart() {
   sleep 1
   menable=`nvram get ngrok_enable`
   kenable=`nvram get k3c_enable`
-  if [ "$menable" == "1" -a "$kenable" == "1" ] ;then
-  start
-  else if [ "$menable" == "1" ]
-    logger -t "软件中心""jffs扩展挂载未开启！"
+  if [ "$menable" == "1" ] ;then
+	if [ "$kenable" == "1" ] ;then
+		start
+	else
+		logger -t "软件中心""jffs扩展挂载未开启！"
+	fi
   fi
 }
 

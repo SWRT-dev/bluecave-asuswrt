@@ -438,7 +438,7 @@ int main(int argc, char **argv, char * envp[])
 
     remote_fd = create_client_fd("/tmp/.skipd_server_sock");
     if(-1 == remote_fd) {
-#if 1
+#if 0
         //Try to restart skipd
         system("service start_skipd >/dev/null 2>&1 &");
         sleep(1);

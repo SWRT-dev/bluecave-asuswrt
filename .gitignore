@@ -16355,4 +16355,5 @@ release/src/router/zlib/uncompr.lo
 release/src/router/zlib/uncompr.o
 release/src/router/zlib/zutil.lo
 release/src/router/zlib/zutil.o
+release/src/router/openssl-1.0/*/*.o
 

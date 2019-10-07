@@ -194,13 +194,13 @@ extern int ssl_stream_fd;
 #endif
 
 #include <iboxcom.h>
-#include <sysinfo.h>
+#include "sysinfo.h"
+#if defined(BCMARM)
+#include "data_arrays.h"
+#endif
 #ifdef RTCONFIG_SOFTCENTER
 #include "dbapi.h"
-char softcenter_cfg[] = "/jffs/softcenter/configs";
-char softcenter_web[] = "/jffs/softcenter/webs";
 #endif
-
 extern int ej_wl_sta_list_2g(int eid, webs_t wp, int argc, char_t **argv);
 extern int ej_wl_sta_list_5g(int eid, webs_t wp, int argc, char_t **argv);
 #ifndef RTCONFIG_QTN
@@ -3458,8 +3458,8 @@ static int validate_apply(webs_t wp, json_object *root) {
 						wans_dualwan_usb |= NVRAM_MODIFIED_DUALWAN_REBOOT;
 				}
 #endif
-				if( !strcmp(name, "PM_MY_EMAIL") || !strcmp(name, "PM_SMTP_AUTH_USER")){
-					if (strpbrk(value, "`") != NULL)
+				if( !strcmp(name, "PM_MY_EMAIL") || !strcmp(name, "PM_SMTP_AUTH_USER") || !strcmp(name, "fb_email")){
+					if (strchr(value, '`') != NULL)
 						continue;
 				}
 #ifdef RTCONFIG_CFGSYNC
@@ -6175,7 +6175,9 @@ static int compare_back(FILE *fp, int current_line, char *buffer);
 static int check_mac_previous(char *mac);
 static char *value(FILE *fp, int line, int token);
 static void find_hostname_by_mac(char *mac, char *hostname);
+#if !defined(BCMARM)
 static void get_ipv6_client_info();
+#endif
 static int total_lines = 0;
 
 /* Init File and clear the content */
@@ -6359,8 +6361,11 @@ static void find_hostname_by_mac(char *mac, char *hostname)
 END:
 	strcpy(hostname, "");
 }
-
+#if defined(BCMARM)
+void get_ipv6_client_info()
+#else
 static void get_ipv6_client_info()
+#endif
 {
 	FILE *fp;
 	char buffer[128], ipv6_addr[128], mac[32];
@@ -6401,7 +6406,11 @@ static void get_ipv6_client_info()
 	fclose(fp);
 }
 
+#if defined(BCMARM)
+void get_ipv6_client_list()
+#else
 static void get_ipv6_client_list(void)
+#endif
 {
 	FILE *fp;
 	int line_index = 1;
@@ -6626,7 +6635,11 @@ const static struct {
 };
 
 #ifdef RTCONFIG_IPV6
+#if defined(BCMARM)
+int inet_raddr6_pton(const char *src, void *dst, void *buf)
+#else
 static int inet_raddr6_pton(const char *src, void *dst, void *buf)
+#endif
 {
 	char *sptr = (char *) src;
 	char *dptr = buf;
@@ -8250,7 +8263,14 @@ static int get_client_detail_info(struct json_object *clients, struct json_objec
 					json_object_object_add(client, "isOnline", json_object_new_string("0"));
 			}
 			else
+#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(R8000) || defined(R7000) || defined(R6300V2) || defined(R7900P) || defined(R8000P)
+				if(!pids("cfg_server")&&(p_client_info_tab->device_flag[i]&(1<<FLAG_EXIST)))
+					json_object_object_add(client, "isOnline", json_object_new_string("1"));
+				else
+					json_object_object_add(client, "isOnline", json_object_new_string("0"));
+#else
 				json_object_object_add(client, "isOnline", json_object_new_string("0"));
+#endif
 #endif
 			json_object_object_add(client, "ssid", json_object_new_string(p_client_info_tab->ssid[i]));
 			if(!strcmp(ipaddr, nvram_safe_get("login_ip_str"))){
@@ -12053,6 +12073,9 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	int count, cnt;
 	long filelen;
 	int offset;
+#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(SBRAC3200P)
+	int checkname=0;
+#endif
 #ifndef RTCONFIG_SMALL_FW_UPDATE
 	struct sysinfo si;
 #endif
@@ -12088,11 +12111,26 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 		}
 
 		len -= strlen(buf);
-
+#if defined(K3)
+		if (strstr(buf, "K3"))
+			checkname=1;
+#elif defined(K3C)
+		if (strstr(buf, "K3C"))
+			checkname=1;
+#elif defined(SBRAC1900P)
+		if (strstr(buf, "SBRAC1900P"))
+			checkname=1;
+#elif defined(SBRAC3200P)
+		if (strstr(buf, "SBRAC3200P"))
+			checkname=1;
+#endif
 		if (!strncasecmp(buf, "Content-Disposition:", 20) && strstr(buf, "name=\"file\""))
 			break;
 	}
-
+#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(SBRAC3200P)
+	if(checkname==0)
+		goto err;
+#endif
 	/* Skip boundary and headers */
 	while (len > 0) {
 		if (!fgets(buf, MIN(len + 1, sizeof(buf)), stream))
@@ -13159,7 +13197,6 @@ do_ssupload_post(char *url, FILE *stream, int len, char *boundary)
 	int count, cnt;
 	long filelen;
 	int offset;
-	char cmpHeader;
 
 	/* Look for our part */
 	while (len > 0)
@@ -15645,9 +15682,9 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 {
 	char *action_mode;
 	char *action_script;
-	char dbjson[100][2048];
+	char dbjson[100][9999];
 	char dbvar[2048];
-	char dbval[2048];
+	char dbval[9999];
 	char notify_cmd[128];
 	char db_cmd[128];
 	int i, j;
@@ -15786,62 +15823,36 @@ do_applydb_cgi(char *url, FILE *stream)
     applydb_cgi(stream, NULL, NULL, 0, url, NULL, NULL);
 }
 
+static int db_print(dbclient* client, webs_t wp, char* prefix, char* key, char* value) {
+	websWrite(wp,"o['%s']='%s';\n", key, value);
+	return 0;
+}
+
 static void
 do_dbconf(char *url, FILE *stream)
 {
-	char substr[2048];
-	char dbvar[2048];
-	char dbval[2048];
-	FILE *fp;
 	char *name = NULL;
 	char * delim = ",";
 	char *pattern = websGetVar(wp, "p","");
 	char *dup_pattern = strdup(pattern);
 	char *sepstr = dup_pattern;
+	dbclient client;
+	dbclient_start(&client);
 	if(strstr(sepstr,delim)) {
 		for(name = strsep(&sepstr, delim); name != NULL; name = strsep(&sepstr, delim)) {
-			//logmessage("HTTPD", "dbconf: %s name: %s", pattern, name);
 			websWrite(stream,"var db_%s=(function() {\nvar o={};\n", name);
-			doSystem("dbus list %s > /tmp/dbusxxx", name);
-			if((fp = fopen("/tmp/dbusxxx", "r")) == NULL)
-				printf("No \"name\"!\n");
-			while(fgets(substr, sizeof(substr),fp) != NULL)
-			{
-				char *result = NULL;
-				result = strtok( substr, "=" );
-				strcpy (dbvar, result);
-				while( result != NULL ) {
-					strcpy(dbval, result);
-					dbval[strlen(dbval)-1]='\0';
-					result = strtok(NULL,"***");
-				}
-				websWrite(stream,"o['%s']='%s';\n", dbvar, dbval );
-			}
-			fclose(fp);
+
+			dbclient_list(&client, name, stream, db_print);
 			websWrite(stream,"return o;\n})();\n" );
 		}
 	} else {
 		name= strdup(pattern);
 		websWrite(stream,"var db_%s=(function() {\nvar o={};\n", name);
-		doSystem("dbus list %s > /tmp/dbusxxx", name);
-		if((fp = fopen("/tmp/dbusxxx", "r")) == NULL)
-			printf("No \"name\"!\n");
-		while(fgets(substr, sizeof(substr),fp) != NULL)
-		{
-			char *result = NULL;
-			result = strtok( substr, "=" );
-			strcpy (dbvar, result);
-			while( result != NULL ) {
-				strcpy(dbval, result);
-				dbval[strlen(dbval)-1]='\0';
-				result = strtok(NULL,"***");
-			}
-			websWrite(stream,"o['%s']='%s';\n", dbvar, dbval );
-		}
-		fclose(fp);
+		dbclient_list(&client, name, stream, db_print);
 		websWrite(stream,"return o;\n})();\n" );
 	}
 	free(dup_pattern);
+	dbclient_end(&client);
 }
 
 static void
@@ -15868,14 +15879,20 @@ do_logread(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char_t *url, char_t *path, char_t *query)
 {
 	char buf[4096];
-	char logpath[100];
+	char logpath[128], scPath[128];
 	FILE *fp;
 	//char filename[100];
 	//sscanf(url, "logreaddb.cgi?%s", filename);
 	char *filename = websGetVar(wp, "p","");
+	char *script = websGetVar(wp, "script", "");
+	if(script){
+		sprintf(scPath, "/jffs/softcenter/scripts/%s", script);
+		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
+		sys_script("syscmd.sh");
+	}
 	sprintf(logpath, "/tmp/%s", filename);
 	//logmessage("HTTPD", "logread: %s, url: %s", logpath, url);
-	sleep(1);//
+	//sleep(1);//
 	if(check_if_file_exist(logpath)){
 		if((fp = fopen(logpath, "r"))!= NULL){
 			while(fgets(buf, sizeof(buf),fp) != NULL){
@@ -23919,6 +23936,19 @@ ej_get_wan_lan_status(int eid, webs_t wp, int argc, char **argv)
 			continue;
 		}
 #endif
+#if defined(K3)
+		if(port[1] == '0') {
+			continue;
+		} else if (port[1] == '1') {
+			port[0] = 'W';
+		} else if (port[1] == '2') {
+			port[1] = '1';
+		} else if (port[1] == '3') {
+			port[1] = '2';
+		} else if (port[1] == '4') {
+			port[1] = '3';
+		}
+#endif
 		switch (*port++) {
 		case 'W':
 			snprintf(name, sizeof(name), "%s%s%s", "WAN", *port ? " " : "", port);
@@ -24682,7 +24712,24 @@ struct ej_handler ej_handlers[] = {
 	{ "radio_status", ej_radio_status},
 	{ "asus_sysinfo", ej_sysinfo},
 	{ "sysinfo", ej_show_sysinfo},
+#if defined(BCMARM)	
+	{ "iptraffic", ej_iptraffic},
+	{ "iptmon", ej_iptmon},
+	{ "ipt_bandwidth", ej_ipt_bandwidth},
+#ifdef RTCONFIG_IPV6
+#ifdef RTCONFIG_IGD2
+	{ "ipv6_pinholes",  ej_ipv6_pinhole_array},
+#endif
+	{ "get_ipv6net_array", ej_lan_ipv6_network_array},
+#endif
+	{ "get_leases_array", ej_get_leases_array},
+	{ "get_vserver_array", ej_get_vserver_array},
+	{ "get_upnp_array", ej_get_upnp_array},
+	{ "get_route_array", ej_get_route_array},
+	{ "get_tcclass_array", ej_tcclass_dump_array},
+#else
 	{ "kool_info", ej_kool_info},
+#endif
 #ifdef RTCONFIG_OPENVPN
 	{ "vpn_server_get_parameter", ej_vpn_server_get_parameter},
 	{ "vpn_client_get_parameter", ej_vpn_client_get_parameter},

@@ -243,7 +243,7 @@ static int ignore_result(dbclient *client) {
     return 0;
 }
 
-static int parse_list_result(dbclient *client, char* prefix, void* o, fn_db_parse fn) {
+static int parse_list_result(dbclient *client, char* prefix, webs_t wp, fn_db_parse fn) {
     int n1, n2;
     char *p1, *p2, *magic = MAGIC;
 
@@ -282,7 +282,7 @@ static int parse_list_result(dbclient *client, char* prefix, void* o, fn_db_pars
         if(client->buf[n2-1] == '\n') {
             client->buf[n2-1] = '\0';
         }
-        if(0 != (*fn)(client, o, prefix, p1, p2)) {
+        if(0 != (*fn)(client, wp, prefix, p1, p2)) {
             break;
         }
     }
@@ -290,7 +290,7 @@ static int parse_list_result(dbclient *client, char* prefix, void* o, fn_db_pars
     return 0;
 }
 
-int dbclient_list(dbclient* client, char* prefix, void* o, fn_db_parse fn) {
+int dbclient_list(dbclient* client, char* prefix, webs_t wp, fn_db_parse fn) {
     int n1, n2;
 
     n1 = strlen("list") + strlen(prefix) + 2;//list prefix\n
@@ -300,7 +300,7 @@ int dbclient_list(dbclient* client, char* prefix, void* o, fn_db_parse fn) {
         return -1;
     }
 
-    return parse_list_result(client, prefix, o, fn);
+    return parse_list_result(client, prefix, wp, fn);
 }
 
 int dbclient_end(dbclient* client) {

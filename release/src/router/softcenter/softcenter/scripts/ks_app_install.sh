@@ -233,7 +233,14 @@ uninstall_module() {
 		rm -f /jffs/softcenter/webs/Module_$softcenter_installing_todo.asp
         rm -f /jffs/softcenter/init.d/S*$softcenter_installing_todo.sh
 	fi
-	[ -z "$softcenter_server_tcode" ] && dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
+	if [ -z "$softcenter_server_tcode" ]; then
+		modelname=`nvram get modelname`
+		if [ "$modelname" == "K3" -o "$modelname" == "SBR-AC3200P" ]; then
+			dbus set softcenter_server_tcode=CN
+		else
+			dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
+		fi
+	fi
 	if [ "$(dbus get softcenter_server_tcode)" == "CN" ]; then
 		curl -s http://update.wifi.com.cn/mips/"$softcenter_installing_module"/"$softcenter_installing_module"/install.sh >/dev/null 2>&1
 	else
@@ -264,3 +271,4 @@ ks_app_remove)
 	install_module
 	;;
 esac
+
