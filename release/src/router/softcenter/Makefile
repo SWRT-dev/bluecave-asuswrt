@@ -73,7 +73,7 @@ install:
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_tar_intall.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 plugin.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
+	#install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 # softcenter SSR and adbyby plus
 	install -m 0755 base64 $(INSTALLDIR)/usr/bin
 	install -m 0755 ssr-redir $(INSTALLDIR)/usr/sbin
