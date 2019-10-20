@@ -5,9 +5,7 @@ source /jffs/softcenter/scripts/base.sh
 sh /jffs/softcenter/perp/perp.sh start
 nvram set jffs2_scripts=1
 nvram commit
-dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "-" -f1|cut -c2-5`
-dbus set softcenter_arch=`uname -m`
-dbus set softcenter_api=`cat /jffs/softcenter/.soft_ver`
+
 #============================================
 # check start up scripts 
 if [ ! -f "/jffs/scripts/wan-start" ];then

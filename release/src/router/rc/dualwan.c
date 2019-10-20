@@ -46,6 +46,10 @@
 #define MODEL_PROTECT "RT-N18U"
 #endif
 
+#if defined(BLUECAVE)
+#define MODEL_PROTECT "BLUECAVE"
+#endif
+
 #ifndef MODEL_PROTECT
 #define MODEL_PROTECT "NOT_SUPPORT"
 #endif
@@ -136,6 +140,8 @@ int dualwan_control(int argc, char *argv[])
 
 #if defined(RTCONFIG_CFEZ) && defined(RTCONFIG_BCMARM)
 	if (strcmp(nvram_safe_get("model"), MODEL_PROTECT) != 0){
+#elif defined(BLUECAVE)
+	if (strcmp(nvram_safe_get("productid"), MODEL_PROTECT) != 0){
 #else
 	if (strcmp(cfe_nvram_safe_get("model"), MODEL_PROTECT) != 0){
 #endif
