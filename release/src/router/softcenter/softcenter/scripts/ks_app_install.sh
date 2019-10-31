@@ -96,20 +96,21 @@ install_module() {
 			dbus set softcenter_server_tcode=CN
 		elif [ "$modelname" == "SBR-AC1900P" -o "$modelname" == "SBR-AC3200P" -o "$modelname" == "R7900P" ]; then
 			dbus set softcenter_server_tcode=ALI
+		elif [ "$modelname" == "GT-AC2900" -o "$modelname" == "GT-AC5300" -o "$modelname" == "RT-AX58U" ]; then
+			dbus set softcenter_server_tcode=CN1
 		else
 			dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
 		fi
 	fi
-	if [ "$(dbus get softcenter_server_tcode)" == "CN" ]; then
+	eval `dbus export softcenter_server_tcode`
+	if [ "$softcenter_server_tcode" == "CN" ]; then
 		HOME_URL="http://update.wifi.com.cn/$ARCH_SUFFIX"
-	elif [ "$(dbus get softcenter_server_tcode)" == "ALI" ]; then
+	elif [ "$softcenter_server_tcode" == "CN1" ]; then
+		HOME_URL="https://123.56.45.194/$ARCH_SUFFIX"
+	elif [ "$softcenter_server_tcode" == "ALI" ]; then
 		HOME_URL="https://121.40.153.145/$ARCH_SUFFIX"
 	else
-		if [ "$ARCH" == "armv7l" ]; then
-			HOME_URL="https://scarm.paldier.com"
-		else
-			HOME_URL="https://sc.paldier.com/$ARCH_SUFFIX"
-		fi
+		HOME_URL="https://sc.paldier.com/$ARCH_SUFFIX"
 	fi
 
 	#HOME_URL=`dbus get softcenter_home_url`

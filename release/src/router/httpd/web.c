@@ -15853,7 +15853,7 @@ do_applydb_cgi(char *url, FILE *stream)
 }
 
 static int db_print(dbclient* client, webs_t wp, char* prefix, char* key, char* value) {
-	websWrite(wp,"o['%s']='%s';\n", key, value);
+	websWrite(wp,"o[\"%s\"]=\"%s\";\n", key, value);
 	return 0;
 }
 
