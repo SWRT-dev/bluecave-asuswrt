@@ -219,6 +219,7 @@ input[type=button]:focus {
 </style>
 <script>
 var db_softcenter_ = {};
+var scarch = "mips";
 var model = '<% nvram_get("model"); %>';
 var modelname = '<% nvram_get("modelname"); %>';
 var TIMEOUT_SECONDS = 18;
@@ -245,7 +246,7 @@ function appPostScript(moduleInfo, script) {
 	var data = {"action_script":script, "action_mode":" Refresh "};
 	//currState.name = moduleInfo.name;
 	//TODO auto choose for home_url
-
+	data["softcenter_home_url"] = db_softcenter_["softcenter_home_url"];
 	data["softcenter_installing_todo"] = moduleInfo.name;
 	if (script == "ks_app_install.sh") {
 		data["softcenter_installing_tar_url"] = moduleInfo.tar_url;
@@ -423,7 +424,7 @@ function renderView(apps) {
 	$('.show-uninstall-btn').val('未安装(' + uninstallCount + ')');
 }
 function getRemoteData() {
-	var remoteURL = db_softcenter_["softcenter_home_url"] + '/softcenter/app.json.js';
+	var remoteURL = db_softcenter_["softcenter_home_url"] + '/' + scarch + '/softcenter/app.json.js';
 	return $.ajax({
 		url: remoteURL,
 		method: 'GET',
@@ -549,6 +550,35 @@ $(function() {
 		dataType: "script",
 		success: function(response) {
 			db_softcenter_ = db_softcenter;
+			if(typeof db_softcenter_["softcenter_server_tcode"] == "undefined") {
+				db_softcenter_["softcenter_home_url"] = "http://update.wifi.com.cn";
+			}
+			else if(db_softcenter_["softcenter_server_tcode"] == "CN") {
+			        db_softcenter_["softcenter_home_url"] = "http://update.wifi.com.cn";
+			}
+			else if(db_softcenter_["softcenter_server_tcode"] == "GB") {
+			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
+			}
+			else if(db_softcenter_["softcenter_server_tcode"] == "CN1") {
+			        db_softcenter_["softcenter_home_url"] = "https://123.56.45.194";
+			}
+			else if(db_softcenter_["softcenter_server_tcode"] == "ALI") {
+			        db_softcenter_["softcenter_home_url"] = "https://121.40.153.145";
+			}
+			else
+			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
+			if(db_softcenter_["softcenter_arch"] == "mips")
+				scarch="mips";
+			else if (db_softcenter_["softcenter_arch"] == "armv7l")
+				scarch="arm";
+			else if (db_softcenter_["softcenter_arch"] == "aarch64")
+				scarch="arm64";
+			else if (db_softcenter_["softcenter_arch"] == "mipsle")
+				scarch="mipsle";
+			else if (db_softcenter_["softcenter_arch"] == "x86")
+				scarch="x86";
+			else
+				scarch="mips";
 			if (!db_softcenter_["softcenter_version"]) {
 				db_softcenter_["softcenter_version"] = "0.0";
 			}
@@ -604,18 +634,6 @@ function notice_show(){
 	else {
 	$("#modelid").html("Software Center " + model );
 	}
-	if(db_softcenter_["softcenter_arch"] == "mips")
-		var scarch="mips";
-	else if (db_softcenter_["softcenter_arch"] == "armv7l")
-		var scarch="arm";
-	else if (db_softcenter_["softcenter_arch"] == "aarch64")
-		var scarch="arm64";
-	else if (db_softcenter_["softcenter_arch"] == "mipsle")
-		var scarch="mipsle";
-	else if (db_softcenter_["softcenter_arch"] == "x86")
-		var scarch="x86";
-	else
-		var scarch="mips";
 	var pushurl = 'https://sc.paldier.com/' + scarch + '/softcenter/push_message.json.js';
 	$.ajax({
 		url: pushurl,
