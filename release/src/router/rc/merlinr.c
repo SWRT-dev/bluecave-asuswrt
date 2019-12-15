@@ -327,6 +327,7 @@ void exec_uu_merlinr()
 #if defined(BLUECAVE)
 		if(strncmp(nvram_get("territory_code"), "CN", 2))
 			return;
+		add_rc_support("uu_accel");
 #endif
 		if ((fpmodel = fopen("/var/model", "w"))){
 			fprintf(fpmodel, nvram_get("productid"));
