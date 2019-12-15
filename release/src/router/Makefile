@@ -7049,6 +7049,19 @@ httpdb-install: httpdb
 	$(STRIP) $(INSTALLDIR)/httpdb/usr/sbin/httpdb
 endif
 endif
+
+ifeq ($(RTCONFIG_SMARTDNS),y)
+smartdns:
+	$(MAKE) -C smartdns/src
+
+smartdns-clean:
+	[ ! -f smartdns/src/Makefile ] || $(MAKE) -C smartdns/src clean
+
+smartdns-install: smartdns
+	install -D smartdns/src/smartdns $(INSTALLDIR)/smartdns/usr/sbin/smartdns
+	$(STRIP) $(INSTALLDIR)/smartdns/usr/sbin/smartdns
+endif
+
 libical-2.0.0/Makefile: libical-2.0.0/CMakeLists.txt
 	cd libical-2.0.0 && cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_BUILD_TYPE=Release \
