@@ -1632,6 +1632,12 @@ extern void stop_dsl_diag(void);
 extern int start_dsl_diag(void);
 #endif
 #endif
+#ifdef RTCONFIG_FRS_LIVE_UPDATE
+extern int firmware_check_update_main(int argc, char *argv[]);
+#endif
+#ifdef RTCONFIG_FRS_FEEDBACK
+extern void start_sendfeedback(void);
+#endif
 #ifdef RTCONFIG_PUSH_EMAIL
 extern void start_DSLsendmail(void);
 #ifdef RTCONFIG_DBLOG
@@ -2198,5 +2204,8 @@ extern int gen_lbd_config_file(void);
 extern void stop_qca_lbd(void);
 extern void start_qca_lbd(void);
 #endif
-
+#ifdef RTCONFIG_FRS_FEEDBACK
+extern int do_feedback(const char* feedback_file, char* attach_cmd);
+#endif
 #endif	/* __RC_H__ */
+

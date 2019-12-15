@@ -442,9 +442,9 @@ static int build_temp_rootfs(const char *newroot)
 #ifdef RTCONFIG_USB_SMS_MODEM
 			     " libsmspdu.so"
 #endif
-#if defined(RTCONFIG_HTTPS) || defined(RTCONFIG_PUSH_EMAIL)
+#if defined(RTCONFIG_HTTPS) || defined(RTCONFIG_PUSH_EMAIL) || defined(RTCONFIG_FRS_FEEDBACK)
 			     " libssl* libmssl*"
-#if defined(RTCONFIG_PUSH_EMAIL)
+#if defined(RTCONFIG_PUSH_EMAIL) || defined(RTCONFIG_FRS_FEEDBACK)
 			     " libcurl* libxml2*"
 #endif
 #endif
@@ -4282,7 +4282,7 @@ start_skipd(void)
 	}
 	if (pids("skipd"))
 		killall_tk("skipd");
-	//logmessage(LOGNAME, "start skipd:%d", pid);
+	logmessage(LOGNAME, "start skipd");
 	_eval(skipd_argv, NULL, 0, &pid);
 
 }
@@ -9746,11 +9746,7 @@ again:
 #if defined(RTCONFIG_LANTIQ)
 	if(nvram_get_int("k3c_enable"))
 		doSystem("/usr/sbin/plugin.sh stop");
-#elif defined(RTCONFIG_BCMARM)
-	doSystem("/usr/sbin/plugin.sh stop");
-#elif defined(RTCONFIG_QCA)
-	doSystem("/usr/sbin/plugin.sh stop");
-#elif defined(RTCONFIG_RALINK)
+#elif defined(RTCONFIG_BCMARM) || defined(HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
 	doSystem("/usr/sbin/plugin.sh stop");
 #endif
 #endif
@@ -12601,7 +12597,12 @@ retry_wps_enr:
 		if(action & RC_SERVICE_START) start_mdns();
 	}
 #endif
-
+#ifdef RTCONFIG_FRS_FEEDBACK
+	else if (strcmp(script, "sendfeedback") == 0)
+	{
+		start_sendfeedback();
+	}
+#endif
 #ifdef RTCONFIG_PUSH_EMAIL
 	else if (strcmp(script, "sendmail") == 0)
 	{

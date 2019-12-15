@@ -53,7 +53,7 @@ done
 			cp -r /jffs/softcenter/bin/softcenter.sh /jffs/.asusrouter
 			echo 1.2.0 > /jffs/softcenter/.soft_ver
 			dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
-			dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "-" -f1|cut -c2-5`
+			dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "-" -f1|cut -c2-6`
 			dbus set softcenter_arch=`uname -m`
 			dbus set softcenter_api=`cat /jffs/softcenter/.soft_ver`
 			echo " $(date "+%F %T"):""安装完成，重启后生效！" >> /tmp/k3c.log

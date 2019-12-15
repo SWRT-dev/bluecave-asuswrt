@@ -7,6 +7,9 @@ endif
 ifneq ($(or $(findstring linux-3.10.14,$(LINUXDIR))),)
 CFLAGS += -idirafter$(LINUXDIR)/include/uapi
 endif
+ifneq ($(or $(findstring linux-3.10.108,$(LINUXDIR))),)
+CFLAGS += -idirafter$(LINUXDIR)/include/uapi
+endif
 CFLAGS += $(PRIVATE_EXTRACFLAGS)
 CFLAGS += -I. -I$(TOP)/shared -I$(SRCBASE)/include
 ifneq ($(HND_ROUTER),y)
@@ -68,7 +71,7 @@ include $(SRCBASE)/.config
 ifeq ($(RTCONFIG_REALTEK),y)
 LDFLAGS = -L$(TOP)/nvram${BCMEX} -lnvram -L$(TOP)/shared -lshared -lcrypt -ldl
 else
-LDFLAGS = -L$(TOP)/nvram${BCMEX}${EX7} -lnvram -L$(TOP)/shared -lshared -lcrypt -L$(TOP)/libbcmcrypto -lbcmcrypto -ldl
+LDFLAGS = -L$(TOP)/nvram${BCMEX}${EX7} -lnvram -L$(TOP)/shared -lshared -lcrypt -ldl
 endif
 ifeq ($(HND_ROUTER),y)
 CFLAGS += -I$(HND_SRC)/userspace/public/include -I$(HND_SRC)/userspace/public/include/linux -I$(HND_SRC)/userspace/private/include
@@ -149,9 +152,11 @@ endif
 endif
 endif
 
-ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+ifeq ($(RTCONFIG_HTTPS),y)
+ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
 CFLAGS  += -I$(TOP)/openssl/include
 LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+endif
 endif
 
 ifeq ($(RTCONFIG_FBWIFI),y)
@@ -199,7 +204,7 @@ ifeq ($(or $(RTAC68A),$(RT4GAC68U)),y)
 CFLAGS += -DRTAC68U
 endif
 
-ifeq ($(or $(RTAC85U),$(RTAC85P)),y)
+ifeq ($(or $(RTAC85U),$(RTAC85P),$(RTACRH26),$(TUFAC1750)),y)
 TARGET_MODEL = $(subst -,,$(subst +,P,$(BUILD_NAME)))
 CFLAGS += -D$(TARGET_MODEL)
 endif
@@ -265,7 +270,7 @@ OBJS += init-broadcom.o wps-broadcom.o broadcom.o ate-broadcom.o
 ifeq ($(RTCONFIG_AMAS),y)
 OBJS += obd-broadcom.o
 endif
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U))
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U GT-AC2900))
 OBJS += cfe.o
 endif
 ifeq ($(RTCONFIG_ADTBW),y)
@@ -319,6 +324,14 @@ endif
 OBJS += $(if $(wildcard conn_diag.c),conn_diag.o,prebuild/conn_diag.o)
 endif
 
+ifeq ($(K3),y)
+OBJS += $(if $(wildcard k3.c), k3.o, prebuild/k3.o)
+OBJS += $(if $(wildcard k3ex.c), k3ex.o, prebuild/k3ex.o)
+else ifeq ($(K3C),y)
+OBJS += $(if $(wildcard k3c.c), k3c.o, prebuild/k3c.o)
+else
+OBJS += merlinr.o
+endif
 # TODO, speedtest
 ifeq ($(RTCONFIG_SPEEDTEST),y)
 OBJS += $(if $(wildcard speedtest.c),speedtest.o,prebuild/speedtest.o)
@@ -327,7 +340,7 @@ endif
 OBJS += wanduck.o
 OBJS += tcpcheck.o
 
-ifeq ($(RTCONFIG_SOC_IPQ8064),y)
+ifeq ($(or $(RTCONFIG_SOC_IPQ8064),$(RTCONFIG_SOC_IPQ8074)),y)
 CFLAGS += -DBUILD_READMEM
 OBJS += readmem.o
 endif
@@ -393,11 +406,15 @@ OBJS += pc_tmp.o
 endif
 
 ifeq ($(RTCONFIG_HTTPS),y)
-ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
 OBJS += dsl_fb.o
 endif
 endif
-
+ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
+ifneq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3 K3C R7900P BLUECAVE))
+OBJS += frs_service.o
+endif
+endif
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += asustest.o
 endif
@@ -416,7 +433,7 @@ ifeq ($(and $(RTCONFIG_BCMWL6),$(RTCONFIG_PROXYSTA)),y)
 OBJS += psta_monitor.o
 endif
 
-ifeq ($(or $(RTCONFIG_BCMWL6),$(RTCONFIG_LANTIQ),$(RTCONFIG_QCA)),y)
+ifeq ($(or $(RTCONFIG_BCMWL6),$(RTCONFIG_LANTIQ),$(RTCONFIG_QCA),$(RTCONFIG_REALTEK)),y)
 ifeq ($(RTCONFIG_AMAS),y)
 ifneq ($(RTCONFIG_DISABLE_REPEATER_UI),y)
 vpath %.c sysdeps/amas
@@ -482,10 +499,6 @@ CFLAGS += -I$(TOP)/libletsencrypt
 LDFLAGS += -L$(TOP)/libletsencrypt -lletsencrypt
 endif
 
-ifeq ($(BUILD_NAME), GT-AC5300)
-CFLAGS += -DSUPPORT_GAME_PROFILE
-endif
-
 CFLAGS += $(if $(RTCONFIG_BLINK_LED),-I$(TOP)/bled)
 
 export CFLAGS
@@ -506,14 +519,14 @@ OBJS += bwdpi.o
 OBJS += bwdpi_check.o
 OBJS += bwdpi_wred_alive.o
 OBJS += bwdpi_db_10.o
+
+OBJS += hour_monitor.o
 endif
 
 ifeq ($(RTCONFIG_AMAS),y)
 OBJS += amas_lib.o
 OBJS += linklist.o
 endif
-
-OBJS += hour_monitor.o
 
 ifeq ($(RTCONFIG_TRAFFIC_LIMITER),y)
 OBJS += traffic_limiter.o
@@ -529,6 +542,8 @@ endif
 
 
 ifeq ($(RTCONFIG_HTTPS),y)
+CFLAGS += -I$(TOP)/curl-7.21.7/include
+LDFLAGS += -L$(TOP)/curl-7.21.7/lib/.libs -lcurl
 ifeq ($(or $(RTCONFIG_PUSH_EMAIL),$(RTCONFIG_NOTIFICATION_CENTER)),y)
 OBJS += pwdec.o
 CFLAGS += -I$(TOP)/json-c
@@ -668,6 +683,14 @@ ifeq ($(RTCONFIG_QCA_LBD),y)
 OBJS += lbd-qca.o
 endif
 
+ifeq ($(BUILD_NAME), RT-AC1200_V2)
+CFLAGS += -DRTAC1200V2
+endif
+
+ifeq ($(RTCONFIG_ISP_CUSTOMIZE),y)
+OBJS	+= $(if $(wildcard customize_rc.c),customize_rc.o,prebuild/customize_rc.o)
+endif
+
 all: PB rc init.prep
 
 PB:
@@ -704,7 +727,6 @@ endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc reboot
 	@cd $(INSTALLDIR)/sbin && ln -sf rc halt
 	@cd $(INSTALLDIR)/sbin && ln -sf rc netool
-	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_custom_updated
 ifeq ($(HND_ROUTER),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hnd-write
 	@cd $(INSTALLDIR)/sbin && ln -sf rc hnd-erase
@@ -720,6 +742,9 @@ else
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-erase
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc mtd-unlock
+endif
+ifeq ($(RTCONFIG_DUAL_TRX2),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc fixdmgfw
 endif
 #	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
@@ -743,7 +768,7 @@ endif
 ifeq ($(RTAC1200G),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wdg_monitor
 endif
-ifeq ($(RTCONFIG_FANCTRL),y)
+ifeq ($(and $(CONFIG_BCMWL5),$(RTCONFIG_FANCTRL)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc phy_tempsense
 endif
 
@@ -751,7 +776,7 @@ ifeq ($(and $(RTCONFIG_BCMWL6),$(RTCONFIG_PROXYSTA)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc psta_monitor
 endif
 
-ifeq ($(or $(RTCONFIG_BCMWL6),$(RTCONFIG_LANTIQ),$(RTCONFIG_QCA)),y)
+ifeq ($(or $(RTCONFIG_BCMWL6),$(RTCONFIG_LANTIQ),$(RTCONFIG_QCA),$(RTCONFIG_REALTEK)),y)
 ifeq ($(RTCONFIG_AMAS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc obd
 	@cd $(INSTALLDIR)/sbin && ln -sf rc obd_eth
@@ -779,6 +804,7 @@ ifeq ($(RTCONFIG_DETWAN),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc detwan
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_updated
+	@cd $(INSTALLDIR)/sbin && ln -sf rc ddns_custom_updated
 
 #	@cd $(INSTALLDIR)/sbin && ln -sf rc wldist
 
@@ -791,6 +817,9 @@ ifeq ($(RTCONFIG_WPS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc wpsaide
 ifeq ($(RTCONFIG_QCA),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc get_wps_er
+ifeq ($(RTCONFIG_CFG80211),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc vap_evhandler
+endif
 endif
 endif
 ifeq ($(RTCONFIG_QCA_PLC_UTILS),y)
@@ -966,6 +995,9 @@ endif
 ifeq ($(RTCONFIG_HTTPS),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rsasign_check
 	@cd $(INSTALLDIR)/sbin && ln -sf rc rsarootca_check
+ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
+	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_check_update
+endif
 endif
 	@cd $(INSTALLDIR)/sbin && ln -sf rc test_endian
 ifeq ($(RTCONFIG_BWDPI),y)
@@ -1060,7 +1092,7 @@ size: rc
 
 # handle prebuilt object here
 ifneq ($(wildcard ./prebuild/dsl_fb.o),)
-ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
 dsl_fb.o:
 	@-cp -f ./prebuild/dsl_fb.o .
 endif
@@ -1072,7 +1104,7 @@ endif
 endif
 else
 ifeq ($(RTCONFIG_HTTPS),y)
-ifeq ($(RTCONFIG_PUSH_EMAIL),y)
+ifeq ($(RTCONFIG_FRS_FEEDBACK),y)
 dsl_fb.o:dsl_fb.c
 #	@echo "encrypt dsl password"
 #	./dsl_fb_enc.sh
@@ -1137,7 +1169,7 @@ ifneq ($(wildcard ./prebuild/ate.o),)
 ate.o:
 	@-cp -f ./prebuild/ate.o .
 endif
-ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U))
+ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME),RT-AC68U RT-AC3200 4G-AC68U GT-AC2900))
 ifneq ($(wildcard ./prebuild/cfe.o),)
 cfe.o:
 	@-cp -f ./prebuild/cfe.o .
@@ -1381,3 +1413,4 @@ pswatch: pswatch.c
 	@$(CC) -o $@ $^
 	$(STRIP) $@
 	$(CPTMP)
+

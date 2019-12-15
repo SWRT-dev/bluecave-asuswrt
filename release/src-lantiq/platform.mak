@@ -5,7 +5,7 @@ EXTRACFLAGS := -DCONFIG_LANTIQ -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -funit-at-a-ti
 endif
 export LINUXDIR := $(SRCBASE)/linux/linux-3.10.104
 export KERNEL_BINARY=$(LINUXDIR)/vmlinux
-export PLATFORM := mipsel-uclibc
+export PLATFORM := mips-uclibc
 export MODEL_EXT := _lantiq
 export CROSS_COMPILE := mips-openwrt-linux-uclibc-
 export TOOLCHAIN_NAME=toolchain-mips_mips32_gcc-4.8-linaro_uClibc-0.9.33.2
@@ -18,9 +18,9 @@ export PATH := $(PATH):${STAGING_DIR}/bin:${WORKING_DIR}/tools/host/bin
 export CROSS_COMPILER := $(CROSS_COMPILE)
 export READELF := mips-openwrt-linux-uclibc-readelf
 export CONFIGURE := ./configure --host=mips-linux --build=$(BUILD)
-export HOSTCONFIG := linux-mipsel
+export HOSTCONFIG := linux-mips
 export ARCH := mips
-export HOST := mipsel-linux
+export HOST := mips-linux
 export KERNELCC := $(CROSS_COMPILE)gcc
 export KERNELLD := $(CROSS_COMPILE)ld
 export TOOLS := $(SRCBASE)/tools/${TOOLCHAIN_NAME}

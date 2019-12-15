@@ -1129,7 +1129,7 @@ static void server_open(skipd_server* server) {
     char real_path[SK_PATH_MAX];
     char nbuf[10];
     int n, sf;
-
+#if 0
     sprintf(real_path, "%s/switch", server->db_path);
     sf = open(real_path, O_RDONLY);
     if(sf > 0) {
@@ -1139,7 +1139,12 @@ static void server_open(skipd_server* server) {
             n = atoi(nbuf);
         }
         server->curr_db = n;
+		skipd_log(SKIPD_DEBUG, "debug:read db:%s",nbuf);
     }
+	if((server->curr_db != 0) && (server->curr_db != 1)){
+		skipd_log(SKIPD_DEBUG, "db:%d is wrong,reset to 0",server->curr_db);
+		server->curr_db = 0;
+	}
     sf = open(real_path, O_TRUNC | O_RDWR | O_CREAT, 0640);
     if (sf < 0) {
         skipd_log(SKIPD_DEBUG, "cannot write swich file");
@@ -1148,7 +1153,9 @@ static void server_open(skipd_server* server) {
     n = sprintf(nbuf, "%d", server->curr_db);
     write(sf, nbuf, n);
     close(sf);
-
+    skipd_log(SKIPD_DEBUG, "use path:%s db:%d",server->db_path,server->curr_db);
+#endif
+	server->curr_db = 0;
     sprintf(real_path, "%s/%d", server->db_path, server->curr_db);
     server->db = SkipDB_new();
     SkipDB_setPath_(server->db, real_path);
@@ -1184,7 +1191,6 @@ static void server_switch(skipd_server* server) {
 
     server->db = other;
     server->curr_db = n2;
-
     SkipDB_delete(tmp);
     SkipDB_free(tmp);
 }
@@ -1465,7 +1471,7 @@ int main(int argc, char **argv)
     signal(SIGABRT, SIG_IGN);
     ev_signal_init (&signal_watcher, sigint_cb, SIGINT);
     ev_signal_start (EV_A_ &signal_watcher);
-    ev_signal_init (&signal_watcher2, sigint_cb, SIGUSR2);
+    ev_signal_init (&signal_watcher2, sigint_cb, SIGTERM);
     ev_signal_start (EV_A_ &signal_watcher2);
 
     // Create unix socket in non-blocking fashion
@@ -1490,10 +1496,9 @@ int main(int argc, char **argv)
     //sync at exit
     SkipDB_beginTransaction(server->db);
     SkipDB_commitTransaction(server->db);
-
+	
     SkipDB_close(server->db);
     skipd_log(SKIPD_DEBUG, "exit..\n");
-
     // This point is only ever reached if the loop is manually exited
     close(server->fd);
     return EXIT_SUCCESS;

@@ -1804,3 +1804,16 @@ config RTCONFIG_SOFTCENTER
 config RTCONFIG_SMARTDNS
 	bool "smart dns"
 	default n
+
+config RTCONFIG_FRS_LIVE_UPDATE
+	bool "RTCONFIG_FRS_LIVE_UPDATE support"
+	default n
+
+config RTCONFIG_UUPLUGIN
+	bool "UU plugin support"
+	default n
+
+config RTCONFIG_FRS_FEEDBACK
+	bool "Feedback features Support"
+	default n
+

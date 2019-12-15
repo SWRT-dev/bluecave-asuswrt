@@ -8274,14 +8274,12 @@ static int get_client_detail_info(struct json_object *clients, struct json_objec
 					json_object_object_add(client, "isOnline", json_object_new_string("0"));
 			}
 			else
-#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(R8000) || defined(R7000) || defined(R6300V2) || defined(R7900P) || defined(R8000P)
-				if(!pids("cfg_server")&&(p_client_info_tab->device_flag[i]&(1<<FLAG_EXIST)))
+#if defined(MERLINR_VER_MAJOR_B)
+				if(p_client_info_tab->device_flag[i]&(1<<FLAG_EXIST))
 					json_object_object_add(client, "isOnline", json_object_new_string("1"));
 				else
-					json_object_object_add(client, "isOnline", json_object_new_string("0"));
-#else
-				json_object_object_add(client, "isOnline", json_object_new_string("0"));
 #endif
+				json_object_object_add(client, "isOnline", json_object_new_string("0"));
 #endif
 			json_object_object_add(client, "ssid", json_object_new_string(p_client_info_tab->ssid[i]));
 			if(!strcmp(ipaddr, nvram_safe_get("login_ip_str"))){
@@ -11780,10 +11778,23 @@ wps_finish:
 		char event_msg[64] = {0};
 
 		if (!strcmp(action_mode, "firmware_check"))
+#if defined(MERLINR_VER_MAJOR_B)
+		{
+#endif
 			snprintf(event_msg, sizeof(event_msg), HTTPD_GENERIC_MSG, EID_HTTPD_FW_CHECK);
+#if defined(MERLINR_VER_MAJOR_B)
+			system("/usr/sbin/webs_update.sh");
+		}
+#endif
 		else if (!strcmp(action_mode, "firmware_upgrade"))
+#if defined(MERLINR_VER_MAJOR_B)
+		{
+#endif
 			snprintf(event_msg, sizeof(event_msg), HTTPD_GENERIC_MSG, EID_HTTPD_FW_UPGRADE);
-
+#if defined(MERLINR_VER_MAJOR_B)
+			system("/usr/sbin/webs_upgrade.sh");
+		}
+#endif
 		if (strlen(event_msg))
 			send_cfgmnt_event(event_msg);
 	}
