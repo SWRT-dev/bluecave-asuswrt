@@ -540,7 +540,10 @@ var cfg_sync_support = isSupport("cfg_sync");
 var meoVoda_support = isSupport("meoVoda");
 var movistarTriple_support = isSupport("movistarTriple");
 var utf8_ssid_support = isSupport("utf8_ssid");
-
+if(based_modelid == "RT-AC3100" || based_modelid == "RT-AC3200")
+	var uu_support = 1;
+else
+	var uu_support = isSupport('uu_accel');
 var QISWIZARD = "QIS_wizard.htm";
 
 var wl_version = "<% nvram_get("wl_version"); %>";

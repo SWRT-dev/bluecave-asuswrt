@@ -315,7 +315,7 @@ GODONE:
 
 	return 0;
 }
-
+#if !defined(BLUECAVE)
 void exec_uu_merlinr()
 {
 	FILE *fpmodel, *fpmac, *fpuu, *fpurl, *fpmd5, *fpcfg;
@@ -324,11 +324,6 @@ void exec_uu_merlinr()
 	char *dup_pattern, *g, *gg;
 	char p[10][100];
 	if(nvram_get_int("sw_mode") == 1){
-#if defined(BLUECAVE)
-		if(strncmp(nvram_get("territory_code"), "CN", 2))
-			return;
-		add_rc_support("uu_accel");
-#endif
 		if ((fpmodel = fopen("/var/model", "w"))){
 			fprintf(fpmodel, nvram_get("productid"));
 			fclose(fpmodel);
@@ -407,6 +402,7 @@ void exec_uu_merlinr()
 		}
 	}
 }
+#endif
 #if !defined(RTAC68U) && !defined(GTAC5300) && !defined(GTAC2900) && !defined(RTAC86U)
 void start_sendfeedback(void)
 {
