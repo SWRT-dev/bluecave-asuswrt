@@ -410,7 +410,7 @@ void start_sendfeedback(void)
 }
 #endif
 
-//#ifdef RTCONFIG_DUALWAN
+#ifdef RTCONFIG_DUALWAN
 void set_load_balance(void)
 {
 	int unit=0;
@@ -786,4 +786,4 @@ void set_load_balance(void)
   }
 #endif
 }
-//#endif
+#endif

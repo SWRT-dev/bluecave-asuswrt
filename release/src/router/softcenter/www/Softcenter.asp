@@ -21,7 +21,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
-<script type="text/javascript" src="res/i18n.js"></script>
+<script type="text/javascript" src="/res/i18n.js"></script>
 <style>
 .cloud_main_radius_left{
     -webkit-border-radius: 10px 0 0 10px;
@@ -214,7 +214,6 @@ show_menu();
 sc_load_lang("sc");
 hide_ss(1);
 show_footer();
-loadxml();
 }
 function hide_ss(_value) {
 if(_value==null)
@@ -232,41 +231,6 @@ $('.show-uninstall-btn').addClass('active');
 function applyRule(_on){
 showLoading();
 document.form.submit();
-}
-
-//加载并显示xml元素内容
-function loadxml() {
-    $.ajax({  
-        url : '/k3c/web/softcenter.xml',  
-        cache:false,  
-        dataType:"xml",  
-        type:'GET',  
-        timeout:4000,  
-        error:function(data) {  
-        setTimeout("loadxml();", 1000);
-    },  
-    success: function(data) {  
-         //$('body #out').remove();  
-         $(data).find('bs').each(function(i) {  
-        //var bid = $(this).attr('id');
-        var btitle = $(this).children('title').text();
-        var bname = $(this).children('name').text();  
-        var bdescription = $(this).children('description').text();  
-        var burl = $(this).children('home_url').text();  
-        var bicon = $(this).children('icon').text();  
-        var html = '<dl class="icon install-status-'+bname+'" data-name="'+bname+'">'
-                      +'<dd class="icon-pic">'
-                      +'<img src="'+bicon+'">'
-                      +'</dd>'  
-                      +'<dt class="icon-title">'+btitle+'</dt>'
-                      +'<dd class="icon-desc">'
-                      +'<a class="text" href="'+burl+'">'
-                      +bdescription+'</a></dd>'
-                +'</dl>';  
-         document.getElementById("scout").innerHTML += html;
-     });  
-    }  
-});  
 }
 </script>
 </head>
@@ -321,13 +285,13 @@ function loadxml() {
                                                                                     <h2 id="push_titile" sclang><em>Welcome</em></h2>
                                                                                 </li>
                                                                                 <li style="margin-top:-5px;">
-                                                                                    <h4 id="push_content1" >欢迎来到插件中心，目前正在紧张开发中，各种插件酝酿中！</h4>
+                                                                                    <h4 id="push_content1" sclang>Most plugins are only for Chinese users.</h4>
                                                                                 </li>
                                                                                 <li  style="margin-top:-5px;">
-                                                                                    <h4 id="push_content2">部分插件需要插入U盘或移动硬盘才能启用！</h4>
+                                                                                    <h4 id="push_content2" sclang>Plug in a USB flash drive to enable softcenter.</h4>
                                                                                 </li>
                                                                                 <li  style="margin-top:-5px;">
-                                                                                    <h4 id="push_content3">为保证正常运行，U盘或移动硬盘至少需分配1G空间留给系统使用！</h4>
+                                                                                    <h4 id="push_content3" sclang>Enable/Disable softcenter in jffs extended settings.</h4>
                                                                                 </li>
                                                                                 </li>
                                                                             </ul>
@@ -371,11 +335,9 @@ function loadxml() {
                                                                         <dd class="icon-pic">
                                                                                 <img src="/images/New_ui/tools.png">
                                                                         </dd>
-                                                                         <dt class="icon-title">jffs扩展设置</dt>
+                                                                         <dt class="icon-title" sclang>jffs extended settings</dt>
                                                                          <dd class="icon-desc">
-                                                                                <a class="text" href="/Tools_softcenter.asp">
-                                                                                        jffs扩展设置
-                                                                                </a>
+                                                                                <a class="text" href="/Tools_softcenter.asp" sclang>jffs extended settings</a>
                                                                         </dd>
                                                                 </dl>
                                                                 <!--模板：下面添加插件-->

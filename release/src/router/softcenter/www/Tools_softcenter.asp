@@ -25,6 +25,7 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script>
+<script type="text/javascript" src="/res/i18n.js"></script>
 <style>
 
 </style>
@@ -35,6 +36,7 @@ var partitions_array = [];
 function show_partition(){
 require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
 var code="";
+var free=dict['Free'];
 var mounted_partition = 0;
 partitions_array = [];
 var usbDevicesList = diskList.list();
@@ -46,19 +48,20 @@ var totalSize = simpleNum(usbDevicesList[i].partition[j].size);
 if(usbDevicesList[i].partition[j].status == "unmounted")
 continue;
 if(usbDevicesList[i].partition[j].partName==k3c_disk)
-code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" selected="selected">'+ usbDevicesList[i].partition[j].partName+'(空闲:'+accessableSize+' GB)</option>';
+code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" selected="selected">'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB)</option>';
 else
-code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" >'+ usbDevicesList[i].partition[j].partName+'(空闲:'+accessableSize+' GB)</option>';
+code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" >'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB)</option>';
 mounted_partition++;
 }
 }
 if(mounted_partition == 0)
-code +='<option value="0">无U盘或移动硬盘</option>';
+code +='<option value="0" sclang>No Disk</option>';
 document.getElementById("usb_disk_id").innerHTML = code;
 });
 }
 function init() {
 	show_menu();
+	sc_load_lang("sc");
 	show_partition();
 }
 function applyRule() {
@@ -119,38 +122,38 @@ document.form.k3c_enable.value = "0";
 								<tr>
 									<td bgcolor="#4D595D" colspan="3" valign="top">
 										<div>&nbsp;</div>
-										<div style="float:left;" class="formfonttitle">jffs扩展设置</div>
+										<div style="float:left;" class="formfonttitle" sclang>jffs extended settings</div>
 										<div style="float:right; width:15px; height:25px;margin-top:10px"><img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img></div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc">jffs扩展设置</div>
+										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc" sclang>jffs extended settings</div>
 										<div style="color:#FC0;padding-top:5px;margin-top:25px;margin-left:0px;float: left;" id="NoteBox" >
-                                                                                        <li style="margin-top:5px;">部分插件必须设置挂载U盘或移动硬盘 </li>
-                                                                                        <li style="margin-top:5px;">剩余空间不得小于1G</li>
-                                                                                        <li style="margin-top:5px;">更换挂载分区必须先禁用再切换新分区</li>
+                                                                                        <li style="margin-top:5px;" sclang>Support EXT/FAT/NTFS partitions.</li>
+                                                                                        <li style="margin-top:5px;" sclang>No less than 1GB of free space.</li>
+                                                                                        <li style="margin-top:5px;" sclang>Must unmount the current partition before mounting other partitions.</li>
 										</div>
 										<table style="margin:10px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="routing_table">
 											<thead>
 											<tr>
-												<td colspan="2">设置挂载分区</td>
+												<td colspan="2" sclang>Setting</td>
 											</tr>
 											</thead>
 											<tr >
-											<th width="30%" style="border-top: 0 none;">启用</th>
+											<th width="30%" style="border-top: 0 none;" sclang>Enable</th>
 											<td style="border-top: 0 none;">
 											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_k3c_enable"></div>
 											</td>
 											</tr>
 <tr>
-<th>选择要挂载的磁盘</th>
+<th sclang>Select a partition to mount</th>
 <td>
 <select id="usb_disk_id" name="k3c_disk" class="input_option input_25_table">
-<option value="0">无U盘或移动硬盘</option>
+<option value="0" sclang>No Disk</option>
 </select>
 </td>
 </tr>
 <thead>
 <tr>
-<td colspan="2">日志信息</td>
+<td colspan="2" sclang>Log</td>
 </tr>
 </thead>
 <tr><td colspan="2">
@@ -160,8 +163,8 @@ document.form.k3c_enable.value = "0";
 </td></tr>
                                     	</table>
 										<div class="apply_gen">
-											<input class="button_gen" onclick="applyRule()" type="button" value="应用设置"/>
-											<input type="button" onClick="location.href=location.href" value="刷新状态" class="button_gen">
+											<input class="button_gen" onclick="applyRule()" type="button" value="Apply"/ sclang>
+											<input type="button" onClick="location.href=location.href" value="Refresh" class="button_gen" sclang>
 										</div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="k3cBottom">
