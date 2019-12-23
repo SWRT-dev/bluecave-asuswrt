@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+include $(TOP)/.config
 BIN=smartdns 
 ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3 SBRAC1900P SBRAC3200P RTAC68U))
 OBJS_LIB=lib/rbtree.o lib/art.o lib/bitops.o lib/radix.o lib/conf.o lib/ifaddrs.o
@@ -40,12 +40,18 @@ CXXFLAGS +=-Iinclude
 LDFLAGS += -lssl -lcrypto -lpthread 
 #endif
 
+ifneq ($(RTCONFIG_RALINK),y)
 .PHONY: all
 
 all: $(BIN)
  
 $(BIN) : $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+else
+.PHONY: all
+all:
+	cp ./smartdns_mipsle ./smartdns
+endif
 
 clean:
 	$(RM) $(OBJS) $(BIN)

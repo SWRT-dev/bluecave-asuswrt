@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>梅林软件中心</title>
+<title sclang>Software Center</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <script type="text/javascript" src="/state.js"></script>
@@ -21,6 +21,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
+<script type="text/javascript" src="res/i18n.js"></script>
 <style>
 .cloud_main_radius_left{
     -webkit-border-radius: 10px 0 0 10px;
@@ -210,6 +211,7 @@
 <script>
 function initial(){
 show_menu();
+sc_load_lang("sc");
 hide_ss(1);
 show_footer();
 loadxml();
@@ -302,7 +304,7 @@ function loadxml() {
                                     <tr>
                                         <td bgcolor="#4D595D" colspan="3" valign="top">
                                             <div>&nbsp;</div>
-                                            <div class="formfonttitle">软件中心</div>
+                                            <div class="formfonttitle" sclang>Software Center</div>
                                             <div style="margin-left:5px;margin-top:5px;margin-bottom:5px"><img src="/images/New_ui/export/line_export.png"></div>
                                                 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" >
                                                 </table>
@@ -316,7 +318,7 @@ function loadxml() {
                                                                         <td>
                                                                             <ul style="margin-top:-50px;padding-left:15px;" >
                                                                                 <li style="margin-top:-5px;">
-                                                                                    <h2 id="push_titile"><em>欢迎</em></h2>
+                                                                                    <h2 id="push_titile" sclang><em>Welcome</em></h2>
                                                                                 </li>
                                                                                 <li style="margin-top:-5px;">
                                                                                     <h4 id="push_content1" >欢迎来到插件中心，目前正在紧张开发中，各种插件酝酿中！</h4>

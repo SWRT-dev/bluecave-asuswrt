@@ -14,6 +14,7 @@ install:
 	install -d $(INSTALLDIR)/usr/sbin/webshell
 	install -d $(INSTALLDIR)/usr/kool
 	install -d $(INSTALLDIR)/www
+	install -d $(INSTALLDIR)/www/js
 	install -d $(INSTALLDIR)/usr/kms
 	install -d $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -d $(INSTALLDIR)/rom/etc/softcenter/res
@@ -160,6 +161,10 @@ install:
 	install -m 0755 www/Tools_Script.asp $(INSTALLDIR)/www
 # K3C helper
 	install -m 0755 www/helper.sh $(INSTALLDIR)/usr/sbin
+#
+	install -m 0755 i18n.js $(INSTALLDIR)/www/js
+	install -m 0755 scCN.json $(INSTALLDIR)/www
+	install -m 0755 scEN.json $(INSTALLDIR)/www
 
 clean:
 
