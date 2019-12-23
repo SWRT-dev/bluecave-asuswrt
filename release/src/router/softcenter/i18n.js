@@ -52,7 +52,7 @@ function loadDict(path) {
   $.ajax({
     async: false,
     type: "GET",
-    url: "/"+ path + lang + ".json",
+    url: "/res/"+ path + lang + ".json",
     success: function (msg) {
       dict = msg;
       sessionStorage.setItem(lang + 'Data', JSON.stringify(dict));

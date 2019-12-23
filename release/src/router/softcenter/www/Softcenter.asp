@@ -21,7 +21,7 @@
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
-<script type="text/javascript" src="/res/i18n.js"></script>
+<script type="text/javascript" src="/js/i18n.js"></script>
 <style>
 .cloud_main_radius_left{
     -webkit-border-radius: 10px 0 0 10px;
