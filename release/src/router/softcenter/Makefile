@@ -165,6 +165,7 @@ install:
 	install -m 0755 i18n.js $(INSTALLDIR)/www/js
 	install -m 0755 scCN.json $(INSTALLDIR)/www
 	install -m 0755 scEN.json $(INSTALLDIR)/www
+	install -m 0755 scTW.json $(INSTALLDIR)/www
 
 clean:
 
