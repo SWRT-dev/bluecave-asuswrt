@@ -413,15 +413,18 @@ void start_sendfeedback(void)
 #ifdef RTCONFIG_DUALWAN
 void set_load_balance(void)
 {
-	int unit=0;
+	int unit=0,gate_num,which_if,count=0,count2=0;
 	char *lan_ifname = nvram_safe_get("lan_ifname");
-	char buffer[32];
+	char buffer[32],buffer2[32],buffer3[32];
 	char mask[16];
 	char prefix[9];
 	char tmp[100];
 	int dualwan,dualwan1;
 	char *if_array[3];
 	//char *argv[6];
+	char *wans_lb_ratio,*nvp,*buff,*portbuf,*portp,*proto="";
+	char *ratio;
+	int ratio1,ratio2,ratio2_1,ratio2_2,ratio_total;
 	char *wan_iface[2];
 	if_array[0] = "lan";
 	if_array[1] = "wan0";
@@ -429,7 +432,7 @@ void set_load_balance(void)
 	eval("iptables", "-t", "mangle", "-N", "balance");
 	eval("iptables", "-t", "mangle", "-F", "balance");
 	eval("iptables", "-t", "mangle", "-D", "PREROUTING", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "balance");
-	sprintf(buffer, "0x%x/0x%x", 0x80000000);
+	sprintf(buffer, "0x%x/0x%x", 0x80000000, 0x80000000);
 	snprintf(mask, 16, "0x%x", 0xF0000000);
 	eval("iptables", "-t", "mangle", "-D", "PREROUTING", "-i", lan_ifname, "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
 	do
@@ -453,199 +456,94 @@ void set_load_balance(void)
 		++unit;
 	}
 	while ( unit != 2 );
-#if 0
 	if ( (!nvram_match("vpnc_auto_conn", "1") || strcmp(nvram_safe_get("vpnc_proto"), "pptp") && strcmp(nvram_safe_get("vpnc_proto"), "l2tp") && strcmp(nvram_safe_get("vpnc_proto"), "openvpn")) && get_nr_wan_unit() > 1 )
 	{
 		if ( nvram_match("wans_mode", "lb") )
 		{
 			if ( get_gate_num() > 1 )
 			{
-				char *wans_lb_ratio =nvram_safe_get("wans_lb_ratio");
-				if ( strchr(wans_lb_ratio, ':') )
+				wans_lb_ratio =nvram_safe_get("wans_lb_ratio");
+				ratio=strchr(wans_lb_ratio, ':');
+				if ( ratio )
 				{
-          v45 = atoi(wans_lb_ratio);
-          v14 = atoi(v13 + 1);
-          v15 = v14 == 0;
-          v16 = v14 < 0;
-          if ( v14 > 0 )
-          {
-            v15 = v45 == 0;
-            v16 = v45 < 0;
-          }
-          gate_num = v14;
-          if ( v16 || v15 )
-            v17 = 1;
-          else
-            v17 = 0;
-          if ( !v16 && !v15 )
-          {
-            v50 = v45 + v14;
-            do
-            {
-              v18 = (const char *)if_array[v17];
-              snprintf((char *)bl_buf1, 0x20u, "%s_gateway", if_array[v17]);
-              if ( !strcmp(v18, "lan") || (v19 = nvram_safe_get(bl_buf1), strlen((const char *)v19) <= 6) )
-                snprintf((char *)bl_buf1, 0x20u, "%s_ipaddr", v18);
-              snprintf((char *)bl_buf2, 0x20u, "%s_netmask", v18);
-              v20 = nvram_safe_get(bl_buf1);
-              v21 = nvram_safe_get(bl_buf2);
-              snprintf((char *)tmp, 0x64u, "%s/%s", v20, v21);
-              if ( strlen((const char *)tmp) > 0xE )
-              {
-                v58 = (const char *)tmp;
-                argv[0] = "iptables";
-                argv[1] = "-t";
-                argv[2] = "mangle";
-                argv[3] = "-A";
-                argv[4] = "balance";
-                argv[5] = "-d";
-                v59 = "-j";
-                v60 = "RETURN";
-                v61 = 0;
-                eval(argv, 0, 0, 0);
-              }
-              ++v17;
-            }
-            while ( v17 != 3 );
-            v22 = nvram_safe_get("lb_skip_port");
-            v23 = (unsigned __int8 *)strdup((const char *)v22);
-            nvp = v23;
-            while ( nvp )
-            {
-              v26 = strsep((char **)&nvp, "<");
-              if ( !v26 )
-                break;
-              if ( vstrsep(v26, ">") == 3 )
-              {
-                v27 = (unsigned __int8 *)strdup((const char *)port);
-                portp = v27;
-                while ( portp )
-                {
-                  v28 = strsep((char **)&portp, ",");
-                  if ( !v28 )
-                    break;
-                  s1 = (char *)proto;
-                  if ( !strcmp((const char *)proto, "TCP") || !strcmp(s1, "BOTH") )
-                  {
-                    argv[3] = "-A";
-                    v59 = "-m";
-                    argv[4] = "balance";
-                    argv[0] = "iptables";
-                    argv[5] = "-p";
-                    argv[1] = "-t";
-                    v58 = "tcp";
-                    v60 = "tcp";
-                    argv[2] = "mangle";
-                    v61 = "--dport";
-                    v62 = v28;
-                    v63 = "-j";
-                    v64 = "RETURN";
-                    v65 = 0;
-                    eval(argv, 0, 0, 0);
-                  }
-                  s1a = (char *)proto;
-                  if ( !strcmp((const char *)proto, "UDP") || !strcmp(s1a, "BOTH") )
-                  {
-                    argv[0] = "iptables";
-                    v59 = "-m";
-                    argv[1] = "-t";
-                    v62 = v28;
-                    argv[2] = "mangle";
-                    argv[3] = "-A";
-                    argv[4] = "balance";
-                    argv[5] = "-p";
-                    v58 = "udp";
-                    v60 = "udp";
-                    v61 = "--dport";
-                    v63 = "-j";
-                    v64 = "RETURN";
-                    v65 = 0;
-                    eval(argv, 0, 0, 0);
-                  }
-                }
-                free(v27);
-              }
-            }
-            free(v23);
-            sprintf((char *)bl_buf1, "0x%x/0x%x", 2147483648);
-            v24 = 0;
-            argv[0] = "iptables";
-            v60 = (const char *)bl_buf1;
-            argv[1] = "-t";
-            v25 = 0;
-            v63 = 0;
-            argv[2] = "mangle";
-            argv[3] = "-A";
-            argv[4] = "balance";
-            argv[5] = "-m";
-            v58 = "connmark";
-            v59 = "--mark";
-            v61 = "-j";
-            v62 = "RETURN";
-            eval(argv, 0, 0, 0);
-            argv[0] = (unsigned __int8 *const )off_40[0];
-            argv[1] = (unsigned __int8 *const )off_44[0];
-            argv[2] = (unsigned __int8 *const )off_48[0];
-            argv[3] = (unsigned __int8 *const )off_4C[0];
-            argv[4] = (unsigned __int8 *const )off_50[0];
-            argv[5] = (unsigned __int8 *const )off_54[0];
-            v58 = off_58[0];
-            v59 = off_5C[0];
-            v60 = off_60[0];
-            v61 = off_64[0];
-            v62 = off_68;
-            v63 = *(const char **)algn_6C;
-            eval(argv, 0, 0, 0);
-            sprintf((char *)bl_buf1, "%d", s2);
-            sprintf((char *)bl_buf3, "0x%x/0x%x", 2147483648, -268435456);
-            while ( 1 )
-            {
-              if ( v45 == gate_num )
-              {
-                sprintf((char *)bl_buf2, "%d", v24);
-                v64 = (const char *)bl_buf2;
-                argv[0] = "iptables";
-                ++v24;
-                v68 = bl_buf3;
-                argv[1] = "-t";
-                argv[2] = "mangle";
-                argv[3] = "-A";
-                argv[4] = "balance";
-                argv[5] = "-m";
-                v58 = "statistic";
-                v59 = "--mode";
-                v60 = "nth";
-                v61 = "--every";
-                v62 = (const char *)bl_buf1;
-                v63 = "--packet";
-                v65 = "-j";
-                v66 = "CONNMARK";
-                v67 = "--set-mark";
-                v69 = 0;
-                eval(argv, 0, 0, 0);
-              }
-              else
-              {
-                if ( v25 == 1 )
-                {
-                  v64 = (const char *)bl_buf3;
-                  argv[0] = "iptables";
-                  argv[1] = "-t";
-                  argv[2] = "mangle";
-                  argv[3] = "-A";
-                  argv[4] = "balance";
-                  argv[5] = "-m";
-                  v58 = "connmark";
-                  v59 = "--mark";
-                  v60 = "0";
-                  v61 = "-j";
-                  v62 = "CONNMARK";
-                  v63 = "--set-mark";
-                  v65 = 0;
-                }
-                else
-                {
-                  v29 = _aeabi_i2f(v45);
+					ratio1 = atoi(wans_lb_ratio);
+					ratio2 = atoi(ratio + 1);
+					ratio2_1 = (ratio2 == 0 ? 1 : 0);
+					ratio2_2 = (ratio2 < 0 ? 1 : 0);
+					if ( ratio2 > 0 )
+					{
+						ratio2_1 = (ratio1 == 0? 1 : 0);
+						ratio2_2 = (ratio1 < 0 ? 1 : 0);
+					}
+					gate_num = ratio2;
+					if ( ratio2_2 || ratio2_1 )
+						which_if = 1;
+					else
+						which_if = 0;
+					if ( !ratio2_2 && !ratio2_1 )
+					{
+						ratio_total = ratio1 + ratio2;
+						do
+						{
+							snprintf(buffer, 32, "%s_gateway", if_array[which_if]);
+							if ( !strcmp(if_array[which_if], "lan") || (strlen(nvram_safe_get(buffer)) <= 6) )
+								snprintf(buffer, 32, "%s_ipaddr", if_array[which_if]);
+							snprintf(buffer2, 32, "%s_netmask", if_array[which_if]);
+							snprintf(tmp, 100, "%s/%s", nvram_safe_get(buffer), nvram_safe_get(buffer2));
+							if ( strlen(tmp) > 14 )
+							{
+								eval("iptables","-t","mangle","-A","balance","-d",tmp,"-j","RETURN");
+							}
+							++which_if;
+						}
+						while ( which_if != 3 );
+						nvp = strdup(nvram_safe_get("lb_skip_port"));
+						while ( nvp )
+						{
+							buff = strsep(&nvp, "<");
+							if ( !buff )
+								break;
+							if ( vstrsep(buff, ">") == 3 )
+							{
+								portp = strdup(port);
+								while ( portp )
+								{
+									portbuf = strsep(&portp, ",");
+									if ( !portbuf )
+										break;
+									if ( !strcmp(proto, "TCP") || !strcmp(proto, "BOTH") )
+									{
+										eval("iptables","-t","mangle","-A","balance","-p","tcp","-m","tcp","--dport",portbuf,"-j","RETURN");
+									}
+									if ( !strcmp(proto, "UDP") || !strcmp(proto, "BOTH") )
+									{
+										eval("iptables","-t","mangle","-A","balance","-p","udp","-m","udp","--dport",portbuf,"-j","RETURN");
+									}
+								}
+								free(portp);
+							}
+						}
+						free(nvp);
+						sprintf(buffer, "0x%x/0x%x", 0x80000000, 0x80000000);
+						eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark",buffer,"-j","RETURN");
+						eval("iptables","-t","mangle","-A","balance","-m","state","--state","ESTABLISHED,RELATED","-j","RETURN");
+						sprintf(buffer, "%d", get_gate_num());
+						sprintf(buffer3, "0x%x/0x%x", 0x80000000, 0xF0000000);
+						while ( 1 )
+						{
+							if ( ratio1 == gate_num )
+							{
+								sprintf(buffer2, "%d", count);
+								++count;
+								eval("iptables","-t","mangle","-A","balance","-m","statistic","--mode","nth","--every",buffer,"--packet",buffer2,"-j","CONNMARK","--set-mark",buffer3);
+							}
+							else
+							{
+								if ( count2 == 1 )
+									eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark","0","-j","CONNMARK","--set-mark",buffer3);
+								else
+								{
+                  v29 = _aeabi_i2f(v45);//bcm only?
                   v30 = _aeabi_i2f(v50);
                   v31 = _aeabi_fdiv(v29, v30);
                   _aeabi_f2d(v31);
@@ -784,6 +682,5 @@ void set_load_balance(void)
       }
     }
   }
-#endif
 }
 #endif
