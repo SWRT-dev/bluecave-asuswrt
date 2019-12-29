@@ -31,6 +31,9 @@ CFLAGS +=-I./include -I$(TOP)/openssl/include
 
 CFLAGS += -DBASE_FILE_NAME=\"$(notdir $<)\"
 LDFLAGS +=-L$(TOP)/openssl -lssl -lcrypto
+ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), RTACRH17 RTAC82U))
+LDFLAGS +=-ldl
+endif
 CFLAGS += -DSMARTDNS_VERION=\"$(MERLINR_VER_MINOR)\"
 CXXFLAGS=-O2 -g -Wall -std=c++11 
 CXXFLAGS +=-Iinclude

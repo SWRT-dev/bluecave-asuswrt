@@ -543,11 +543,11 @@ void set_load_balance(void)
 									eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark","0","-j","CONNMARK","--set-mark",buffer3);
 								else
 								{
-                  v29 = _aeabi_i2f(v45);//bcm only?
-                  v30 = _aeabi_i2f(v50);
-                  v31 = _aeabi_fdiv(v29, v30);
-                  _aeabi_f2d(v31);
-                  snprintf((char *)bl_buf2, 0x20u, "%.2f");
+                  v29 = _aeabi_i2f(v45);//bcm only?floatsisf(v45)
+                  v30 = _aeabi_i2f(v50);//floatsisf(v50)
+                  v31 = _aeabi_fdiv(v29, v30);//_divsf3(v29, v30)
+                  _aeabi_f2d(v31);//__extendsfdf2(v31)
+                  snprintf((char *)bl_buf2, 0x20u, "%.2f");//v31?
                   argv[0] = "iptables";
                   argv[2] = "mangle";
                   argv[1] = "-t";
