@@ -20,7 +20,12 @@
  *
  */
 
-
+#if defined(RTCONFIG_LANTIQ)
+#if !defined(K3C)
+//extern void lantiq_init(void);
+extern void lantiq_init_done(void);
+#endif
+#endif
 #ifdef RTCONFIG_UUPLUGIN
 extern void exec_uu_merlinr(void);
 #endif

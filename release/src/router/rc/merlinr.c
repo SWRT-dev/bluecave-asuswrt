@@ -37,6 +37,18 @@
 #include <curl/curl.h>
 
 
+#if defined(RTCONFIG_LANTIQ)
+#if !defined(K3C)
+void lantiq_init_done()
+{
+	if(!nvram_get("modelname"))
+		nvram_set("modelname", "BULECAVE");
+	if(!nvram_get("bl_ver"))
+		nvram_set("bl_ver", nvram_get("blver"));
+}
+#endif
+#endif
+
 int str_split(char* buf, char** s, int s_size) {
 	int curr = 0;
 	char* token = strtok(buf, ".");

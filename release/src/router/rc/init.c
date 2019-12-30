@@ -11091,7 +11091,11 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			nvram_set("success_start_service", "1");
 			force_free_caches();
 #endif
-
+#if defined(RTCONFIG_LANTIQ)
+#if !defined(K3C)
+			lantiq_init_done();
+#endif
+#endif
 #ifdef RTCONFIG_AMAS
 			nvram_set("start_service_ready", "1");
 #endif
