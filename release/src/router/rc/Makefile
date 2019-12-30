@@ -411,7 +411,7 @@ OBJS += dsl_fb.o
 endif
 endif
 ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
-ifneq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3 K3C R7900P BLUECAVE))
+ifeq (,$(filter y,$(RTCONFIG_BCMARM) $(RTCONFIG_HND_ROUTER) $(RTCONFIG_LANTIQ) $(RTCONFIG_QCA) $(RTCONFIG_RALINK)))
 OBJS += frs_service.o
 endif
 endif
@@ -1028,7 +1028,7 @@ endif
 ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc lteled
 endif
-ifneq (,$(filter y,$(RTCONFIG_TR069) $(RTCONFIG_AMAS)))
+ifneq (,$(filter y,$(RTCONFIG_TR069) $(RTCONFIG_AMAS) $(RTAC3200) $(RTAC85P) $(RTACRH17) $(RTAC82U)))
 	@cd $(INSTALLDIR)/sbin && ln -sf rc dhcpc_lease
 endif
 

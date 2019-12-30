@@ -115,7 +115,7 @@ static char *defenv[] = {
 #ifdef RTCONFIG_LANTIQ
 	"LD_LIBRARY_PATH=/lib:/usr/lib:/opt/lantiq/usr/lib:/opt/lantiq/usr/sbin/:/tmp/wireless/lantiq/usr/lib/:/jffs/softcenter/lib",
 #endif
-#ifdef RTCONFIG_RTAC3100
+#if (!defined(HND_ROUTER) && defined(RTCONFIG_BCMARM)) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
 	"LD_LIBRARY_PATH=/lib:/usr/lib:/jffs/softcenter/lib",
 #endif
 	"SHELL=" SHELL,

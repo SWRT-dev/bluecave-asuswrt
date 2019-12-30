@@ -25,15 +25,17 @@
 #endif
 
 #if defined(K3)
-#include <k3.h>
-#elif defined(R7900P)
-#include <r7900p.h>
+#include "k3.h"
+#elif defined(R7900P) || defined(R8000P)
+#include "r7900p.h"
 #elif defined(K3C)
-#include <k3c.h>
+#include "k3c.h"
 #elif defined(SBRAC1900P)
-#include <1900p.h>
+#include "ac1900p.h"
+#elif defined(SBRAC3200P)
+#include "ac3200p.h"
 #else
-#include <merlinr.h>
+#include "merlinr.h"
 #endif
 
 #ifndef ARRAYSIZE
@@ -292,8 +294,23 @@ static int rctest_main(int argc, char *argv[])
 	}
 #endif
 	else if (strcmp(argv[1], "GetPhyStatus")==0) {
+#if defined(R7900P) || defined(R8000P)
+		printf("Get Phy status:%d\n", GetPhyStatus2(0));
+#elif defined(K3)
+		printf("Get Phy status:%d\n", GetPhyStatusk3(0));
+#else
 		printf("Get Phy status:%d\n", GetPhyStatus(0));
+#endif
 	}
+#if defined(K3) || defined(R7900P) || defined(R8000P)
+	else if (strcmp(argv[1], "Get_PhyStatus")==0) {
+#if defined(K3)
+		GetPhyStatusk3(1);
+#elif defined(R7900P) || defined(R8000P)
+		 GetPhyStatus2(1);
+#endif
+	}
+#endif
 	else if (strcmp(argv[1], "GetExtPhyStatus")==0) {
 		printf("Get Ext Phy status:%d\n", GetPhyStatus(atoi(argv[2])));
 	}
@@ -498,7 +515,7 @@ static int rctest_main(int argc, char *argv[])
 					f_write_string("/proc/sys/net/ipv4/conf/all/force_igmp_version", "2", 0, 0);
 #endif
 
-#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined (RTAC1200GU) || defined(RTAC85U) || defined(RTAC85P) || defined(RTAC51UP) || defined(RTAC53) || defined(RTN800HP)
+#if defined(RTN14U) || defined(RTAC52U) || defined(RTAC51U) || defined(RTN11P) || defined(RTN300) || defined(RTN54U) || defined(RTAC1200HP) || defined(RTN56UB1) || defined(RTAC54U) || defined(RTN56UB2) || defined(RTAC1200GA1) || defined (RTAC1200GU) || defined(RTAC85U) || defined(RTAC85P) || defined(RTAC51UP) || defined(RTAC53) || defined(RTN800HP) || defined(RTACRH26)
 					if (!(!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")))
 #endif
 					{
@@ -593,10 +610,10 @@ static int rctest_main(int argc, char *argv[])
 }
 #endif
 
-#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX) || defined(RTCONFIG_LANTIQ) || defined(RPAC51) || defined(MAPAC1750)
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX) || defined(RTCONFIG_LANTIQ) || defined(RTAC59U) || defined(RPAC51) || defined(MAPAC1750)
 /* download firmware */
 #ifndef FIRMWARE_DIR
-#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX) || defined(RPAC51) || defined(MAPAC1750)
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX) || defined(RTAC59U) || defined(RPAC51) || defined(MAPAC1750)
 #define FIRMWARE_DIR	"/lib/firmware"
 #else
 #define FIRMWARE_DIR	"/tmp"
@@ -711,7 +728,7 @@ static int hotplug_main(int argc, char *argv[])
 			return coma_uevent();
 #endif /* LINUX_2_6_36 */
 #endif
-#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX) || defined(RTCONFIG_LANTIQ) || defined(RPAC51) || defined(MAPAC1750)
+#if defined(RTCONFIG_SOC_IPQ8064) || defined(RTCONFIG_SOC_IPQ40XX) || defined(RTCONFIG_LANTIQ) || defined(RTAC59U) || defined(RPAC51) || defined(MAPAC1750)
 		else if(!strcmp(argv[1], "firmware")) {
 			hotplug_firmware();
 		}
@@ -875,7 +892,7 @@ static const applets_t applets[] = {
 #endif
 	{ "firmware_check",		firmware_check_main		},
 #if defined(RTCONFIG_FRS_LIVE_UPDATE)
-#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA) || defined(RTCONFIG_HND_ROUTER)
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_HND_ROUTER)
 	{ "firmware_check_update",	merlinr_firmware_check_update_main	},
 #else
 	{ "firmware_check_update",	firmware_check_update_main	},
@@ -915,7 +932,7 @@ static const applets_t applets[] = {
 #endif
 #endif
 #endif
-#if defined(RTCONFIG_TR069) || defined(RTCONFIG_AMAS)
+#if defined(RTCONFIG_TR069) || defined(RTCONFIG_AMAS) || defined(RTAC3200) || defined(RTCONFIG_QCA)
 	{ "dhcpc_lease",		dnsmasq_script_main		},
 #endif
 #ifdef RTCONFIG_NEW_USER_LOW_RSSI
