@@ -7,7 +7,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1"/>
 <link rel="shortcut icon" href="images/favicon.png"/>
 <link rel="icon" href="images/favicon.png"/>
-<title>软件中心 - K3C扩展设置</title>
+<title sclang>jffs extended settings</title>
 <link rel="stylesheet" type="text/css" href="index_style.css"/>
 <link rel="stylesheet" type="text/css" href="form_style.css"/>
 <link rel="stylesheet" type="text/css" href="usp_style.css"/>
@@ -30,7 +30,7 @@
 
 </style>
 <script>
-var k3c_disk='<% nvram_get("k3c_disk"); %>';
+var sc_disk='<% nvram_get("sc_disk"); %>';
 
 var partitions_array = [];
 function show_partition(){
@@ -47,7 +47,7 @@ var accessableSize = simpleNum(usbDevicesList[i].partition[j].size-usbDevicesLis
 var totalSize = simpleNum(usbDevicesList[i].partition[j].size);
 if(usbDevicesList[i].partition[j].status == "unmounted")
 continue;
-if(usbDevicesList[i].partition[j].partName==k3c_disk)
+if(usbDevicesList[i].partition[j].partName==sc_disk)
 code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" selected="selected">'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB)</option>';
 else
 code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" >'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB)</option>';
@@ -78,12 +78,12 @@ location.href = "/Softcenter.asp";
 
 
 $(document).ready(function () {
-$('#radio_k3c_enable').iphoneSwitch(document.form.k3c_enable.value,
+$('#radio_sc_mount').iphoneSwitch(document.form.sc_mount.value,
 function(){
-document.form.k3c_enable.value = "1";
+document.form.sc_mount.value = "1";
 },
 function(){
-document.form.k3c_enable.value = "0";
+document.form.sc_mount.value = "0";
 }
 );
 });
@@ -94,18 +94,18 @@ document.form.k3c_enable.value = "0";
 	<div id="Loading" class="popup_bg"></div>
 	<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 	<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-	<input type="hidden" name="current_page" value="Tools_softcenter.asp"/>
-	<input type="hidden" name="next_page" value="Tools_softcenter.asp"/>
+	<input type="hidden" name="current_page" value="Softcenter_mount.asp"/>
+	<input type="hidden" name="next_page" value="Softcenter_mount.asp"/>
 	<input type="hidden" name="group_id" value=""/>
 	<input type="hidden" name="modified" value="0"/>
 	<input type="hidden" name="action_mode" value="toolscript"/>
-	<input type="hidden" name="action_script" value="softcenter_tools.sh"/>
+	<input type="hidden" name="action_script" value="jffsinit.sh"/>
 	<input type="hidden" name="action_wait" value=""/>
 	<input type="hidden" name="first_time" value=""/>
 	<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>"/>
 	<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>"/>
-	<input type="hidden" name="k3c_enable" value="<% nvram_get("k3c_enable"); %>">
-	<input type="hidden" name="k3c_disk" value="<% nvram_get("k3c_disk"); %>">
+	<input type="hidden" name="sc_mount" value="<% nvram_get("sc_mount"); %>">
+	<input type="hidden" name="sc_disk" value="<% nvram_get("sc_disk"); %>">
 	<table class="content" align="center" cellpadding="0" cellspacing="0">
 		<tr>
 			<td width="17">&nbsp;</td>
@@ -127,7 +127,7 @@ document.form.k3c_enable.value = "0";
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc" sclang>jffs extended settings</div>
 										<div style="color:#FC0;padding-top:5px;margin-top:25px;margin-left:0px;float: left;" id="NoteBox" >
-                                                                                        <li style="margin-top:5px;" sclang>Support EXT/FAT/NTFS partitions.</li>
+                                                                                        <li style="margin-top:5px;" sclang>Support EXT/FAT/NTFS partitions(BLUECAVE unsupport FAT).</li>
                                                                                         <li style="margin-top:5px;" sclang>No less than 1GB of free space.</li>
                                                                                         <li style="margin-top:5px;" sclang>Must unmount the current partition before mounting other partitions.</li>
 										</div>
@@ -140,35 +140,26 @@ document.form.k3c_enable.value = "0";
 											<tr >
 											<th width="30%" style="border-top: 0 none;" sclang>Enable</th>
 											<td style="border-top: 0 none;">
-											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_k3c_enable"></div>
+											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_sc_mount"></div>
 											</td>
 											</tr>
 <tr>
 <th sclang>Select a partition to mount</th>
 <td>
-<select id="usb_disk_id" name="k3c_disk" class="input_option input_25_table">
+<select id="usb_disk_id" name="sc_disk" class="input_option input_25_table">
 <option value="0" sclang>No Disk</option>
 </select>
 </td>
 </tr>
-<thead>
-<tr>
-<td colspan="2" sclang>Log</td>
-</tr>
-</thead>
-<tr><td colspan="2">
-<textarea cols="63" rows="20" wrap="off" readonly="readonly" id="textarea" style="width:99%;font-family:Courier New, Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;">
-<% nvram_dump("k3c.log",""); %>
-</textarea>
-</td></tr>
+
                                     	</table>
 										<div class="apply_gen">
 											<input class="button_gen" onclick="applyRule()" type="button" value="Apply"/ sclang>
 											<input type="button" onClick="location.href=location.href" value="Refresh" class="button_gen" sclang>
 										</div>
 										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
-										<div class="k3cBottom">
-											K3C： <i>paldier</i><br/>
+										<div class="scBottom">
+											webui by： <i>paldier</i><br/>
 										</div>
 
 									</td>

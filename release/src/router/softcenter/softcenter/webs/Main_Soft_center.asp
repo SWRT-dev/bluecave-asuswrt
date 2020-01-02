@@ -560,22 +560,26 @@ $(function() {
 			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
 			}
 			else if(db_softcenter_["softcenter_server_tcode"] == "CN1") {
-			        db_softcenter_["softcenter_home_url"] = "https://123.56.45.194";
+			        db_softcenter_["softcenter_home_url"] = "https://sc.softcenter.site";
 			}
 			else if(db_softcenter_["softcenter_server_tcode"] == "ALI") {
-			        db_softcenter_["softcenter_home_url"] = "https://121.40.153.145";
+			        db_softcenter_["softcenter_home_url"] = "https://wufan.softcenter.site";
 			}
 			else
 			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
-			if(db_softcenter_["softcenter_arch"] == "mips")
+			if(db_softcenter_["softcenter_arch"] == "mips")//for grx500
 				scarch="mips";
-			else if (db_softcenter_["softcenter_arch"] == "armv7l")
+			else if (db_softcenter_["softcenter_arch"] == "armv7l")//for bcm4709
 				scarch="arm";
-			else if (db_softcenter_["softcenter_arch"] == "aarch64")
+			else if (db_softcenter_["softcenter_arch"] == "armng")//for bcm6750
+				scarch="armng";
+			else if (db_softcenter_["softcenter_arch"] == "armqca")//for qca4019
+				scarch="armqca";
+			else if (db_softcenter_["softcenter_arch"] == "aarch64")//for bcm4908
 				scarch="arm64";
-			else if (db_softcenter_["softcenter_arch"] == "mipsle")
+			else if (db_softcenter_["softcenter_arch"] == "mipsle")//for mtk7621
 				scarch="mipsle";
-			else if (db_softcenter_["softcenter_arch"] == "x86")
+			else if (db_softcenter_["softcenter_arch"] == "x86")//for grx750
 				scarch="x86";
 			else
 				scarch="mips";

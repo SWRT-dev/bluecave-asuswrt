@@ -26,25 +26,66 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "merlinr.h"
 #include "rc.h"
 #include <shared.h>
 #include <shutils.h>
 #if defined(RTCONFIG_LANTIQ)
 #include <lantiq.h>
 #endif
-
+#include "merlinr.h"
 #include <curl/curl.h>
 
 
 #if defined(RTCONFIG_LANTIQ)
 #if !defined(K3C)
+//60s->init 90s->wan 150s->usbmount 180s->init_done
+//bluecave has a bug in fat driver,all ln command have got an error
+void lantiq_insmod(){
+	eval("insmod", "nfnetlink");
+	eval("insmod", "ip_set");
+	eval("insmod", "ip_set_bitmap_ip");
+	eval("insmod", "ip_set_bitmap_ipmac");
+	eval("insmod", "ip_set_bitmap_port");
+	eval("insmod", "ip_set_hash_ip");
+	eval("insmod", "ip_set_hash_ipport");
+	eval("insmod", "ip_set_hash_ipportip");
+	eval("insmod", "ip_set_hash_ipportnet");
+	eval("insmod", "ip_set_hash_ipmac");
+	eval("insmod", "ip_set_hash_ipmark");
+	eval("insmod", "ip_set_hash_net");
+	eval("insmod", "ip_set_hash_netport");
+	eval("insmod", "ip_set_hash_netiface");
+	eval("insmod", "ip_set_hash_netnet");
+	eval("insmod", "ip_set_hash_netportnet");
+	eval("insmod", "ip_set_hash_mac");
+	eval("insmod", "ip_set_list_set");
+	eval("insmod", "nf_tproxy_core");
+	eval("insmod", "xt_TPROXY");
+	eval("insmod", "xt_set");
+}
+void lantiq_init()
+{
+#if defined(RTCONFIG_SOFTCENTER)
+	nvram_set("sc_wan_sig", "0");
+	nvram_set("sc_nat_sig", "0");
+	nvram_set("sc_mount_sig", "0");
+#endif
+	lantiq_insmod();
+}
 void lantiq_init_done()
 {
 	if(!nvram_get("modelname"))
 		nvram_set("modelname", "BULECAVE");
 	if(!nvram_get("bl_ver"))
 		nvram_set("bl_ver", nvram_get("blver"));
+#if defined(RTCONFIG_SOFTCENTER)
+	if(f_exists("/jffs/.asusrouter")){
+		unlink("/jffs/.asusrouter");
+		doSystem("sed -i '/softcenter-wan.sh/d' /jffs/scripts/wan-start");
+		doSystem("sed -i '/softcenter-net.sh/d' /jffs/scripts/nat-start");
+		doSystem("sed -i '/softcenter-mount.sh/d' /jffs/scripts/post-mount");
+	}
+#endif
 }
 #endif
 #endif
@@ -694,5 +735,28 @@ void set_load_balance(void)
       }
     }
   }
+}
+#endif
+#if defined(RTCONFIG_SOFTCENTER)
+void softcenter_eval(int sig)
+{
+	//1=wan,2=nat,3=mount
+	pid_t pid;
+	char path[100], action[10], sc[]="/jffs/softcenter/bin";
+	if(SOFTCENTER_WAN == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-wan.sh", sc);
+		snprintf(action, sizeof(action), "start");
+	} else if (SOFTCENTER_NAT == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-nat.sh", sc);
+		snprintf(action, sizeof(action), "start_nat");
+	} else if (SOFTCENTER_MOUNT == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-mount.sh", sc);
+		snprintf(action, sizeof(action), "start");
+	} else {
+		logmessage("Softcenter", "sig=%s, bug?",sig);
+		return;
+	}
+	char *eval_argv[] = { path, action, NULL };
+	_eval(eval_argv, NULL, 0, &pid);
 }
 #endif

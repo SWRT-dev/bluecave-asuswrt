@@ -27,6 +27,10 @@ install:
 	install -d $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp/.boot
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp/.control
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300))
+	install -d $(INSTALLDIR)/rom/etc/softcenter/ROG/res
+	install -d $(INSTALLDIR)/rom/etc/softcenter/ROG/webs
+endif
 # softcenter versioncmp
 	install -m 0755 versioncmp $(INSTALLDIR)/usr/sbin
 
@@ -76,82 +80,88 @@ install:
 	#install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 # softcenter SSR and adbyby plus
 	#install -m 0755 base64 $(INSTALLDIR)/usr/bin
-	install -m 0755 ssr-redir $(INSTALLDIR)/usr/sbin
-	install -m 0755 ss-redir $(INSTALLDIR)/usr/sbin
-	install -m 0755 ssr-rules $(INSTALLDIR)/usr/sbin
-	install -m 0755 ssr-state $(INSTALLDIR)/usr/sbin
-	install -m 0755 usr/ssr/gfw_addr.conf $(INSTALLDIR)/usr/sbin/ssr
-	install -m 0755 usr/ssr/gfw_list.conf $(INSTALLDIR)/usr/sbin/ssr
-	install -m 0755 usr/ssr/ignore.list $(INSTALLDIR)/usr/sbin/ssr
-	install -m 0755 usr/ssr/ignore.user $(INSTALLDIR)/usr/sbin/ssr
-	install -m 0755 usr/ssr/ssr_mon.sh $(INSTALLDIR)/usr/sbin/ssr
-	install -m 0755 www/softcenter-init.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/softcenter_ssr.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/Tools_Adbyby.asp $(INSTALLDIR)/www
-	install -m 0755 www/softcenter_adbyby.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/user.txt $(INSTALLDIR)/usr/kool
-	install -m 0755 www/openssl.cnf $(INSTALLDIR)/usr/kool
-	install -m 0755 www/kool_mon.sh $(INSTALLDIR)/usr/kool
-	install -m 0755 www/kool.sh $(INSTALLDIR)/usr/kool
-	install -m 0755 www/gen_ca.sh $(INSTALLDIR)/usr/kool
-	install -m 0755 www/adblock.conf $(INSTALLDIR)/usr/kool
+	#install -m 0755 ssr-redir $(INSTALLDIR)/usr/sbin
+	#install -m 0755 ss-redir $(INSTALLDIR)/usr/sbin
+	#install -m 0755 ssr-rules $(INSTALLDIR)/usr/sbin
+	#install -m 0755 ssr-state $(INSTALLDIR)/usr/sbin
+	#install -m 0755 usr/ssr/gfw_addr.conf $(INSTALLDIR)/usr/sbin/ssr
+	#install -m 0755 usr/ssr/gfw_list.conf $(INSTALLDIR)/usr/sbin/ssr
+	#install -m 0755 usr/ssr/ignore.list $(INSTALLDIR)/usr/sbin/ssr
+	#install -m 0755 usr/ssr/ignore.user $(INSTALLDIR)/usr/sbin/ssr
+	#install -m 0755 usr/ssr/ssr_mon.sh $(INSTALLDIR)/usr/sbin/ssr
+	#install -m 0755 www/softcenter-init.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/softcenter_ssr.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/Tools_Adbyby.asp $(INSTALLDIR)/www
+	#install -m 0755 www/softcenter_adbyby.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/user.txt $(INSTALLDIR)/usr/kool
+	#install -m 0755 www/openssl.cnf $(INSTALLDIR)/usr/kool
+	#install -m 0755 www/kool_mon.sh $(INSTALLDIR)/usr/kool
+	#install -m 0755 www/kool.sh $(INSTALLDIR)/usr/kool
+	#install -m 0755 www/gen_ca.sh $(INSTALLDIR)/usr/kool
+	#install -m 0755 www/adblock.conf $(INSTALLDIR)/usr/kool
 	install -m 0755 nohup $(INSTALLDIR)/usr/bin
 
 # softcenter dns
-	install -m 0755 usr/pdnsd $(INSTALLDIR)/usr/sbin
+	#install -m 0755 usr/pdnsd $(INSTALLDIR)/usr/sbin
 
 # softcenter Entware setup script
 	#install -m 0755 entware-setup.sh $(INSTALLDIR)/usr/sbin
 
 # softcenter webshell
-	install -m 0755 www/softcenter_webshell.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/shellinaboxd $(INSTALLDIR)/usr/sbin/webshell
-	install -m 0755 www/white-on-black.css $(INSTALLDIR)/usr/sbin/webshell
-	install -m 0755 www/Tools_webshell.asp $(INSTALLDIR)/www
-	install -m 0755 www/certificate.pem $(INSTALLDIR)/usr/sbin/webshell
+	#install -m 0755 www/softcenter_webshell.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/shellinaboxd $(INSTALLDIR)/usr/sbin/webshell
+	#install -m 0755 www/white-on-black.css $(INSTALLDIR)/usr/sbin/webshell
+	#install -m 0755 www/Tools_webshell.asp $(INSTALLDIR)/www
+	#install -m 0755 www/certificate.pem $(INSTALLDIR)/usr/sbin/webshell
 # softcenter ngrok
-	install -m 0755 www/softcenter_ngrok.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/ngrokc $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/Tools_ngrok.asp $(INSTALLDIR)/www
+	#install -m 0755 www/softcenter_ngrok.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/ngrokc $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/Tools_ngrok.asp $(INSTALLDIR)/www
 # softcenter xunlei
-	install -m 0755 www/softcenter_xunlei.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/Tools_xunlei.asp $(INSTALLDIR)/www
+	#install -m 0755 www/softcenter_xunlei.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/Tools_xunlei.asp $(INSTALLDIR)/www
 # softcenter kms
-	install -m 0755 www/vlmcsd.ini $(INSTALLDIR)/usr/kms
-	install -m 0755 www/kms_dns.conf $(INSTALLDIR)/usr/kms
-	install -m 0755 www/softcenter_kms.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/vlmcsd $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/Tools_Kms.asp $(INSTALLDIR)/www
+	#install -m 0755 www/vlmcsd.ini $(INSTALLDIR)/usr/kms
+	#install -m 0755 www/kms_dns.conf $(INSTALLDIR)/usr/kms
+	#install -m 0755 www/softcenter_kms.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/vlmcsd $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/Tools_Kms.asp $(INSTALLDIR)/www
 # softcenter aria2
-	install -m 0755 www/Tools_aria2.asp $(INSTALLDIR)/www
+	#install -m 0755 www/Tools_aria2.asp $(INSTALLDIR)/www
 	#install -m 0755 www/aria2c $(INSTALLDIR)/usr/sbin
 	#install -m 0755 www/softcenter_aria2.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 libssh2.so.1.0.1 $(INSTALLDIR)/usr/lib
 	cd $(INSTALLDIR)/usr/lib && ln -sf libssh2.so.1.0.1 libssh2.so.1 && ln -sf libssh2.so.1 libssh2.so
 # softcenter frp
-	install -m 0755 www/Tools_frpc.asp $(INSTALLDIR)/www
+	#install -m 0755 www/Tools_frpc.asp $(INSTALLDIR)/www
 	#install -m 0755 www/frpc $(INSTALLDIR)/usr/sbin/frp
-	install -m 0755 www/frp_mon.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/softcenter_frpc.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/frp_mon.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/softcenter_frpc.sh $(INSTALLDIR)/usr/sbin
 # softcenter v2ray
-	install -m 0755 www/Tools_v2ray.asp $(INSTALLDIR)/www
-	install -m 0755 www/softcenter_v2ray.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/v2ray_mon.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/v2ray-rules $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/Tools_v2ray.asp $(INSTALLDIR)/www
+	#install -m 0755 www/softcenter_v2ray.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/v2ray_mon.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/v2ray-rules $(INSTALLDIR)/usr/sbin
 # softcenter swap
-	install -m 0755 www/Tools_swap.asp $(INSTALLDIR)/www
-	install -m 0755 www/softcenter_swap.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/Tools_swap.asp $(INSTALLDIR)/www
+	#install -m 0755 www/softcenter_swap.sh $(INSTALLDIR)/usr/sbin
 # softcenter swap
-	install -m 0755 www/Tools_softcenter.asp $(INSTALLDIR)/www
-	install -m 0755 www/softcenter_tools.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/softcenter_start.sh $(INSTALLDIR)/usr/sbin
+	install -m 0755 www/Softcenter_mount.asp $(INSTALLDIR)/www
+	#install -m 0755 www/softcenter_tools.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/softcenter_start.sh $(INSTALLDIR)/usr/sbin
 # softcenter script
-	install -m 0755 www/softcenter_script.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/softcenter_script_ch.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 www/Tools_Script.asp $(INSTALLDIR)/www
+	#install -m 0755 www/softcenter_script.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/softcenter_script_ch.sh $(INSTALLDIR)/usr/sbin
+	#install -m 0755 www/Tools_Script.asp $(INSTALLDIR)/www
 # K3C helper
 	install -m 0755 www/helper.sh $(INSTALLDIR)/usr/sbin
 #
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300))
+	install -m 0755 softcenter/ROG/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/ROG/res
+	install -m 0755 softcenter/ROG/webs/Main_Soft_center.asp $(INSTALLDIR)/rom/etc/softcenter/ROG/webs
+	install -m 0755 softcenter/ROG/webs/Main_Soft_setting.asp $(INSTALLDIR)/rom/etc/softcenter/ROG/webs
+endif
+	install -m 0755 jffsinit.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 i18n.js $(INSTALLDIR)/www/js
 	install -m 0755 scCN.json $(INSTALLDIR)/www/res
 	install -m 0755 scEN.json $(INSTALLDIR)/www/res
