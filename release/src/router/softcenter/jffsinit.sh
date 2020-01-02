@@ -3,7 +3,7 @@
 
 SPACE_AVAL=$(df|grep jffs | awk '{print $2}')
 
-if [ "$SPACE_AVAL" -gt 51200 -a "$(nvram get sc_mount)" == 0 ];then
+if [ $SPACE_AVAL -gt 51200 -a "$(nvram get sc_mount)" == 0 ];then
 if [ ! -d /jffs/softcenter ]; then
 	mkdir -p /jffs/softcenter
 	cp -rf /rom/etc/softcenter/* /jffs/softcenter/
@@ -24,6 +24,7 @@ if [ "$(nvram get sc_mount)" == 1 ];then
 	usb_disk="/tmp/mnt/$mdisk"
 	if [ "$(nvram get productid)" == "BLUECAVE" ];then
 		[ -n "$(mount |grep sda1 |grep tfat)" ] && logger "Unsupport TFAT!" && exit 1
+	fi
 	if [ ! -e "$usb_disk" ]; then
 		nvram set sc_mount="0"
 		nvram commit
