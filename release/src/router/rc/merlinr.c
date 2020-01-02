@@ -77,7 +77,7 @@ void lantiq_init_done()
 	if(!nvram_get("modelname"))
 		nvram_set("modelname", "BULECAVE");
 	if(!nvram_get("bl_ver"))
-		nvram_set("bl_ver", nvram_get("blver"));
+		doSystem("nvram set bl_ver=`uboot_env --get --name bl_ver`");
 #if defined(RTCONFIG_SOFTCENTER)
 	if(f_exists("/jffs/.asusrouter")){
 		unlink("/jffs/.asusrouter");

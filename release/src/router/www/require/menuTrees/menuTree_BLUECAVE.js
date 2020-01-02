@@ -420,7 +420,7 @@ define(function(){
 						retArray.push("menu_Alexa_IFTTT");
 					}
 				}
-				else if (<% nvram_get("k3c_enable"); %> == "0"){
+				else if (<% nvram_get("sc_mount"); %> == "0"){
 					retArray.push("menu_Softcenter");
 				}
 
