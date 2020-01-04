@@ -128,6 +128,10 @@ static struct device *s_nvram_device = NULL;
 #       define MTD_UNPOINT(mtd, arg) mtd_unpoint(mtd, (u_char *)arg)
 #       define MTD_READ(mtd, args...) mtd_read(mtd, args)
 #       define MTD_WRITE(mtd, args...) mtd_write(mtd, args)
+#       define MTD_READV(mtd, args...) mtd_readv(mtd, args)
+#       define MTD_WRITEV(mtd, args...) mtd_writev(mtd, args)
+#       define MTD_READECC(mtd, args...) mtd_read_ecc(mtd, args)
+#       define MTD_WRITEECC(mtd, args...) mtd_write_ecc(mtd, args)
 #       define MTD_READOOB(mtd, args...) mtd_read_oob(mtd, args)
 #       define MTD_WRITEOOB(mtd, args...) mtd_write_oob(mtd, args)
 #       define MTD_SYNC(mtd) do { if (mtd->sync) (*(mtd->_sync))(mtd);  } while (0)
@@ -141,9 +145,13 @@ static struct device *s_nvram_device = NULL;
 #       define MTD_UNPOINT(mtd, arg) (*(mtd->_unpoint))(mtd, (u_char *)arg)
 #       define MTD_READ(mtd, args...) (*(mtd->_read))(mtd, args)
 #       define MTD_WRITE(mtd, args...) (*(mtd->_write))(mtd, args)
+#       define MTD_READV(mtd, args...) (*(mtd->_readv))(mtd, args)
+#       define MTD_WRITEV(mtd, args...) (*(mtd->_writev))(mtd, args)
+#       define MTD_READECC(mtd, args...) (*(mtd->_read_ecc))(mtd, args)
+#       define MTD_WRITEECC(mtd, args...) (*(mtd->_write_ecc))(mtd, args)
 #       define MTD_READOOB(mtd, args...) (*(mtd->_read_oob))(mtd, args)
 #       define MTD_WRITEOOB(mtd, args...) (*(mtd->_write_oob))(mtd, args)
-#       define MTD_SYNC(mtd) do { if (mtd->_sync) (*(mtd->_sync))(mtd);  } while (0)
+#       define MTD_SYNC(mtd) do { if (mtd->sync) (*(mtd->_sync))(mtd);  } while (0)
 #       define MTD_UNLOCK(mtd, args...) do { if (mtd->_unlock) (*(mtd->_unlock))(mtd, args);  } while (0)
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,18)
 // Following macros are removed from linux/mtd/mtd.h since linux-2.6.0
@@ -152,6 +160,10 @@ static struct device *s_nvram_device = NULL;
 #       define MTD_UNPOINT(mtd, arg) (*(mtd->unpoint))(mtd, (u_char *)arg)
 #       define MTD_READ(mtd, args...) (*(mtd->read))(mtd, args)
 #       define MTD_WRITE(mtd, args...) (*(mtd->write))(mtd, args)
+#       define MTD_READV(mtd, args...) (*(mtd->readv))(mtd, args)
+#       define MTD_WRITEV(mtd, args...) (*(mtd->writev))(mtd, args)
+#       define MTD_READECC(mtd, args...) (*(mtd->read_ecc))(mtd, args)
+#       define MTD_WRITEECC(mtd, args...) (*(mtd->write_ecc))(mtd, args)
 #       define MTD_READOOB(mtd, args...) (*(mtd->read_oob))(mtd, args)
 #       define MTD_WRITEOOB(mtd, args...) (*(mtd->write_oob))(mtd, args)
 #       define MTD_SYNC(mtd) do { if (mtd->sync) (*(mtd->sync))(mtd);  } while (0)
@@ -570,18 +582,10 @@ hndcrc8(
 }
 
 #define NVRAM_DRIVER_VERSION	"0.05"
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,14)
-static int nvram_proc_version_read(struct file *file, __user char *buffer, size_t count, loff_t *data)
-#else
-static int nvram_proc_version_read(char *buf, char **start, off_t offset, int count, int *eof, void *data)
-#endif
+static int 
+nvram_proc_show(struct seq_file *m, void *v)
 {
-	int len = 0;
 	char type[32];
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,14)
-       char buf[512];
-#endif
 
 	if (nvram_mtd->type == MTD_NORFLASH)
 		strcpy(type, "NORFLASH");
@@ -594,32 +598,38 @@ static int nvram_proc_version_read(char *buf, char **start, off_t offset, int co
 	else
 		sprintf(type, "Unknown type(%d)", nvram_mtd->type);
 
-	len += snprintf (buf+len, count-len, "nvram driver : v" NVRAM_DRIVER_VERSION "\n");
-	len += snprintf (buf+len, count-len, "nvram space  : 0x%x\n", NVRAM_SPACE);
-	len += snprintf (buf+len, count-len, "major number : %d\n", nvram_major);
-	len += snprintf (buf+len, count-len, "MTD            \n");
-	len += snprintf (buf+len, count-len, "  name       : %s\n", nvram_mtd->name);
-	len += snprintf (buf+len, count-len, "  index      : %d\n", nvram_mtd->index);
-	len += snprintf (buf+len, count-len, "  type       : %s\n", type);
-	len += snprintf (buf+len, count-len, "  flags      : 0x%x\n", nvram_mtd->flags);
-	len += snprintf (buf+len, count-len, "  size       : 0x%x\n", (unsigned int)nvram_mtd->size);
-	len += snprintf (buf+len, count-len, "  erasesize  : 0x%x\n", nvram_mtd->erasesize);
-	len += snprintf (buf+len, count-len, "  writesize  : 0x%x\n", nvram_mtd->writesize);
+	seq_printf(m, "nvram driver : v" NVRAM_DRIVER_VERSION "\n");
+	seq_printf(m, "nvram space  : 0x%x\n", NVRAM_SPACE);
+	seq_printf(m, "major number : %d\n", nvram_major);
+	seq_printf(m, "MTD            \n");
+	seq_printf(m, "  name       : %s\n", nvram_mtd->name);
+	seq_printf(m, "  index      : %d\n", nvram_mtd->index);
+	seq_printf(m, "  type       : %s\n", type);
+	seq_printf(m, "  flags      : 0x%x\n", nvram_mtd->flags);
+	seq_printf(m, "  size       : 0x%x\n", (unsigned int)nvram_mtd->size);
+	seq_printf(m, "  erasesize  : 0x%x\n", nvram_mtd->erasesize);
+	seq_printf(m, "  writesize  : 0x%x\n", nvram_mtd->writesize);
 #ifdef WL_NVRAM
-	len += snprintf (buf+len, count-len, "private      : 0x%x, 0x%x -> 0x%x +0x%x, 0x%x %d\n",
+	seq_printf(m, "private      : 0x%x, 0x%x -> 0x%x +0x%x, 0x%x %d\n",
 			g_wlnv.last_commit_times, g_wlnv.cur_offset, g_wlnv.next_offset, step_unit,
 			g_wlnv.avg_len, g_wlnv.may_erase_nexttime);
-	len += snprintf (buf+len, count-len, "rsv_blk_size : 0x%x\n", rsv_blk_size);
+	seq_printf(m, "rsv_blk_size : 0x%x\n", rsv_blk_size);
 #endif	/* WL_NVRAM */
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,14)
-       copy_to_user(buffer, buf, len);
-#else
-	*eof = 1;
-#endif
-	return len;
+	return 0;
 }
 
+static int nvram_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nvram_proc_show, NULL);
+}
+
+static const struct file_operations nvram_file_ops = {
+	.open		= nvram_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
 #endif	// ASUS_NVRAM
 
 
@@ -703,9 +713,11 @@ _nvram_read(char *buf)
 		 */
 		rlen = valid_h->len;
 
-		if (MTD_READ(nvram_mtd, valid_offset, rlen, &len, buf) || len != rlen) {
+		if (ret=MTD_READ(nvram_mtd, valid_offset, rlen, &len, buf) || len != rlen) {
 			printk("MTD_READ 0x%x len 0x%x/0x%x fail\n", valid_offset, len, rlen);
-			recover_flag = 2;
+			printk("MTD_READ 0x%x ret:%d,recover_flag=2\n", valid_offset, ret);
+			printk("NVRAM:we got an error in here, ret should be 0 and recover_flag=0,skip to continue\n");
+			//recover_flag = 2;
 		} else {
 			g_wlnv.last_commit_times = cmt_times;
 			g_wlnv.cur_offset = valid_offset;
@@ -828,7 +840,7 @@ nvram_set(const char *name, const char *value)
 
 	if ((ret = _nvram_set(name, value))) {
 		/* Consolidate space and try again */
-		if ((header = kmalloc(NVRAM_SPACE, GFP_ATOMIC))) {
+		if ((header = kzalloc(NVRAM_SPACE, GFP_ATOMIC))) {
 			if (_nvram_commit(header) == 0)		{
 				ret = _nvram_set(name, value);
 			}
@@ -1267,61 +1279,72 @@ dev_nvram_write(struct file *file, const char *buf, size_t count, loff_t *ppos)
 	return ret;
 }
 
-char *nvram_xfr(const char *buf){
+static char *
+nvram_xfr(const char *buf)
+{
 	char *name = tmpbuf;
 	ssize_t ret=0;
 
-	if(copy_from_user(name, buf, sizeof(tmpbuf))){
+	//printk("nvram xfr 1: %s\n", buf);	// tmp test
+	if (copy_from_user(name, buf, strlen(buf)+1)) {
 		ret = -EFAULT;
 		goto done;
 	}
 
-	if(!strncmp(tmpbuf, NLS_NVRAM_U2C, strlen(NLS_NVRAM_U2C))){
+	if (strncmp(tmpbuf, NLS_NVRAM_U2C, strlen(NLS_NVRAM_U2C))==0)
+	{
 		asusnls_u2c(tmpbuf);
 	}
-	else if(!strncmp(tmpbuf, NLS_NVRAM_C2U, strlen(NLS_NVRAM_C2U))){
+	else if (strncmp(buf, NLS_NVRAM_C2U, strlen(NLS_NVRAM_C2U))==0)
+	{
 		asusnls_c2u(tmpbuf);
 	}
-	else{
+	else
+	{
 		strcpy(tmpbuf, "");
+		//printk("nvram xfr 2: %s\n", tmpbuf);	// tmp test
 	}
-
-	if(copy_to_user((char *)buf, tmpbuf, sizeof(tmpbuf))){
+	
+	if (copy_to_user((char*)buf, tmpbuf, strlen(tmpbuf)+1))
+	{
 		ret = -EFAULT;
 		goto done;
 	}
+	//printk("nvram xfr 3: %s\n", tmpbuf);	// tmp test
 
 done:
-	if(ret == 0)
-		return tmpbuf;
-
-	return NULL;
+	if(ret==0) return tmpbuf;
+	else return NULL;
 }
 
-static long dev_nvram_do_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
-	long ret = 0;
-
-	if(cmd != NVRAM_MAGIC)
+static long
+dev_nvram_do_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	if (cmd == NVRAM_IOCTL_GET_SPACE && arg != 0) {
+		unsigned int nvram_space = NVRAM_SPACE;
+		copy_to_user((unsigned int *)arg, &nvram_space, sizeof(nvram_space));
+		return 0;
+	}
+	if (cmd != NVRAM_MAGIC)
 		return -EINVAL;
-
-	if(!arg)
+	if(arg==0)
 		return nvram_commit();
-
 #ifdef NLS_XFR
-	if(nvram_xfr((char *)arg) == NULL)
-		ret = -EFAULT;
+	else {
+		if(nvram_xfr((char *)arg)!=NULL) return 0;
+		else return -EFAULT;
+	}
 #endif
-
-	return ret;
 }
 
-static long dev_nvram_ioctl(struct file *file, unsigned int cmd, unsigned long arg){
-	long ret = 0;
+static long
+dev_nvram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	long ret;
 
 	mutex_lock(&nvram_ioctl_lock);
 	ret = dev_nvram_do_ioctl(file, cmd, arg);
 	mutex_unlock(&nvram_ioctl_lock);
-
 	return ret;
 }
 
@@ -1469,13 +1492,6 @@ dev_nvram_exit(void)
 	_nvram_exit();
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,14)
-static struct file_operations nvram_version_read_proc_operations =
-{
-		.read		= nvram_proc_version_read,
-};
-#endif
-
 static int __init
 dev_nvram_init(void)
 {
@@ -1487,7 +1503,7 @@ dev_nvram_init(void)
 	size_t erasesize;
 
 #ifdef ASUS_NVRAM
-	nvram_buf = kmalloc (NVRAM_SPACE, GFP_ATOMIC);
+	nvram_buf = kzalloc (NVRAM_SPACE, GFP_ATOMIC);
 	if (nvram_buf == NULL) {
 		printk(KERN_ERR "%s(): Allocate %d bytes fail!\n", __func__, NVRAM_SPACE);
 		return -ENOMEM;
@@ -1515,12 +1531,7 @@ dev_nvram_init(void)
 		else
 		{
 			if (!strcmp(nvram_mtd->name, MTD_NVRAM_NAME) &&
-#ifdef CONFIG_MTK_MTD_NAND
-			    nvram_mtd->erasesize >= NVRAM_SPACE
-#else
-			    nvram_mtd->size >= NVRAM_SPACE
-#endif
-			)
+			    nvram_mtd->size >= NVRAM_SPACE)
 			{
 				break;
 			}
@@ -1617,11 +1628,7 @@ dev_nvram_init(void)
 #endif	// ASUS_NVRAM
 
 #ifdef ASUS_NVRAM
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,14)
-	g_pdentry = proc_create(NVRAM_DRV_NAME, S_IRUGO, NULL, &nvram_version_read_proc_operations);
-#else
-	g_pdentry = create_proc_read_entry(NVRAM_DRV_NAME, S_IRUGO, NULL, nvram_proc_version_read, NULL);
-#endif
+	g_pdentry = proc_create(NVRAM_DRV_NAME, S_IRUGO, NULL, &nvram_file_ops);
 	if (g_pdentry == NULL) {
 		printk(KERN_ERR "%s(): Create /proc/nvram fail!\n", __func__);
 		ret  = -ENOMEM;
@@ -1838,3 +1845,4 @@ MODULE_LICENSE("GPL");
 #endif	// ASUS_NVRAM
 
 MODULE_VERSION("V0.01");
+

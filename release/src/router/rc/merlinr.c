@@ -38,7 +38,6 @@
 
 #if defined(RTCONFIG_LANTIQ)
 #if !defined(K3C)
-//60s->init 90s->wan 150s->usbmount 180s->init_done
 //bluecave has a bug in fat driver,all ln command have got an error
 void lantiq_insmod(){
 	eval("insmod", "nfnetlink");
