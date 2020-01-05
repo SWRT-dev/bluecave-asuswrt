@@ -89,6 +89,13 @@ void lantiq_init_done()
 #endif
 #endif
 
+#define FWUPDATE_DBG(fmt,args...) \
+        if(1) { \
+                char info[1024]; \
+                snprintf(info, sizeof(info), "echo \"[FWUPDATE][%s:(%d)]"fmt"\" >> /tmp/webs_upgrade.log", __FUNCTION__, __LINE__, ##args); \
+                system(info); \
+        }
+
 int str_split(char* buf, char** s, int s_size) {
 	int curr = 0;
 	char* token = strtok(buf, ".");
@@ -276,10 +283,11 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 	curl_global_init(CURL_GLOBAL_ALL);
 	curlhandle = curl_easy_init();
 	snprintf(url, sizeof(url), "%s/%s", serverurl, serverupdate);
-	snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- update dl_path_info for general %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, serverupdate);
+	//snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- update dl_path_info for general %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, serverupdate);
 	download=curl_download_file(curlhandle , url,localupdate,8,3);
-	system(log);
-	_dprintf("%d\n",download);
+	//system(log);
+	FWUPDATE_DBG("---- update dl_path_info for general %s/%s ----", serverurl, serverupdate);
+	//_dprintf("%d\n",download);
 	if(download)
 	{
 		fpupdate = fopen(localupdate, "r");
@@ -300,6 +308,8 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 #else
 						snprintf(info,sizeof(info),"3004_384_%s_%s-%s",modelname,fwver,tag);
 #endif
+						FWUPDATE_DBG("---- current version : %s ----", nvram_get("extendno"));
+						FWUPDATE_DBG("---- productid : %s_%s-%s ----", modelname, fwver, tag);
 						nvram_set("webs_state_info", info);
 						nvram_set("webs_state_REQinfo", info);
 						nvram_set("webs_state_flag", "1");
@@ -314,18 +324,20 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 						char releasenote_file[100];
 						snprintf(releasenote_file, sizeof(releasenote_file), "%s_%s_%s_note.zip", nvram_get("productid"), nvram_get("webs_state_info"),nvram_get("preferred_lang"));
 						snprintf(url, sizeof(url), "%s/%s", serverurl, releasenote_file);
-						snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- download real release note %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, releasenote_file);
-						system(log);
+						//snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- download real release note %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, releasenote_file);
+						//system(log);
+						FWUPDATE_DBG("---- download real release note %s/%s ----", serverurl, releasenote_file);
 						download=curl_download_file(curlhandle , url,releasenote,8,3);
 						if(download ==0 ){
 							memset(url,'\0',sizeof(url));
 							snprintf(releasenote_file, sizeof(releasenote_file), "%s_%s_US_note.zip", nvram_get("productid"), nvram_get("webs_state_info"));
 							snprintf(url, sizeof(url), "%s/%s", serverurl, releasenote_file);
-							snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- download real release note %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, releasenote_file);
-							system(log);
+							//snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- download real release note %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, releasenote_file);
+							//system(log);
+							FWUPDATE_DBG("---- download real release note %s/%s ----", serverurl, releasenote_file);
 							curl_download_file(curlhandle , url,releasenote,8,3);
 						}
-
+						FWUPDATE_DBG("---- firmware check update finish ----");
 						return 0;
 #if 0
 						if(strstr(nt_center,"nt_center")){
@@ -364,7 +376,7 @@ GODONE:
 	nvram_set("cfg_check", "9");
 	nvram_set("cfg_upgrade", "0");
 #endif
-
+	FWUPDATE_DBG("---- firmware check update finish ----");
 	return 0;
 }
 #if !defined(BLUECAVE)

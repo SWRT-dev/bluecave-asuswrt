@@ -13810,6 +13810,7 @@ _dprintf("nat_rule: the nat rule file was not ready. wait %d seconds...\n", retr
 	setup_udp_timeout(TRUE);
 
 	run_custom_script("nat-start", 0, NULL, NULL);
+	nvram_set_int("sc_nat_sig", 1);
 	return NAT_STATE_NORMAL;
 }
 

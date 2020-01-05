@@ -2076,6 +2076,7 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 			run_nvscript("script_usbmount", mountpoint, 3);
 
 		run_custom_script("post-mount", 120, mountpoint, NULL);
+		nvram_set_int("sc_nat_sig", 1);
 
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
 		char word[PATH_MAX], *next_word;
