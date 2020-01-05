@@ -1737,7 +1737,7 @@ int dnsmasq_script_main(int argc, char **argv)
 #endif
 #if defined(RTCONFIG_SOFTCENTER)
 	if(nvram_get("sc_dhcp_script"))
-		doSystem("/jffs/softcenter/scripts/%s",nvram_get("sc_dhcp_script"));
+		doSystem("/jffs/softcenter/scripts/%s &",nvram_get("sc_dhcp_script"));
 #endif
 	return 0;
 }
