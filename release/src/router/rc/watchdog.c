@@ -5467,9 +5467,10 @@ static void softcenter_sig_check()
 	//1=wan,2=nat,3=mount
 	if(nvram_match("sc_installed", "1")){
 		if(!pids("perpd")){
-			char *perp_argv[] = { "perpboot", "-d",NULL };
-			pid_t pid;
-			_eval(perp_argv, NULL, 0, &pid);
+			//char *perp_argv[] = { "/jffs/softcenter/perp/perp.sh", "start",NULL };
+			//pid_t pid;
+			//_eval(perp_argv, NULL, 0, &pid);
+			doSystem("sh /jffs/softcenter/perp/perp.sh start &");
 		}
 		if(nvram_match("sc_wan_sig", "1")) {
 			if(nvram_match("sc_mount", "1")) {

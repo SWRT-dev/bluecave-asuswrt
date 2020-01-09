@@ -758,7 +758,7 @@ void softcenter_eval(int sig)
 		snprintf(path, sizeof(path), "%s/softcenter-wan.sh", sc);
 		snprintf(action, sizeof(action), "start");
 	} else if (SOFTCENTER_NAT == sig){
-		snprintf(path, sizeof(path), "%s/softcenter-nat.sh", sc);
+		snprintf(path, sizeof(path), "%s/softcenter-net.sh", sc);
 		snprintf(action, sizeof(action), "start_nat");
 	} else if (SOFTCENTER_MOUNT == sig){
 		snprintf(path, sizeof(path), "%s/softcenter-mount.sh", sc);
