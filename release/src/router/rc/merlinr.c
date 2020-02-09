@@ -37,7 +37,8 @@
 
 
 //bluecave has a bug in fat driver,all ln command have got an error
-void merlinr_insmod(){
+void merlinr_insmod()
+{
 	eval("insmod", "nfnetlink");
 	eval("insmod", "ip_set");
 	eval("insmod", "ip_set_bitmap_ip");
@@ -60,6 +61,7 @@ void merlinr_insmod(){
 	eval("insmod", "xt_TPROXY");
 	eval("insmod", "xt_set");
 }
+
 void merlinr_init()
 {
 	_dprintf("############################ MerlinR init #################################\n");
@@ -70,6 +72,7 @@ void merlinr_init()
 #endif
 	merlinr_insmod();
 }
+
 void merlinr_init_done()
 {
 	_dprintf("############################ MerlinR init done #################################\n");
@@ -88,7 +91,6 @@ void merlinr_init_done()
 		doSystem("sed -i '/softcenter-wan.sh/d' /jffs/scripts/wan-start");
 		doSystem("sed -i '/softcenter-net.sh/d' /jffs/scripts/nat-start");
 		doSystem("sed -i '/softcenter-mount.sh/d' /jffs/scripts/post-mount");
-
 	}
 #endif
 #if defined(RTCONFIG_QCA)
@@ -113,8 +115,8 @@ void merlinr_init_done()
 		nvram_set("modelname", "R8000P");
 #elif defined(RTAC3100)
 		nvram_set("modelname", "RTAC3100");
-#elif defined(BULECAVE)
-		nvram_set("modelname", "BULECAVE");
+#elif defined(BLUECAVE)
+		nvram_set("modelname", "BLUECAVE");
 #elif defined(RTAC68U)
 		nvram_set("modelname", "RTAC68U");
 #elif defined(RTAC68P)
@@ -366,11 +368,11 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 			sscanf(buffer,"%[A-Z0-9-]#%[A-Z0-9]#%[0-9]#%[A-Z0-9.]#%[a-z0-9]",model,modelname,fsver,fwver,tag);
 			_dprintf("%s#%s#%s#%s\n",model,modelname,fsver,fwver);
 			if(!strcmp(model, nvram_get("productid")) && !strcmp(modelname, nvram_safe_get("modelname"))){
-				if((strstr(cur_fwver, "B") && strstr(fwver, "B"))||(strstr(cur_fwver, "R") && strstr(fwver, "R"))){
+				if((strstr(cur_fwver, "B") && strstr(fwver, "B"))||(strstr(cur_fwver, "R") && strstr(fwver, "R"))||(strstr(cur_fwver, "X") && strstr(fwver, "X"))){
 					//_dprintf("%s#%s\n",fwver,cur_fwver);
 					if(versioncmp((cur_fwver+1),(fwver+1))==1){
 						nvram_set("webs_state_url", "");
-#if defined(SBRAC3200P) || defined(RTACRH17) || defined(RTAC3200)
+#if defined(SBRAC3200P) || defined(RTACRH17) || defined(RTAC3200) || defined(RTAC85P)
 						snprintf(info,sizeof(info),"3004_382_%s_%s-%s",modelname,fwver,tag);
 #else
 						snprintf(info,sizeof(info),"3004_384_%s_%s-%s",modelname,fwver,tag);
@@ -424,7 +426,7 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 	curl_global_cleanup();
 
 GODONE:
-#if defined(SBRAC3200P) || defined(RTACRH17) || defined(RTAC3200)
+#if defined(SBRAC3200P) || defined(RTACRH17) || defined(RTAC3200) || defined(RTAC85P)
 	snprintf(info,sizeof(info),"3004_382_%s",nvram_get("extendno"));
 //elif defined(RTAC68U)
 //	snprintf(info,sizeof(info),"3004_385_%s",nvram_get("extendno"));
@@ -848,3 +850,4 @@ void softcenter_eval(int sig)
 	_eval(eval_argv, NULL, 0, &pid);
 }
 #endif
+

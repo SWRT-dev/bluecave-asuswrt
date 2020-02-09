@@ -22,12 +22,8 @@
 
 #ifndef __MERLINR_H__
 #define __MERLINR_H__
-#if defined(RTCONFIG_LANTIQ)
-#if !defined(K3C)
 extern void merlinr_init(void);
 extern void merlinr_init_done(void);
-#endif
-#endif
 #ifdef RTCONFIG_UUPLUGIN
 extern void exec_uu(void);
 #endif
