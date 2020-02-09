@@ -5467,10 +5467,9 @@ static void softcenter_sig_check()
 	//1=wan,2=nat,3=mount
 	if(nvram_match("sc_installed", "1")){
 		if(!pids("perpd")){
-			//char *perp_argv[] = { "/jffs/softcenter/perp/perp.sh", "start",NULL };
-			//pid_t pid;
-			//_eval(perp_argv, NULL, 0, &pid);
-			doSystem("sh /jffs/softcenter/perp/perp.sh start &");
+			char *perp_argv[] = { "perpboot", "-d",NULL };
+			pid_t pid;
+			_eval(perp_argv, NULL, 0, &pid);
 		}
 		if(nvram_match("sc_wan_sig", "1")) {
 			if(nvram_match("sc_mount", "1")) {
@@ -5696,7 +5695,7 @@ void modem_log_check(void) {
 			while(fgets(var, 16, fp)) {
 				line = safe_atoi(var);
 			}
-			fclose(fp);
+			pclose(fp);
 
 			if (line > MAX_MODEMLOG_LINE) {
 				snprintf(cmd, 64, "cat %s |tail -n %d > %s-1", MODEMLOG_FILE, MAX_MODEMLOG_LINE, MODEMLOG_FILE);
@@ -7542,7 +7541,9 @@ wdp:
 	amas_ctl_check();
 #endif
 #ifdef RTCONFIG_CFGSYNC
+#if !defined(MERLINR_VER_MAJOR_B)
 	cfgsync_check();
+#endif
 #endif
 #ifdef RTCONFIG_TUNNEL
 	mastiff_check();
