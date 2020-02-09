@@ -8291,7 +8291,7 @@ int init_nvram(void)
 #ifdef BLUECAVE
 	case MODEL_BLUECAVE:
 		_dprintf("BLUECAVE: todo, init_nvram()\n");
-		lantiq_init();
+		merlinr_init();
 		nvram_set("wave_action", "0");
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "eth0_1 eth0_2 eth0_3 eth0_4");
@@ -11092,10 +11092,20 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			nvram_set("success_start_service", "1");
 			force_free_caches();
 #endif
-#if defined(RTCONFIG_LANTIQ)
-#if !defined(K3C)
-			lantiq_init_done();
-#endif
+#if defined(K3)
+			k3_init_done();
+#elif defined(K3C)
+			k3c_init_done();
+#elif defined(SBRAC1900P)
+			ac1900p_init_done();
+#elif defined(SBRAC3200P)
+			ac3200p_init_done();
+#elif defined(R8000P) || defined(R7900P)
+			r8000p_init_done();
+#elif defined(RTAC68U) && !defined(SBRAC1900P)
+			ac68u_init_done();
+#else
+			merlinr_init_done();
 #endif
 #ifdef RTCONFIG_AMAS
 			nvram_set("start_service_ready", "1");

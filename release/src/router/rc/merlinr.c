@@ -36,10 +36,8 @@
 #include <curl/curl.h>
 
 
-#if defined(RTCONFIG_LANTIQ)
-#if !defined(K3C)
 //bluecave has a bug in fat driver,all ln command have got an error
-void lantiq_insmod(){
+void merlinr_insmod(){
 	eval("insmod", "nfnetlink");
 	eval("insmod", "ip_set");
 	eval("insmod", "ip_set_bitmap_ip");
@@ -62,32 +60,101 @@ void lantiq_insmod(){
 	eval("insmod", "xt_TPROXY");
 	eval("insmod", "xt_set");
 }
-void lantiq_init()
+void merlinr_init()
 {
+	_dprintf("############################ MerlinR init #################################\n");
 #if defined(RTCONFIG_SOFTCENTER)
 	nvram_set("sc_wan_sig", "0");
 	nvram_set("sc_nat_sig", "0");
 	nvram_set("sc_mount_sig", "0");
 #endif
-	lantiq_insmod();
+	merlinr_insmod();
 }
-void lantiq_init_done()
+void merlinr_init_done()
 {
-	if(!nvram_get("modelname"))
-		nvram_set("modelname", "BULECAVE");
-	if(!nvram_get("bl_ver"))
-		doSystem("nvram set bl_ver=`uboot_env --get --name bl_ver`");
-#if defined(RTCONFIG_SOFTCENTER)
+	_dprintf("############################ MerlinR init done #################################\n");
+#ifdef RTCONFIG_SOFTCENTER
+	if (!f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","0")){
+		doSystem("/usr/sbin/jffsinit.sh &");
+		logmessage("软件中心", "开始安装......");
+		logmessage("软件中心", "1分钟后完成安装");
+		_dprintf("....softcenter ok....\n");
+	} else if (f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","0"))
+		nvram_set("sc_installed","1");
+	else if (!f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","1"))
+		nvram_set("sc_installed","0");
 	if(f_exists("/jffs/.asusrouter")){
 		unlink("/jffs/.asusrouter");
 		doSystem("sed -i '/softcenter-wan.sh/d' /jffs/scripts/wan-start");
 		doSystem("sed -i '/softcenter-net.sh/d' /jffs/scripts/nat-start");
 		doSystem("sed -i '/softcenter-mount.sh/d' /jffs/scripts/post-mount");
+
 	}
 #endif
+#if defined(RTCONFIG_QCA)
+	if(!nvram_get("bl_ver"))
+		nvram_set("bl_ver", "1.0.0.0");
+#elif defined(RTCONFIG_LANTIQ)
+#if !defined(K3C)
+	if(!nvram_get("bl_ver"))
+		doSystem("nvram set bl_ver=`uboot_env --get --name bl_ver`");
+#endif
+#endif
+	if(!nvram_get("modelname"))
+#if defined(K3)
+		nvram_set("modelname", "K3");
+#elif defined(K3C)
+		nvram_set("modelname", "K3C");
+#elif defined(SBRAC1900P)
+		nvram_set("modelname", "SBRAC1900P");
+#elif defined(SBRAC3200P)
+		nvram_set("modelname", "SBRAC3200P");
+#elif defined(R8000P) || defined(R7900P)
+		nvram_set("modelname", "R8000P");
+#elif defined(RTAC3100)
+		nvram_set("modelname", "RTAC3100");
+#elif defined(BULECAVE)
+		nvram_set("modelname", "BULECAVE");
+#elif defined(RTAC68U)
+		nvram_set("modelname", "RTAC68U");
+#elif defined(RTAC68P)
+		nvram_set("modelname", "RTAC68P");
+#elif defined(RTAC3200)
+		nvram_set("modelname", "RTAC3200");
+#elif defined(GTAC2900)
+		nvram_set("modelname", "GTAC2900");
+#elif defined(GTAC5300)
+		nvram_set("modelname", "GTAC5300");
+#elif defined(RTAC86U)
+		nvram_set("modelname", "RTAC86U");
+#elif defined(RTACRH17)
+		nvram_set("modelname", "RTACRH17");
+#elif defined(TUFAX3000) || defined(RTAX58U)
+		nvram_set("modelname", "TUFAX3000");
+#elif defined(RTAX56U)
+		nvram_set("modelname", "RTAX56U");
+#elif defined(RTAX88U)
+		nvram_set("modelname", "RTAX88U");
+#elif defined(GTAX11000)
+		nvram_set("modelname", "GTAX11000");
+#elif defined(RAX20)
+		nvram_set("modelname", "RAX20");
+#elif defined(RAX80)
+		nvram_set("modelname", "RAX80");
+#elif defined(RAX200)
+		nvram_set("modelname", "RAX200");
+#elif defined(TUFAC1750)
+		nvram_set("modelname", "TUFAC1750");
+#elif defined(RTACRH26)
+		nvram_set("modelname", "RTACRH26");
+#elif defined(RTAC85P)
+		nvram_set("modelname", "RTAC85P");
+#endif
+#if defined(R8000P) || defined(R7900P)
+	nvram_set("ping_target","www.taobao.com");
+	nvram_commit();
+#endif
 }
-#endif
-#endif
 
 #define FWUPDATE_DBG(fmt,args...) \
         if(1) { \
@@ -379,14 +446,24 @@ GODONE:
 	FWUPDATE_DBG("---- firmware check update finish ----");
 	return 0;
 }
-#if !defined(BLUECAVE)
-void exec_uu_merlinr()
+#if !defined(BLUECAVE) && !defined(GTAC2900)
+#if defined(RTAC85P)
+void isCN()
+{
+	if(!strncmp(nvram_safe_get("territory_code"), "CN", 2))
+		add_rc_support("uu_accel");
+}
+#endif
+void exec_uu()
 {
 	FILE *fpmodel, *fpmac, *fpuu, *fpurl, *fpmd5, *fpcfg;
 	char buf[128];
 	int download,i;
 	char *dup_pattern, *g, *gg;
 	char p[10][100];
+#if defined(RTAC85P)
+	isCN();
+#endif
 	if(nvram_get_int("sw_mode") == 1){
 		if ((fpmodel = fopen("/var/model", "w"))){
 			fprintf(fpmodel, nvram_get("productid"));
