@@ -550,10 +550,7 @@ $(function() {
 		dataType: "script",
 		success: function(response) {
 			db_softcenter_ = db_softcenter;
-			if(typeof db_softcenter_["softcenter_server_tcode"] == "undefined") {
-				db_softcenter_["softcenter_home_url"] = "http://update.wifi.com.cn";
-			}
-			else if(db_softcenter_["softcenter_server_tcode"] == "CN") {
+			if(db_softcenter_["softcenter_server_tcode"] == "CN") {
 			        db_softcenter_["softcenter_home_url"] = "http://update.wifi.com.cn";
 			}
 			else if(db_softcenter_["softcenter_server_tcode"] == "GB") {
@@ -571,11 +568,9 @@ $(function() {
 				scarch="mips";
 			else if (db_softcenter_["softcenter_arch"] == "armv7l")//for bcm4709
 				scarch="arm";
-			else if (db_softcenter_["softcenter_arch"] == "armng")//for bcm6750
+			else if (db_softcenter_["softcenter_arch"] == "armng")//for bcm6750/ipq4019
 				scarch="armng";
-			else if (db_softcenter_["softcenter_arch"] == "armqca")//for qca4019
-				scarch="armqca";
-			else if (db_softcenter_["softcenter_arch"] == "aarch64")//for bcm4908
+			else if (db_softcenter_["softcenter_arch"] == "aarch64")//for bcm4908/bcm6710
 				scarch="arm64";
 			else if (db_softcenter_["softcenter_arch"] == "mipsle")//for mtk7621
 				scarch="mipsle";
@@ -638,7 +633,15 @@ function notice_show(){
 	else {
 	$("#modelid").html("Software Center " + model );
 	}
-	var pushurl = 'https://sc.paldier.com/' + scarch + '/softcenter/push_message.json.js';
+	var pushlog;
+	switch ("<% nvram_get("preferred_lang"); %>") {
+	case "EN":
+		pushlog="push_message_en.json.js";
+		break
+	default:
+		pushlog="push_message.json.js";
+	}
+	var pushurl = 'https://sc.paldier.com/' + scarch + '/softcenter/' + pushlog;
 	$.ajax({
 		url: pushurl,
 		type: 'GET',

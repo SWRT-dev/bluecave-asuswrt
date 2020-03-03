@@ -69,12 +69,14 @@ export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 
 #K3C/K3/SBRAC1900P/SBRAC3200P/R7000/R8000/R7900P/R8000P/RTACRH17/RTAC85P/GTAC2900/GTAC5300/RTAC86U/RTAC68U/RTAC3100/RTAC3200/RTAC68P/BLUECAVE
 #RTAX58U/TUFAX3000/RTAX56U/RTAX88U
+#export LANTIQ_OVERCLOCK=y
 export MERLINR_NAME := BLUECAVE
 #aimesh:R(384 and 385),non-aimesh:B(382 and 384)
 export MERLINR_VER_MAJOR :=R
-export MERLINR_VER_MINOR :=5.0.8
+export MERLINR_VER_MINOR :=5.0.9
 export MERLINR_VER := $(MERLINR_VER_MAJOR)$(MERLINR_VER_MINOR)
 export MERLINRVER := $(MERLINR_NAME)_$(MERLINR_VER)
+
 
 # tmp depend on busybox
 E2FSPROGS := $(if $(filter $(BUSYBOX),busybox-1.17.4),n,y)
@@ -230,7 +232,11 @@ ifeq ($(FAKEID),y)
 export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)_$(SWPJVER)$(FORCE_EN)
 else
 #export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)
+ifeq ($(LANTIQ_OVERCLOCK),y)
+export IMGNAME := P_$(EXTENDNO)
+else
 export IMGNAME := $(EXTENDNO)
+endif
 endif
 
 ifeq ($(BUILD_NAME),DSL-AC68U)
@@ -261,13 +267,20 @@ $(if $(CONFIG_UBOOT_CONFIG_LTQ_IMAGE_EXTRA_CHECKS), \
 endef
 
 LANTIQ_LINUX_DIR=linux/linux-3.10.104
-
+#k3c only,bluecave will be supported after i successfully built the new uboot
+ifeq ($(LANTIQ_OVERCLOCK),y)
+DTSFILE=easy350_anywan_router_800m_p.dts
+UBOOTFILE=u-boot-nand-k3c-p.bin
+else
+DTSFILE=easy350_anywan_router_800m.dts
+UBOOTFILE=u-boot-nand-k3c.bin
+endif
 define build_bluecave_image
 	mips-openwrt-linux-uclibc-objcopy -O binary -R .reginfo -R .notes -R .note -R .comment -R .mdebug -R .note.gnu.build-id -S $(LANTIQ_LINUX_DIR)/vmlinux ./vmlinux
 	mips-openwrt-linux-uclibc-objcopy -R .reginfo -R .notes -R .note -R .comment -R .mdebug -R .note.gnu.build-id -S $(LANTIQ_LINUX_DIR)/vmlinux ./vmlinux.elf
 	cp -fpR $(LANTIQ_LINUX_DIR)/vmlinux ./vmlinux.debug
 	cp ./vmlinux ./vmlinux-easy350_anywan_router_800m
-	tools/dtc -O dtb -o ./easy350_anywan_router_800m.dtb ./proprietary/dts/easy350_anywan_router_800m.dts
+	tools/dtc -O dtb -o ./easy350_anywan_router_800m.dtb ./proprietary/dts/$(DTSFILE)
 	tools/host/bin/patch-dtb ./vmlinux-easy350_anywan_router_800m ./easy350_anywan_router_800m.dtb 32768
 	tools/host/bin/lzma e ./vmlinux-easy350_anywan_router_800m ./vmlinux-easy350_anywan_router_800m.lzma
 	mv ./vmlinux-easy350_anywan_router_800m.lzma ./vmlinux.lzma
@@ -319,7 +332,8 @@ define build_bluecave_image
 	chmod 644 $$ONEIMAGE;
 	cp proprietary/gphy_firmware.img image/
 	cp proprietary/uImage_bootcore image/
-	#cp proprietary/u-boot-nand.bin image/
+	#cp proprietary/$(UBOOTFILE) image/
+
 	rm -f vmlinux*
 	rm -f uImage*
 	rm -f easy350_anywan_router_800m.dtb

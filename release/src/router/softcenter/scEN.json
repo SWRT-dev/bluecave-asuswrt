@@ -17,6 +17,7 @@
   "No less than 1GB of free space(BLUECAVE unsupport FAT).": "No less than 1GB of free space(BLUECAVE unsupport FAT).",
   "Must unmount the current partition before mounting other partitions.": "Must unmount the current partition before mounting other partitions.",
   "Select a partition to mount": "Select a partition to mount",
+  "This function must be enabled when JFFS is less than 50MB.": "This function must be enabled when JFFS is less than 50MB.",
   "Enable": "Enable",
   "Setting": "Setting",
   "No Disk": "No Disk",

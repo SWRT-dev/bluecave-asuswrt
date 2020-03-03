@@ -79,8 +79,8 @@ void merlinr_init_done()
 #ifdef RTCONFIG_SOFTCENTER
 	if (!f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","0")){
 		doSystem("/usr/sbin/jffsinit.sh &");
-		logmessage("软件中心", "开始安装......");
-		logmessage("软件中心", "1分钟后完成安装");
+		logmessage("Softcenter/软件中心", "Installing/开始安装......");
+		logmessage("Softcenter/软件中心", "Wait a minute/1分钟后完成安装");
 		_dprintf("....softcenter ok....\n");
 	} else if (f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","0"))
 		nvram_set("sc_installed","1");

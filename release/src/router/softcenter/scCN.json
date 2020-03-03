@@ -17,6 +17,7 @@
   "No less than 1GB of free space.": "剩余空间不得小于1G.",
   "Must unmount the current partition before mounting other partitions.": "更换挂载分区必须先禁用再切换新分区.",
   "Select a partition to mount": "设置挂载分区",
+  "This function must be enabled when JFFS is less than 50MB.": "如果jffs小于50MB则必须挂载U盘.",
   "Enable": "启用",
   "Setting": "设置",
   "No Disk": "无U盘或移动硬盘",

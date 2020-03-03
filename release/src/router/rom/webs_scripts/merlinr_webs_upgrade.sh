@@ -39,7 +39,7 @@ if [ "$model" == "RT-AC68U" ] && [ "$fw_check" == "1" ]; then
 else
 
 #openssl support rsa check
-rsa_enabled=""
+rsa_enabled=`nvram show | grep rc_support | grep HTTPS`
 
 touch /tmp/update_url
 update_url=`cat /tmp/update_url`
@@ -50,7 +50,7 @@ productid=`nvram get productid`
 if [ "$productid" == "BLUECAVE" ]; then
        rc rc_service stop_wrs_force
 fi
-
+modelname=`nvram get modelname`
 get_productid=`echo $productid | sed s/+/plus/;`    #replace 'plus' to '+' for one time
 odmpid_support=`nvram get webs_state_odm`
 if [ "$odmpid_support" == "1" ]; then
@@ -60,7 +60,7 @@ fi
 firmware_file=`echo $get_productid`_`nvram get webs_state_info`_un.zip
 
 if [ "$rsa_enabled" != "" ]; then
-	firmware_rsasign=`echo $get_productid`_`nvram get webs_state_info`_rsa.zip
+	firmware_rsasign=firmware_md5.zip
 fi
 
 small_fw_update=`nvram show | grep rc_support | grep small_fw`
@@ -73,7 +73,7 @@ if [ "$small_fw_update" != "" ]; then
 else
 	firmware_path="/tmp/linux.trx"
 fi
-rsa_path=/tmp/rsasign.bin
+rsa_path=/tmp/md5.txt
 
 rm -f $firmware_path
 wget_result=0
@@ -159,8 +159,10 @@ else
 	sleep 1
 
 	if [ "$rsa_enabled" != "" ]; then
+		firmware_md5=`md5sum /tmp/linux.trx`
+		check_md5=`cat $rsa_path |grep $firmware_md5`
 		nvram set rsasign_check=0
-		rsasign_check $firmware_path
+		[ -n "$check_md5" ] && nvram set rsasign_check=1
 		sleep 1
 	fi
 

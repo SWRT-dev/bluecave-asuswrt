@@ -2,6 +2,7 @@
 
 
 SPACE_AVAL=$(df|grep jffs | awk '{print $2}')
+MODEL=`nvram get productid`
 
 if [ $SPACE_AVAL -gt 51200 -a "$(nvram get sc_mount)" == 0 ];then
 if [ ! -d /jffs/softcenter ]; then
@@ -22,7 +23,7 @@ else
 if [ "$(nvram get sc_mount)" == 1 ];then
 	mdisk=`nvram get sc_disk`
 	usb_disk="/tmp/mnt/$mdisk"
-	if [ "$(nvram get productid)" == "BLUECAVE" ];then
+	if [ "$MODEL" == "BLUECAVE" ];then
 		[ -n "$(mount |grep $usb_disk |grep tfat)" ] && logger "Unsupport TFAT!" && exit 1
 	fi
 	if [ ! -e "$usb_disk" ]; then
@@ -37,16 +38,17 @@ if [ "$(nvram get sc_mount)" == 1 ];then
 			mkdir -p $usb_disk/res
 			mkdir -p $usb_disk/webs
 			mkdir -p $usb_disk/scripts
+			mkdir -p $usb_disk/lib
 			mkdir -p /jffs/softcenter/etc
 			mkdir -p /jffs/softcenter/init.d
 			mkdir -p /jffs/softcenter/configs
 			mkdir -p /jffs/softcenter/ss
-			mkdir -p /jffs/softcenter/lib
 			mkdir -p /jffs/softcenter/perp
 			ln -sf $usb_disk/bin /jffs/softcenter/bin
 			ln -sf $usb_disk/res /jffs/softcenter/res
 			ln -sf $usb_disk/webs /jffs/softcenter/webs
 			ln -sf $usb_disk/scripts /jffs/softcenter/scripts
+			ln -sf $usb_disk/lib /jffs/softcenter/lib
 		fi
 	fi
 else
@@ -60,9 +62,6 @@ cp -rf /rom/etc/softcenter/res/* /jffs/softcenter/res/
 cp -rf /rom/etc/softcenter/webs/* /jffs/softcenter/webs/
 cp -rf /rom/etc/softcenter/bin/* /jffs/softcenter/bin/
 cp -rf /rom/etc/softcenter/perp /jffs/softcenter/
-if [ "`nvram get model`" == "GT-AC5300" ] || [ "`nvram get model`" == "GT-AC2900" ];then
-rm -rf /jffs/softcenter/ROG
-fi
 ln -sf /jffs/softcenter/bin/base64_encode /jffs/softcenter/bin/base64_decode
 ln -sf /jffs/softcenter/scripts/ks_app_install.sh /jffs/softcenter/scripts/ks_app_remove.sh
 chmod 755 /jffs/softcenter/scripts/*.sh
@@ -77,24 +76,45 @@ dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "
 ARCH=`uname -m`
 KVER=`uname -r`
 if [ "$ARCH" == "armv7l" ]; then
-	if [ "$KVER" == "4.1.52" -o "$KVER" == "4.1.49" ];then
+	if [ "$KVER" == "4.1.52" -o "$KVER" == "3.14.77" ];then
 		dbus set softcenter_arch="armng"
 	else
 		dbus set softcenter_arch="$ARCH"
 	fi
 else
-	dbus set softcenter_arch="$ARCH"
+	if [ "$KVER" == "3.10.14" ];then
+		dbus set softcenter_arch="mipsle"
+	else
+		dbus set softcenter_arch="$ARCH"
+	fi
 fi
 
 dbus set softcenter_api=`cat /jffs/softcenter/.soft_ver`
-if [ "`nvram get model`" == "GT-AC5300" ] || [ "`nvram get model`" == "GT-AC2900" ];then
+if [ "$MODEL" == "GT-AC5300" ] || [ "$MODEL" == "GT-AC2900" ];then
 	cp -rf /rom/etc/softcenter/ROG/webs/* /jffs/softcenter/webs/
 	cp -rf /rom/etc/softcenter/ROG/res/* /jffs/softcenter/res/
+elif [ "$MODEL" == "TUF-AX3000" ] ;then
+	cp -rf /rom/etc/softcenter/TUF/webs/* /jffs/softcenter/webs/
+	cp -rf /rom/etc/softcenter/TUF/res/* /jffs/softcenter/res/
 fi
 nvram set sc_installed=1
 nvram commit
 # creat wan-start file
 mkdir -p /jffs/scripts
+
+	if [ -z "$(dbus get softcenter_server_tcode)" ]; then
+		modelname=`nvram get modelname`
+		if [ "$modelname" == "K3" ]; then
+			dbus set softcenter_server_tcode=CN
+		elif [ "$modelname" == "SBRAC1900P" -o "$modelname" == "SBR-AC1900P" -o "$modelname" == "SBRAC3200P" -o "$modelname" == "SBR-AC3200P" -o "$modelname" == "R7900P" -o "$modelname" == "R8000P" ]; then
+			dbus set softcenter_server_tcode=ALI
+		elif [ "$modelname" == "GTAC2900" -o "$modelname" == "GTAC5300" -o "$modelname" == "RTAC86U" -o "$modelname" == "RTAX86U" -o "$modelname" == "RTAX68U" -o "$modelname" == "RTAX58U" -o "$modelname" == "RTAX82U" -o "$modelname" == "TUFAX3000" -o "$modelname" == "RTACRH17" -o "$modelname" == "RTAX56U" ]; then
+			dbus set softcenter_server_tcode=CN1
+		else
+			dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
+			[ -z "$(dbus get softcenter_server_tcode)" ] && dbus set softcenter_server_tcode=GB
+		fi
+	fi
 
 # creat profile file
 if [ ! -f /jffs/configs/profile.add ]; then
@@ -107,5 +127,6 @@ export PERP_BASE=/softcenter/perp
 
 EOF
 fi
+
 
 

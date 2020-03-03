@@ -4209,7 +4209,8 @@ start_smartdns(void)
 	fprintf(fp, "server-name MerlinR-smartdns\n");
 	fprintf(fp, "conf-file /etc/blacklist-ip.conf\n");
 	fprintf(fp, "conf-file /etc/whitelist-ip.conf\n");
-	fprintf(fp, "bind [::]:9053\n");
+	//fprintf(fp, "conf-file /etc/seconddns.conf\n");
+	fprintf(fp, "bind [::]:9053 -no-speed-check\n");
 	//fprintf(fp, "bind-tcp [::]:5353\n");
 	fprintf(fp, "cache-size 9999\n");
 	//fprintf(fp, "prefetch-domain yes\n");
@@ -4218,12 +4219,11 @@ start_smartdns(void)
 	//fprintf(fp, "whitelist-ip 1.0.0.0/16\n");
 	//fprintf(fp, "ignore-ip 1.0.0.0/16\n");
 	//fprintf(fp, "force-AAAA-SOA yes\n");
-	//fprintf(fp, "dualstack-ip-selection yes\n");
 	//fprintf(fp, "edns-client-subnet 1.0.0.0/16\n");
 	//fprintf(fp, "rr-ttl 300\n");
 	//fprintf(fp, "rr-ttl-min 60\n");
 	//fprintf(fp, "rr-ttl-max 86400\n");
-	fprintf(fp, "log-level info\n");
+	fprintf(fp, "log-level warn\n");
 	//fprintf(fp, "log-file /var/log/smartdns.log\n");
 	//fprintf(fp, "log-size 128k\n");
 	//fprintf(fp, "log-num 2\n");
@@ -4261,7 +4261,11 @@ start_smartdns(void)
 	//fprintf(fp, "server %s\n", nvram_get("wan_dns2_x"));
 	fprintf(fp, "server-tcp 8.8.8.8\n");
 	fprintf(fp, "server-tcp 8.8.4.4\n");
+	fprintf(fp, "tcp-idle-time 120\n");
+	fprintf(fp, "server-tls 8.8.8.8:853\n");
 	//fprintf(fp, "server-https https://cloudflare-dns.com/dns-query\n");
+	//fprintf(fp, "speed-check-mode none\n");
+	//fprintf(fp, "dualstack-ip-selection no\n");
 	fclose(fp);
 	//logmessage(LOGNAME, "start smartdns:%d", pid);
 	_eval(smartdns_argv, NULL, 0, &pid);

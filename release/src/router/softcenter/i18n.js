@@ -23,8 +23,8 @@ function setLanguage(lang,path) {
 }
 
 function translate(lang,path) {
-  if(sessionStorage.getItem(lang + "Data") != null){
-    dict = JSON.parse(sessionStorage.getItem(lang + "Data"));
+  if(sessionStorage.getItem(path + lang + "Data") != null){
+    dict = JSON.parse(sessionStorage.getItem(path + lang + "Data"));
   }else{
     loadDict(path);
   }
@@ -55,7 +55,7 @@ function loadDict(path) {
     url: "/res/"+ path + lang + ".json",
     success: function (msg) {
       dict = msg;
-      sessionStorage.setItem(lang + 'Data', JSON.stringify(dict));
+      sessionStorage.setItem(path + lang + 'Data', JSON.stringify(dict));
     }
   });
 

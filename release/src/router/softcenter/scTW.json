@@ -17,6 +17,7 @@
   "No less than 1GB of free space.": "可用空間不能少於1GB.",
   "Must unmount the current partition before mounting other partitions.": "更換掛載分區前必須先卸載當前分區.",
   "Select a partition to mount": "設置掛載分區",
+  "This function must be enabled when JFFS is less than 50MB.": "如果jffs小於50MB則必須掛載USB存儲設備.",
   "Enable": "啟用",
   "Setting": "設置",
   "No Disk": "無USB存儲設備",
