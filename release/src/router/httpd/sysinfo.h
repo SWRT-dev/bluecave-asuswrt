@@ -16,6 +16,4 @@
  */
 
 extern int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t **argv);
-#if defined(RTCONFIG_LANTIQ)
-extern int ej_kool_info(int eid, webs_t wp, int argc, char_t **argv);
-#endif
+

@@ -129,14 +129,16 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			char *buffer = read_whole_file("/proc/cpuinfo");
 
 			if (buffer) {
-#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER)
 				int count = 0;
 				char model[64];
-
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA)
+#if !defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710) && !defined(RTCONFIG_QCA)
 				tmp = strstr(buffer, "Processor");
 				if (tmp)
 					sscanf(tmp, "Processor  :  %[^\n]", model);
-				else {	// BCM490x
+				else
+#endif
+				 {	// BCM490x
 					char impl[8], arch[8], variant[8], part[10];
 					impl[0]='\0'; arch[0]='\0'; variant[0]='\0'; part[0]='\0';
 
@@ -148,16 +150,33 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					sscanf(tmp, "CPU variant  :  %7[^\n]s", variant);
 					tmp = strstr(buffer, "CPU part");
 					sscanf(tmp, "CPU part  :  %9[^\n]s", part);
-
+#if defined(RTCONFIG_QCA) || (defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710))
+					if (!strcmp(impl, "0x41")
+					    && !strcmp(variant, "0x0")
+					    && !strcmp(part, "0xc07")
+					    && !strcmp(arch, "7"))
+						strcpy(model, "Cortex A7 ARMv7l");
+#else//490x or 671x
 					if (!strcmp(impl, "0x42")
 					    && !strcmp(variant, "0x0")
 					    && !strcmp(part, "0x100")
 					    && !strcmp(arch, "8"))
 						strcpy(model, "Cortex A53 ARMv8");
+#endif
 					else
 						sprintf(model, "Implementer: %s, Part: %s, Variant: %s, Arch: %s",impl, part, variant, arch);
 				}
-
+#elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+				tmp = strstr(buffer, "system type");
+				if (tmp)
+					sscanf(tmp, "system type  :  %[^\n]", model);
+				else
+#if defined(RTCONFIG_LANTIQ)
+					strcpy(model, "GRX500 rev 1.2");
+#elif defined(RTCONFIG_RALINK)
+					strcpy(model, "MT7621");
+#endif
+#endif
 				count = sysconf(_SC_NPROCESSORS_CONF);
 				if (count > 1) {
 					tmp = nvram_safe_get("cpurev");
@@ -168,41 +187,15 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				} else {
 					strcpy(result, model);
 				}
-#elif defined(RTCONFIG_LANTIQ)
-				tmp = strstr(buffer, "system type");
-				if (tmp)
-					sscanf(tmp, "system type  :  %[^\n]", result);
-				else
-					strcpy(result, "GRX500 rev 1.2");
-#elif  defined(RTCONFIG_QCA)
-				char model[64];
 
-				char impl[8], arch[8], variant[8], part[10];
-				impl[0]='\0'; arch[0]='\0'; variant[0]='\0'; part[0]='\0';
-				tmp = strstr(buffer, "CPU implementer");
-				sscanf(tmp, "CPU implementer  :  %7[^\n]s", impl);
-				tmp = strstr(buffer, "CPU architecture");
-				sscanf(tmp, "CPU architecture  :  %7[^\n]s", arch);
-				tmp = strstr(buffer, "CPU variant");
-				sscanf(tmp, "CPU variant  :  %7[^\n]s", variant);
-				tmp = strstr(buffer, "CPU part");
-				sscanf(tmp, "CPU part  :  %9[^\n]s", part);
-
-				if (!strcmp(impl, "0x41")
-				    && !strcmp(variant, "0x0")
-				    && !strcmp(part, "0xc07")
-				    && !strcmp(arch, "7"))
-					strcpy(model, "IPQ4019");
-				else
-					sprintf(model, "Implementer: %s, Part: %s, Variant: %s, Arch: %s",impl, part, variant, arch);
-				strcpy(result, model);
-#endif
 				free(buffer);
 			}
 
 		} else if(strcmp(type,"cpu.freq") == 0) {
-#if defined(RTCONFIG_BCMARM) || defined(HND_ROUTER)
-#if defined(HND_ROUTER)
+#if defined(RTCONFIG_HND_ROUTER_AX_675X) || defined(RTCONFIG_HND_ROUTER_AX_6710)
+			strcpy(result, "1500");
+#elif defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_BCMARM)
+#if defined(RTCONFIG_HND_ROUTER)
 			int freq = 0;
 			char *buffer;
 
@@ -220,7 +213,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				if (tmp)
 					sscanf(tmp,"%[^,]s", result);
 			}
-#elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA)		
+#elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA)
 			int freq = 0;
 			char *buffer;
 
@@ -233,7 +226,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			}
 			else
 				strcpy(result, "0");//bug?
-
+#elif defined(RTCONFIG_RALINK)
+			strcpy(result, "880");
 #endif
 		} else if(strcmp(type,"memory.total") == 0) {
 			sysinfo(&sys);
@@ -410,7 +404,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				free(buffer);
 			}
 			unlink("/rom/opt/lantiq/etc/wave_components.ver");
-#elif defined(RTCONFIG_QCA)
+#elif defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
 					strcpy(result,"Unknow");
 #endif
 #ifdef RTCONFIG_QTN
@@ -860,60 +854,5 @@ void GetPhyStatus_rtk(int *states)
 	states[3] = (pS.link[o[3]] == 1) ? (pS.speed[o[3]] == 2) ? 1000 : 100 : 0;
 }
 #endif
-#endif
-
-#if defined(RTCONFIG_LANTIQ)
-int ej_kool_info(int eid, webs_t wp, int argc, char_t ** argv)
-{
-	char *type;
-	char result[2048];
-	int retval = 0;
-	strcpy(result,"None");
-
-	if (ejArgs(argc, argv, "%s", &type) < 1) {
-		websError(wp, 400, "Insufficient args\n");
-		return retval;
-	}
-	if (type) {
-		if (strcmp(type,"version") == 0) {
-			if (nvram_get_int("adblock_mode") == 0) {
-				char pathad[2048];
-				sprintf(pathad,"/tmp/mnt/%s/adbyby/adbyby", nvram_get("k3c_disk"));
-				//if (!d_exists("/tmp/mnt/%s/adbyby"))
-				if((access(pathad, F_OK)) != -1) {
-					eval("/tmp/mnt/%s/adbyby/adbyby", "--version|awk '{print $3}'|awk -F '(' '{print $1}' > /tmp/kool.ver 2>/dev/null", nvram_get("k3c_disk"));
-					char *buffer = read_whole_file("/tmp/kool.ver");
-
-					if (buffer) {
-						sscanf(buffer, "%s", result);
-						free(buffer);
-					} else {
-						strcpy(result,"None");
-					}
-					unlink("/tmp/kool.ver");
-				}
-				else
-					strcpy(result,"None");
-			} else {
-				if((access("/tmp/koolproxy/koolproxy", F_OK) != -1)) {
-					eval("/tmp/koolproxy/koolproxy", "-v > /tmp/kool.ver 2>/dev/null");
-					char *buffer = read_whole_file("/tmp/kool.ver");
-
-					if (buffer) {
-						sscanf(buffer, "%s", result);
-						free(buffer);
-					} else {
-						strcpy(result,"None");
-					}
-					unlink("/tmp/kool.ver");
-				}
-				else
-					strcpy(result,"None");
-			}
-		}
-	}
-	retval += websWrite(wp, result);
-	return retval;
-}
 #endif
 

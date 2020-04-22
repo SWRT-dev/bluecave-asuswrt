@@ -85,15 +85,15 @@ Currently available applets include:
 	chown, chpasswd, clear, cmp, cp, crond, cut, date, dd, devmem, df,
 	dirname, dmesg, du, echo, egrep, env, ether-wake, expr, fdisk,
 	fgrep, find, flash_eraseall, flock, free, fsck, fsck.minix, fsync,
-	grep, gunzip, gzip, head, ifconfig, insmod, ionice, kill, killall,
-	klogd, less, ln, logger, login, ls, lsmod, lspci, lsusb, md5sum,
-	mdev, mkdir, mknod, mkswap, modprobe, more, mount, mv, netstat,
-	nice, nohup, nslookup, pidof, ping, ping6, printf, ps, pwd,
+	getopt, grep, gunzip, gzip, head, ifconfig, insmod, ionice, kill,
+	killall, klogd, less, ln, logger, login, ls, lsmod, lspci, lsusb,
+	md5sum, mdev, mkdir, mknod, mkswap, modprobe, more, mount, mv,
+	netstat, nice, nohup, nslookup, pidof, ping, ping6, printf, ps, pwd,
 	readlink, renice, rm, rmdir, rmmod, route, sed, setconsole, sh,
-	sleep, sort, start-stop-daemon, strings, swapoff, swapon, sync,
-	syslogd, tail, tar, telnetd, test, tftp, top, touch, tr, traceroute,
-	traceroute6, true, udhcpc, umount, uname, uniq, unzip, uptime,
-	usleep, vconfig, vi, watch, wc, which, xargs, zcat, zcip
+	shuf, sleep, sort, start-stop-daemon, strings, swapoff, swapon,
+	sync, syslogd, tail, tar, telnetd, test, tftp, top, touch, tr,
+	traceroute, traceroute6, true, udhcpc, umount, uname, uniq, unzip,
+	uptime, usleep, vconfig, vi, watch, wc, which, xargs, zcat, zcip
 
 =head1 COMMAND DESCRIPTIONS
 
@@ -540,6 +540,38 @@ fsync [-d] FILE...
 Write files' buffered blocks to disk
 
 	-d	Avoid syncing metadata
+
+=item B<getopt>
+
+getopt [OPTIONS] [--] OPTSTRING PARAMS
+
+	-a,--alternative		Allow long options starting with single -
+	-l,--longoptions=LOPT[,...]	Long options to recognize
+	-n,--name=PROGNAME		The name under which errors are reported
+	-o,--options=OPTSTRING		Short options to recognize
+	-q,--quiet			No error messages on unrecognized options
+	-Q,--quiet-output		No normal output
+	-s,--shell=SHELL		Set shell quoting conventions
+	-T,--test			Version test (exits with 4)
+	-u,--unquoted			Don't quote output
+
+Example:
+
+
+O=`getopt -l bb: -- ab:c:: "$@"` || exit 1
+eval set -- "$O"
+while true; do
+	case "$1" in
+	-a)	echo A; shift;;
+	-b|--bb) echo "B:'$2'"; shift 2;;
+	-c)	case "$2" in
+		"")	echo C; shift 2;;
+		*)	echo "C:'$2'"; shift 2;;
+		esac;;
+	--)	shift; break;;
+	*)	echo Error; exit 1;;
+	esac
+done
 
 =item B<grep>
 
@@ -1058,6 +1090,18 @@ Redirect system console output to DEVICE (default: /dev/tty)
 sh [-/+OPTIONS] [-/+o OPT]... [-c 'SCRIPT' [ARG0 [ARGS]] / FILE [ARGS]]
 
 Unix shell interpreter
+
+=item B<shuf>
+
+shuf [-e|-i L-H] [-n NUM] [-o FILE] [-z] [FILE|ARG...]
+
+Randomly permute lines
+
+	-e	Treat ARGs as lines
+	-i L-H	Treat numbers L-H as lines
+	-n NUM	Output at most NUM lines
+	-o FILE	Write to FILE, not standard output
+	-z	End lines with zero byte, not newline
 
 =item B<sleep>
 

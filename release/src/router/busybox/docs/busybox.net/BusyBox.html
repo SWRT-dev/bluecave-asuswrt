@@ -64,15 +64,15 @@
         chown, chpasswd, clear, cmp, cp, crond, cut, date, dd, devmem, df,
         dirname, dmesg, du, echo, egrep, env, ether-wake, expr, fdisk,
         fgrep, find, flash_eraseall, flock, free, fsck, fsck.minix, fsync,
-        grep, gunzip, gzip, head, ifconfig, insmod, ionice, kill, killall,
-        klogd, less, ln, logger, login, ls, lsmod, lspci, lsusb, md5sum,
-        mdev, mkdir, mknod, mkswap, modprobe, more, mount, mv, netstat,
-        nice, nohup, nslookup, pidof, ping, ping6, printf, ps, pwd,
+        getopt, grep, gunzip, gzip, head, ifconfig, insmod, ionice, kill,
+        killall, klogd, less, ln, logger, login, ls, lsmod, lspci, lsusb,
+        md5sum, mdev, mkdir, mknod, mkswap, modprobe, more, mount, mv,
+        netstat, nice, nohup, nslookup, pidof, ping, ping6, printf, ps, pwd,
         readlink, renice, rm, rmdir, rmmod, route, sed, setconsole, sh,
-        sleep, sort, start-stop-daemon, strings, swapoff, swapon, sync,
-        syslogd, tail, tar, telnetd, test, tftp, top, touch, tr, traceroute,
-        traceroute6, true, udhcpc, umount, uname, uniq, unzip, uptime,
-        usleep, vconfig, vi, watch, wc, which, xargs, zcat, zcip</code></pre>
+        shuf, sleep, sort, start-stop-daemon, strings, swapoff, swapon,
+        sync, syslogd, tail, tar, telnetd, test, tftp, top, touch, tr,
+        traceroute, traceroute6, true, udhcpc, umount, uname, uniq, unzip,
+        uptime, usleep, vconfig, vi, watch, wc, which, xargs, zcat, zcip</code></pre>
 
 <h1 id="COMMAND-DESCRIPTIONS">COMMAND DESCRIPTIONS</h1>
 
@@ -571,6 +571,26 @@ If none of the following actions is specified, -print is assumed
 <p>Write files&#39; buffered blocks to disk</p>
 
 <pre><code>        -d      Avoid syncing metadata</code></pre>
+
+</dd>
+<dt id="getopt"><b>getopt</b></dt>
+<dd>
+
+<p>getopt [OPTIONS] [--] OPTSTRING PARAMS</p>
+
+<pre><code>        -a,--alternative                Allow long options starting with single -
+        -l,--longoptions=LOPT[,...]     Long options to recognize
+        -n,--name=PROGNAME              The name under which errors are reported
+        -o,--options=OPTSTRING          Short options to recognize
+        -q,--quiet                      No error messages on unrecognized options
+        -Q,--quiet-output               No normal output
+        -s,--shell=SHELL                Set shell quoting conventions
+        -T,--test                       Version test (exits with 4)
+        -u,--unquoted                   Don&#39;t quote output</code></pre>
+
+<p>Example:</p>
+
+<p>O=`getopt -l bb: -- ab:c:: &quot;$@&quot;` || exit 1 eval set -- &quot;$O&quot; while true; do case &quot;$1&quot; in -a) echo A; shift;; -b|--bb) echo &quot;B:&#39;$2&#39;&quot;; shift 2;; -c) case &quot;$2&quot; in &quot;&quot;) echo C; shift 2;; *) echo &quot;C:&#39;$2&#39;&quot;; shift 2;; esac;; --) shift; break;; *) echo Error; exit 1;; esac done</p>
 
 </dd>
 <dt id="grep"><b>grep</b></dt>
@@ -1171,6 +1191,20 @@ TYPE:
 <p>sh [-/+OPTIONS] [-/+o OPT]... [-c &#39;SCRIPT&#39; [ARG0 [ARGS]] / FILE [ARGS]]</p>
 
 <p>Unix shell interpreter</p>
+
+</dd>
+<dt id="shuf"><b>shuf</b></dt>
+<dd>
+
+<p>shuf [-e|-i L-H] [-n NUM] [-o FILE] [-z] [FILE|ARG...]</p>
+
+<p>Randomly permute lines</p>
+
+<pre><code>        -e      Treat ARGs as lines
+        -i L-H  Treat numbers L-H as lines
+        -n NUM  Output at most NUM lines
+        -o FILE Write to FILE, not standard output
+        -z      End lines with zero byte, not newline</code></pre>
 
 </dd>
 <dt id="sleep"><b>sleep</b></dt>

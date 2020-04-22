@@ -78,7 +78,8 @@ static void ntp_service()
 		notify_rc("restart_diskmon");
 #endif
 #ifdef RTCONFIG_UUPLUGIN
-#if defined(R8000P) || defined(R7900P) || defined(K3) || defined(SBRAC3200P) || defined(RTAC3100)  || defined(RTAC3200)
+		if(nvram_get_int("uu_enable"))
+#if defined(R8000P) || defined(R7900P) || defined(K3) || defined(SBRAC3200P) || defined(RTAC3100) || defined(RTAC3200) || defined(EA6700) || defined(RAX20) || defined(SBRAC1900P)
 		exec_uu_merlinr();
 #else
 		exec_uu();

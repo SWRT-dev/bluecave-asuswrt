@@ -69,6 +69,8 @@ void merlinr_init()
 	nvram_set("sc_wan_sig", "0");
 	nvram_set("sc_nat_sig", "0");
 	nvram_set("sc_mount_sig", "0");
+	nvram_set("sc_unmount_sig", "0");
+	nvram_set("sc_services_sig", "0");	
 #endif
 	merlinr_insmod();
 }
@@ -343,6 +345,8 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 	nvram_set("webs_state_error", "0");
 	nvram_set("webs_state_odm", "0");
 	nvram_set("webs_state_url", "");
+	nvram_set("cfg_check", "0");
+	nvram_set("cfg_upgrade", "0");
 	unlink("/tmp/webs_upgrade.log");
 	unlink("/tmp/wlan_update.txt");
 	unlink("/tmp/release_note0.txt");
@@ -353,9 +357,9 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 	curlhandle = curl_easy_init();
 	snprintf(url, sizeof(url), "%s/%s", serverurl, serverupdate);
 	//snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- update dl_path_info for general %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, serverupdate);
+	FWUPDATE_DBG("---- update dl_path_info for general %s/%s ----", serverurl, serverupdate);
 	download=curl_download_file(curlhandle , url,localupdate,8,3);
 	//system(log);
-	FWUPDATE_DBG("---- update dl_path_info for general %s/%s ----", serverurl, serverupdate);
 	//_dprintf("%d\n",download);
 	if(download)
 	{
@@ -374,6 +378,8 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 						nvram_set("webs_state_url", "");
 #if defined(SBRAC3200P) || defined(RTACRH17) || defined(RTAC3200) || defined(RTAC85P)
 						snprintf(info,sizeof(info),"3004_382_%s_%s-%s",modelname,fwver,tag);
+#elif defined(RTAC68U)
+						snprintf(info,sizeof(info),"3004_385_%s_%s-%s",modelname,fwver,tag);
 #else
 						snprintf(info,sizeof(info),"3004_384_%s_%s-%s",modelname,fwver,tag);
 #endif
@@ -384,7 +390,6 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 						nvram_set("webs_state_flag", "1");
 						nvram_set("webs_state_update", "1");
 #ifdef RTCONFIG_AMAS
-//aimesh has other upgrade tools(one or more),non-mesh network status:rc,mesh network status:cfg_server
 //						nvram_set("cfg_check", "9");
 //						nvram_set("cfg_upgrade", "0");
 #endif
@@ -428,8 +433,8 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 GODONE:
 #if defined(SBRAC3200P) || defined(RTACRH17) || defined(RTAC3200) || defined(RTAC85P)
 	snprintf(info,sizeof(info),"3004_382_%s",nvram_get("extendno"));
-//elif defined(RTAC68U)
-//	snprintf(info,sizeof(info),"3004_385_%s",nvram_get("extendno"));
+#elif defined(RTAC68U)
+	snprintf(info,sizeof(info),"3004_385_%s",nvram_get("extendno"));
 #else
 	snprintf(info,sizeof(info),"3004_384_%s",nvram_get("extendno"));
 #endif
@@ -449,24 +454,15 @@ GODONE:
 	return 0;
 }
 #if !defined(BLUECAVE) && !defined(GTAC2900)
-#if defined(RTAC85P)
-void isCN()
-{
-	if(!strncmp(nvram_safe_get("territory_code"), "CN", 2))
-		add_rc_support("uu_accel");
-}
-#endif
-void exec_uu()
+void exec_uu_merlinr()
 {
 	FILE *fpmodel, *fpmac, *fpuu, *fpurl, *fpmd5, *fpcfg;
 	char buf[128];
 	int download,i;
 	char *dup_pattern, *g, *gg;
 	char p[10][100];
-#if defined(RTAC85P)
-	isCN();
-#endif
 	if(nvram_get_int("sw_mode") == 1){
+		add_rc_support("uu_accel");
 		if ((fpmodel = fopen("/var/model", "w"))){
 			fprintf(fpmodel, nvram_get("productid"));
 			fclose(fpmodel);
@@ -842,6 +838,13 @@ void softcenter_eval(int sig)
 	} else if (SOFTCENTER_MOUNT == sig){
 		snprintf(path, sizeof(path), "%s/softcenter-mount.sh", sc);
 		snprintf(action, sizeof(action), "start");
+	} else if (SOFTCENTER_SERVICES == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-services.sh", sc);
+		snprintf(action, sizeof(action), "start");
+	//enable it after 1.3.0
+	//} else if (SOFTCENTER_UNMOUNT == sig){
+	//	snprintf(path, sizeof(path), "%s/softcenter-unmount.sh", sc);
+	//	snprintf(action, sizeof(action), "unmount");
 	} else {
 		logmessage("Softcenter", "sig=%s, bug?",sig);
 		return;

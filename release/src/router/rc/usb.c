@@ -1601,7 +1601,7 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 {
 	int ret = 1, count;
 	char flagfn[128];
-
+	nvram_set_int("sc_unmount_sig", 1);
 	snprintf(flagfn, sizeof(flagfn), "%s/.autocreated-dir", mnt->mnt_dir);
 
 	/* Run user pre-unmount scripts if any. It might be too late if

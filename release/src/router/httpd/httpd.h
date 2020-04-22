@@ -31,6 +31,7 @@
 #include <dmalloc.h>
 #endif
 #include <rtconfig.h>
+#include "merlinr.h"
 
 /* DEBUG DEFINE */
 #define HTTPD_DEBUG             "/tmp/HTTPD_DEBUG"
@@ -120,12 +121,10 @@ struct iptv_profile {
         char *ttl_inc_enable;
 };
 
-#ifdef RTCONFIG_ODMPID
-struct REPLACE_ODMPID_S {
+struct REPLACE_PRODUCTID_S {
         char *org_name;
         char *replace_name;
 };
-#endif
 
 #define MIME_EXCEPTION_NOAUTH_ALL 	1<<0
 #define MIME_EXCEPTION_NOAUTH_FIRST	1<<1
@@ -441,3 +440,4 @@ extern int change_location(char *lang);
 #endif
 extern void update_wlan_log(int sig);
 #endif /* _httpd_h_ */
+

@@ -14,7 +14,7 @@ resolveip:
 	$(CC) -static resolveip.c -o resolveip
 	$(STRIP) resolveip
 else
-all: 
+all:
 endif
 
 install:
@@ -24,6 +24,10 @@ install:
 	install -d $(INSTALLDIR)/usr/bin
 	install -d $(INSTALLDIR)/usr/share
 	install -d $(INSTALLDIR)/usr/lib
+ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3))
+	install -d $(INSTALLDIR)/mcu
+	install -d $(INSTALLDIR)/rom/cfe/
+endif
 	install -d $(INSTALLDIR)/rom/etc
 ifeq ($(HND_ROUTER), y)
 	install -d $(INSTALLDIR)/www/www
@@ -60,6 +64,8 @@ endif
 	install -m 0755 softcenter/bin/softcenter-mount.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter-net.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter-wan.sh $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin/softcenter-services.sh $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin/softcenter-unmount.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/perpboot $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/perpctl $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/perpd $(INSTALLDIR)/rom/etc/softcenter/bin
@@ -71,6 +77,7 @@ endif
 	install -m 0755 softcenter/bin/tinylog $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/versioncmp $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/res/icon-default.png $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/merlinr.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/upgrade.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/softcenter.js $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/res
@@ -94,7 +101,7 @@ endif
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_tar_intall.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	#install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), K3C))	
+ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3C))	
 	install -m 0755 mtd $(INSTALLDIR)/sbin
 endif
 ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300))
@@ -107,6 +114,18 @@ else ifeq  ($(BUILD_NAME), $(filter $(BUILD_NAME), TUF-AX3000))
 	install -m 0755 softcenter/TUF/webs/Main_Soft_setting.asp $(INSTALLDIR)/rom/etc/softcenter/TUF/webs
 endif
 	install -m 0755 jffsinit.sh $(INSTALLDIR)/usr/sbin
+ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3))
+	install -m 0755 uhmiMsg $(INSTALLDIR)/usr/sbin
+	install -m 0644 mcu/app.2.2.120.bin $(INSTALLDIR)/mcu
+	install -m 0644 mcu/app.1.2.116.hex $(INSTALLDIR)/mcu
+	install -m 0644 mcu/app.1.1.116.hex $(INSTALLDIR)/mcu
+	install -m 0755 phi_speed $(INSTALLDIR)/usr/sbin
+	install -m 0755 libwlcr.so $(INSTALLDIR)/usr/share
+	install -m 0644 cfe.bin $(INSTALLDIR)/rom/cfe/
+	install -m 0755 uhmi $(INSTALLDIR)/usr/sbin
+	install -m 0755 weather $(INSTALLDIR)/usr/sbin
+	install -m 0755 wl_cr $(INSTALLDIR)/usr/sbin
+endif
 	install -m 0755 plugin.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 helper.sh $(INSTALLDIR)/usr/sbin
 ifeq ($(HND_ROUTER), y)
@@ -121,6 +140,9 @@ else
 	install -m 0755 scEN.json $(INSTALLDIR)/www/res
 	install -m 0755 scTW.json $(INSTALLDIR)/www/res
 	install -m 0755 Softcenter.asp $(INSTALLDIR)/www
+ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), SBRAC1900P SBRAC3200P))
+	install -m 0755 key.asp $(INSTALLDIR)/www
+endif
 endif
 ifeq ($(or $(RTCONFIG_LANTIQ),$(RTCONFIG_QCA),$(RTCONFIG_RALINK)),y)
 	install -m 0755 sysinfo/lantiq/Tools_Sysinfo.asp $(INSTALLDIR)/www/

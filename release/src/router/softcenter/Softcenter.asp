@@ -94,8 +94,8 @@ document.form.sc_mount.value = "0";
 	<div id="Loading" class="popup_bg"></div>
 	<iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 	<form method="post" name="form" id="ruleForm" action="/start_apply.htm" target="hidden_frame">
-	<input type="hidden" name="current_page" value="Softcenter_mount.asp"/>
-	<input type="hidden" name="next_page" value="Softcenter_mount.asp"/>
+	<input type="hidden" name="current_page" value="Softcenter.asp"/>
+	<input type="hidden" name="next_page" value="Softcenter.asp"/>
 	<input type="hidden" name="group_id" value=""/>
 	<input type="hidden" name="modified" value="0"/>
 	<input type="hidden" name="action_mode" value="toolscript"/>
