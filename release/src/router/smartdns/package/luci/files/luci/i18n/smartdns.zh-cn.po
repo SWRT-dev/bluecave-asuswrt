@@ -16,6 +16,21 @@ msgstr "SmartDNS是一个本地高性能DNS服务器，支持返回最快IP，�
 msgid "Custom Settings"
 msgstr "自定义设置"
 
+msgid "General Settings"
+msgstr "基本设置"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Advanced Settings"
+msgstr "高级设置"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
 msgid "Generate Coredump"
 msgstr "生成coredump"
 
@@ -72,6 +87,12 @@ msgstr "域名预加载"
 
 msgid "Enable domain prefetch, accelerate domain response speed."
 msgstr "启用域名预加载，加速域名响应速度。"
+
+msgid "Serve expired"
+msgstr "缓存过期服务"
+
+msgid "Attempts to serve old responses from cache with a TTL of 0 in the response without waiting for the actual resolution to finish."
+msgstr "查询性能优化，有请求时尝试回应TTL为0的过期记录，以避免查询等待。"
 
 msgid "Redirect"
 msgstr "重定向"
@@ -157,7 +178,7 @@ msgstr "跳过address SOA(#)规则。"
 msgid "Skip Dualstack Selection"
 msgstr "跳过双栈优选"
 
-msgid "Skip Sualstack Selection."
+msgid "Skip Dualstack Selection."
 msgstr "跳过双栈优选。"
 
 msgid "Skip Cache"
@@ -165,6 +186,12 @@ msgstr "跳过cache"
 
 msgid "Skip Cache."
 msgstr "跳过cache。"
+
+msgid "Force AAAA SOA"
+msgstr "停用IPV6地址解析"
+
+msgid "Force AAAA SOA."
+msgstr "停用IPV6地址解析。"
 
 msgid "Upstream Servers"
 msgstr "上游服务器"
@@ -199,6 +226,12 @@ msgstr "校验TLS主机名"
 msgid "Set TLS hostname to verify."
 msgstr "设置校验TLS主机名。"
 
+msgid "No check certificate"
+msgstr "停用证书校验"
+
+msgid "Do not check certificate."
+msgstr "不校验证书的合法性。"
+
 msgid "TLS SNI name"
 msgstr "TLS SNI名称"
 
@@ -215,7 +248,7 @@ msgid "Server Group"
 msgstr "服务器组"
 
 msgid "DNS Server group belongs to, used with nameserver, such as office, home."
-msgsr "DNS服务器所属组， 配合nameserver使用，例如：office，home。"
+msgstr "DNS服务器所属组， 配合nameserver使用，例如：office，home。"
 
 msgid "IP Blacklist Filtering"
 msgstr "IP黑名单过滤"
@@ -276,7 +309,3 @@ msgstr "捐助smartdns项目"
 
 msgid "Donate"
 msgstr "捐助"
-
-
-
-

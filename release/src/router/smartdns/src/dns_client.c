@@ -29,8 +29,8 @@
 #include "tlog.h"
 #include "util.h"
 #include <arpa/inet.h>
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <linux/filter.h>
 #include <netdb.h>
@@ -46,7 +46,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/epoll.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -59,10 +58,10 @@
 #define DNS_TCP_IDLE_TIMEOUT (60 * 10)
 #define DNS_TCP_CONNECT_TIMEOUT (5)
 #define DNS_QUERY_TIMEOUT (500)
-#define DNS_QUERY_RETRY (3)
+#define DNS_QUERY_RETRY (6)
+#define DNS_PENDING_SERVER_RETRY 40
 #define SOCKET_PRIORITY (6)
 #define SOCKET_IP_TOS (IPTOS_LOWDELAY | IPTOS_RELIABILITY)
-
 
 /* ECS info */
 struct dns_client_ecs {
@@ -108,6 +107,7 @@ struct dns_server_info {
 	SSL *ssl;
 	SSL_CTX *ssl_ctx;
 	SSL_SESSION *ssl_session;
+	char skip_check_cert;
 	dns_server_status status;
 
 	struct dns_server_buff send_buff;
@@ -136,6 +136,7 @@ struct dns_server_pending_group {
 
 struct dns_server_pending {
 	struct list_head list;
+	atomic_t refcnt;
 
 	char host[DNS_HOSTNAME_LEN];
 	char ipv4[DNS_HOSTNAME_LEN];
@@ -148,6 +149,7 @@ struct dns_server_pending {
 	unsigned int query_v6;
 	/* server type */
 	dns_server_type_t type;
+	int retry_cnt;
 
 	int port;
 
@@ -246,12 +248,11 @@ static LIST_HEAD(pending_servers);
 static pthread_mutex_t pending_server_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int dns_client_has_bootstrap_dns = 0;
 
-const char *_dns_server_get_type_string(dns_server_type_t type) 
+const char *_dns_server_get_type_string(dns_server_type_t type)
 {
 	const char *type_str = "";
 
-	switch (type)
-	{
+	switch (type) {
 	case DNS_SERVER_UDP:
 		type_str = "udp";
 		break;
@@ -321,8 +322,9 @@ static int _dns_client_server_exist(const char *server_ip, int port, dns_server_
 	return -1;
 }
 
-static void _dns_client_server_update_ttl(struct ping_host_struct *ping_host, const char *host, FAST_PING_RESULT result, struct sockaddr *addr,
-										  socklen_t addr_len, int seqno, int ttl, struct timeval *tv, void *userptr)
+static void _dns_client_server_update_ttl(struct ping_host_struct *ping_host, const char *host, FAST_PING_RESULT result,
+										  struct sockaddr *addr, socklen_t addr_len, int seqno, int ttl,
+										  struct timeval *tv, void *userptr)
 {
 	struct dns_server_info *server_info = userptr;
 	if (result != PING_RESULT_RESPONSE || server_info == NULL) {
@@ -478,7 +480,8 @@ errout:
 }
 
 /* add server to group */
-static int _dns_client_add_to_group_pending(char *group_name, char *server_ip, int port, dns_server_type_t server_type, int ispending)
+static int _dns_client_add_to_group_pending(char *group_name, char *server_ip, int port, dns_server_type_t server_type,
+											int ispending)
 {
 	struct dns_server_info *server_info = NULL;
 
@@ -712,8 +715,42 @@ static char *_dns_client_server_get_spki(struct dns_server_info *server_info, in
 	return spki;
 }
 
+static int _dns_client_set_trusted_cert(SSL_CTX *ssl_ctx)
+{
+	char *cafile = NULL;
+	char *capath = NULL;
+	int cert_path_set = 0;
+
+	if (dns_conf_ca_file[0]) {
+		cafile = dns_conf_ca_file;
+	}
+
+	if (dns_conf_ca_path[0]) {
+		capath = dns_conf_ca_path;
+	}
+
+	if (cafile == NULL && capath == NULL) {
+		if (SSL_CTX_set_default_verify_paths(ssl_ctx)) {
+			cafile = "/etc/ssl/certs/ca-certificates.crt";
+			capath = "/etc/ssl/certs";
+		} else {
+			cert_path_set = 1;
+		}
+	}
+
+	if (cert_path_set == 0) {
+		if (!SSL_CTX_load_verify_locations(ssl_ctx, cafile, capath)) {
+			tlog(TLOG_WARN, "load certificate from %s:%s failed.", cafile, capath);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 /* add dns server information */
-static int _dns_client_server_add(char *server_ip, char *server_host, int port, dns_server_type_t server_type, struct client_dns_server_flags *flags)
+static int _dns_client_server_add(char *server_ip, char *server_host, int port, dns_server_type_t server_type,
+								  struct client_dns_server_flags *flags)
 {
 	struct dns_server_info *server_info = NULL;
 	struct addrinfo *gai = NULL;
@@ -721,6 +758,7 @@ static int _dns_client_server_add(char *server_ip, char *server_host, int port, 
 	int ttl = 0;
 	char port_s[8];
 	int sock_type;
+	char skip_check_cert = 0;
 
 	switch (server_type) {
 	case DNS_SERVER_UDP: {
@@ -745,11 +783,13 @@ static int _dns_client_server_add(char *server_ip, char *server_host, int port, 
 			}
 		}
 		sock_type = SOCK_STREAM;
+		skip_check_cert = flag_https->skip_check_cert;
 	} break;
 	case DNS_SERVER_TLS: {
 		struct client_dns_server_flag_tls *flag_tls = &flags->tls;
 		spki_data_len = flag_tls->spi_len;
 		sock_type = SOCK_STREAM;
+		skip_check_cert = flag_tls->skip_check_cert;
 	} break;
 	case DNS_SERVER_TCP:
 		sock_type = SOCK_STREAM;
@@ -795,6 +835,7 @@ static int _dns_client_server_add(char *server_ip, char *server_host, int port, 
 	server_info->status = DNS_SERVER_STATUS_INIT;
 	server_info->ttl = ttl;
 	server_info->ttl_range = 0;
+	server_info->skip_check_cert = skip_check_cert;
 	memcpy(&server_info->flags, flags, sizeof(server_info->flags));
 
 	/* exclude this server from default group */
@@ -812,6 +853,11 @@ static int _dns_client_server_add(char *server_ip, char *server_host, int port, 
 #else
 		server_info->ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 #endif
+		if (_dns_client_set_trusted_cert(server_info->ssl_ctx) != 0) {
+			tlog(TLOG_WARN, "disable check certificate for %s.", server_info->ip);
+			server_info->skip_check_cert = 1;
+		}
+
 		if (server_info->ssl_ctx == NULL) {
 			tlog(TLOG_ERROR, "init ssl failed.");
 			goto errout;
@@ -820,7 +866,8 @@ static int _dns_client_server_add(char *server_ip, char *server_host, int port, 
 
 	/* safe address info */
 	if (gai->ai_addrlen > sizeof(server_info->in6)) {
-		tlog(TLOG_ERROR, "addr len invalid, %d, %zd, %d", gai->ai_addrlen, sizeof(server_info->addr), server_info->ai_family);
+		tlog(TLOG_ERROR, "addr len invalid, %d, %zd, %d", gai->ai_addrlen, sizeof(server_info->addr),
+			 server_info->ai_family);
 		goto errout;
 	}
 	memcpy(&server_info->addr, gai->ai_addr, gai->ai_addrlen);
@@ -828,7 +875,8 @@ static int _dns_client_server_add(char *server_ip, char *server_host, int port, 
 	/* start ping task */
 	if (server_type == DNS_SERVER_UDP) {
 		if (ttl <= 0 && (server_info->flags.result_flag & DNSSERVER_FLAG_CHECK_TTL)) {
-			server_info->ping_host = fast_ping_start(PING_TYPE_DNS, server_ip, 0, 60000, 1000, _dns_client_server_update_ttl, server_info);
+			server_info->ping_host =
+				fast_ping_start(PING_TYPE_DNS, server_ip, 0, 60000, 1000, _dns_client_server_update_ttl, server_info);
 			if (server_info->ping_host == NULL) {
 				tlog(TLOG_ERROR, "start ping failed.");
 				goto errout;
@@ -879,7 +927,6 @@ static void _dns_client_close_socket(struct dns_server_info *server_info)
 
 	if (server_info->ssl) {
 		/* Shutdown ssl */
-		SSL_shutdown(server_info->ssl);
 		SSL_free(server_info->ssl);
 		server_info->ssl = NULL;
 	}
@@ -961,7 +1008,51 @@ static int _dns_client_server_remove(char *server_ip, int port, dns_server_type_
 	return -1;
 }
 
-static int _dns_client_server_pending(char *server_ip, int port, dns_server_type_t server_type, struct client_dns_server_flags *flags)
+void _dns_client_server_pending_get(struct dns_server_pending *pending)
+{
+	if (atomic_inc_return(&pending->refcnt) <= 0) {
+		tlog(TLOG_ERROR, "BUG: pending ref is invalid");
+		abort();
+	}
+}
+
+void _dns_client_server_pending_release_lck(struct dns_server_pending *pending)
+{
+	int refcnt = atomic_dec_return(&pending->refcnt);
+
+	if (refcnt) {
+		if (refcnt < 0) {
+			tlog(TLOG_ERROR, "BUG: pending refcnt is %d", refcnt);
+			abort();
+		}
+		return;
+	}
+
+	list_del_init(&pending->list);
+	free(pending);
+}
+
+void _dns_client_server_pending_release(struct dns_server_pending *pending)
+{
+	int refcnt = atomic_dec_return(&pending->refcnt);
+
+	if (refcnt) {
+		if (refcnt < 0) {
+			tlog(TLOG_ERROR, "BUG: pending refcnt is %d", refcnt);
+			abort();
+		}
+		return;
+	}
+
+	pthread_mutex_lock(&pending_server_mutex);
+	list_del_init(&pending->list);
+	pthread_mutex_unlock(&pending_server_mutex);
+
+	free(pending);
+}
+
+static int _dns_client_server_pending(char *server_ip, int port, dns_server_type_t server_type,
+									  struct client_dns_server_flags *flags)
 {
 	struct dns_server_pending *pending = NULL;
 
@@ -981,6 +1072,7 @@ static int _dns_client_server_pending(char *server_ip, int port, dns_server_type
 	pending->ipv6[0] = 0;
 	pending->has_v4 = 0;
 	pending->has_v6 = 0;
+	_dns_client_server_pending_get(pending);
 	INIT_LIST_HEAD(&pending->group_list);
 	memcpy(&pending->flags, flags, sizeof(struct client_dns_server_flags));
 
@@ -996,8 +1088,8 @@ errout:
 	return -1;
 }
 
-static int _dns_client_add_server_pending(char *server_ip, char *server_host, int port, dns_server_type_t server_type, struct client_dns_server_flags *flags,
-										  int ispending)
+static int _dns_client_add_server_pending(char *server_ip, char *server_host, int port, dns_server_type_t server_type,
+										  struct client_dns_server_flags *flags, int ispending)
 {
 	int ret;
 
@@ -1027,7 +1119,8 @@ errout:
 	return -1;
 }
 
-int dns_client_add_server(char *server_ip, int port, dns_server_type_t server_type, struct client_dns_server_flags *flags)
+int dns_client_add_server(char *server_ip, int port, dns_server_type_t server_type,
+						  struct client_dns_server_flags *flags)
 {
 	return _dns_client_add_server_pending(server_ip, NULL, port, server_type, flags, 1);
 }
@@ -1243,7 +1336,8 @@ static int _dns_replied_check_add(struct dns_query_struct *dns_query, struct soc
 	return 0;
 }
 
-static int _dns_client_recv(struct dns_server_info *server_info, unsigned char *inpacket, int inpacket_len, struct sockaddr *from, socklen_t from_len)
+static int _dns_client_recv(struct dns_server_info *server_info, unsigned char *inpacket, int inpacket_len,
+							struct sockaddr *from, socklen_t from_len)
 {
 	int len;
 	int i;
@@ -1265,8 +1359,8 @@ static int _dns_client_recv(struct dns_server_info *server_info, unsigned char *
 	len = dns_decode(packet, DNS_PACKSIZE, inpacket, inpacket_len);
 	if (len != 0) {
 		char host_name[DNS_MAX_CNAME_LEN];
-		tlog(TLOG_WARN, "decode failed, packet len = %d, tc = %d, id = %d, from = %s\n", inpacket_len, packet->head.tc, packet->head.id,
-			 gethost_by_addr(host_name, sizeof(host_name), from));
+		tlog(TLOG_WARN, "decode failed, packet len = %d, tc = %d, id = %d, from = %s\n", inpacket_len, packet->head.tc,
+			 packet->head.id, gethost_by_addr(host_name, sizeof(host_name), from));
 		return -1;
 	}
 
@@ -1276,9 +1370,12 @@ static int _dns_client_recv(struct dns_server_info *server_info, unsigned char *
 		return -1;
 	}
 
-	tlog(TLOG_DEBUG, "qdcount = %d, ancount = %d, nscount = %d, nrcount = %d, len = %d, id = %d, tc = %d, rd = %d, ra = %d, rcode = %d, payloadsize = %d\n",
-		 packet->head.qdcount, packet->head.ancount, packet->head.nscount, packet->head.nrcount, inpacket_len, packet->head.id, packet->head.tc,
-		 packet->head.rd, packet->head.ra, packet->head.rcode, dns_get_OPT_payload_size(packet));
+	tlog(TLOG_DEBUG,
+		 "qdcount = %d, ancount = %d, nscount = %d, nrcount = %d, len = %d, id = %d, tc = %d, rd = %d, ra = %d, rcode "
+		 "= %d, payloadsize = %d\n",
+		 packet->head.qdcount, packet->head.ancount, packet->head.nscount, packet->head.nrcount, inpacket_len,
+		 packet->head.id, packet->head.tc, packet->head.rd, packet->head.ra, packet->head.rcode,
+		 dns_get_OPT_payload_size(packet));
 
 	/* get question */
 	rrs = dns_get_rrs_start(packet, DNS_RRS_QD, &rr_count);
@@ -1317,7 +1414,8 @@ static int _dns_client_recv(struct dns_server_info *server_info, unsigned char *
 
 	/* notify caller dns query result */
 	if (query->callback) {
-		ret = query->callback(query->domain, DNS_QUERY_RESULT, server_info->flags.result_flag, packet, inpacket, inpacket_len, query->user_ptr);
+		ret = query->callback(query->domain, DNS_QUERY_RESULT, server_info->flags.result_flag, packet, inpacket,
+							  inpacket_len, query->user_ptr);
 		if (request_num == 0 || ret) {
 			/* if all server replied, or done, stop query, release resource */
 			_dns_client_query_remove(query);
@@ -1474,11 +1572,11 @@ static int _DNS_client_create_socket_tls(struct dns_server_info *server_info, ch
 
 	// ? this cause ssl crash ?
 	// setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes));
+	// setsockopt(fd, IPPROTO_TCP, TCP_THIN_DUPACK, &yes, sizeof(yes));
+	// setsockopt(fd, IPPROTO_TCP, TCP_THIN_LINEAR_TIMEOUTS, &yes, sizeof(yes));
 	// set_sock_keepalive(fd, 15, 3, 4);
 	setsockopt(fd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority));
 	setsockopt(fd, IPPROTO_IP, IP_TOS, &ip_tos, sizeof(ip_tos));
-	setsockopt(fd, IPPROTO_TCP, TCP_THIN_DUPACK, &yes, sizeof(yes));
-	setsockopt(fd, IPPROTO_TCP, TCP_THIN_LINEAR_TIMEOUTS, &yes, sizeof(yes));
 
 	if (connect(fd, (struct sockaddr *)&server_info->addr, server_info->ai_addrlen) != 0) {
 		if (errno != EINPROGRESS) {
@@ -1602,7 +1700,8 @@ static int _dns_client_process_udp(struct dns_server_info *server_info, struct e
 		}
 	}
 
-	tlog(TLOG_DEBUG, "recv udp packet from %s, len: %d, ttl: %d", gethost_by_addr(from_host, sizeof(from_host), (struct sockaddr *)&from), len, ttl);
+	tlog(TLOG_DEBUG, "recv udp packet from %s, len: %d, ttl: %d",
+		 gethost_by_addr(from_host, sizeof(from_host), (struct sockaddr *)&from), len, ttl);
 
 	/* update recv time */
 	time(&server_info->last_recv);
@@ -1747,7 +1846,8 @@ static int _dns_client_socket_recv(struct dns_server_info *server_info)
 	if (server_info->type == DNS_SERVER_UDP) {
 		return -1;
 	} else if (server_info->type == DNS_SERVER_TCP) {
-		return recv(server_info->fd, server_info->recv_buff.data + server_info->recv_buff.len, DNS_TCP_BUFFER - server_info->recv_buff.len, 0);
+		return recv(server_info->fd, server_info->recv_buff.data + server_info->recv_buff.len,
+					DNS_TCP_BUFFER - server_info->recv_buff.len, 0);
 	} else if (server_info->type == DNS_SERVER_TLS || server_info->type == DNS_SERVER_HTTPS) {
 		return _dns_client_socket_ssl_recv(server_info->ssl, server_info->recv_buff.data + server_info->recv_buff.len,
 										   DNS_TCP_BUFFER - server_info->recv_buff.len);
@@ -1762,29 +1862,31 @@ static int _dns_client_process_tcp_buff(struct dns_server_info *server_info)
 	int dns_packet_len = 0;
 	struct http_head *http_head = NULL;
 	unsigned char *inpacket_data = NULL;
+	int ret = -1;
 
 	while (1) {
 		if (server_info->type == DNS_SERVER_HTTPS) {
 			http_head = http_head_init(4096);
 			if (http_head == NULL) {
-				goto errout;
+				goto out;
 			}
 
 			len = http_head_parse(http_head, (char *)server_info->recv_buff.data, server_info->recv_buff.len);
 			if (len < 0) {
-				tlog(TLOG_DEBUG, "remote server not supported.");
 				if (len == -1) {
-					break;
+					ret = 0;
+					goto out;
 				}
-				goto errout;
+
+				tlog(TLOG_DEBUG, "remote server not supported.");
+				goto out;
 			}
 
 			if (http_head_get_httpcode(http_head) != 200) {
-				tlog(TLOG_WARN, "http server query from %s:%d failed, server return http code : %d, %s", 
-					server_info->ip, server_info->port,
-					http_head_get_httpcode(http_head),
-					http_head_get_httpcode_msg(http_head));
-				goto errout;
+				tlog(TLOG_WARN, "http server query from %s:%d failed, server return http code : %d, %s",
+					 server_info->ip, server_info->port, http_head_get_httpcode(http_head),
+					 http_head_get_httpcode_msg(http_head));
+				goto out;
 			}
 
 			dns_packet_len = http_head_get_data_len(http_head);
@@ -1797,12 +1899,13 @@ static int _dns_client_process_tcp_buff(struct dns_server_info *server_info)
 			len = ntohs(*((unsigned short *)(inpacket_data)));
 			if (len <= 0 || len >= DNS_IN_PACKSIZE) {
 				/* data len is invalid */
-				goto errout;
+				goto out;
 			}
 
 			if (len > server_info->recv_buff.len - 2) {
 				/* len is not expceded, wait and recv */
-				break;
+				ret = 0;
+				goto out;
 			}
 
 			inpacket_data = server_info->recv_buff.data + 2;
@@ -1812,8 +1915,9 @@ static int _dns_client_process_tcp_buff(struct dns_server_info *server_info)
 
 		tlog(TLOG_DEBUG, "recv tcp packet from %s, len = %d", server_info->ip, len);
 		/* process result */
-		if (_dns_client_recv(server_info, inpacket_data, dns_packet_len, &server_info->addr, server_info->ai_addrlen) != 0) {
-			goto errout;
+		if (_dns_client_recv(server_info, inpacket_data, dns_packet_len, &server_info->addr, server_info->ai_addrlen) !=
+			0) {
+			goto out;
 		}
 
 		if (http_head) {
@@ -1822,21 +1926,26 @@ static int _dns_client_process_tcp_buff(struct dns_server_info *server_info)
 		}
 
 		server_info->recv_buff.len -= len;
+		if (server_info->recv_buff.len < 0) {
+			tlog(TLOG_ERROR, "Internal error.");
+			abort();
+		}
 
 		/* move to next result */
 		if (server_info->recv_buff.len > 0) {
 			memmove(server_info->recv_buff.data, server_info->recv_buff.data + len, server_info->recv_buff.len);
 		} else {
-			break;
+			ret = 0;
+			goto out;
 		}
 	}
 
-	return 0;
-errout:
+	ret = 0;
+out:
 	if (http_head) {
 		http_head_destroy(http_head);
 	}
-	return -1;
+	return ret;
 }
 
 static int _dns_client_process_tcp(struct dns_server_info *server_info, struct epoll_event *event, unsigned long now)
@@ -1880,7 +1989,7 @@ static int _dns_client_process_tcp(struct dns_server_info *server_info, struct e
 
 		time(&server_info->last_recv);
 		server_info->recv_buff.len += len;
-		if (server_info->recv_buff.len < 2) {
+		if (server_info->recv_buff.len <= 2) {
 			/* wait and recv */
 			return 0;
 		}
@@ -1917,6 +2026,9 @@ static int _dns_client_process_tcp(struct dns_server_info *server_info, struct e
 			server_info->send_buff.len -= len;
 			if (server_info->send_buff.len > 0) {
 				memmove(server_info->send_buff.data, server_info->send_buff.data + len, server_info->send_buff.len);
+			} else if (server_info->send_buff.len < 0) {
+				tlog(TLOG_ERROR, "Internal Error");
+				abort();
 			}
 			pthread_mutex_unlock(&client.server_list_lock);
 		}
@@ -1930,7 +2042,7 @@ static int _dns_client_process_tcp(struct dns_server_info *server_info, struct e
 		event.events = EPOLLIN;
 		event.data.ptr = server_info;
 		if (epoll_ctl(client.epoll_fd, EPOLL_CTL_MOD, server_info->fd, &event) != 0) {
-			tlog(TLOG_ERROR, "epoll ctl failed.");
+			tlog(TLOG_ERROR, "epoll ctl failed, %s", strerror(errno));
 			goto errout;
 		}
 	}
@@ -1980,13 +2092,15 @@ static int _dns_client_tls_matchName(const char *host, const char *pattern, int 
 	if (i == size && host[j] == '\0') {
 		match = 0;
 	}
-	
+
 	return match;
 }
 
 static int _dns_client_tls_verify(struct dns_server_info *server_info)
 {
 	X509 *cert = NULL;
+	X509_PUBKEY *pubkey = NULL;
+	X509_NAME *cert_name = NULL;
 	char peer_CN[256];
 	char cert_fingerprint[256];
 	int i = 0;
@@ -2007,20 +2121,45 @@ static int _dns_client_tls_verify(struct dns_server_info *server_info)
 		return -1;
 	}
 
-	X509_NAME_get_text_by_NID(X509_get_subject_name(cert), NID_commonName, peer_CN, 256);
+	if (server_info->skip_check_cert == 0) {
+		long res = SSL_get_verify_result(server_info->ssl);
+		if (res != X509_V_OK) {
+			tlog(TLOG_WARN, "peer server certificate verify failed.");
+			goto errout;
+		}
+	}
+
+	cert_name = X509_get_subject_name(cert);
+	if (cert_name == NULL) {
+		tlog(TLOG_ERROR, "get subject name failed.");
+		goto errout;
+	}
+
+	if (X509_NAME_get_text_by_NID(cert_name, NID_commonName, peer_CN, 256) == -1) {
+		tlog(TLOG_ERROR, "cannot found x509 name");
+		goto errout;
+	}
+
 	tlog(TLOG_DEBUG, "peer CN: %s", peer_CN);
 
 	/* check tls host */
 	tls_host_verify = _dns_client_server_get_tls_host_verify(server_info);
 	if (tls_host_verify) {
-		if (_dns_client_tls_matchName(peer_CN, tls_host_verify, strnlen(tls_host_verify, DNS_MAX_CNAME_LEN)) != 0) {
-			tlog(TLOG_INFO, "server %s CN is invalid, peer CN: %s, expect CN: %s", server_info->ip, peer_CN, tls_host_verify);
+		if (_dns_client_tls_matchName(tls_host_verify, peer_CN, strnlen(peer_CN, DNS_MAX_CNAME_LEN)) != 0) {
+			tlog(TLOG_INFO, "server %s CN is invalid, peer CN: %s, expect CN: %s", server_info->ip, peer_CN,
+				 tls_host_verify);
 			goto errout;
 		}
 	}
 
+	pubkey = X509_get_X509_PUBKEY(cert);
+	if (pubkey == NULL) {
+		tlog(TLOG_ERROR, "get pub key failed.");
+		goto errout;
+	}
+
 	/* get spki pin */
-	key_len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), NULL);
+	key_len = i2d_X509_PUBKEY(pubkey, NULL);
 	if (key_len <= 0) {
 		tlog(TLOG_ERROR, "get x509 public key failed.");
 		goto errout;
@@ -2033,7 +2172,7 @@ static int _dns_client_tls_verify(struct dns_server_info *server_info)
 		goto errout;
 	}
 
-	i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), &key_data_tmp);
+	i2d_X509_PUBKEY(pubkey, &key_data_tmp);
 
 	/* Get the SHA256 value of SPKI */
 	key_sha256 = SSL_SHA256(key_data, key_len, NULL);
@@ -2056,7 +2195,7 @@ static int _dns_client_tls_verify(struct dns_server_info *server_info)
 	tlog(TLOG_DEBUG, "cert SPKI pin(%s): %s", "sha256", cert_fingerprint);
 
 	spki = _dns_client_server_get_spki(server_info, &spki_len);
-	if (spki) {
+	if (spki && spki_len > 0 && spki_len <= SHA256_DIGEST_LENGTH) {
 		/* check SPKI */
 		if (memcmp(spki, key_sha256, spki_len) != 0) {
 			tlog(TLOG_INFO, "server %s cert spki is invalid", server_info->ip);
@@ -2111,7 +2250,7 @@ static int _dns_client_process_tls(struct dns_server_info *server_info, struct e
 
 			fd_event.data.ptr = server_info;
 			if (epoll_ctl(client.epoll_fd, EPOLL_CTL_MOD, server_info->fd, &fd_event) != 0) {
-				tlog(TLOG_ERROR, "epoll ctl failed.");
+				tlog(TLOG_ERROR, "epoll ctl failed, %s", strerror(errno));
 				goto errout;
 			}
 
@@ -2147,7 +2286,7 @@ static int _dns_client_process_tls(struct dns_server_info *server_info, struct e
 		fd_event.events = EPOLLIN | EPOLLOUT;
 		fd_event.data.ptr = server_info;
 		if (epoll_ctl(client.epoll_fd, EPOLL_CTL_MOD, server_info->fd, &fd_event) != 0) {
-			tlog(TLOG_ERROR, "epoll ctl failed.");
+			tlog(TLOG_ERROR, "epoll ctl failed, %s", strerror(errno));
 			goto errout;
 		}
 	}
@@ -2290,11 +2429,11 @@ static int _dns_client_send_tls(struct dns_server_info *server_info, void *packe
 
 	send_len = _dns_client_socket_ssl_send(server_info->ssl, inpacket, len);
 	if (send_len < 0) {
-		if (errno == EAGAIN || errno == EPIPE || server_info->ssl == NULL ) {
+		if (errno == EAGAIN || errno == EPIPE || server_info->ssl == NULL) {
 			/* save data to buffer, and retry when EPOLLOUT is available */
 			return _dns_client_send_data_to_buffer(server_info, inpacket, len);
 		} else if (server_info->ssl && errno != ENOMEM) {
-			SSL_shutdown(server_info->ssl);
+			SSL_set_shutdown(server_info->ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 		}
 		return -1;
 	} else if (send_len < len) {
@@ -2340,11 +2479,11 @@ static int _dns_client_send_https(struct dns_server_info *server_info, void *pac
 
 	send_len = _dns_client_socket_ssl_send(server_info->ssl, inpacket, http_len);
 	if (send_len < 0) {
-		if (errno == EAGAIN || errno == EPIPE || server_info->ssl == NULL ) {
+		if (errno == EAGAIN || errno == EPIPE || server_info->ssl == NULL) {
 			/* save data to buffer, and retry when EPOLLOUT is available */
 			return _dns_client_send_data_to_buffer(server_info, inpacket, http_len);
 		} else if (server_info->ssl && errno != ENOMEM) {
-			SSL_shutdown(server_info->ssl);
+			SSL_set_shutdown(server_info->ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 		}
 		return -1;
 	} else if (send_len < http_len) {
@@ -2407,9 +2546,11 @@ static int _dns_client_send_packet(struct dns_query_struct *query, void *packet,
 
 		if (ret != 0) {
 			if (send_err != ENOMEM) {
-				tlog(TLOG_ERROR, "send query to %s failed, %s, type: %d", server_info->ip, strerror(send_err), server_info->type);
+				tlog(TLOG_ERROR, "send query to %s failed, %s, type: %d", server_info->ip, strerror(send_err),
+					 server_info->type);
 			} else {
-				tlog(TLOG_DEBUG, "send query to %s failed, %s, type: %d", server_info->ip, strerror(send_err), server_info->type);
+				tlog(TLOG_DEBUG, "send query to %s failed, %s, type: %d", server_info->ip, strerror(send_err),
+					 server_info->type);
 			}
 			atomic_dec(&query->dns_request_sent);
 			continue;
@@ -2586,29 +2727,32 @@ static void _dns_client_check_servers(void)
 	pthread_mutex_unlock(&client.server_list_lock);
 }
 
-static int _dns_client_pending_server_resolve(char *domain, dns_rtcode_t rtcode, dns_type_t addr_type, char *ip, unsigned int ping_time, void *user_ptr)
+static int _dns_client_pending_server_resolve(char *domain, dns_rtcode_t rtcode, dns_type_t addr_type, char *ip,
+											  unsigned int ping_time, void *user_ptr)
 {
 	struct dns_server_pending *pending = user_ptr;
+	int ret = 0;
 
 	if (addr_type == DNS_T_A) {
-		pending->has_v4 = 1;
 		pending->ping_time_v4 = -1;
 		if (rtcode == DNS_RC_NOERROR) {
+			pending->has_v4 = 1;
 			pending->ping_time_v4 = ping_time;
 			safe_strncpy(pending->ipv4, ip, DNS_HOSTNAME_LEN);
 		}
 	} else if (addr_type == DNS_T_AAAA) {
-		pending->has_v6 = 1;
 		pending->ping_time_v6 = -1;
 		if (rtcode == DNS_RC_NOERROR) {
+			pending->has_v6 = 1;
 			pending->ping_time_v6 = ping_time;
 			safe_strncpy(pending->ipv6, ip, DNS_HOSTNAME_LEN);
 		}
 	} else {
-		return -1;
+		ret = -1;
 	}
 
-	return 0;
+	_dns_client_server_pending_release(pending);
+	return ret;
 }
 
 static int _dns_client_add_pendings(struct dns_server_pending *pending, char *ip)
@@ -2641,37 +2785,61 @@ static void _dns_client_add_pending_servers(void)
 	if (++dely < 3) {
 		return;
 	}
+	dely = 0;
 
 	pthread_mutex_lock(&pending_server_mutex);
 	list_for_each_entry_safe(pending, tmp, &pending_servers, list)
 	{
 		/* send dns type A, AAAA query to bootstrap DNS server */
+		int add_success = 0;
+		char *dnsserver_ip = NULL;
+
 		if (pending->query_v4 == 0) {
 			pending->query_v4 = 1;
-			dns_server_query(pending->host, DNS_T_A, _dns_client_pending_server_resolve, pending);
+			_dns_client_server_pending_get(pending);
+			if (dns_server_query(pending->host, DNS_T_A, _dns_client_pending_server_resolve, pending) != 0) {
+				_dns_client_server_pending_release_lck(pending);
+			}
 		}
 
 		if (pending->query_v6 == 0) {
 			pending->query_v6 = 1;
-			dns_server_query(pending->host, DNS_T_AAAA, _dns_client_pending_server_resolve, pending);
+			_dns_client_server_pending_get(pending);
+			if (dns_server_query(pending->host, DNS_T_AAAA, _dns_client_pending_server_resolve, pending) != 0) {
+				_dns_client_server_pending_release_lck(pending);
+			}
 		}
 
 		/* if both A, AAAA has query result, select fastest IP address */
 		if (pending->has_v4 && pending->has_v6) {
-			char *ip = NULL;
-			if (pending->ping_time_v4 <= pending->ping_time_v6 && pending->ipv4[0]) {
-				ip = pending->ipv4;
-			} else {
-				ip = pending->ipv6;
-			}
 
-			if (ip[0]) {
-				if (_dns_client_add_pendings(pending, ip) != 0) {
-					tlog(TLOG_WARN, "add pending DNS server %s failed.", pending->host);
-				}
+			if (pending->ping_time_v4 <= pending->ping_time_v6 && pending->ipv4[0]) {
+				dnsserver_ip = pending->ipv4;
+			} else {
+				dnsserver_ip = pending->ipv6;
 			}
-			list_del_init(&pending->list);
-			free(pending);
+		} else if (pending->has_v4) {
+			dnsserver_ip = pending->ipv4;
+		} else if (pending->has_v6) {
+			dnsserver_ip = pending->ipv6;
+		}
+
+		if (dnsserver_ip && dnsserver_ip[0]) {
+			if (_dns_client_add_pendings(pending, dnsserver_ip) == 0) {
+				add_success = 1;
+			}
+		}
+
+		pending->retry_cnt++;
+		if (pending->retry_cnt >= DNS_PENDING_SERVER_RETRY || add_success) {
+			if (add_success == 0) {
+				tlog(TLOG_WARN, "add pending DNS server %s failed.", pending->host);
+			}
+			_dns_client_server_pending_release_lck(pending);
+		} else {
+			tlog(TLOG_DEBUG, "add pending DNS server %s failed, retry %d...", pending->host, pending->retry_cnt);
+			pending->query_v4 = 0;
+			pending->query_v6 = 0;
 		}
 
 		/* if has no bootstrap DNS, just call getaddrinfo to get address */
@@ -2682,8 +2850,8 @@ static void _dns_client_add_pending_servers(void)
 				exit(1);
 				return;
 			}
-			list_del_init(&pending->list);
-			free(pending);
+
+			_dns_client_server_pending_release_lck(pending);
 		}
 	}
 	pthread_mutex_unlock(&pending_server_mutex);

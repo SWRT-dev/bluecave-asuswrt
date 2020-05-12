@@ -13,8 +13,8 @@ showhelp()
 {
 	echo "Usage: $0 [OPTION]"
 	echo "Options:"
-	echo " --platform [luci|debian|openwrt|optware|linux]    build for platform. "
-	echo " --arch [all|armhf|arm64|x86_64|...]               build for architecture, e.g. "
+	echo " --platform [luci|luci-compat|debian|openwrt|optware|linux]    build for platform. "
+	echo " --arch [all|armhf|arm64|x86-64|...]               build for architecture, e.g. "
 	echo " --cross-tool [cross-tool]                         cross compiler, e.g. mips-openwrt-linux-"
 	echo ""
 	echo "Advance Options:"
@@ -26,8 +26,10 @@ showhelp()
 	echo "Example:"
 	echo " build luci:"
 	echo "   $0 --platform luci"
+	echo " build luci:"
+	echo "   $0 --platform luci-compat"
 	echo " build debian:"
-	echo "   $0 --platform debian --arch x86_64"
+	echo "   $0 --platform debian --arch x86-64"
 	echo " build raspbian pi:"
 	echo "   $0 --platform debian --arch armhf"
 	echo " build optware mips:"
@@ -35,14 +37,14 @@ showhelp()
 	echo " build openwrt mips:"
 	echo "   $0 --platform openwrt --arch mips_24kc"
 	echo " build generic linux:"
-	echo "   $0 --platform linux --arch x86_64"
+	echo "   $0 --platform linux --arch x86-64"
 }
 
 build_smartdns()
 {
 	if [ "$PLATFORM" != "luci" ]; then
-		make -C $CODE_DIR/src clean 
-		make -C $CODE_DIR/src all -j8 VER=$VER $MAKE_ARGS
+		make -C $CODE_DIR clean $MAKE_ARGS
+		make -C $CODE_DIR all -j8 VER=$VER $MAKE_ARGS
 		if [ $? -ne 0 ]; then
 			echo "make smartdns failed"
 			exit 1

@@ -129,66 +129,21 @@ Download the matching version of the SmartDNS installation package. The correspo
 
 |system |package|Description
 |-----|-----|-----
-|Standard Linux system (Raspberry Pi)| smartdns.xxxxxxxx.armhf.deb|Support Raspberry Pi Raspbian stretch, Debian 9 system.
-|Standard Linux system (Armbian arm64)| smartdns.xxxxxxxx.arm64.deb|Support Armbian debian stretch, Debian 9 system.
-|Standard Linux system (x86_64)| smartdns.xxxxxxxx.x86_64.tar.gz|Support for x86_64 Linux systems.
-|Windows 10 WSL (Ubuntu)| smartdns.xxxxxxxx.x86_64.tar.gz|Windows 10 WSL ubuntu.
-|Standard Linux system (x86)| smartdns.xxxxxxxx.x86.tar.gz|Support for x86_64 systems.
-|ASUS native firmware (optware)|smartdns.xxxxxxx.mipsbig.ipk|Systems that support the MIPS big-end architecture, such as RT-AC55U, RT-AC66U.
-|ASUS native firmware (optware)|smartdns.xxxxxxx.mipsel.ipk|System that supports the MIPS little endian architecture.
-|ASUS native firmware (optware)|smartdns.xxxxxxx.arm.ipk|System that supports the ARM small endian architecture, such as the RT-AC88U, RT-AC68U.
-|Padavan|smartdns.xxxxxxx.mipselsf.ipk|padavan Firmware.
-|openwrt 15.01|smartdns.xxxxxxxx.ar71xx.ipk|Support AR71XX MIPS system.
-|openwrt 15.01|smartdns.xxxxxxxx.ramips_24kec.ipk|Support small-end routers such as MT762X
-|openwrt 15.01(Pandora)|smartdns.xxxxxxxx.mipsel_24kec_dsp.ipk|Support for Pandora firmware of MT7620 series
-|openwrt 15.01(Pandora)|smartdns.xxxxxxxx.mips_74kc_dsp2.ipk|Support for Pandora firmware of AR71xx series
-|openwrt 18.06|smartdns.xxxxxxxx.mips_24kc.ipk|Support AR71XX MIPS system.
-|openwrt 18.06|smartdns.xxxxxxxx.mipsel_24kc.ipk|Support small-end routers such as MT726X
-|openwrt 18.06|smartdns.xxxxxxxx.x86_64.ipk|Support x86_64 router
-|openwrt 18.06|smartdns.xxxxxxxx.i386_pentium4.ipk|Support x86_64 router
-|openwrt 18.06|smartdns.xxxxxxxxxxx.arm_cortex-a9.ipk|Router supporting arm A9 core CPU
-|openwrt 18.06|smartdns.xxxxxxxxx.arm_cortex-a7_neon-vfpv4.ipk|Router supporting arm A7 core CPU
-|openwrt LUCI|luci-app-smartdns.xxxxxxxxx.xxxx.all.ipk|Openwrt management interface
+|Standard Linux system (Raspberry Pi)| smartdns.xxxxxxxx.arm-debian-all.deb|Support Raspberry Pi Raspbian stretch, Debian 9 system.
+|Standard Linux system (Armbian arm64)| smartdns.xxxxxxxx.aarch64-debian-all.deb|Support Armbian debian stretch, Debian 9 system.
+|Standard Linux system (x86_64)| smartdns.xxxxxxxx.x86_64-linux-all.tar.gz|Support for x86_64 Linux systems.
+|Windows 10 WSL (ubuntu)| smartdns.xxxxxxxx.x86_64-linux-all.tar.gz|Windows 10 WSL ubuntu.
+|Standard Linux system (x86)| smartdns.xxxxxxxx.x86-linux-all.tar.gz|Support for x86_64 systems.
+|optware|smartdns.xxxxxxxx.mips-optware-all.ipk|Support the MIPS big-endian architecture for optware。
+|optware|smartdns.xxxxxxxx.mipsel-optware-all.ipk|Support the MIPS little-endian architecture for optware。
+|optware|smartdns.xxxxxxxx.arm-optware-all.ipk|Support the arm architecture for optware。
+|openwrt|smartdns.xxxxxxxx.mips-openwrt-all.ipk|Support the MIPS big-endian architecture for openwrt。
+|openwrt|smartdns.xxxxxxxx.mipsel-openwrt-all.ipk|Support the MIPS little-endian architecture for openwrt。
+|openwrt|smartdns.xxxxxxxx.arm-openwrt-all.ipk|Support the arm architecture for openwrt。
+|openwrt LUCI|luci-app-smartdns.xxxxxxxxx.all.ipk|Openwrt management interface.
+|openwrt LUCI|luci-app-smartdns.xxxxxxxxx.all-luci-compat-all|Compat Openwrt management interface for early openwrt.
 
-* The openwrt system supports a lot of CPU architecture. The above table does not list all the supported systems. Please check the CPU architecture and download it.
-* The merlin Merlin firmware theory is the same as the ASUS firmware, so install the corresponding ipk package according to the hardware type. (Merlin is not verified yet, and has a problem to submit an issue)
-* The CPU architecture can be found in the router management interface:  
-    Log in to the router, click `System`->`Software`, click the `Configuration` tab page, and find the corresponding software architecture in the opkg installation source. The download path can be found, as follows, the architecture is ar71xx
-
-    ```shell
-    src/gz chaos_calmer_base http://downloads.openwrt.org/chaos_calmer/15.05/ar71xx/generic/packages/base
-    ```
-
-* Or after login to the system, you can query the architecture with the following commands:
-
-  * **Openwrt series commands**
-
-    ```shell
-    opkg print_architecture
-    ```
-
-  * **Optiware series commands**
-
-    ```shell
-    ipkg print_architecture
-    ```
-
-  * **Dedebian Series Order**
-
-    ```shell
-    dpkg -- print-architecture
-    ```
-
-  * **for example**
-
-    The following query result `arch ar71xx 10` represents the ar71xx series architecture, so select the `smartdns.xxxxxxx.ar71xx.ipk` installation package.
-
-    ```shell
-    Root@OpenWrt:# opkg print_architecture
-    Arch all 1
-    Arch noarch 1
-    Arch ar71xx 10
-    ```
+* The released packages are statically compiled. If you need a small size package, please compile it yourself or obtain it from the openwrt / entware repository.
 
 * **Please download from the Release page: [Download here](https://github.com/pymu/smartdns/releases)**
 
@@ -204,16 +159,16 @@ https://github.com/pymumu/smartdns/releases
 
 1. Installation
 
-    Download the installation package like `smartdns.xxxxxxxx.armhf.deb` and upload it to the Linux system. Run the following command to install
+    Download the installation package like `smartdns.xxxxxxxx.arm-debian-all.deb` and upload it to the Linux system. Run the following command to install
 
     ```shell
-    dpkg -i smartdns.xxxxxxxx.armhf.deb
+    dpkg -i smartdns.xxxxxxxx.arm-debian-all.deb
     ```
 
-    For X86-64 system, download the installation package like `smartdns.xxxxxxxx.x86-64.tar.gz` and upload it to the Linux system. Run the following command to install
+    For X86-64 system, download the installation package like `smartdns.xxxxxxxx.x86_64-linux-all.tar.gz` and upload it to the Linux system. Run the following command to install
 
     ```shell
-    tar zxf smartdns.xxxxxxxx.x86-64.tar.gz
+    tar zxf smartdns.xxxxxxxx.x86_64-linux-all.tar.gz
     cd smartdns
     chmod +x ./install
     ./install -i
@@ -247,19 +202,19 @@ https://github.com/pymumu/smartdns/releases
 
 1. Check if the service is configured successfully
 
-    Query domain name with `nslookup -querytype=ptr 0.0.0.0`  
+    Query domain name with `nslookup -querytype=ptr smartdns`  
     Check if the `name` item in the command result is displayed as `smartdns` or `hostname`, such as `smartdns`
 
     ```shell
-    pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr 0.0.0.0
+    pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr smartdns
     Server:         192.168.1.1
     Address:        192.168.1.1#53
 
     Non-authoritative answer:
-    0.0.0.0.in-addr.arpa  name = smartdns.
+    smartdns         name = smartdns.
     ```
 
-### openwrt/LEDE
+### openwrt
 
 --------------
 
@@ -271,6 +226,8 @@ https://github.com/pymumu/smartdns/releases
     opkg install smartdns.xxxxxxxx.xxxx.ipk
     opkg install luci-app-smartdns.xxxxxxxx.xxxx.all.ipk
     ```
+
+    * Note: For versions before openwrt 19.07, please install `luci-app-smartdns.xxxxxxxxx.all-luci-compat-all` package.
 
 1. Configuration
 
@@ -291,16 +248,16 @@ https://github.com/pymumu/smartdns/releases
 
     * **Check if the service is configured successfully**
 
-        Query domain name with `nslookup -querytype=ptr 0.0.0.0`
+        Query domain name with `nslookup -querytype=ptr smartdns`
         See if the `name` item in the command result is displayed as `smartdns` or `hostname`, such as `smartdns`
 
         ```shell
-        pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr 0.0.0.0
+        pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr smartdns
         Server:         192.168.1.1
         Address:        192.168.1.1#53
 
         Non-authoritative answer:
-        0.0.0.0.in-addr.arpa  name = smartdns.
+        smartdns         name = smartdns.
         ```
 
     * **The interface prompts that the redirect failed**
@@ -328,12 +285,12 @@ https://github.com/pymumu/smartdns/releases
         See if the `name` item in the command result is displayed as `smartdns` or `hostname`, such as `smartdns`
 
         ```shell
-        pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr 0.0.0.0
+        pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr smartdns
         Server:         192.168.1.1
         Address:        192.168.1.1#53
 
         Non-authoritative answer:
-        0.0.0.0.in-addr.arpa  name = smartdns.
+        smartdns         name = smartdns.
         ```
 
         * Method 2: Use `nslookup` to query the `www.baidu.com` domain name to see if the IP address of Baidu in the result is `only one. If there are multiple IP addresses returned, it means that it is not valid. Please try to check several domain names.
@@ -388,16 +345,16 @@ Note: Merlin firmware is derived from ASUS firmware and can theoretically be use
 
 1. Restart router
 
-    After the router is started, use `nslookup -querytype=ptr 0.0.0.0` to query the domain name.  
+    After the router is started, use `nslookup -querytype=ptr smartdns` to query the domain name.  
     See if the `name` item in the command result is displayed as `smartdns` or `hostname`, such as `smartdns`
 
     ```shell
-    pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr 0.0.0.0
+    pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr smartdns
     Server:         192.168.1.1
     Address:        192.168.1.1#53
 
     Non-authoritative answer:
-    0.0.0.0.in-addr.arpa  name = smartdns.
+    smartdns         name = smartdns.
     ```
 
 1. Note
@@ -464,16 +421,16 @@ Note: Merlin firmware is derived from ASUS firmware and can theoretically be use
 
 1. Restart the router to take effect
 
-    After the router is started, use `nslookup -querytype=ptr 0.0.0.0` to query the domain name.
+    After the router is started, use `nslookup -querytype=ptr smartdns` to query the domain name.
     See if the `name` item in the command result is displayed as `smartdns` or `hostname`, such as `smartdns`
 
     ```shell
-    Pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr 0.0.0.0
+    Pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr smartdns
     Server: 192.168.1.1
     Address: 192.168.1.1#53
 
     Non-authoritative answer:
-    0.0.0.0.in-addr.arpa name = smartdns.
+    smartdns        name = smartdns.
     ```
 
     Note: If the service does not start automatically, you need to set optwre/entware to start automatically. For details, see the optware/entware documentation.
@@ -488,7 +445,7 @@ Note: Merlin firmware is derived from ASUS firmware and can theoretically be use
 
 1. Install smartdns
 
-    download install package `smartdns.xxxxxxxx.x86_64.tar.gz`，and unzip to the `D:\` directory, after decompression, the directory is as follows: 
+    download install package `smartdns.xxxxxxxx.x86_64-linux-all.tar.gz`，and unzip to the `D:\` directory, after decompression, the directory is as follows: 
 
     ```shell
     D:\SMARTDNS
@@ -521,16 +478,16 @@ Note: Merlin firmware is derived from ASUS firmware and can theoretically be use
 
 1. Check if the service is configured successfully
 
-    Query domain name with `nslookup -querytype=ptr 0.0.0.0`  
+    Query domain name with `nslookup -querytype=ptr smartdns`  
     Check if the `name` item in the command result is displayed as `smartdns` or `hostname`, such as `smartdns`
 
     ```shell
-    pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr 0.0.0.0
+    pi@raspberrypi:~/code/smartdns_build $ nslookup -querytype=ptr smartdns
     Server:         192.168.1.1
     Address:        192.168.1.1#53
 
     Non-authoritative answer:
-    0.0.0.0.in-addr.arpa  name = smartdns.
+    smartdns         name = smartdns.
     ```
 
 ## Configuration parameter
@@ -556,21 +513,26 @@ Note: Merlin firmware is derived from ASUS firmware and can theoretically be use
 |conf-file|additional conf file|None|File path|conf-file /etc/smartdns/smartdns.more.conf
 |server|Upstream UDP DNS server|None|Repeatable <br>`[ip][:port]`: Server IP, port optional. <br>`[-blacklist-ip]`: The "-blacklist-ip" parameter is to filtering IPs which is configured by "blacklist-ip". <br>`[-whitelist-ip]`: whitelist-ip parameter specifies that only the IP range configured in whitelist-ip is accepted. <br>`[-group [group] ...]`: The group to which the DNS server belongs, such as office, foreign, use with nameserver. <br>`[-exclude-default-group]`: Exclude DNS servers from the default group| server 8.8.8.8:53 -blacklist-ip
 |server-tcp|Upstream TCP DNS server|None|Repeatable <br>`[ip][:port]`: Server IP, port optional. <br>`[-blacklist-ip]`: The "-blacklist-ip" parameter is to filtering IPs which is configured by "blacklist-ip". <br>`[-whitelist-ip]`: whitelist-ip parameter specifies that only the IP range configured in whitelist-ip is accepted. <br>`[-group [group] ...]`: The group to which the DNS server belongs, such as office, foreign, use with nameserver. <br>`[-exclude-default-group]`: Exclude DNS servers from the default group| server-tcp 8.8.8.8:53
-|server-tls|Upstream TLS DNS server|None|Repeatable <br>`[ip][:port]`: Server IP, port optional. <br>`[-spki-pin [sha256-pin]]`: TLS verify SPKI value, a base64 encoded SHA256 hash<br>`[-host-name]`:TLS Server name. <br>`[-tls-host-verify]`: TLS cert hostname to verify.<br>`[-blacklist-ip]`: The "-blacklist-ip" parameter is to filtering IPs which is configured by "blacklist-ip". <br>`[-whitelist-ip]`: whitelist-ip parameter specifies that only the IP range configured in whitelist-ip is accepted. <br>`[-group [group] ...]`: The group to which the DNS server belongs, such as office, foreign, use with nameserver. <br>`[-exclude-default-group]`: Exclude DNS servers from the default group| server-tls 8.8.8.8:853
-|server-https|Upstream HTTPS DNS server|None|Repeatable <br>`https://[host][:port]/path`: Server IP, port optional. <br>`[-spki-pin [sha256-pin]]`: TLS verify SPKI value, a base64 encoded SHA256 hash<br>`[-host-name]`:TLS Server name<br>`[-http-host]`：http header host. <br>`[-tls-host-verify]`: TLS cert hostname to verify.<br>`[-blacklist-ip]`: The "-blacklist-ip" parameter is to filtering IPs which is configured by "blacklist-ip". <br>`[-whitelist-ip]`: whitelist-ip parameter specifies that only the IP range configured in whitelist-ip is accepted. <br>`[-group [group] ...]`: The group to which the DNS server belongs, such as office, foreign, use with nameserver. <br>`[-exclude-default-group]`: Exclude DNS servers from the default group| server-https https://cloudflare-dns.com/dns-query
+|server-tls|Upstream TLS DNS server|None|Repeatable <br>`[ip][:port]`: Server IP, port optional. <br>`[-spki-pin [sha256-pin]]`: TLS verify SPKI value, a base64 encoded SHA256 hash<br>`[-host-name]`:TLS Server name. <br>`[-tls-host-verify]`: TLS cert hostname to verify. <br>`-no-check-certificate:`: No check certificate. <br>`[-blacklist-ip]`: The "-blacklist-ip" parameter is to filtering IPs which is configured by "blacklist-ip". <br>`[-whitelist-ip]`: whitelist-ip parameter specifies that only the IP range configured in whitelist-ip is accepted. <br>`[-group [group] ...]`: The group to which the DNS server belongs, such as office, foreign, use with nameserver. <br>`[-exclude-default-group]`: Exclude DNS servers from the default group| server-tls 8.8.8.8:853
+|server-https|Upstream HTTPS DNS server|None|Repeatable <br>`https://[host][:port]/path`: Server IP, port optional. <br>`[-spki-pin [sha256-pin]]`: TLS verify SPKI value, a base64 encoded SHA256 hash<br>`[-host-name]`:TLS Server name<br>`[-http-host]`：http header host. <br>`[-tls-host-verify]`: TLS cert hostname to verify. <br>`-no-check-certificate:`: No check certificate. <br>`[-blacklist-ip]`: The "-blacklist-ip" parameter is to filtering IPs which is configured by "blacklist-ip". <br>`[-whitelist-ip]`: whitelist-ip parameter specifies that only the IP range configured in whitelist-ip is accepted. <br>`[-group [group] ...]`: The group to which the DNS server belongs, such as office, foreign, use with nameserver. <br>`[-exclude-default-group]`: Exclude DNS servers from the default group| server-https https://cloudflare-dns.com/dns-query
 |speed-check-mode|Speed ​​mode|None|[ping\|tcp:[80]\|none]|speed-check-mode ping,tcp:443
 |address|Domain IP address|None|address /domain/[ip\|-\|-4\|-6\|#\|#4\|#6], `-` for ignore, `#` for return SOA, `4` for IPV4, `6` for IPV6| address /www.example.com/1.2.3.4
 |nameserver|To query domain with specific server group|None|nameserver /domain/[group\|-], `group` is the group name, `-` means ignore this rule, use the `-group` parameter in the related server|nameserver /www.example.com/office
 |ipset|Domain IPSet|None|ipset /domain/[ipset\|-], `-` for ignore|ipset /www.example.com/pass
 |ipset-timeout|ipset timeout enable|auto|[yes]|ipset-timeout yes
+|domain-rules|set domain rules|None|domain-rules /domain/ [-rules...]<br>`[-speed-check-mode]`: set speed check mode，same as parameter `speed-check-mode`<br>`[-address]`: same as  parameter `address` <br>`[-nameserver]`: same as parameter `nameserver`<br>`[-ipset]`: same as parameter `ipset`|domain-rules /www.example.com/ -speed-check-mode none
 |bogus-nxdomain|bogus IP address|None|[IP/subnet], Repeatable| bogus-nxdomain 1.2.3.4/16
 |ignore-ip|ignore ip address|None|[ip/subnet], Repeatable| ignore-ip 1.2.3.4/16
 |whitelist-ip|ip whitelist|None|[ip/subnet], Repeatable，When the filtering server responds IPs in the IP whitelist, only result in whitelist will be accepted| whitelist-ip 1.2.3.4/16
 |blacklist-ip|ip blacklist|None|[ip/subnet], Repeatable，When the filtering server responds IPs in the IP blacklist, The result will be discarded directly| blacklist-ip 1.2.3.4/16
 |force-AAAA-SOA|force AAAA query return SOA|no|[yes\|no]|force-AAAA-SOA yes
 |prefetch-domain|domain prefetch feature|no|[yes\|no]|prefetch-domain yes
+|serve-expired|Cache serve expired feature|no|[yes\|no], Attempts to serve old responses from cache with a TTL of 0 in the response without waiting for the actual resolution to finish.|serve-expired yes
+|serve-expired-ttl|Cache serve expired limite TTL|0|second，0：disable，> 0  seconds after expiration|serve-expired-ttl 0
 |dualstack-ip-selection|Dualstack ip selection|no|[yes\|no]|dualstack-ip-selection yes
 |dualstack-ip-selection-threshold|Dualstack ip select threadhold|30ms|millisecond|dualstack-ip-selection-threshold [0-1000]
+|ca-file|certificate file|/etc/ssl/certs/ca-certificates.crt|path|ca-file /etc/ssl/certs/ca-certificates.crt
+|ca-path|certificates path|/etc/ssl/certs|path|ca-path /etc/ssl/certs
 
 ## FAQ
 
@@ -668,6 +630,10 @@ Note: Merlin firmware is derived from ASUS firmware and can theoretically be use
     * Enable domain pre-acquisition  
     Enable pre-fetching of domain names with `prefetch-domain yes` to improve query hit rate.
     by default, Smartdns will send domain query request again before cache expire, and cache the result for the next query. Frequently accessed domain names will continue to be cached. This feature will consume more CPU when idle.
+
+    * Cache serve expired feature  
+    Enable cache serve expired feature with `serve-expired yes` to improve the cache hit rate and reduce the CPU consumption.
+    This feature will return TTL = 0 to the client after the TTL timeout, and send a new query request again at the same time, and cache the new results for later query.
 
 1. How does the second DNS customize more behavior?
     The second DNS can be used as the upstream of other DNS servers to provide more query behaviors. Bind configuration support can bind multiple ports. Different ports can be set with different flags to implement different functions, such as
