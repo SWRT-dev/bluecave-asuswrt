@@ -174,6 +174,7 @@ function initial(){
 			return true;
 
 		document.getElementById("auto_channel").style.display = "";
+		ajax_wl_channel();
 		var temp = "";
 		if(smart_connect_flag_t == "1"){		//Tri-Band Smart Connect
 			if(isSupport("triband") && dwb_info.mode) {
@@ -233,7 +234,6 @@ function change_wl_nmode(o){
 	
 	wl_chanspec_list_change();
 	genBWTable(wl_unit);
-	change_channel(document.form.wl_channel);
 }
 
 function genBWTable(_unit){
@@ -836,6 +836,20 @@ function regen_auto_option(obj){
 	obj.options[0] = new Option("<#Auto#>", 0);
 	obj.selectedIndex = 0;
 }
+
+function ajax_wl_channel(){
+	$.ajax({
+		url: '/ajax_wl_channel.asp',
+		dataType: 'script',	
+		error: function(xhr) {
+			setTimeout("ajax_wl_channel();", 1000);
+		},
+		success: function(response){
+			$("#auto_channel").html("<#wireless_control_channel#>: " + cur_control_channel[wl_unit]);
+			setTimeout("ajax_wl_channel();", 5000);
+		}
+	});
+}
 </script>
 </head>
 
@@ -923,6 +937,7 @@ function regen_auto_option(obj){
 <input type="hidden" name="smart_connect_x" value="<% nvram_get("smart_connect_x"); %>">
 <input type="hidden" name="wl1_80211h" value="<% nvram_get("wl1_80211h"); %>" >
 <input type="hidden" name="w_Setting" value="1">
+<input type="hidden" name="w_apply" value="1">
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
 	<td width="17">&nbsp;</td>

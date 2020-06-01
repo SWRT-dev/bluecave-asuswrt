@@ -690,6 +690,9 @@ gen_qca_wifi_cfgs(void)
 	int i;
 #ifdef RTCONFIG_WIRELESSREPEATER
 	int wlc_band = nvram_get_int("wlc_band");
+#if defined(RTCONFIG_REPEATER_STAALLBAND)
+	int wlc_triBand = nvram_get_int("wlc_triBand");
+#endif
 #endif
 #if defined(RTCONFIG_HIDDEN_BACKHAUL)
 	if(sw_mode() != SW_MODE_REPEATER)
@@ -702,6 +705,8 @@ gen_qca_wifi_cfgs(void)
 	if (!(fp2 = fopen("/tmp/postwifi.sh", "w+")))
 		return;
 
+	fprintf(fp, "#!/bin/sh -p\n");
+	fprintf(fp2, "#!/bin/sh -p\n");
 	memset(wl_mask, 0, sizeof(wl_mask));
 
 #ifdef RTCONFIG_CAPTIVE_PORTAL
@@ -949,94 +954,6 @@ gen_qca_wifi_cfgs(void)
 #endif
 	doSystem("/tmp/prewifi.sh");
 
-#ifdef RTCONFIG_WIRELESSREPEATER
-#ifdef RTCONFIG_AMAS
-	if(sw_mode() == SW_MODE_REPEATER || (sw_mode() == SW_MODE_AP && nvram_match("re_mode", "1")))
-#else
-	if(sw_mode() == SW_MODE_REPEATER)
-#endif
-	{
-		for (i = 0; i < MAX_NR_WL_IF; ++i) {
-			int nmode, shortgi;
-			char prefix[16];
-			char lan_if[16];
-			char *sta = get_staifname(swap_5g_band(i));
-			char pid_file[sizeof("/var/run/wifi-staX.pidXXXXXX")];
-			char conf[sizeof("/etc/Wireless/conf/wpa_supplicant-STAX.confXXXXXX")];
-#if defined(RTCONFIG_CONCURRENTREPEATER)
-			char wlc_prefix[16];
-			char wpa_sup[sizeof("/var/run/wpa_supplicant-staXXXXXXX")];
-#endif
-
-			SKIP_ABSENT_BAND(i);
-#if !defined(RTCONFIG_CONCURRENTREPEATER)
-#ifdef RTCONFIG_AMAS
-			if (nvram_match("re_mode", "1")) {
-				if (strstr(nvram_safe_get("sta_ifnames"), sta) == NULL)
-					continue;
-			}
-			else
-#endif
-			{
-				if (i != wlc_band)
-					continue;
-			}
-#endif
-
-			snprintf(lan_if, sizeof(lan_if), "%s", nvram_get("lan_ifname")? nvram_get("lan_ifname") : "br0");
-			snprintf(prefix, sizeof(prefix), "wl%d_", i);
-			nmode = nvram_pf_get_int(prefix, "nmode_x");
-			shortgi = (nmode != 2)? !!nvram_pf_get_int(prefix, "HT_GI") : 0;
-			doSystem("iwpriv %s shortgi %d\n", sta, shortgi);
-			doSystem("iwpriv %s mode AUTO", sta);
-			doSystem("iwpriv %s extap 1", sta);
-
-			get_wpa_supplicant_pidfile(sta, pid_file, sizeof(pid_file));
-			if(kill_pidfile(pid_file) == 0)
-				cprintf("## WARNING: %s is alive ##\n", pid_file);
-			sprintf(conf, "/etc/Wireless/conf/wpa_supplicant-%s.conf", sta);
-			eval("/usr/bin/wpa_supplicant", "-B", "-P", pid_file, "-D", get_wsup_drvname(swap_5g_band(i)), "-i", sta, "-b", lan_if, "-c", conf);
-			{
-				extern char * conv_iwconfig_essid(char *ssid_in, char *ssid_out);
-				char prefix_wlc[16];
-				if (sw_mode() == SW_MODE_REPEATER)
-#if defined(RTCONFIG_CONCURRENTREPEATER)
-					snprintf(prefix_wlc, sizeof(prefix_wlc), "wlc%d_", i);
-#else
-					snprintf(prefix_wlc, sizeof(prefix_wlc), "wlc_");
-#endif
-#if defined(RTCONFIG_AMAS)
-				else if (nvram_match("re_mode", "1"))
-					snprintf(prefix_wlc, sizeof(prefix_wlc), "wlc%d_", i);
-#endif
-				if (conv_iwconfig_essid(nvram_pf_get(prefix_wlc, "ssid"), tmp) != NULL) {
-					doSystem("iwconfig %s essid -- %s", sta, tmp);
-				}
-			}
-			ifconfig(sta, IFUP, NULL, NULL);
-#if defined(RTCONFIG_AMAS)
-			sprintf(path2, "/etc/Wireless/sh/postwifi_%s.sh", get_wififname(swap_5g_band(i)));
-			if (fp = fopen(path2, "a")) {
-				fprintf(fp, "delay_exec 15 /usr/bin/wpa_cli -p /var/run/wpa_supplicant-%s -i %s enable_network all&\n", sta, sta);
-				fclose(fp);
-			}
-#endif
-
-#if defined(RTCONFIG_REPEATER_STAALLBAND)
-			if (nvram_match("wlc_triBand", "-1"))
-				nvram_set_int("wlc_triBand", i);
-#endif
-
-#if defined(RTCONFIG_CONCURRENTREPEATER)
-			sprintf(wlc_prefix, "wlc%d_", i);
-			if (nvram_pf_match(wlc_prefix, "ssid", "")) {
-				sprintf(wpa_sup, "/var/run/wpa_supplicant-%s", sta);
-				eval("wpa_cli", "-p", wpa_sup, "-i", sta, "disconnect");
-			}
-#endif
-		}
-	}
-#endif
 #ifdef RTCONFIG_PROXYSTA
 	if (!mediabridge_mode())
 #endif
@@ -1161,6 +1078,20 @@ gen_qca_wifi_cfgs(void)
 				if (nvram_pf_match(main_prefix, "radio", "0")) {
 					fprintf(fp, "ifconfig %s down\n", wif);
 				}
+#if defined(RTCONFIG_QCA) && defined(RTCONFIG_WIRELESSREPEATER)
+#if defined(RTCONFIG_HAS_5G_2)
+#if defined(RTCONFIG_REPEATER_STAALLBAND)
+				if (wlc_triBand >= WL_2G_BAND)
+					wlc_band = wlc_triBand;
+#endif
+				if(sw_mode() == SW_MODE_REPEATER
+					&& ((unit==WL_5G_BAND || unit==WL_5G_2_BAND) && wlc_band==unit)
+				)
+				{
+					fprintf(fp, "ifconfig %s down\n", wif);
+				}
+#endif
+#endif
 
 				/* Connect to peer WDS AP after VAP up */
 				sprintf(path1, NAWDS_SH_FMT, wif);
@@ -1184,13 +1115,100 @@ gen_qca_wifi_cfgs(void)
 				fclose(fp);
 			}
 		}
-
-		argv[1]="4";
-		_eval(argv, NULL, 0, &pid);
-
-		//system("/tmp/postwifi.sh");
-		//sleep(1);
 	} /* !mediabridge_mode() */
+
+#ifdef RTCONFIG_WIRELESSREPEATER
+#ifdef RTCONFIG_AMAS
+	if(sw_mode() == SW_MODE_REPEATER || (sw_mode() == SW_MODE_AP && nvram_match("re_mode", "1")))
+#else
+	if(sw_mode() == SW_MODE_REPEATER)
+#endif
+	{
+		for (i = 0; i < MAX_NR_WL_IF; ++i) {
+			int nmode, shortgi;
+			char prefix[16];
+			char lan_if[16];
+			char *sta = get_staifname(swap_5g_band(i));
+			char pid_file[sizeof("/var/run/wifi-staX.pidXXXXXX")];
+			char conf[sizeof("/etc/Wireless/conf/wpa_supplicant-STAX.confXXXXXX")];
+
+			SKIP_ABSENT_BAND(i);
+#if !defined(RTCONFIG_CONCURRENTREPEATER)
+#ifdef RTCONFIG_AMAS
+			if (nvram_match("re_mode", "1")) {
+				if (strstr(nvram_safe_get("sta_ifnames"), sta) == NULL)
+					continue;
+				if (strstr(nvram_safe_get("skip_ifnames"), sta) != NULL)
+					continue;
+			}
+			else
+#endif
+			{
+				if (i != wlc_band)
+					continue;
+			}
+#endif
+
+			snprintf(lan_if, sizeof(lan_if), "%s", nvram_get("lan_ifname")? nvram_get("lan_ifname") : "br0");
+			snprintf(prefix, sizeof(prefix), "wl%d_", i);
+			nmode = nvram_pf_get_int(prefix, "nmode_x");
+			shortgi = (nmode != 2)? !!nvram_pf_get_int(prefix, "HT_GI") : 0;
+			doSystem("iwpriv %s shortgi %d\n", sta, shortgi);
+			doSystem("iwpriv %s mode AUTO", sta);
+			doSystem("iwpriv %s extap 1", sta);
+
+			get_wpa_supplicant_pidfile(sta, pid_file, sizeof(pid_file));
+			if(kill_pidfile(pid_file) == 0)
+				cprintf("## WARNING: %s is alive ##\n", pid_file);
+
+			sprintf(path2, "/etc/Wireless/sh/postwifi_%s.sh", get_wififname(swap_5g_band(i)));
+			if ((fp = fopen(path2, "a")) != NULL) {
+				char prefix_wlc[16];
+
+				sprintf(conf, "/etc/Wireless/conf/wpa_supplicant-%s.conf", sta);
+				fprintf(fp, "/usr/bin/wpa_supplicant -B -P %s -D %s -i %s -b %s -c %s\n", pid_file, get_wsup_drvname(i), sta, lan_if, conf);
+
+				if (sw_mode() == SW_MODE_REPEATER)
+#if defined(RTCONFIG_CONCURRENTREPEATER)
+					snprintf(prefix_wlc, sizeof(prefix_wlc), "wlc%d_", i);
+#else
+					snprintf(prefix_wlc, sizeof(prefix_wlc), "wlc_");
+#endif
+#if defined(RTCONFIG_AMAS)
+				else if (nvram_match("re_mode", "1"))
+					snprintf(prefix_wlc, sizeof(prefix_wlc), "wlc%d_", i);
+#endif
+				extern char * conv_iwconfig_essid(char *ssid_in, char *ssid_out);
+				if (conv_iwconfig_essid(nvram_pf_get(prefix_wlc, "ssid"), tmp) != NULL) {
+					fprintf(fp, "iwconfig %s essid -- %s\n", sta, tmp);
+				}
+
+				fprintf(fp, "ifconfig %s up\n", sta);
+#if defined(RTCONFIG_AMAS)
+				fprintf(fp, "delay_exec 15 /usr/bin/wpa_cli -p /var/run/wpa_supplicant-%s -i %s enable_network all&\n", sta, sta);
+#endif
+
+#if defined(RTCONFIG_REPEATER_STAALLBAND)
+				if (wlc_triBand < WL_2G_BAND)
+					nvram_set_int("wlc_triBand", i);
+#endif
+
+#if defined(RTCONFIG_CONCURRENTREPEATER)
+				sprintf(prefix_wlc, "wlc%d_", i);
+				if (nvram_pf_match(prefix_wlc, "ssid", "")) {
+					char wpa_sup[sizeof("/var/run/wpa_supplicant-staXXXXXXX")];
+					sprintf(wpa_sup, "/var/run/wpa_supplicant-%s", sta);
+					fprintf(fp, "wpa_cli -p %s -i %s disconnect\n", wpa_sup, sta);
+				}
+#endif
+				fclose(fp);
+			}
+		}
+	}
+#endif	/* RTCONFIG_WIRELESSREPEATER */
+
+	argv[1]="4";
+	_eval(argv, NULL, 0, &pid);	//tmp/postwifi.sh
 
 #if defined(RTCONFIG_WIRELESSREPEATER)
 	if (repeater_mode() || mediabridge_mode())
@@ -2322,9 +2340,6 @@ void start_lan(void)
 				ifconfig(ifname, 0, NULL, NULL);
 #endif	/* RTCONFIG_DETWAN */
 
-#ifdef RTCONFIG_QCA
-				qca_wif_up(ifname);
-#endif
 #ifdef RTCONFIG_RALINK
 				gen_ra_config(ifname);
 #endif
@@ -2426,6 +2441,10 @@ void start_lan(void)
 				     || !strncmp(ifname, WIF_5G, strlen(WIF_5G))
 				     || !strncmp(ifname, WIF_5G2, strlen(WIF_5G2))
 				     || !strncmp(ifname, WIF_60G, strlen(WIF_60G))
+				     || !strncmp(ifname, STA_2G, strlen(STA_2G))	//sta interface
+				     || !strncmp(ifname, STA_5G, strlen(STA_5G))
+				     || !strncmp(ifname, STA_5G2, strlen(STA_5G2))
+				     || !strncmp(ifname, STA_60G, strlen(STA_60G))
 				    ))
 				{
 					/* Don't up VAP interface here. */
@@ -2529,6 +2548,18 @@ void start_lan(void)
 						ioctl(sfd, SIOCSIFHWADDR, &ifr);
 					}
 
+#ifdef RTCONFIG_EMF
+					if ((nvram_get_int("emf_enable")
+#if defined(RTCONFIG_BCMWL6) && !defined(HND_ROUTER)
+						|| wl_igs_enabled()
+#endif
+					) && !strcmp(ifname, "dpsta")) {
+						eval("emf", "add", "iface", lan_ifname, ifname);
+						eval("emf", "add", "uffp", lan_ifname, ifname);
+						eval("emf", "add", "rtport", lan_ifname, ifname);
+					}
+#endif
+
 					if (dpsta)
 						add_to_list(ifname, list, sizeof(list));
 				}
@@ -2624,7 +2655,11 @@ gmac3_no_swbr:
 #ifdef HND_ROUTER
 						if (!strstr(bonding_ifnames, ifname))
 #endif
-						eval("emf", "add", "iface", lan_ifname, ifname);
+						{
+							eval("emf", "add", "iface", lan_ifname, ifname);
+							eval("emf", "add", "uffp", lan_ifname, ifname);
+							eval("emf", "add", "rtport", lan_ifname, ifname);
+						}
 					}
 #endif
 				}
@@ -3188,7 +3223,11 @@ gmac3_no_swbr:
 					|| wl_igs_enabled()
 #endif
 				)
+				{
 					eval("emf", "del", "iface", lan_ifname, ifname);
+					eval("emf", "del", "uffp", lan_ifname, ifname);
+					eval("emf", "del", "rtport", lan_ifname, ifname);
+				}
 #endif
 #if defined (RTCONFIG_WLMODULE_RT3352_INIC_MII)
 				{ // remove interface for iNIC packets
@@ -3322,14 +3361,14 @@ void hotplug_net(void)
 	char lan_ifname[16];
 	char *interface, *action;
 	bool psta_if, dyn_if, add_event, remove_event;
-	int unit = WAN_UNIT_NONE;
-	char tmp[100], prefix[32];
 #ifdef RTCONFIG_USB_MODEM
 	char device_path[128], usb_path[PATH_MAX], usb_node[32], port_path[8];
 	char nvram_name[32];
 	char word[PATH_MAX], *next;
 	char modem_type[8];
+	int unit = WAN_UNIT_NONE;
 	int modem_unit;
+	char tmp[100], prefix[32];
 	char tmp2[100], prefix2[32];
 	unsigned int vid, pid;
 	char buf[32];
@@ -3490,10 +3529,13 @@ void hotplug_net(void)
 NEITHER_WDS_OR_PSTA:
 	/* PPP interface removed */
 	if (strncmp(interface, "ppp", 3) == 0 && remove_event) {
+		_dprintf("hotplug net: remove net %s.\n", interface);
+		/* do not clear interface too early
 		while ((unit = ppp_ifunit(interface)) >= 0) {
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			nvram_set(strcat_r(prefix, "pppoe_ifname", tmp), "");
 		}
+		*/
 	}
 #ifdef RTCONFIG_USB_MODEM
 	// Android phone, RNDIS interface, NCM, qmi_wwan.
@@ -3749,9 +3791,15 @@ NEITHER_WDS_OR_PSTA:
 #endif
 
 #elif defined(RTCONFIG_QCA)
+#if defined(RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2) || defined(RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2) || !defined(RTCONFIG_QCN550X)
 		/* All models use eth0/eth1 as LAN or WAN. */
 		if (!strncmp(interface, "eth0", 4) || !strncmp(interface, "eth1", 4))
 			return;
+#else
+		/* RT-AC59U family */
+		if (!strncmp(interface, "eth0", 4))
+			return;
+#endif
 #if defined(RTCONFIG_SWITCH_RTL8370M_PHY_QCA8033_X2) || defined(RTCONFIG_SWITCH_RTL8370MB_PHY_QCA8033_X2)
 		/* BRT-AC828 SR1~SR3: eth2/eth3 are WAN1/WAN2.
 		 * BRT-AC828 SR4+   : eth2/eth3 are LAN2/WAN2.
@@ -3759,14 +3807,15 @@ NEITHER_WDS_OR_PSTA:
 		if (!strncmp(interface, "eth2", 4) || !strncmp(interface, "eth3", 4))
 			return;
 #endif
+
 #elif defined(RTCONFIG_REALTEK)
 		TRACE_PT("do nothing in hotplug net\n");
+#elif defined(RTCONFIG_LANTIQ)
+		TRACE_PT("do nothing in hotplug net\n");
 #else
-#ifndef RTCONFIG_LANTIQ
 		// for all models, ethernet's physical interface.
 		if(!strcmp(interface, "eth0"))
 			return;
-#endif
 #endif
 
 		// Not wired ethernet.
@@ -4679,6 +4728,7 @@ void stop_lan_wl(void)
 #ifdef RTCONFIG_BLINK_LED
 			disable_wifi_bled(ifname);
 #endif
+			if (!is_intf_up(ifname)) continue;
 #ifdef CONFIG_BCMWL5
 #ifdef RTCONFIG_QTN
 			if (!strcmp(ifname, "wifi0")) continue;
@@ -4694,6 +4744,7 @@ void stop_lan_wl(void)
 				foreach(dp_uif, nvram_safe_get("dpsta_ifnames"),
 					dpnext) {
 					eval("wlconf", dp_uif, "down");
+					eval("brctl", "delif", lan_ifname, dp_uif);
 					ifconfig(dp_uif, 0, NULL, NULL);
 				}
 			}
@@ -4706,8 +4757,10 @@ void stop_lan_wl(void)
 			else if (wl_ioctl(ifname, WLC_GET_INSTANCE, &unit, sizeof(unit)))
 				continue;
 
-			eval("wlconf", ifname, "down");
-			eval("wl", "-i", ifname, "radio", "off");
+			if (strncmp(ifname, "wl", 2) == 0)
+				eval("wl", "-i", ifname, "maxassoc", "0");
+			else
+				eval("wlconf", ifname, "down");
 #elif defined RTCONFIG_RALINK
 			if (!strncmp(ifname, "ra", 2)) {
 #if defined (RTCONFIG_WLMODULE_MT7615E_AP)
@@ -4745,12 +4798,6 @@ void stop_lan_wl(void)
 					nvram_set_int("wlc1_state", WLC_STATE_STOPPED);
 			}
 #endif
-#ifdef RTCONFIG_QSR10G
-			if(strcmp(ifname, "host0") != 0)
-				ifconfig(ifname, 0, NULL, NULL);
-#else
-			ifconfig(ifname, 0, NULL, NULL);
-#endif
 #ifdef RTCONFIG_GMAC3
 			if (nvram_match("gmac3_enable", "1") && find_in_list(nvram_get("fwd_wlandevs"), ifname))
 				goto gmac3_no_swbr;
@@ -4760,6 +4807,15 @@ void stop_lan_wl(void)
 #endif
 #ifdef RTCONFIG_GMAC3
 gmac3_no_swbr:
+#endif
+#ifdef RTCONFIG_QSR10G
+			if(strcmp(ifname, "host0") != 0)
+				ifconfig(ifname, 0, NULL, NULL);
+#else
+#ifdef RTCONFIG_DPSTA
+			if (strcmp(ifname, "dpsta"))
+#endif
+			ifconfig(ifname, 0, NULL, NULL);
 #endif
 #ifdef RTCONFIG_EMF
 			if (nvram_get_int("emf_enable")
@@ -4920,7 +4976,9 @@ void start_lan_wl(void)
 #ifdef CONFIG_BCMWL5
 	init_wl_compact();
 	wlconf_pre();
-
+#ifdef RTCONFIG_AMAS
+	del_beacon_vsie("");
+#endif
 #ifdef REMOVE
 	foreach_wif(1, NULL, set_wlmac);
 	check_afterburner();
@@ -5097,9 +5155,6 @@ void start_lan_wl(void)
 				ifconfig(ifname, 0, NULL, NULL);
 #endif	/* RTCONFIG_DETWAN */
 
-#ifdef RTCONFIG_QCA
-				qca_wif_up(ifname);
-#endif
 #ifdef RTCONFIG_RALINK
 				gen_ra_config(ifname);
 #endif
@@ -5193,6 +5248,10 @@ void start_lan_wl(void)
 				     || !strncmp(ifname, WIF_5G, strlen(WIF_5G))
 				     || !strncmp(ifname, WIF_5G2, strlen(WIF_5G2))
 				     || !strncmp(ifname, WIF_60G, strlen(WIF_60G))
+				     || !strncmp(ifname, STA_2G, strlen(STA_2G))	//sta interface
+				     || !strncmp(ifname, STA_5G, strlen(STA_5G))
+				     || !strncmp(ifname, STA_5G2, strlen(STA_5G2))
+				     || !strncmp(ifname, STA_60G, strlen(STA_60G))
 				    ))
 				{
 					/* Don't up VAP interface here. */
@@ -5289,6 +5348,18 @@ void start_lan_wl(void)
 						close(s);
 					}
 
+#ifdef RTCONFIG_EMF
+					if ((nvram_get_int("emf_enable")
+#if defined(RTCONFIG_BCMWL6) && !defined(HND_ROUTER)
+						|| wl_igs_enabled()
+#endif
+					) && !strcmp(ifname, "dpsta")) {
+						eval("emf", "add", "iface", lan_ifname, ifname);
+						eval("emf", "add", "uffp", lan_ifname, ifname);
+						eval("emf", "add", "rtport", lan_ifname, ifname);
+					}
+#endif
+
 					if (dpsta)
 						add_to_list(ifname, list2, sizeof(list2));
 				}
@@ -5368,7 +5439,11 @@ gmac3_no_swbr:
 #ifdef HND_ROUTER
 						if (!strstr(bonding_ifnames, ifname))
 #endif
-						eval("emf", "add", "iface", lan_ifname, ifname);
+						{
+							eval("emf", "add", "iface", lan_ifname, ifname);
+							eval("emf", "add", "uffp", lan_ifname, ifname);
+							eval("emf", "add", "rtport", lan_ifname, ifname);
+						}
 					}
 #endif
 				}
@@ -5671,6 +5746,11 @@ void lanaccess_wl(void)
 	int subunit;
 #endif
 
+#ifdef RTCONFIG_GN_WBL
+	/* this rule will flush ebtables broute table, so it must be the first function */
+	add_GN_WBL_EBTbrouteRule();
+#endif
+
 	snprintf(lan_subnet, sizeof(lan_subnet), "%s/%s", nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
 	strlcpy(lan_hwaddr, get_lan_hwaddr(), sizeof(lan_hwaddr));
 	if ((wl_ifnames = strdup(nvram_safe_get("lan_ifnames"))) != NULL) {
@@ -5834,6 +5914,10 @@ void restart_wireless(void)
 		stop_amas_wlcconnect();
 		stop_amas_bhctrl();
 	}
+#ifdef CONFIG_BCMWL5
+	else
+		nvram_set_int("obd_allow_scan", 0);
+#endif
 #endif
 #ifdef RTCONFIG_LANTIQ
 #ifdef LANTIQ_BSD

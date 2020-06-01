@@ -33,16 +33,20 @@
 
 				// setup systemVariables
 				setTimeout(function(){
-					var initNvram = httpApi.nvramGet(["wan0_proto", "wan0_dnsenable_x", "sw_mode", "wlc_psta", "wl_ifnames", "wl_version", "productid", "rc_support", "x_Setting", "preferred_lang", "territory_code", "reboot_time", "lan_ipaddr", "wlc_dpsta"]);
+					var initNvram = httpApi.nvramGet(["wan0_proto", "wan0_pppoe_username", "wan0_pppoe_passwd", "wan0_dnsenable_x", "sw_mode", "wlc_psta", "wl_ifnames", "wl_version", "productid", "rc_support", "x_Setting", "preferred_lang", "territory_code", "reboot_time", "lan_ipaddr", "wlc_dpsta"]);
 
 					systemVariable.historyPage = [];
 					systemVariable.originWanType = initNvram.wan0_proto;
+					if(systemVariable.originWanType == "pppoe" || systemVariable.originWanType == "pptp" || systemVariable.originWanType == "l2tp"){
+						systemVariable.originPppAccount.username = initNvram.wan0_pppoe_username;
+						systemVariable.originPppAccount.password = initNvram.wan0_pppoe_passwd;
+					}
 					systemVariable.wanDnsenable = initNvram.wan0_dnsenable_x;
 					systemVariable.originOpMode = (function(){
 						if(initNvram.sw_mode == "2" && (initNvram.wlc_psta == "0" || initNvram.wlc_psta == "") && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "RP";
 						else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "2" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "RP";
 						else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "2" && initNvram.wlc_dpsta == "1") return "RP";
-						else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "0" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "AP";
+						else if(initNvram.sw_mode == "3" && (initNvram.wlc_psta == "0" || initNvram.wlc_psta == "") && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "AP";
 						else if(initNvram.sw_mode == "2" && initNvram.wlc_psta == "1" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "MB";
 						else if(initNvram.sw_mode == "3" && initNvram.wlc_psta == "1" && (initNvram.wlc_dpsta == "0" || initNvram.wlc_dpsta == "")) return "MB";
 						else return "RT";
@@ -273,7 +277,7 @@
 								<div class="secureInput icon_eye_close" for="http_passwd http_passwd_confirm"></div>
 							</div>
 							<div class="inputContainer">
-								<input id="http_passwd" type="password" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="16" class="textInput" data-role="none" value="" data-clear-btn="true" />
+								<input id="http_passwd" type="password" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="17" class="textInput" data-role="none" value="" data-clear-btn="true" />
 							</div>
 						</div>
 						<div>
@@ -281,7 +285,7 @@
 								<div class="inputTitle"><#PASS_retype#></div>
 							</div>
 							<div class="inputContainer">
-								<input id="http_passwd_confirm" type="password" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="16" class="textInput" data-role="none" value="" data-clear-btn="true" />
+								<input id="http_passwd_confirm" type="password" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="17" class="textInput" data-role="none" value="" data-clear-btn="true" />
 							</div>
 						</div>
 						<!-- Action Button -->

@@ -113,6 +113,10 @@ apply.login = function(){
 			httpPassInput.showTextHint("<#JS_short_password#>");
 			return false;
 		}
+		else if(httpPassInput.val().length > 16){
+			httpPassInput.showTextHint("<#JS_max_password#>");
+			return false;
+		}
 
 		var isValidChar = validator.invalidChar(httpPassInput.val())
 		if(isValidChar.isError){
@@ -626,7 +630,7 @@ apply.yadnsDisable = function(){
 apply.yadnsSetting = function(){
 	httpApi.nvramSet((function(){
 		qisPostData.action_mode = "apply";
-		qisPostData.rc_service = "restart_yadns";
+		qisPostData.rc_service = getRestartService();
 		return qisPostData;
 	})(), (systemVariable.isNewFw == 0) ? goTo.Finish : goTo.Update);
 };
@@ -812,20 +816,8 @@ abort.wanType = function(){
 	}
 	else if(systemVariable.detwanResult.wanType == "CHECKING"){
 		systemVariable.manualWanSetup = false;
-
-		setTimeout(function(){
-			if(!isPage("waiting_page")) return false;
-
-			if(systemVariable.detwanResult.wanType == "" || systemVariable.detwanResult.wanType == "CHECKING"){
-				systemVariable.detwanResult = httpApi.detwanGetRet();
-				if(isPage("waiting_page")) setTimeout(arguments.callee, 1000);
-				return false;
-			}
-
-			if(!systemVariable.manualWanSetup) goTo.autoWan();	
-		}, 1000);
-
-		goTo.loadPage("waiting_page", true);	
+		goTo.loadPage("waiting_page", true);
+		goTo.Waiting();
 	}
 	else{
 		if(!systemVariable.forceChangePw)

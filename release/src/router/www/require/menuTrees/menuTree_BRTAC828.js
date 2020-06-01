@@ -240,6 +240,7 @@ define(function(){
 					{url: "Advanced_SettingBackup_Content.asp", tabName: "<#menu5_6_4#>"},
 					{url: "Advanced_ADSL_Content.asp", tabName: "<#menu_dsl_setting#>"},
 					{url: "Advanced_Feedback.asp", tabName: "<#menu_feedback#>"},
+					{url: "Feedback_Info.asp", tabName: "__INHERIT__"},
 					{url: "Advanced_SNMP_Content.asp", tabName: "SNMP"},
 					{url: "Advanced_TR069_Content.asp", tabName: "TR-069"},
 					{url: "Advanced_Notification_Content.asp", tabName: "Notification"},
@@ -331,7 +332,7 @@ define(function(){
 					retArray.push("menu_VLAN");
 					retArray.push("menu_Firewall");
 
-					if(userRSSI_support){
+					if(!userRSSI_support){
 						retArray.push("menu_Wireless");
 					}
 
@@ -423,8 +424,9 @@ define(function(){
 					retArray.push("YandexDNS.asp");
 				}
 
-				if(!feedback_support) {		
+				if(!frs_feedback_support) {		
 					retArray.push("Advanced_Feedback.asp");
+					retArray.push("Feedback_Info.asp");
 				}
 
 				if(noftp_support){

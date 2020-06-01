@@ -85,7 +85,7 @@ function init(){
 		}
 	}
 
-	setTimeout(show_warning_message, 100);
+	setTimeout(show_warning_message, 1000);
 
 	ASUS_EULA.config(applyRule, refreshpage);
 	if(ddns_enable_x == "1" && ddns_server_x == "WWW.ASUS.COM"){
@@ -148,11 +148,11 @@ function get_real_ip(){
 
 function submitForm(){
 	if(letsencrypt_support){
-		if(document.form.ddns_enable_x.value == "1" && document.form.le_enable.value == "1"){
+		if($("input[name='ddns_enable_x']:checked").val() == "1" && $("input[name='le_enable']:checked").val() == "1"){
 			document.form.action_wait.value = "10";
 			document.form.action_script.value = "restart_ddns_le";
 		}
-		else if(http_enable != "0" && document.form.le_enable.value != orig_le_enable){
+		else if(http_enable != "0" && $("input[name='le_enable']:checked").val() != orig_le_enable){
 			document.form.action_wait.value = "10";
 			if(orig_le_enable == "1")
 				document.form.action_script.value = "restart_httpd;restart_webdav;restart_ddns_le";
@@ -250,8 +250,11 @@ function ddns_load_body(){
 	{
 		var ddnsHint = getDDNSState(ddns_return_code, ddns_hostname_x_t, ddns_old_name);
 
-		if(ddnsHint != "")
+		if(ddnsHint != ""){
 			alert(ddnsHint);
+			document.getElementById("ddns_result").innerHTML = ddnsHint;
+			document.getElementById('ddns_result_tr').style.display = "";
+		}
 		if(ddns_return_code.indexOf('200')!=-1 || ddns_return_code.indexOf('220')!=-1 || ddns_return_code == 'register,230'){
 			showhide("wan_ip_hide2", 0);
 			if(ddns_server_x == "WWW.ASUS.COM"){
@@ -330,7 +333,7 @@ function validForm(){
 			}else if(!validator.string(document.form.ddns_hostname_x)){
 				return false;
 			}
-			
+			if(document.form.ddns_server_x.value != "CUSTOM"){             // Not CUSTOM
 			if(document.form.ddns_username_x.value == ""){
 				alert("<#QKSet_account_nameblank#>");
 				document.form.ddns_username_x.focus();
@@ -347,6 +350,7 @@ function validForm(){
 				return false;
 			}else if(!validator.string(document.form.ddns_passwd_x)){
 				return false;
+			}
 			}
 			
 			if(document.form.ddns_regular_period.value < 30){
@@ -524,19 +528,24 @@ function hide_upload_window(){
 
 function show_cert_details(){
 	if(httpd_cert_info.issueTo != "" && httpd_cert_info.issueBy != "" && httpd_cert_info.expire != ""){
-		if(orig_le_enable == "1" && le_state == "0" && httpd_cert_info.issueBy.indexOf("Let's Encrypt") == -1){
-			document.getElementById("cert_status").innerHTML = "<#upgrade_processing#>";
+		if(orig_le_enable == "1" && le_state == "0"){
+			if(httpd_cert_info.issueBy.indexOf("Let's Encrypt") == -1)
+				document.getElementById("cert_status").innerHTML = "<#vpn_openvpn_KC_Authorizing#>";
+			else
+				document.getElementById("cert_status").innerHTML = "<#upgrade_processing#>";
+			setTimeout("get_cert_info();", 1000);
 		}
-		else
-			document.getElementById("cert_status").innerHTML = "<#CTL_ok#>";
+		else{
+			document.getElementById("cert_status").innerHTML = "<#Status_Active#>";
+			document.getElementById("issueTo").innerHTML = httpd_cert_info.issueTo;
+			document.getElementById("issueBy").innerHTML = httpd_cert_info.issueBy;
+			document.getElementById("expireOn").innerHTML = httpd_cert_info.expire;
+		}
 	}
 	else{
 		document.getElementById("cert_status").innerHTML = "Authorizing";
 		setTimeout("get_cert_info();", 1000);
 	}
-	document.getElementById("issueTo").innerHTML = httpd_cert_info.issueTo;
-	document.getElementById("issueBy").innerHTML = httpd_cert_info.issueBy;
-	document.getElementById("expireOn").innerHTML = httpd_cert_info.expire;
 }
 
 function check_filename(){
@@ -716,6 +725,10 @@ function save_cert_key(){
 					<input type="hidden" maxlength="15" class="button_gen" size="12" name="" value="<% nvram_get("DDNSStatus"); %>">
 				  	<input type="submit" maxlength="15" class="button_gen" onclick="showLoading();return onSubmitApply('ddnsclient');" size="12" name="LANHostConfig_x_DDNSStatus_button" value="<#LANHostConfig_x_DDNSStatus_buttonname#>" /></td>
 			</tr>
+			<tr id="ddns_result_tr" style="display:none;">
+				<th>DDNS Registration Result</th>
+				<td id="ddns_result"></td>
+			</tr>
 			<tr id="https_cert" style="display:none;">
 				<th><#DDNS_https_cert#></th>
 				<td>
@@ -807,3 +820,4 @@ function save_cert_key(){
 </form>
 </body>
 </html>
+

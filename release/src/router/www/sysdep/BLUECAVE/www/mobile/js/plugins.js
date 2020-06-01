@@ -513,8 +513,8 @@ function handleModelIcon() {
 		else if(odmpid.length > 0 && odmpid != based_modelid) {
 			if(odmpid == "RT-AC66U_B1" || odmpid == "RT-AC1750_B1" || odmpid == "RT-N66U_C1" || odmpid == "RT-AC1900U" || odmpid == "RT-AC67U")
 				MP_png_path = "/images/RT-AC66U_V2/Model_product.png";
-			else if(odmpid == "RP-AC1900")
-				MP_png_path = "/images/RP-AC1900/Model_product.png";
+			else
+				MP_png_path = "/images/"+ odmpid +"/Model_product.png";
 
 			if(MP_png_path == "")
 				return default_png_path;
@@ -788,6 +788,14 @@ var isWANChanged = function(){
 		if(qisPostData.wan_dnsenable_x != systemVariable.wanDnsenable) isChanged = true;
 	}
 
+	if(qisPostData.hasOwnProperty("wan_pppoe_username")){
+		if(qisPostData.wan_pppoe_username != systemVariable.originPppAccount.username) isChanged = true;
+	}
+
+	if(qisPostData.hasOwnProperty("wan_pppoe_passwd")){
+		if(qisPostData.wan_pppoe_passwd != systemVariable.originPppAccount.password) isChanged = true;
+	}
+
 	return isChanged;
 };
 
@@ -935,16 +943,17 @@ function startLiveUpdate(){
 		setTimeout(arguments.callee, 1000);
 	}
 	else{
-		httpApi.nvramSet({"action_mode":"apply", "rc_service":"start_webs_update"}, function(){
+		httpApi.nvramSet({"action_mode":"apply", "webs_update_trigger":"QIS", "rc_service":"start_webs_update"}, function(){
 			setTimeout(function(){
 				var fwInfo = httpApi.nvramGet(["webs_state_update", "webs_state_info", "webs_state_flag"], true);
+				
+				if(fwInfo.webs_state_flag == "1" || fwInfo.webs_state_flag == "2"){
+					systemVariable.isNewFw = fwInfo.webs_state_flag;
+					systemVariable.newFwVersion = fwInfo.webs_state_info;
+				}
 
 				if(fwInfo.webs_state_update == "0" || fwInfo.webs_state_update == ""){
 					setTimeout(arguments.callee, 1000);
-				}
-				else if(fwInfo.webs_state_info !== ""){
-					systemVariable.isNewFw = fwInfo.webs_state_flag;
-					systemVariable.newFwVersion = fwInfo.webs_state_info;
 				}
 			}, 1000);
 		});

@@ -76,6 +76,22 @@
 #define SHELL "/bin/sh"
 #define LOGIN "/bin/login"
 
+#if defined(K3)
+#include "k3.h"
+#elif defined(XWR3100)
+#include "xwr3100.h"
+#elif defined(K3C)
+#include "k3c.h"
+#elif defined(SBRAC1900P)
+#include "ac1900p.h"
+#elif defined(SBRAC3200P)
+#include "ac3200p.h"
+#elif defined(R8000P)
+#include "r7900p.h"
+#else
+#include "merlinr.h"
+#endif
+
 static int fatalsigs[] = {
 	SIGILL,
 	SIGABRT,
@@ -108,9 +124,9 @@ static char *defenv[] = {
 #endif
 #ifdef HND_ROUTER
 	"LD_LIBRARY_PATH=/lib:/usr/lib:/lib/aarch64",
-#ifdef RTCONFIG_HNDMFG
-	"PS1=# ",
 #endif
+#ifdef RTCONFIG_BCM_MFG
+	"PS1=# ",
 #endif
 #ifdef RTCONFIG_LANTIQ
 	"LD_LIBRARY_PATH=/lib:/usr/lib:/opt/lantiq/usr/lib:/opt/lantiq/usr/sbin/:/tmp/wireless/lantiq/usr/lib/",
@@ -150,7 +166,7 @@ static char *defenv[] = {
  */
 	"DMALLOC_OPTIONS=debug=0x3,inter=100,log=/jffs/dmalloc_%d.log",
 #endif
-#if defined(HND_ROUTER) && !defined(RTCONFIG_HNDMFG)
+#if defined(HND_ROUTER) && !defined(RTCONFIG_BCM_MFG)
 	"ENV=/etc/profile",
 #endif
 	NULL
@@ -220,7 +236,6 @@ virtual_radio_restore_defaults(void)
 		nvram_unset(strcat_r(prefix, "nas_dbg", tmp));
 #ifdef RTCONFIG_PSR_GUEST
 		nvram_unset(strcat_r(prefix, "psr_mbss", tmp));
-		nvram_unset(strcat_r(prefix, "mbss_rmac", tmp));
 #endif
 		sprintf(prefix, "lan%d_", i);
 		nvram_unset(strcat_r(prefix, "ifname", tmp));
@@ -275,9 +290,6 @@ virtual_radio_restore_defaults(void)
 			nvram_unset(strcat_r(prefix, "key4", tmp));
 			nvram_unset(strcat_r(prefix, "wpa_gtk_rekey", tmp));
 			nvram_unset(strcat_r(prefix, "nas_dbg", tmp));
-#ifdef RTCONFIG_PSR_GUEST
-			nvram_unset(strcat_r(prefix, "mbss_rmac", tmp));
-#endif
 			nvram_unset(strcat_r(prefix, "probresp_mf", tmp));
 
 			nvram_unset(strcat_r(prefix, "bss_opmode_cap_reqd", tmp));
@@ -361,7 +373,7 @@ misc_ioctrl(void)
 			setLANLedOn();
 #endif
 
-#if defined(HND_ROUTER) && defined(RTCONFIG_HNDMFG)
+#if (defined(HND_ROUTER) && defined(RTCONFIG_BCM_MFG))
 			led_control(LED_WAN_NORMAL, LED_ON);
 			return;
 #endif
@@ -495,7 +507,7 @@ wl_defaults(void)
 				}
 #else
 				nvram_set(tmp, t->value);
-#endif		
+#endif
 	}
 		}
 
@@ -606,6 +618,15 @@ wl_defaults(void)
 				nvram_set(strcat_r(prefix, "bw_dl", tmp), "");
 				nvram_set(strcat_r(prefix, "bw_ul", tmp), "");
 			}
+
+#ifdef RTCONFIG_GN_WBL
+			if (!nvram_get(strcat_r(prefix, "gn_wbl_enable", tmp)))
+			{
+				nvram_set(strcat_r(prefix, "gn_wbl_enable", tmp), "0");
+				nvram_set(strcat_r(prefix, "gn_wbl_type", tmp), "1");
+				nvram_set(strcat_r(prefix, "gn_wbl_rule", tmp), "");
+			}
+#endif
 
 			if (!nvram_get(strcat_r(prefix, "ssid", tmp))) {
 				pssid = nvram_default_get(strcat_r(pprefix, "ssid", tmp));
@@ -946,7 +967,7 @@ void
 tagged_vlan_defaults(void)
 {
 	char *buf, *g, *p;
-	char *mac, *ip, *gateway, *lan_ipaddr;
+	char *mac, *ip, *gateway, *lan_ipaddr, *dns;
 	char dhcp_staticlist[sizeof(DHCP_STATICLIST_EXAMPLE) * STATIC_MAC_IP_BINDING_PER_LAN + 8];			/* 2240 + 8 */
 	char subnet_rulelist[(sizeof(SUBNET_RULE_EXAMPLE) + sizeof(SUBNET_STATICLIST_EXAMPLE) * STATIC_MAC_IP_BINDING_PER_VLAN) * (VLAN_MAX_NUM - 1) + sizeof(dhcp_staticlist)];	/* 2954 + 2240 + 8 */
 	char subnet_rulelist_ext_default[24]={0};
@@ -958,15 +979,15 @@ tagged_vlan_defaults(void)
 	nvram_set("vlan_if_list","00>00FF>007F>007F");
 	nvram_set("vlan_pvid_list","1>1>1>1>1>1>1>1");
 
-	g = buf = strdup(nvram_default_get("dhcp_staticlist")? : "");
-	while (buf) {
-		if ((p = strsep(&g, "<")) == NULL) break;
-		if((vstrsep(p, ">", &mac, &ip)) != 2) continue;
-		if(strlen(dhcp_staticlist) != 0)
-			strcat(dhcp_staticlist, ";");
-		strcat(dhcp_staticlist, mac);
-		strcat(dhcp_staticlist, " ");
-		strcat(dhcp_staticlist, ip);
+	g = buf = strdup(nvram_default_get("dhcp_staticlist") ? : "");
+	while (buf && (p = strsep(&g, "<")) != NULL) {
+		if ((vstrsep(p, ">", &mac, &ip, &dns)) < 2)
+			continue;
+		if (*dhcp_staticlist)
+			strlcat(dhcp_staticlist, ";", sizeof(dhcp_staticlist));
+		strlcat(dhcp_staticlist, mac, sizeof(dhcp_staticlist));
+		strlcat(dhcp_staticlist, " ", sizeof(dhcp_staticlist));
+		strlcat(dhcp_staticlist, ip, sizeof(dhcp_staticlist));
 	}
 	free(buf);
 
@@ -1090,10 +1111,10 @@ void usbctrl_default()
 
 		http_passwd = nvram_safe_get("http_passwd");
 #ifdef RTCONFIG_NVRAM_ENCRYPT
-		int declen = pw_dec_len(http_passwd);
+		int declen = strlen(http_passwd);
 		char dec_passwd[declen];
 		memset(dec_passwd, 0, sizeof(dec_passwd));
-		pw_dec(http_passwd, dec_passwd);
+		pw_dec(http_passwd, dec_passwd, sizeof(dec_passwd));
 
 		char_to_ascii_safe(ascii_passwd, dec_passwd, 84);
 
@@ -1556,7 +1577,7 @@ misc_defaults(int restore_defaults)
 		case MODEL_BRTAC828:
 		case MODEL_RTAC88S:
 		case MODEL_RTAD7200:
-			nvram_set("reboot_time", "100");	// default is 70 sec
+			nvram_set("reboot_time", "110");	// default is 70 sec
 #if defined(RTCONFIG_LETSENCRYPT)
 			if (nvram_match("le_acme_auth", "dns"))
 				nvram_set("le_acme_auth", "http");
@@ -1630,11 +1651,6 @@ misc_defaults(int restore_defaults)
 	nvram_set("svc_ready", "0");
 #ifdef RTCONFIG_QTN
 	nvram_unset("qtn_ready");
-#endif
-	nvram_set("mfp_ip_requeue", "");
-#if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
-	nvram_set_int("auto_upgrade", 0);
-	nvram_unset("fw_check_period");
 #endif
 #ifdef RTAC68U
 	nvram_unset("fw_enc_crc");
@@ -1727,6 +1743,7 @@ misc_defaults(int restore_defaults)
 	nvram_set("aae_support", "1");
 #define AAE_ENABLE_AIHOME 2
 #define AAE_EANBLE_AICLOUD 4
+	nvram_set("aae_enable", "0");
 #ifdef RTCONFIG_AIHOME_TUNNEL
 	nvram_set_int("aae_enable", (nvram_get_int("aae_enable") | AAE_ENABLE_AIHOME));
 #endif
@@ -1750,10 +1767,10 @@ misc_defaults(int restore_defaults)
 #ifdef RTCONFIG_AMAS
 	nvram_unset("amesh_found_cap");
 	nvram_unset("amesh_led");
-#ifdef RTCONFIG_LANTIQ
-	nvram_unset("amesh_hexdata");
+#ifdef CONFIG_BCMWL5
+	nvram_unset("obd_allow_scan");
+	nvram_unset("obd_scan_state");
 #endif
-
 #ifdef RTCONFIG_ADV_RAST
 	nvram_unset("diag_chk_cap");
 	nvram_unset("diag_chk_re1");
@@ -1976,8 +1993,8 @@ restore_defaults(void)
 
 	misc_defaults(restore_defaults);
 
-#if defined(HND_ROUTER) && defined(RTCONFIG_HNDMFG)
-	hnd_mfg_init();
+#ifdef RTCONFIG_BCM_MFG
+	brcm_mfg_init();
 #endif
 }
 
@@ -1991,7 +2008,7 @@ static void set_term(int fd)
 	/* set control chars */
 	tty.c_cc[VINTR]  = 3;	/* C-c */
 	tty.c_cc[VQUIT]  = 28;	/* C-\ */
-	tty.c_cc[VERASE] = 127; /* C-? */
+	tty.c_cc[VERASE] = 8; /* C-H */
 	tty.c_cc[VKILL]  = 21;	/* C-u */
 	tty.c_cc[VEOF]   = 4;	/* C-d */
 	tty.c_cc[VSTART] = 17;	/* C-q */
@@ -2052,10 +2069,9 @@ static int console_init(void)
 
 static pid_t run_shell(int timeout, int nowait)
 {
-#ifdef LOGIN
+	char *argv_shell[] = { SHELL, NULL };
 	char *argv_login[] = { LOGIN, "-p", NULL };
-#endif
-	char *argv[] = { SHELL, NULL };
+	char **argv = argv_shell;
 	pid_t pid;
 	int sig;
 
@@ -2063,17 +2079,16 @@ static pid_t run_shell(int timeout, int nowait)
 	if (waitfor(STDIN_FILENO, timeout) <= 0)
 		return 0;
 
-#ifdef LOGIN
 #ifdef CONFIG_BCMWL5
-	if (!ATE_BRCM_FACTORY_MODE()
+	if (!ATE_BRCM_FACTORY_MODE())
 #else
-	if (!IS_ATE_FACTORY_MODE()
+	if (!IS_ATE_FACTORY_MODE())
 #endif
-		&& !(check_if_file_exist("/etc/shadow"))) {
-		void setup_passwd(void);
-		setup_passwd();
+	{
+		if (!check_if_file_exist("/etc/shadow"))
+			setup_passwd();
+		argv = argv_login;
 	}
-#endif	/* LOGIN */
 
 	switch (pid = fork()) {
 	case -1:
@@ -2089,32 +2104,10 @@ static pid_t run_shell(int timeout, int nowait)
 
 		/* Now run it.  The new program will take over this PID,
 		 * so nothing further in init.c should be run. */
-#ifdef LOGIN
-#ifdef CONFIG_BCMWL5
-		if (ATE_BRCM_FACTORY_MODE())
-#else
-		if (IS_ATE_FACTORY_MODE())
-#endif
-			execve(argv[0], argv, defenv);
-		else
-			execve(argv_login[0], argv_login, defenv);
-#else
 		execve(argv[0], argv, defenv);
-#endif
 
 		/* We're still here?  Some error happened. */
-#ifdef LOGIN
-#ifdef CONFIG_BCMWL5
-		if (ATE_BRCM_FACTORY_MODE())
-#else
-		if (IS_ATE_FACTORY_MODE())
-#endif
-			perror(argv[0]);
-		else
-			perror(argv_login[0]);
-#else
 		perror(argv[0]);
-#endif
 		_exit(errno);
 	default:
 		if (!nowait) {
@@ -2972,6 +2965,9 @@ int init_nvram(void)
 	nvram_unset("led_ctl_sig3_gpio");
 	nvram_unset("led_idr_sig1_gpio");
 	nvram_unset("led_idr_sig2_gpio");
+#ifdef K3C
+	nvram_unset("led_idr_sig3_gpio");
+#endif
 #endif
 	/* In the order of physical placement */
 	nvram_set("ehci_ports", "");
@@ -3824,7 +3820,7 @@ int init_nvram(void)
 		break;
 #endif	/* RT-N800HP */
 
-#if defined(RTAC85U) 
+#if defined(RTAC85U)
 	case MODEL_RTAC85U:
 		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
 		nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
@@ -3882,7 +3878,7 @@ int init_nvram(void)
 		break;
 #endif /*  RTAC85U  */
 
-#if defined(RTAC85P) 
+#if defined(RTAC85P)
 	case MODEL_RTAC85P:
 		nvram_set("boardflags", "0x100"); // although it is not used in ralink driver, set for vlan
 		nvram_set("vlan1hwname", "et0");  // vlan. used to get "%smacaddr" for compare and find parent interface.
@@ -4313,8 +4309,14 @@ int init_nvram(void)
 						__func__, __LINE__,
 						sw_mode(),SW_MODE_REPEATER,SW_MODE_AP);
 			nvram_set("eth_ifnames", "eth0");
-			nvram_set("sta_phy_ifnames", "sta0 sta1");
-			nvram_set("sta_ifnames", "sta0 sta1");
+			nvram_set("sta_phy_ifnames", "sta0 sta1 sta2");
+			nvram_set("sta_ifnames", "sta0 sta2 sta1");		//set all sta interfaces
+	       		
+			if(strlen(nvram_safe_get("sta_priority")) == 15)
+	               		nvram_set("sta_priority", "2 0 2 1 5 1 3 0 5 2 1 1");
+
+			if(nvram_get("skip_ifnames") == NULL)
+				nvram_set("skip_ifnames", "sta2");		//not to create this interface
 			nvram_unset("dfschinfo");
 		}
 #endif
@@ -4453,6 +4455,8 @@ int init_nvram(void)
 		add_rc_support("11AC");
 		add_rc_support("manual_stb");
 		add_rc_support("switchctrl");
+		if (nvram_match("odmpid", "RP-AC67"))
+			add_rc_support("psta");
 
 		// the following values is model dep. so move it from default.c to here
 		nvram_set("wl0_HT_TxStream", "3");
@@ -6663,6 +6667,9 @@ int init_nvram(void)
 			nvram_set("dsl8_vid", "0");
 		}
 
+#if defined(RTCONFIG_AMAS) || defined(RTCONFIG_CFGSYNC)
+		nvram_set("wired_ifnames", "vlan1");
+#endif
 		break;
 #endif
 
@@ -8288,7 +8295,6 @@ int init_nvram(void)
 #ifdef BLUECAVE
 	case MODEL_BLUECAVE:
 		_dprintf("BLUECAVE: todo, init_nvram()\n");
-		merlinr_init();
 		nvram_set("wave_action", "0");
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "eth0_1 eth0_2 eth0_3 eth0_4");
@@ -8367,6 +8373,15 @@ int init_nvram(void)
 		nvram_set_int("led_wps_gpio", 6|GPIO_ACTIVE_LOW);
 #endif
 
+if defined(K3C)
+		nvram_set_int("led_idr_sig3_gpio", 36|GPIO_ACTIVE_LOW);	// YELLOW
+		nvram_set_int("led_idr_sig1_gpio", 34);	// RED
+		nvram_set_int("led_idr_sig2_gpio", 35|GPIO_ACTIVE_LOW);	// BLUE
+		nvram_set_int("btn_wps_gpio", 30);
+		k3c_init();//Detect partition integrity, log and alert when corruption is found
+		k3c_init_led();
+		led_control(LED_INDICATOR_SIG3, LED_ON);//yellow
+#else
 		nvram_set_int("led_ctl_sig1_gpio", 42);	// Level 1
 		nvram_set_int("led_ctl_sig2_gpio", 8);	// Level 2
 		nvram_set_int("led_ctl_sig3_gpio", 1);	// Level 3
@@ -8375,6 +8390,8 @@ int init_nvram(void)
 		nvram_set_int("led_idr_sig2_gpio", 6);	// BLUE
 
 		nvram_set_int("btn_wps_gpio", 30|GPIO_ACTIVE_LOW);
+		merlinr_init();
+#endif
 		nvram_set_int("btn_rst_gpio", 0|GPIO_ACTIVE_LOW);
 
 		if(nvram_get_int("usb_usb3") == 1)
@@ -8849,12 +8866,15 @@ NO_USB_CAP:
 #endif
 #endif // RTCONFIG_USB
 
-#ifdef RTCONFIG_PUSH_EMAIL
-	add_rc_support("feedback");
-	add_rc_support("email");
+#ifdef RTCONFIG_FRS_FEEDBACK
+	add_rc_support("frs_feedback");
 #ifdef RTCONFIG_DBLOG
 	add_rc_support("dblog");
 #endif /* RTCONFIG_DBLOG */
+#endif
+
+#ifdef RTCONFIG_PUSH_EMAIL
+	add_rc_support("email");
 #endif
 
 #ifdef RTCONFIG_ISP_METER
@@ -8897,6 +8917,9 @@ NO_USB_CAP:
 		else
 			nvram_set("wrs_protect_enable", "0");
 	}
+
+	// wrs - white and black list
+	add_rc_support("wrs_wbl");
 #endif
 
 #ifdef RTCONFIG_TRAFFIC_LIMITER
@@ -9117,9 +9140,11 @@ NO_USB_CAP:
 #endif
 
 #ifdef RTCONFIG_AMAS
+#if !defined(MERLINR_VER_MAJOR_B)
 	add_rc_support("amas");
 	if (nvram_get_int("amas_bdl"))
 	add_rc_support("amas_bdl");
+#endif
 #endif
 
 #ifdef RTCONFIG_WIFI_PROXY
@@ -9148,6 +9173,10 @@ NO_USB_CAP:
 	config_tcode(2);
 #endif
 
+#if defined(RTCONFIG_HND_ROUTER)
+	add_rc_support("bcmhnd");
+#endif
+
 #ifdef RTCONFIG_CONNDIAG
 	add_rc_support("conndiag");
 #endif
@@ -9160,6 +9189,13 @@ NO_USB_CAP:
 
 #ifdef RTCONFIG_QCA
 	add_rc_support("qca");
+#endif
+
+#ifdef RTCONFIG_GN_WBL
+	add_rc_support("gn_wbl");
+#ifdef RTCONFIG_AMAZON_WSS
+	add_rc_support("amazon_wss"); // depends on gn_wbl
+#endif
 #endif
 
 	return 0;
@@ -9287,6 +9323,10 @@ int init_nvram2(void)
 	if (nvram_get_int("re_mode") == 1) {
 		nvram_set_int("cfg_rejoin", 1);
 		nvram_set_int("amas_path_stat", -1);
+
+		nvram_unset("cfg_first_sync");
+		if (strlen(nvram_safe_get("cfg_group")) == 0)
+			nvram_set("cfg_first_sync", "1");
 	}
 #endif /* AMAS */
 #ifdef RTCONFIG_QCA
@@ -9308,7 +9348,23 @@ int init_nvram2(void)
 #ifdef RTCONFIG_DWB
 	dwb_init_settings();
 #endif
-	
+	nvram_set("label_mac", get_label_mac());
+
+	// upgrade/downgrade dont keep info
+	if(!nvram_match("extendno", nvram_safe_get("extendno_org"))){
+		nvram_set("mfp_ip_requeue", "");
+		nvram_unset("webs_state_update");
+		nvram_unset("webs_state_upgrade");
+		nvram_unset("webs_state_info");
+		nvram_unset("webs_state_REQinfo");
+		nvram_unset("webs_state_url");
+		nvram_unset("webs_state_flag");
+		nvram_unset("webs_state_error");
+#if defined(RTAC68U) || defined(RTCONFIG_FORCE_AUTO_UPGRADE)
+		nvram_set_int("auto_upgrade", 0);
+#endif
+	}
+
 	return 0;
 }
 
@@ -10586,6 +10642,14 @@ int init_main(int argc, char *argv[])
 #endif
 	}
 
+#if defined(RTCONFIG_PTHSAFE_POPEN)
+	{
+		pid_t pid;
+		char *argv[]={"/sbin/PS_pod", NULL};
+
+		_eval(argv, NULL, 0, &pid);
+	}
+#endif
 	for (;;) {
 //		TRACE_PT("main loop signal/state=%d\n", state);
 
@@ -11089,20 +11153,12 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			nvram_set("success_start_service", "1");
 			force_free_caches();
 #endif
-#if defined(K3)
-			k3_init_done();
-#elif defined(K3C)
+#if defined(BLUECAVE)
+#if defined(K3C)
 			k3c_init_done();
-#elif defined(SBRAC1900P)
-			ac1900p_init_done();
-#elif defined(SBRAC3200P)
-			ac3200p_init_done();
-#elif defined(R8000P) || defined(R7900P)
-			r8000p_init_done();
-#elif defined(RTAC68U) && !defined(SBRAC1900P)
-			ac68u_init_done();
 #else
 			merlinr_init_done();
+#endif
 #endif
 #ifdef RTCONFIG_AMAS
 			nvram_set("start_service_ready", "1");

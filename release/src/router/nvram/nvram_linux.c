@@ -49,11 +49,14 @@ static char *nvram_buf = NULL;
 #ifdef RTCONFIG_REALTEK
 static char hw_mac[18];
 #endif
+static unsigned int nvram_space = 0;
+
 int
 nvram_init(void *unused)
 {
 	int ret;
-	unsigned int nvram_space = MAX_NVRAM_SPACE;
+
+	nvram_space = MAX_NVRAM_SPACE;
 
 	if (nvram_fd >= 0)
 		return 0;
@@ -77,6 +80,14 @@ nvram_init(void *unused)
 err:
 	perror(PATH_DEV_NVRAM);
 	return errno;
+}
+
+unsigned int get_nvram_space(void)
+{
+	if (nvram_space == 0)
+		nvram_init(NULL);
+
+	return nvram_space;
 }
 
 #ifdef RTCONFIG_REALTEK
@@ -464,3 +475,4 @@ int nvram_nvram2file(const char *varname, const char *filename)
 	close(fnum);
 	return (i != (j- 2* sizeof(mode_t)));
 }
+

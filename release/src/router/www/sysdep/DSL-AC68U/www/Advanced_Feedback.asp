@@ -18,7 +18,6 @@
 <script language="JavaScript" type="text/javascript" src="/general.js"></script>
 <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-<script language="JavaScript" type="text/javascript" src="merlin.js"></script>
 <script language="JavaScript" type="text/javascript" src="js/jquery.js"></script>
 <script type="text/javascript" src="js/httpApi.js"></script>
 <style>
@@ -267,13 +266,13 @@ function Reload_pdesc(obj, url){
 		desclist.push(["<#Network_Tools#>","Network Tools"]);
 		url_group.push(["Status_"]);
 
-		desclist.push(["Rescue Mode","Rescue"]);
+		desclist.push(["<#Rescue_Mode#>","Rescue"]);
 		url_group.push(["Rescue"]);//false value
 
 		desclist.push(["With other network devices","Other Devices"]);	//25
 		url_group.push(["Other_Device"]);//false value
 
-		desclist.push(["Cannot access firmware page","Fail to access"]);
+		desclist.push(["<#WebGUI_issue#>","Fail to access"]);
 		url_group.push(["GUI"]);//false value
 
 		desclist.push(["<#menu5_6_3#>","FW update"]);
@@ -355,26 +354,26 @@ function applyRule(){
 				return false;
 		}*/
 		if(document.form.attach_syslog.checked == true)
-			document.form.PM_attach_syslog.value = 1;
+			document.form.fb_attach_syslog.value = 1;
 		else
-			document.form.PM_attach_syslog.value = 0;
+			document.form.fb_attach_syslog.value = 0;
 		if(document.form.attach_cfgfile.checked == true)
-			document.form.PM_attach_cfgfile.value = 1;
+			document.form.fb_attach_cfgfile.value = 1;
 		else
-			document.form.PM_attach_cfgfile.value = 0;
+			document.form.fb_attach_cfgfile.value = 0;
 		if(document.form.attach_modemlog.checked == true)
-			document.form.PM_attach_modemlog.value = 1;
+			document.form.fb_attach_modemlog.value = 1;
 		else
-			document.form.PM_attach_modemlog.value = 0;
+			document.form.fb_attach_modemlog.value = 0;
 		if(document.form.attach_wlanlog.checked == true)
-			document.form.PM_attach_wlanlog.value = 1;
+			document.form.fb_attach_wlanlog.value = 1;
 		else
-			document.form.PM_attach_wlanlog.value = 0;
+			document.form.fb_attach_wlanlog.value = 0;
 		if(dsl_support){
 			if(document.form.attach_iptables.checked == true)
-				document.form.PM_attach_iptables.value = 1;
+				document.form.fb_attach_iptables.value = 1;
 			else
-				document.form.PM_attach_iptables.value = 0;
+				document.form.fb_attach_iptables.value = 0;
 		}	
                 
 		if(document.form.fb_email.value == ""){
@@ -390,7 +389,14 @@ function applyRule(){
 				return false;
 			}
 		}
-
+		
+		var re = new RegExp("^[a-zA-Z][0-9]{10}","gi");
+		if(!re.test(document.form.fb_serviceno.value) && document.form.fb_serviceno.value != ""){
+			alert("<#JS_validchar#>");
+			document.form.fb_serviceno.focus();
+			return false;
+		}
+		
 		if(fb_trans_id != "")
 		{
 			document.form.fb_transid.value = fb_trans_id;
@@ -437,19 +443,13 @@ function applyRule(){
 			}
 		}
 
-		if(document.form.PM_attach_wlanlog.value == "1")
+		if(document.form.fb_attach_wlanlog.value == "1")
 			httpApi.update_wlanlog();
 
 		document.form.fb_browserInfo.value = navigator.userAgent;
-		if(dsl_support){
-			if(document.form.dslx_diag_enable[0].checked == true){
-				document.form.action_wait.value="120";
-				showLoading(120);
-			}else	
-				showLoading(60);
-		}
-		else
-			showLoading(60);
+
+		startLogPrep();
+
 		document.form.submit();
 }
 
@@ -702,6 +702,35 @@ function dblog_stop() {
 	showLoading(3);
 	document.stop_dblog_form.submit();
 }
+
+function startLogPrep(){
+	dr_advise();
+}
+
+var redirect_info = 0;
+function CheckFBSize(){
+	$.ajax({
+		url: '/ajax_fb_size.asp',
+		dataType: 'script',
+		timeout: 1500,
+		error: function(xhr){
+				redirect_info++;
+				if(redirect_info < 10){
+					setTimeout("CheckFBSize();", 1000);
+				}
+				else{
+					showLoading(35);
+					setTimeout("redirect()", 35000);
+				}
+		},
+		success: function(){
+				if(fb_state == 0)
+					setTimeout("CheckFBSize()", 3000);
+				else
+					setTimeout("redirect()", 1000);
+		}
+	});
+}
 </script>
 </head>
 <body onload="initial();" onunLoad="return unload_body();">
@@ -710,12 +739,10 @@ function dblog_stop() {
 <table cellpadding="5" cellspacing="0" id="dr_sweet_advise" class="dr_sweet_advise" align="center">
 <tr>
 <td>
-<div class="drword" id="drword" style="height:110px;"><#Main_alert_proceeding_desc4#> <#Main_alert_proceeding_desc1#>...
+<div class="drword" id="drword" style="height:110px;"><#Main_alert_proceeding_desc4#> <#QKSet_detect_waitdesc1#>...
 <br/>
 <br/>
 </div>
-<div class="drImg"><img src="/images/alertImg.png"></div>
-<div style="height:70px;"></div>
 </td>
 </tr>
 </table>
@@ -734,13 +761,13 @@ function dblog_stop() {
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="current_page" value="Advanced_Feedback.asp">
 <input type="hidden" name="action_mode" value="apply">
-<input type="hidden" name="action_script" value="restart_sendmail">
+<input type="hidden" name="action_script" value="restart_sendfeedback">
 <input type="hidden" name="action_wait" value="60">
-<input type="hidden" name="PM_attach_syslog" value="">
-<input type="hidden" name="PM_attach_cfgfile" value="">
-<input type="hidden" name="PM_attach_iptables" value="">	
-<input type="hidden" name="PM_attach_modemlog" value="">
-<input type="hidden" name="PM_attach_wlanlog" value="">
+<input type="hidden" name="fb_attach_syslog" value="">
+<input type="hidden" name="fb_attach_cfgfile" value="">
+<input type="hidden" name="fb_attach_iptables" value="">	
+<input type="hidden" name="fb_attach_modemlog" value="">
+<input type="hidden" name="fb_attach_wlanlog" value="">
 <input type="hidden" name="feedbackresponse" value="<% nvram_get("feedbackresponse"); %>">
 <input type="hidden" name="fb_experience" value="<% nvram_get("fb_experience"); %>">
 <input type="hidden" name="fb_browserInfo" value="">
@@ -770,7 +797,7 @@ function dblog_stop() {
 <div style="margin: 10px 0 10px 5px;" class="splitLine"></div>
 <div id="fb_desc0" class="formfontdesc" style="display:none;"><#Feedback_desc0#></div>
 <div id="fb_desc1" class="formfontdesc" style="display:none;"><#Feedback_desc1#></div>
-<div id="fb_desc_disconnect" class="formfontdesc" style="display:none;color:#FC0;"><#Feedback_desc_disconnect#> <a href="mailto:xdsl_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">xdsl_feedback@asus.com </a></div>
+<div id="fb_desc_disconnect" class="formfontdesc" style="display:none;color:#FC0;"><#Feedback_desc_disconnect#> <a href="mailto:broadband_feedback@asus.com?Subject=<%nvram_get("productid");%>" target="_top" style="color:#FFCC00;">broadband_feedback@asus.com </a></div>
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
 <tr>
 <th width="30%"><#feedback_country#> *</th>
@@ -798,9 +825,9 @@ function dblog_stop() {
 </tr>
 
 <tr>
-<th>ASUS Service No./Case#</th>
+<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(34,2);">ASUS Service No./Case#</a></th>
 <td>
-	<input type="text" name="fb_serviceno" maxlength="50" class="input_25_table" value="" autocorrect="off" autocapitalize="off">
+	<input type="text" name="fb_serviceno" maxlength="11" class="input_15_table" value="" autocorrect="off" autocapitalize="off">
 </td>
 </tr>
 

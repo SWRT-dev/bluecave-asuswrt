@@ -105,10 +105,10 @@ var realip_state = "";
 
 var StatusList = {
 	"NoInetrnet": "<#Alexa_Status_Disconnect#>",
-	"SvrFail": "Server connection failed",
+	"SvrFail": "<#Alexa_Server_Failed#>",
 	"StepAccount": "<#Alexa_Status_Account#>",
 	"EnableRemoteCtrl": "<#Alexa_Register1#>",
-	"Success": "Amazon Alexa account is registered"
+	"Success": "<#Alexa_Registered#>"
 }
 
 var AccLinkStatus = {
@@ -166,6 +166,10 @@ function initial(){
 	if(isSupport("amazon_avs")){
 		document.getElementById("amazon_avs_div").style.display = "";
 	}
+
+	$("#alexa_ex1").html("<#Alexa_Example1#>".replace("ASUS ROUTER", "MY ROUTER"));
+	$("#alexa_ex2").html("<#Alexa_Example2#>".replace("ASUS ROUTER", "MY ROUTER"));
+	$("#alexa_ex3").html("<#Alexa_Example3#>".replace("ASUS ROUTER", "MY ROUTER"));
 }
 
 function create_AmazonRegion_select(){
@@ -450,9 +454,9 @@ function show_account_state(){
 													<div style="padding:0px 40px;font-family:Arial, Helvetica, sans-serif;font-size:13px;">
 														<span><#Alexa_Desc2#></span>
 														<p style="font-size:13px;padding-top: 20px;font-style:italic;"><#Alexa_Example0#></p>
-														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“<#Alexa_Example1#>”</p>
-														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“<#Alexa_Example2#>”</p>
-														<p style="font-size:13px;padding-left: 20px;font-style:italic;">“<#Alexa_Example3#>”</p>
+														<p id="alexa_ex1" style="font-size:13px;padding-left: 20px;font-style:italic;">“<#Alexa_Example1#>”</p>
+														<p id="alexa_ex2" style="font-size:13px;padding-left: 20px;font-style:italic;">“<#Alexa_Example2#>”</p>
+														<p id="alexa_ex3" style="font-size:13px;padding-left: 20px;font-style:italic;">“<#Alexa_Example3#>”</p>
 														<a id="faq" href="" style="font-family:Arial, Helvetica, sans-serif;font-size:13px;padding-top: 2px;padding-left: 20px;font-style:italic;text-decoration: underline;cursor:pointer;" target="_blank"><#Alexa_More_Skill#></a>
 														<p id="network_services_Remind" style="font-size:13px;padding-top: 10px;font-style:italic;color:#FFCC00;font-size:13px;display: none;">WARNING: The current network service filter policy for firewall will be overwritten once you say “Alexa, ask ASUS Router to pause the Internet</p>
 													</div>

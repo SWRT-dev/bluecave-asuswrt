@@ -321,8 +321,9 @@ var httpApi ={
 	},
 
 	"detwanGetRet": function(){
-		var wanInfo = httpApi.nvramGet(["wan0_state_t", "wan0_sbstate_t", "wan0_auxstate_t", "autodet_state", "autodet_auxstate", "wan0_proto", "link_internet", "x_Setting"], true);
-	
+		var wanInfo = httpApi.nvramGet(["wan0_state_t", "wan0_sbstate_t", "wan0_auxstate_t", "autodet_state", "autodet_auxstate", "wan0_proto",
+										 "link_internet", "x_Setting", "link_wan"], true);
+
 		var wanTypeList = {
 			"dhcp": "DHCP",
 			"static": "STATIC",
@@ -357,6 +358,12 @@ var httpApi ={
 			retData.isIPConflict = false;
 			retData.isError = true;
 		}
+		else if(wanInfo.link_wan == ""){
+			retData.wanType = wanTypeList.check;
+		}
+		else if(wanInfo.link_wan == "0"){
+			retData.wanType = wanTypeList.noWan;
+		}
 		else if(
 			wanInfo.link_internet   == "2" &&
 			wanInfo.wan0_state_t    == "2" &&
@@ -373,9 +380,6 @@ var httpApi ={
 		}
 		else if(hadPlugged("modem")){
 			retData.wanType = wanTypeList.modem;
-		}
-		else if(wanInfo.wan0_auxstate_t == "1"){
-			retData.wanType = wanTypeList.noWan;
 		}
 		else if(wanInfo.autodet_state == "3" || wanInfo.autodet_state == "5"){
 			retData.wanType = wanTypeList.resetModem;
@@ -394,9 +398,6 @@ var httpApi ={
 			else{
 				retData.wanType = wanTypeList.noWan;
 			}
-		}
-		else if(wanInfo.autodet_state == "2"){
-			retData.wanType = wanTypeList.dhcp;
 		}
 		else{
 			retData.wanType = wanTypeList.check;
@@ -763,11 +764,157 @@ var httpApi ={
 		var status = false;
 		if(amesh_support && (isSwMode("rt") || isSwMode("ap"))) {
 			var get_cfg_clientlist = httpApi.hookGet("get_cfg_clientlist", true);
-			get_cfg_clientlist.shift();//filter CAP
-			var online_node_list = get_cfg_clientlist.filter(function(item) { return item.online == "1"; });
-			if(online_node_list.length > 0)
-				status = true;
+			if(get_cfg_clientlist != undefined && get_cfg_clientlist.length > 1) {
+				get_cfg_clientlist.shift();//filter CAP
+				var online_node_list = get_cfg_clientlist.filter(function(item) { return item.online == "1"; });
+				if(online_node_list.length > 0)
+					status = true;
+			}
 		}
 		return status;
+	},
+
+	"amazon_wss": {
+		"if_support": function(_wl_unit, _wl_subunit){
+			var support_if = ["0.2"];
+			return (support_if.indexOf("" + _wl_unit + "." + _wl_subunit + "") != -1) ? true : false;
+		},
+
+		"getStatue": function(_wl_unit, _wl_subunit){
+			var value = "0";
+			if(httpApi.amazon_wss.if_support(_wl_unit, _wl_subunit))
+				value = httpApi.nvramGet(["wl" + _wl_unit + "." + _wl_subunit + "_gn_wbl_enable"], true)["wl" + _wl_unit + "." + _wl_subunit + "_gn_wbl_enable"];
+			if(value == "")
+				value = "0";
+			return value;
+		},
+
+		"getProfile": function(){
+			return {
+				"Hide SSID": "Yes",
+				"Network Name SSID": "simple_setup",	
+				"Oauth mode": "Open System",	
+				"Bandwidth Setting": "D: 80 kbps, U: 80 kbps",	
+				"Access Intranet": "Disable"
+			}
+		},
+
+		"set": function(postData, parmData){
+			var asyncDefault = true;
+			var _wl_unit = "", _wl_subunit = "";
+			if(parmData != undefined){
+				if(parmData.async != undefined)
+					asyncDefault = parmData.async;
+				if(parmData.wl_unit != undefined && parmData.wl_subunit != undefined){
+					_wl_unit = parmData.wl_unit;
+					_wl_subunit = parmData.wl_subunit;
+				}
+			}
+
+			if(httpApi.amazon_wss.if_support(_wl_unit, _wl_subunit)){
+				$.ajax({
+					url: '/amazon_wss.cgi',
+					dataType: 'json',
+					data: postData,
+					async: asyncDefault,
+					error: function(){},
+					success: function(response){
+						if(parmData.callBack) parmData.callBack.call(response);
+					}
+				});
+			}
+		}
+	},
+
+	"ftp_port_conflict_check" : {
+		usb_ftp : {
+			enabled : function(){
+				if(noftp_support)
+					return 0;
+				else{
+					var enable_ftp = httpApi.nvramGet(["enable_ftp"], true).enable_ftp;
+					if(enable_ftp == "")
+						return 0;
+					else
+						return parseInt(enable_ftp);
+				}
+			},
+			hint : "<#IPConnection_VServer_usb_port_conflict#>\n<#IPConnection_VServer_go_VS_change_lan_port#>"
+		},
+		port_forwarding : {
+			enabled : function(){
+				if(isSwMode("rt")){
+					var vts_enable_x = httpApi.nvramGet(["vts_enable_x"], true).vts_enable_x;
+					if(vts_enable_x == "0")
+						return 0;
+					else{
+						return httpApi.ftp_port_conflict_check.port_forwarding.use_usb_ftp_port();
+					}
+				}
+				else
+					return 0;
+			},
+			use_usb_ftp_port : function(){
+				var state = 0;
+				var lan_ipaddr = httpApi.nvramGet(["lan_ipaddr"], true).lan_ipaddr;
+				var usb_ftp_port = 21;
+				var vts_rulelist = decodeURIComponent(httpApi.nvramCharToAscii(["vts_rulelist"], true).vts_rulelist);
+				var dual_wan_lb_status = (check_dual_wan_status().status == "1" && check_dual_wan_status().mode == "lb") ? true : false;
+				var support_dual_wan_unit_flag = (mtwancfg_support && dual_wan_lb_status) ? true : false;
+				if(support_dual_wan_unit_flag)
+					vts_rulelist += decodeURIComponent(httpApi.nvramCharToAscii(["vts1_rulelist"], true).vts1_rulelist);
+
+				var eachRulelist = decodeURIComponent(vts_rulelist).split('<');
+				break_loop:
+					for(var i = 0; i < eachRulelist.length; i += 1){
+						if(eachRulelist[i] != "") {
+							var eachRuleItem = eachRulelist[i].split('>');
+							var externalPort = eachRuleItem[1];
+							var internalIP = eachRuleItem[2];
+							var eachPort = externalPort.split(",");
+							for(var j = 0; j < eachPort.length; j += 1){
+								if(eachPort[j].indexOf(":") != -1){//port range
+									var portS = eachPort[j].split(":")[0];
+									var portE = eachPort[j].split(":")[1];
+									if(parseInt(portS) <= usb_ftp_port && parseInt(portE) >= usb_ftp_port && internalIP != lan_ipaddr){
+										state = 1;
+										break break_loop;
+									}
+								}
+								else if(parseInt(eachPort[j]) == usb_ftp_port && internalIP != lan_ipaddr){
+									state = 1;
+									break break_loop;
+								}
+							}
+						}
+					}
+				return state;
+			},
+			hint : "<#IPConnection_VServer_usb_port_conflict#>\n<#IPConnection_VServer_change_lan_port#>"
+		},
+		conflict : function(){
+			return (httpApi.ftp_port_conflict_check.usb_ftp.enabled() && httpApi.ftp_port_conflict_check.port_forwarding.enabled()) ? true : false;
+		}
+	},
+
+	"isItSafe_trend": function(queryStr){
+		var $form = $("<form>", {
+			action: "https://global.sitesafety.trendmicro.com/result.php",
+			method: "post",
+			target: "_blank"
+		});
+
+		$form
+			.append($("<input>", {
+				type: "hidden",
+				name: "urlname",
+				value: queryStr
+			}))
+			.append($("<input>", {
+				type: "hidden",
+				name: "getinfo",
+				value: "Check Now"
+			}))			
+			.appendTo("body").submit().remove();
 	}
 }

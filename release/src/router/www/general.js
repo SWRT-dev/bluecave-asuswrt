@@ -308,6 +308,7 @@ function show_cert_settings(show){
 
 function change_ddns_setting(v){
 		var hostname_x = '<% nvram_get("ddns_hostname_x"); %>';
+		document.getElementById("ddns_result_tr").style.display = "none";
 		if (v == "WWW.ASUS.COM"){
 				document.getElementById("ddns_hostname_info_tr").style.display = "none";
 				document.getElementById("ddns_hostname_tr").style.display="";
@@ -453,6 +454,7 @@ function change_common_radio(o, s, v, r){
 			showhide("check_ddns_field", 0);
 			inputCtrl(document.form.ddns_regular_period, 0);
 
+			document.getElementById("ddns_result_tr").style.display = "none";
 			if(letsencrypt_support)
 				show_cert_settings(0);
 		}
@@ -829,7 +831,36 @@ function insertExtChannelOption_5g(){
 				}
 			}
 
-				if(document.form.wl_bw.value != "0" && document.form.wl_nmode_x.value != "2"){ //not Legacy mode and BW != 20MHz
+			if(is_RU_sku){
+				var RU_band4 = (function(){
+					for(i=0;i<wl_channel_list_5g.length;i++){
+						if(wl_channel_list_5g[i] >= '149'){
+							return true;
+						}
+					}
+
+					return false;
+				})();
+				if(document.form.wl_nmode_x.value == 0 || document.form.wl_nmode_x.value == 8){    // Auto or N/AC mixed
+					if(document.form.wl_bw.value == 3){    // 80 MHz
+						if(RU_band4){
+							wl_channel_list_5g = ['42', '58', '138', '155'];
+						}
+						else{
+							wl_channel_list_5g = ['42', '58', '138'];
+						}
+					}
+					else if(document.form.wl_bw.value == 2){    // 40 MHz
+						if(RU_band4){
+							wl_channel_list_5g = ['38', '46', '54', '62', '134', '142', '151', '159'];
+						}
+						else{
+							wl_channel_list_5g = ['38', '46', '54', '62', '134', '142'];
+						}
+					}			
+				}
+			}
+			else if(document.form.wl_bw.value != "0" && document.form.wl_nmode_x.value != "2"){ //not Legacy mode and BW != 20MHz
 					// for V40, if not all 2 continuous channels exist, remove them.
 					if(document.form.wl_bw.value == "2" && (Rawifi_support || Qcawifi_support || Rtkwifi_support)){
 						wl_channel_list_5g = filter_5g_channel_by_bw(wl_channel_list_5g, 40);
@@ -1207,14 +1238,46 @@ function insertExtChannelOption_5g(){
         for(var i=0; i<channels.length; i++){
         	ch_v[i] = channels[i];
         }
-        if(ch_v[0] == "0")
-        	channels[0] = "<#Auto#>";
+        if(ch_v[0] == "0"){
+			channels[0] = "<#Auto#>";
+		}
+		
+		if(is_RU_sku){
+			var RU_band4 = (function(){
+				for(i=0;i<wl_channel_list_5g.length;i++){
+					if(wl_channel_list_5g[i] >= '149'){
+						return true;
+					}
+				}
+
+				return false;
+			})();
+			if(document.form.wl_nmode_x.value == 0 || document.form.wl_nmode_x.value == 8){    // Auto or N/AC mixed
+				if(document.form.wl_bw.value == 3){    // 80 MHz
+					if(RU_band4){
+						ch_v = ['0', '36', '52', '132', '149'];
+					}
+					else{
+						ch_v = ['0', '36', '52', '132'];
+					}
+				}
+				else if(document.form.wl_bw.value == 2){    // 40 MHz
+					if(RU_band4){
+						ch_v = ['0', '36', '44', '52', '60', '132', '140', '149', '157'];
+					}
+					else{
+						ch_v = ['0', '36', '44', '52', '60', '132', '140'];
+					}
+				}			
+			}
+		}
+
         add_options_x2(document.form.wl_channel, channels, ch_v, orig);
-				var x = document.form.wl_nctrlsb;
-				//x.remove(x.selectedIndex);
-				free_options(x);
-				add_option(x, "<#Auto#>", "lower");
-				x.selectedIndex = 0;
+		var x = document.form.wl_nctrlsb;
+		//x.remove(x.selectedIndex);
+		free_options(x);
+		add_option(x, "<#Auto#>", "lower");
+		x.selectedIndex = 0;
 }
 
 function insertExtChannelOption_2g(){
@@ -1436,19 +1499,21 @@ function showhide(element, sh)
 	}
 }
 
-function check_hwaddr_flag(obj){  //check_hwaddr() remove alert()
+function check_hwaddr_flag(obj, flag){  //check_hwaddr() remove alert()
 	if(obj.value == ""){
 			return 0;
 	}else{
 		var hwaddr = new RegExp("(([a-fA-F0-9]{2}(\:|$)){6})", "gi");
-		var legal_hwaddr = new RegExp("(^([a-fA-F0-9][cC048])(\:))", "gi"); // for legal MAC, unicast & globally unique (OUI enforced)
-		if(!hwaddr.test(obj.value))
-    		return 1;
-  		else if(!legal_hwaddr.test(obj.value))
-    		return 2;
-		else
-			return 0;
-  }
+		var legal_hwaddr = new RegExp("(^([a-fA-F0-9][aAcCeE02468])(\:))", "gi"); // for legal MAC, unicast & globally unique (OUI enforced)
+		if(!hwaddr.test(obj.value)){
+			return 1;
+		}
+  		else if(flag != 'inner' && !legal_hwaddr.test(obj.value)){
+			return 2;
+		}
+				
+		return 0;
+	}
 }
 
 function change_key_des(){
@@ -1533,10 +1598,15 @@ function limit_auth_method(g_unit){
 		var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"]];
 	}
 	else if(document.form.wl_nmode_x.value != "2"){
-		if((based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1') || g_unit != undefined)
+		if((based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1') || g_unit != undefined){
 			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
-		else
+		}	
+		else if(based_modelid == "RP-AC55"){
+			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
+		}
+		else{
 			var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+		}
 	}
 	else{		//Legacy
 		if((based_modelid == "RT-AC87U" && '<% nvram_get("wl_unit"); %>' == '1') || g_unit != undefined){
@@ -1551,6 +1621,9 @@ function limit_auth_method(g_unit){
 			}
 			else if(wifi_logo_support){
 				var auth_array = [["Open System", "open"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"]];
+			}
+			else if(based_modelid == "RP-AC55"){
+				var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"]];
 			}
 			else{
 				var auth_array = [["Open System", "open"], ["Shared Key", "shared"], ["WPA-Personal", "psk"], ["WPA2-Personal", "psk2"], ["WPA-Auto-Personal", "pskpsk2"], ["WPA-Enterprise", "wpa"], ["WPA2-Enterprise", "wpa2"], ["WPA-Auto-Enterprise", "wpawpa2"], ["Radius with 802.1x", "radius"]];
@@ -1761,3 +1834,4 @@ function gen_tab_menu(_tab_list_array, _currentItem) {
 		return code;
 	}
 }
+

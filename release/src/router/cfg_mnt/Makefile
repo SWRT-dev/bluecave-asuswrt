@@ -21,6 +21,8 @@ endif
 ifeq ($(HND_ROUTER),y)
 CFLAGS += -DPTHREAD_STACK_SIZE_256K -DPTHREAD_EXIT
 LDFLAGS += -L$(TOP)/wlcsm -lwlcsm
+else ifeq ($(RTCONFIG_QCA),y)
+CFLAGS += -DPTHREAD_STACK_SIZE_256K -DPTHREAD_EXIT
 endif
 
 ifeq ($(RTCONFIG_DHDAP), y)

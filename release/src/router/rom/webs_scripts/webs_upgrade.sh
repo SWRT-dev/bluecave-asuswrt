@@ -1,5 +1,7 @@
 #!/bin/sh
 
+IS_BCMHND=`nvram get rc_support|grep -i bcmhnd`
+
 wget_timeout=`nvram get apps_wget_timeout`
 #wget_options="-nv -t 2 -T $wget_timeout --dns-timeout=120"
 wget_options="-q -t 2 -T $wget_timeout"
@@ -12,7 +14,9 @@ firmware_file=`nvram get productid`_`nvram get webs_state_info`_un.zip
 
 # get firmware zip file
 forsq=`nvram get apps_sq`
-echo 3 > /proc/sys/vm/drop_caches
+if [ -z "$IS_BCMHND" ]; then
+	echo 3 > /proc/sys/vm/drop_caches
+fi
 if [ "$forsq" == "1" ]; then
 	echo "---- upgrade sq ----" >> /tmp/webs_upgrade.log
 	wget $wget_options http://dlcdnet.asus.com/pub/ASUS/LiveUpdate/Release/Wireless_SQ/$firmware_file -O /tmp/linux.zip

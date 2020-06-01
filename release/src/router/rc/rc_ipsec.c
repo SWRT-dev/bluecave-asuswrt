@@ -498,6 +498,7 @@ void rc_ipsec_conf_set()
     return;
 }
 
+/*
 void rc_ipsec_secrets_init()
 {
     FILE *fp = NULL;
@@ -513,6 +514,7 @@ void rc_ipsec_secrets_init()
     }
     return;
 }
+*/
 
 void rc_strongswan_conf_set()
 {
@@ -2025,6 +2027,7 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 								sprintf(tmpStr,"wan%d_gw_ifname",unit);
 								if(0 != strlen(nvram_safe_get(tmpStr)))
 									strcpy(interface,nvram_safe_get(tmpStr));
+								/* moved to firewall
 								fprintf(fp1, "iptables -D INPUT -i %s --protocol esp -j ACCEPT\n", interface);
 								fprintf(fp1, "iptables -D INPUT -i %s --protocol ah -j ACCEPT\n", interface);
 								fprintf(fp1, "iptables -D INPUT -i %s -p udp --dport %d -j ACCEPT\n", interface, isakmp_port);
@@ -2043,6 +2046,7 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 								fprintf(fp1, "iptables -I OUTPUT -o %s -p udp --sport %d -j ACCEPT\n", interface, nat_t_port);
 								fprintf(fp1, "iptables -D INPUT -i %s -s %s -j ACCEPT\n",interface, prof[prof_count][i].virtual_subnet);
 								fprintf(fp1, "iptables -I INPUT -i %s -s %s -j ACCEPT\n",interface, prof[prof_count][i].virtual_subnet);
+								*/
 #ifdef RTCONFIG_BCMARM
 								/* mark connect to bypass CTF */
 								if (nvram_match("ctf_disable", "0")){
@@ -2061,6 +2065,7 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 						}
 						else{
 							/* Net to Net */
+							/* moved to firewall
 							fprintf(fp1, "iptables -D INPUT -i %s --protocol esp -j ACCEPT\n", interface);
 							fprintf(fp1, "iptables -D INPUT -i %s --protocol ah -j ACCEPT\n", interface);
 							fprintf(fp1, "iptables -D INPUT -i %s -p udp --dport %d -j ACCEPT\n", interface, isakmp_port);
@@ -2077,10 +2082,13 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 							fprintf(fp1, "iptables -I OUTPUT -o %s --protocol ah -j ACCEPT\n", interface);
 							fprintf(fp1, "iptables -I OUTPUT -o %s -p udp --sport %d -j ACCEPT\n", interface, isakmp_port);
 							fprintf(fp1, "iptables -I OUTPUT -o %s -p udp --sport %d -j ACCEPT\n", interface, nat_t_port);
+							*/
 							local_subnet_total = strdup(prof[prof_count][i].local_subnet);
 							while((local_subnet = strsep(&local_subnet_total, ",")) != NULL){
+								/* moved to firewall
 								fprintf(fp1, "iptables -t nat -D POSTROUTING -s %s -m policy --dir out --pol ipsec -j ACCEPT\n", local_subnet);
 								fprintf(fp1, "iptables -t nat -I POSTROUTING -s %s -m policy --dir out --pol ipsec -j ACCEPT\n", local_subnet);
+								*/
 #ifdef RTCONFIG_BCMARM
 								/* mark connect to bypass CTF */
 								if (nvram_match("ctf_disable", "0")){
@@ -2102,7 +2110,8 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 						//cur_bitmap_en = cur_bitmap_en_scan();
 						get_bitmap_scan((int *) cur_bitmap_en_p);
 						if(0 != strcmp(interface,"")){
-							/*fprintf(fp, "iptables -D INPUT -i %s --protocol esp -j ACCEPT\n", interface);
+							/* moved to firewall
+							fprintf(fp, "iptables -D INPUT -i %s --protocol esp -j ACCEPT\n", interface);
 							fprintf(fp, "iptables -D INPUT -i %s --protocol ah -j ACCEPT\n", interface);
 							fprintf(fp, "iptables -D INPUT -i %s -p udp --dport 500 -j ACCEPT\n", interface);
 							fprintf(fp, "iptables -D INPUT -i %s -p udp --dport 4500 -j ACCEPT\n", interface);
@@ -2117,11 +2126,14 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 							fprintf(fp, "iptables -I OUTPUT -o %s --protocol esp -j ACCEPT\n", interface);
 							fprintf(fp, "iptables -I OUTPUT -o %s --protocol ah -j ACCEPT\n", interface);
 							fprintf(fp, "iptables -I OUTPUT -o %s -p udp --sport 500 -j ACCEPT\n", interface);
-							fprintf(fp, "iptables -I OUTPUT -o %s -p udp --sport 4500 -j ACCEPT\n", interface);*/
+							fprintf(fp, "iptables -I OUTPUT -o %s -p udp --sport 4500 -j ACCEPT\n", interface);
+							*/
 
 						if(VPN_TYPE_HOST_NET == prof[prof_count][i].vpn_type){
-							/*fprintf(fp, "iptables -D INPUT -i %s -s %s -j ACCEPT\n",interface,prof[prof_count][i].virtual_subnet);
-							fprintf(fp, "iptables -I INPUT -i %s -s %s -j ACCEPT\n",interface,prof[prof_count][i].virtual_subnet);*/
+							/* moved to firewall
+							fprintf(fp, "iptables -D INPUT -i %s -s %s -j ACCEPT\n",interface,prof[prof_count][i].virtual_subnet);
+							fprintf(fp, "iptables -I INPUT -i %s -s %s -j ACCEPT\n",interface,prof[prof_count][i].virtual_subnet);
+							*/
 #ifdef RTCONFIG_BCMARM
 							/* mark connect to bypass CTF */
 							/*if (nvram_match("ctf_disable", "0")){
@@ -2135,8 +2147,10 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 						else{
 							local_subnet_total = strdup(prof[prof_count][i].local_subnet);
 							while((local_subnet = strsep(&local_subnet_total, ",")) != NULL){
-								/*fprintf(fp, "iptables -t nat -D POSTROUTING -s %s -m policy --dir out --pol ipsec -j ACCEPT\n", local_subnet);
-								fprintf(fp, "iptables -t nat -I POSTROUTING -s %s -m policy --dir out --pol ipsec -j ACCEPT\n", local_subnet);*/
+								/* moved to firewall
+								fprintf(fp, "iptables -t nat -D POSTROUTING -s %s -m policy --dir out --pol ipsec -j ACCEPT\n", local_subnet);
+								fprintf(fp, "iptables -t nat -I POSTROUTING -s %s -m policy --dir out --pol ipsec -j ACCEPT\n", local_subnet);
+								*/
 #ifdef RTCONFIG_BCMARM
 								/* mark connect to bypass CTF */
 								/*if (nvram_match("ctf_disable", "0")){
@@ -2164,14 +2178,16 @@ void rc_ipsec_set(ipsec_conn_status_t conn_status, ipsec_prof_type_t prof_type)
 						}
     				}
 					if(0 == is_duplicate){
-						/*fprintf(fp, "iptables -D INPUT -i %s --protocol esp -j ACCEPT\n", interface);
+						/* moved to firewall
+						fprintf(fp, "iptables -D INPUT -i %s --protocol esp -j ACCEPT\n", interface);
 						fprintf(fp, "iptables -D INPUT -i %s --protocol ah -j ACCEPT\n", interface);
 						fprintf(fp, "iptables -D INPUT -i %s -p udp --dport 500 -j ACCEPT\n", interface);
 						fprintf(fp, "iptables -D INPUT -i %s -p udp --dport 4500 -j ACCEPT\n", interface); 
 						fprintf(fp, "iptables -D OUTPUT -o %s --protocol esp -j ACCEPT\n", interface);
 						fprintf(fp, "iptables -D OUTPUT -o %s --protocol ah -j ACCEPT\n", interface);
 						fprintf(fp, "iptables -D OUTPUT -o %s -p udp --sport 500 -j ACCEPT\n", interface);
-						fprintf(fp, "iptables -D OUTPUT -o %s -p udp --sport 4500 -j ACCEPT\n", interface);*/
+						fprintf(fp, "iptables -D OUTPUT -o %s -p udp --sport 4500 -j ACCEPT\n", interface);
+						*/
 					}
 					rc_ipsec_down(fp, i, prof_count);
 				}

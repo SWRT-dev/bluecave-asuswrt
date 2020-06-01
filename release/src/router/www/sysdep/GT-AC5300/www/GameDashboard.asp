@@ -129,7 +129,7 @@ function initial(){
 
 	netoolApi.start({
 		"type": 1, 
-		"target": "www.google.com"
+		"target": (in_territory_code("CN")) ? "www.baidu.com" : "www.google.com"
 	});		
 
 	setTimeout(check_eula, 100);

@@ -60,9 +60,25 @@ all:
 clean:
 #	rm -f rom/etc/motd
 
+certs/ca-bundle.crt:
+	certs/mk-ca-bundle.pl -fu $@
+
+certs: dummy
+	certs/mk-ca-bundle.pl -fu certs/ca-bundle.crt
+
+certs-install: certs/ca-bundle.crt
+	install -d $(INSTALLDIR)/rom/etc/ssl/certs
+	install -m 0644 certs/ca-bundle.crt $(INSTALLDIR)/rom/etc/ssl/certs/ca-certificates.crt
+	sed -r '/^\s*(#|$$)/d;/\-BEGIN/{h;d};H;/\-END/{x;/\-BEGIN/p};d' -i $(INSTALLDIR)/rom/etc/ssl/certs/ca-certificates.crt
+
 install:
 	mkdir -p $(INSTALLDIR)
 	( tar --exclude=.svn --exclude=*.bak -cpf - rom ) | ( cd $(INSTALLDIR) && tar -xpf - )
+
+	$(MAKE) certs-install
+ifeq ($(RTCONFIG_LETSENCRYPT),y)
+	install -m 0644 certs/DST_Root_CA_X3.pem $(INSTALLDIR)/rom/etc/ssl/certs/letsencrypt.pem
+endif
 
 ifeq ($(RTAC88U),y)
 	install -m 0644 smb.conf $(INSTALLDIR)/rom/smb.conf
@@ -125,12 +141,12 @@ ifeq ($(RTCONFIG_USB_MODEM),y)
 	install -m 0644 spn_*.dat $(INSTALLDIR)/rom
 	install -m 0755 apps_scripts/find_modem_*.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 apps_scripts/modem_*.sh $(INSTALLDIR)/usr/sbin
-	install -m 0755 apps_scripts/3ginfo.sh $(INSTALLDIR)/usr/sbin
 ifeq ($(RTCONFIG_INTERNAL_GOBI),y)
 	install -m 0755 apps_scripts/gobi_update.sh $(INSTALLDIR)/usr/sbin
 endif
 endif
 endif
+	install -m 0755 apps_scripts/3ginfo.sh $(INSTALLDIR)/usr/sbin
 
 ifeq ($(RTCONFIG_DSL),y)
 	cp -f webs_scripts/notif_update.sh $(INSTALLDIR)/usr/sbin/notif_update.sh
@@ -153,32 +169,22 @@ endif
 endif
 else
 ifeq ($(RTCONFIG_HTTPS),y)
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3 K3C R7900P BLUECAVE))
 	cp -f webs_scripts/merlinr_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
-else
-	cp -f webs_scripts/ssl_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
-endif
-ifeq ($(RTCONFIG_CFGSYNC),y)
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3 K3C R7900P BLUECAVE))
-	cp -f webs_scripts/merlinr_webs_download.sh $(INSTALLDIR)/usr/sbin/webs_download.sh
-	cp -f webs_scripts/merlinr_webs_note.sh $(INSTALLDIR)/usr/sbin/webs_note.sh
-else
-	cp -f webs_scripts/ssl_webs_download.sh $(INSTALLDIR)/usr/sbin/webs_download.sh
-	cp -f webs_scripts/ssl_webs_note.sh $(INSTALLDIR)/usr/sbin/webs_note.sh
-endif
-endif
-else
-	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
-endif
 ifeq ($(RTCONFIG_FBWIFI),y)
 	cp -f webs_scripts/fbwifi_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
+else ifeq ($(RTAC68A),y)
+	cp -f webs_scripts/force_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 else ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
 	cp -f webs_scripts/frs_live_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 else
 	cp -f webs_scripts/ssl_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 endif
-ifeq ($(RTAC68A),y)
-	cp -f webs_scripts/force_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
+ifeq ($(RTCONFIG_CFGSYNC),y)
+	cp -f webs_scripts/merlinr_webs_download.sh $(INSTALLDIR)/usr/sbin/webs_download.sh
+	cp -f webs_scripts/merlinr_webs_note.sh $(INSTALLDIR)/usr/sbin/webs_note.sh
+endif
+else
+	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
 endif
 ifeq ($(AC2900),y)
 	cp -f webs_scripts/verizon_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
@@ -270,10 +276,6 @@ endif
 
 	install -m 0755 webs_scripts/GoogleDNS_Update.sh $(INSTALLDIR)/usr/sbin
 
-ifeq ($(RTCONFIG_LETSENCRYPT),y)
-	install -m 0644 rom/etc/ssl/certs/DST_Root_CA_X3.pem $(INSTALLDIR)/rom/etc/ssl/certs/letsencrypt.pem
-endif
-
 ifeq ($(HND_ROUTER),y)
 	mkdir -p $(INSTALL_DIR)/rom/rom/usr/share/zoneinfo
 	cp -rf zoneinfo/* $(INSTALL_DIR)/rom/rom/usr/share/zoneinfo/
@@ -281,4 +283,9 @@ endif
 
 ifeq ($(HND_ROUTER),y)
 	mv -f $(INSTALLDIR)/rom/etc/profile.hnd $(INSTALLDIR)/rom/etc/profile
+else
+	rm -f $(INSTALLDIR)/rom/etc/profile.hnd
 endif
+
+.PHONY: dummy
+

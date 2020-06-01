@@ -86,14 +86,6 @@ define(function(){
 				] 
 			},
 			{
-				menuName: "网易UU加速器",
-				index: "menu_UU", 
-				tab: [
-					{url: "UUAccelerator.asp", tabName: "网易UU加速器"},
-					{url: "NULL", tabName: "__INHERIT__"}
-				] 
-			},
-			{
 				menuName: "<#Traffic_Analyzer#>",
 				index: "menu_TrafficAnalyzer", 
 				tab: [
@@ -145,10 +137,9 @@ define(function(){
 				index: "menu_Tools",
 				tab: [
 					{url: "Tools_Sysinfo.asp", tabName: "<#K3C_Sysinfo#>"},
-					/*{url: "Tools_OtherSettings.asp", tabName: "Other Settings"},*/
 					{url: "Softcenter.asp", tabName: "<#Softcenter#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
-				]
+				] 
 			},
 			/* ============================================================================================================ */
 			{
@@ -252,9 +243,10 @@ define(function(){
 					{url: "Advanced_System_Content.asp", tabName: "<#menu5_6_2#>"},
 					{url: "Advanced_FirmwareUpgrade_Content.asp", tabName: "<#menu5_6_3#>"},
 					{url: "Advanced_SettingBackup_Content.asp", tabName: "<#menu5_6_4#>"},
-					{url: "Advanced_PerformanceTuning_Content.asp", tabName: "Fan tuning"},
+					{url: "Advanced_PerformanceTuning_Content.asp", tabName: "Performance tuning"},
 					{url: "Advanced_ADSL_Content.asp", tabName: "<#menu_dsl_setting#>"},
 					{url: "Advanced_Feedback.asp", tabName: "<#menu_feedback#>"},
+					{url: "Feedback_Info.asp", tabName: "__INHERIT__"},
 					{url: "Advanced_SNMP_Content.asp", tabName: "SNMP"},
 					{url: "Advanced_TR069_Content.asp", tabName: "TR-069"},
 					{url: "Advanced_Notification_Content.asp", tabName: "Notification"},
@@ -357,9 +349,6 @@ define(function(){
 					retArray.push("menu_GameBoost");
 				}
 
-				if(!uu_support){
-					retArray.push("menu_UU");
-				}
 				/* Operation Mode */
 				if(isSwMode("re")){
 					retArray.push("menu_GuestNetwork");
@@ -374,7 +363,7 @@ define(function(){
 					retArray.push("menu_VLAN");
 					retArray.push("menu_Firewall");
 
-					if(userRSSI_support){
+					if(!userRSSI_support){
 						retArray.push("menu_Wireless");
 					}
 
@@ -481,8 +470,9 @@ define(function(){
 					retArray.push("YandexDNS.asp");
 				}
 
-				if(!feedback_support) {		
+				if(!frs_feedback_support) {		
 					retArray.push("Advanced_Feedback.asp");
+					retArray.push("Feedback_Info.asp");
 				}
 
 				if(noftp_support){

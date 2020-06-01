@@ -38,8 +38,11 @@
 #include <shutils.h>
 #include <shared.h>
 
-struct REPLACE_PRODUCTID_S replace_productid_t[] =
-{
+
+struct REPLACE_PRODUCTID_S {
+	char *org_name;
+	char *replace_name;
+} replace_productid_t[] = {
 	{"LYRA_VOICE", "LYRA VOICE"},
 	{NULL, NULL}
 };
@@ -442,3 +445,4 @@ ejArgs(int argc, char **argv, char *fmt, ...)
 
 	return arg;
 }
+

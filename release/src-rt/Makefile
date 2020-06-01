@@ -71,12 +71,11 @@ export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 #RTAX58U/TUFAX3000/RTAX56U/RTAX88U
 #export LANTIQ_OVERCLOCK=y
 export MERLINR_NAME := BLUECAVE
-#aimesh:R(384 and 385),non-aimesh:B(382 and 384)
+#aimesh:R(384 and 385 and 386),non-aimesh:B(382 and 384)
 export MERLINR_VER_MAJOR :=R
-export MERLINR_VER_MINOR :=5.1.0
+export MERLINR_VER_MINOR :=5.1.1
 export MERLINR_VER := $(MERLINR_VER_MAJOR)$(MERLINR_VER_MINOR)
 export MERLINRVER := $(MERLINR_NAME)_$(MERLINR_VER)
-
 
 # tmp depend on busybox
 E2FSPROGS := $(if $(filter $(BUSYBOX),busybox-1.17.4),n,y)
@@ -368,7 +367,7 @@ cfe_sysdep:
 
 wl_sysdep:
 	if [ -d $(SRCBASE)/../../../impl51/4365/src/wl/sysdeps/$(BUILD_NAME) ]; then \
-		if [ "$(HND_MFG)" = "y" ] && [ -f $(SRCBASE)/../../../impl51/4365/src/wl/sysdeps/$(BUILD_NAME)/clm/src/wlc_clm_data_mfg.c ]; then \
+		if [ "$(BCM_MFG)" = "y" ] && [ -f $(SRCBASE)/../../../impl51/4365/src/wl/sysdeps/$(BUILD_NAME)/clm/src/wlc_clm_data_mfg.c ]; then \
 			cp -f $(SRCBASE)/../../../impl51/4365/src/wl/sysdeps/$(BUILD_NAME)/clm/src/wlc_clm_data_mfg.c $(SRCBASE)/../../../impl51/4365/src/wl/clm/src/wlc_clm_data.c ; \
 		elif [ -d $(SRCBASE)/../../../impl51/4365/src/wl/sysdeps/$(BUILD_NAME)/clm ]; then \
 			cp -f $(SRCBASE)/../../../impl51/4365/src/wl/sysdeps/$(BUILD_NAME)/clm/src/wlc_clm_data.c $(SRCBASE)/../../../impl51/4365/src/wl/clm/src/. ; \
@@ -382,7 +381,7 @@ wl_sysdep:
 		fi; \
 	fi;
 	if [ -d $(SRCBASE)/../../../impl51/dhd/src/shared/sysdeps/$(BUILD_NAME) ]; then \
-		if [ "$(HND_MFG)" = "y" ] && [ -f $(SRCBASE)/../../../impl51/dhd/src/shared/sysdeps/$(BUILD_NAME)/rtecdc_4366c0_mfg.h ]; then \
+		if [ "$(BCM_MFG)" = "y" ] && [ -f $(SRCBASE)/../../../impl51/dhd/src/shared/sysdeps/$(BUILD_NAME)/rtecdc_4366c0_mfg.h ]; then \
 			cp -f $(SRCBASE)/../../../impl51/dhd/src/shared/sysdeps/$(BUILD_NAME)/rtecdc_4366c0_mfg.h $(SRCBASE)/../../../impl51/dhd/src/shared/rtecdc_4366c0.h ; \
 		elif [ -f $(SRCBASE)/../../../impl51/dhd/src/shared/sysdeps/$(BUILD_NAME)/rtecdc_4366c0.h ]; then \
 			cp -f $(SRCBASE)/../../../impl51/dhd/src/shared/sysdeps/$(BUILD_NAME)/rtecdc_4366c0.h $(SRCBASE)/../../../impl51/dhd/src/shared/. ; \
@@ -782,6 +781,9 @@ ifeq ($(CONFIG_LANTIQ),y)
 	# rm -f proprietary/rom_lantiq/opt/lantiq/wave/images/cal_wlan0.bin
 	# rm -f proprietary/rom_lantiq/opt/lantiq/wave/images/cal_wlan1.bin
 	cd proprietary; cp -rf rom_lantiq_05.04.00.131_patch/* ${SRCBASE}/router/rom_lantiq/
+ifeq ($(K3C),y)
+	cd proprietary; cp -rf rom_lantiq_K3C_patch/* ${SRCBASE}/router/rom_lantiq/
+endif
 	# cp -f proprietary/linux-3.10.104/firmware/lantiq/phy11g_ip_BE.bin linux/linux-3.10.104/firmware/lantiq/phy11g_ip_BE.bin
 endif
 
@@ -1042,6 +1044,10 @@ define RouterOptions
 		sed -i "/RTCONFIG_BCMWL6A/d" $(1); \
 		echo "RTCONFIG_BCMWL6A=y" >>$(1); \
 	fi; \
+	if [ "$(BCM4708)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCM4708/d" $(1); \
+		echo "RTCONFIG_BCM4708=y" >>$(1); \
+	fi; \
 	if [ "$(ARM)" = "y" ]; then \
 		sed -i "/RTCONFIG_BCMARM/d" $(1); \
 		echo "RTCONFIG_BCMARM=y" >>$(1); \
@@ -1089,6 +1095,10 @@ define RouterOptions
 			sed -i "/RTCONFIG_CONNTRACK/d" $(1); \
 			echo "RTCONFIG_CONNTRACK=y" >>$(1); \
 		fi; \
+	fi; \
+	if [ "$(INTERNETCTRL)" = "y" ]; then \
+		sed -i "/RTCONFIG_INTERNETCTRL/d" $(1); \
+		echo "RTCONFIG_INTERNETCTRL=y" >>$(1); \
 	fi; \
 	if [ "$(OPENSSL)" = "11" -o "$(OPENSSL11)" = "y" ]; then \
 		sed -i "/RTCONFIG_OPENSSL/d" $(1); \
@@ -1396,9 +1406,27 @@ define RouterOptions
 		sed -i "/RTCONFIG_PUSH_EMAIL/d" $(1); \
 		echo "RTCONFIG_PUSH_EMAIL=y" >>$(1); \
 	fi; \
+	if [ "$(AHS)" = "y" ]; then \
+		sed -i "/RTCONFIG_AHS/d" $(1); \
+		echo "RTCONFIG_AHS=y" >>$(1); \
+		sed -i "/RTCONFIG_HTTPS/d" $(1); \
+		echo "RTCONFIG_HTTPS=y" >>$(1); \
+		sed -i "/RTCONFIG_LIBASC/d" $(1); \
+		echo "RTCONFIG_LIBASC=y" >>$(1); \
+	fi; \
+	if [ "$(ASD)" = "y" ]; then \
+		sed -i "/RTCONFIG_ASD/d" $(1); \
+		echo "RTCONFIG_ASD=y" >>$(1); \
+		sed -i "/RTCONFIG_LIBASC/d" $(1); \
+		echo "RTCONFIG_LIBASC=y" >>$(1); \
+	fi; \
 	if [ "$(DBLOG)" = "y" ]; then \
 		sed -i "/RTCONFIG_DBLOG/d" $(1); \
 		echo "RTCONFIG_DBLOG=y" >>$(1); \
+	fi; \
+	if [ "$(FRS_LIVE_UPDATE)" = "y" ]; then \
+		sed -i "/RTCONFIG_FRS_LIVE_UPDATE/d" $(1); \
+		echo "RTCONFIG_FRS_LIVE_UPDATE=y" >>$(1); \
 	fi; \
 	if [ "$(SYSSTATE)" = "y" ]; then \
 		sed -i "/RTCONFIG_SYSSTATE/d" $(1); \
@@ -2110,12 +2138,6 @@ define RouterOptions
 		echo "RTCONFIG_LBR_AGGR=y" >>$(1); \
 		sed -i "/RTCONFIG_WLEXE/d" $(1); \
 		echo "RTCONFIG_WLEXE=y" >>$(1); \
-		sed -i "/RTCONFIG_HNDMFG/d" $(1); \
-		if [ "$(HND_MFG)" = "y" ]; then \
-			echo "RTCONFIG_HNDMFG=y" >>$(1); \
-		else \
-			echo "# RTCONFIG_HNDMFG is not set" >>$(1); \
-		fi; \
 		sed -i "/RTCONFIG_VISUALIZATION/d" $(1); \
 		if [ "$(VISUALIZATION)" = "y" ]; then \
 			echo "RTCONFIG_VISUALIZATION=y" >>$(1); \
@@ -2616,6 +2638,8 @@ define RouterOptions
 			sed -i "/RTCONFIG_WPS_ENROLLEE/d" $(1); \
 			echo "RTCONFIG_WPS_ENROLLEE=y" >>$(1); \
 		elif [ "$(QCA)" = "y" ]; then \
+			sed -i "/RTCONFIG_PTHSAFE_POPEN/d" $(1); \
+			echo "RTCONFIG_PTHSAFE_POPEN=y" >>$(1); \
 			sed -i "/RTCONFIG_HAPDEVENT/d" $(1); \
 			echo "RTCONFIG_HAPDEVENT=y" >>$(1); \
 			sed -i "/RTCONFIG_WPS_ENROLLEE/d" $(1); \
@@ -2694,17 +2718,27 @@ define RouterOptions
 		sed -i "/RTCONFIG_DWB/d" $(1); \
 		echo "RTCONFIG_DWB=y" >>$(1); \
 	fi; \
-	if [ "$(FRS_LIVE_UPDATE)" = "y" ]; then \
-		sed -i "/RTCONFIG_FRS_LIVE_UPDATE/d" $(1); \
-		echo "RTCONFIG_FRS_LIVE_UPDATE=y" >>$(1); \
-	fi; \
-	if [ "$(UUPLUGIN)" = "y" ]; then \
-		sed -i "/RTCONFIG_UUPLUGIN/d" $(1); \
-		echo "RTCONFIG_UUPLUGIN=y" >>$(1); \
-	fi; \
 	if [ "$(NO_TRY_DWB_PROFILE)" = "y" ]; then \
 		sed -i "/RTCONFIG_NO_TRY_DWB_PROFILE/d" $(1); \
 		echo "RTCONFIG_NO_TRY_DWB_PROFILE=y" >>$(1); \
+	fi; \
+	if [ "$(ARM)" = "y" ] && [ "$(BCMWL6)" = "y" ] && [ "$(BCM_MFG)" = "y" ]; then \
+		sed -i "/RTCONFIG_BCM_MFG/d" $(1); \
+		if [ "$(BCM_MFG)" = "y" ]; then \
+			echo "RTCONFIG_BCM_MFG=y" >>$(1); \
+		else \
+			echo "# RTCONFIG_BCM_MFG is not set" >>$(1); \
+		fi; \
+	fi; \
+	if [ "$(GN_WBL)" = "y" ]; then \
+		sed -i "/RTCONFIG_GN_WBL\>/d" $(1); \
+		echo "RTCONFIG_GN_WBL=y" >>$(1); \
+	fi; \
+	if [ "$(AMAZON_WSS)" = "y" ]; then \
+		sed -i "/RTCONFIG_AMAZON_WSS\>/d" $(1); \
+		echo "RTCONFIG_AMAZON_WSS=y" >>$(1); \
+		sed -i "/RTCONFIG_GN_WBL\>/d" $(1); \
+		echo "RTCONFIG_GN_WBL=y" >>$(1); \
 	fi; \
 	if [ "$(SOFTCENTER)" = "y" ]; then \
 	sed -i "/RTCONFIG_SOFTCENTER/d" $(1); \
@@ -2994,7 +3028,7 @@ define BusyboxOptions
 		else \
 			sed -i "/CONFIG_FEATURE_LS_COLOR\b/d" $(1); \
 			echo "CONFIG_FEATURE_LS_COLOR=y" >>$(1); \
-			if [ "$(HND_MFG)" = "y" ]; then \
+			if [ "$(BCM_MFG)" = "y" ]; then \
 				sed -i "/CONFIG_FEATURE_LS_COLOR_IS_DEFAULT/d" $(1); \
 				echo "# CONFIG_FEATURE_LS_COLOR_IS_DEFAULT is not set" >>$(1); \
 			fi; \
@@ -3406,6 +3440,10 @@ fi; \
 	if [ "$(DNSMQ)" = "y" ]; then \
 		sed -i "/CONFIG_IP_NF_DNSMQ/d" $(1); \
 		echo "CONFIG_IP_NF_DNSMQ=y" >>$(1); \
+	fi; \
+	if [ "$(CTFNAT)" = "y" ]; then \
+		sed -i "/CONFIG_IP_NF_CTFNAT/d" $(1); \
+		echo "CONFIG_IP_NF_CTFNAT=y" >>$(1); \
 	fi; \
 	if [ "$(USB)" = "" ]; then \
 		sed -i "/CONFIG_MSDOS_PARTITION/d" $(1); \

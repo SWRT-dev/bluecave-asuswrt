@@ -323,6 +323,8 @@ BRCM_UBI:
 	}
 #endif
 
+	userfs_prepare(UBIFS_MNT_DIR);
+
 	notice_set("ubifs", format ? "Formatted" : "Loaded");
 
 #ifndef RTCONFIG_NVRAM_FILE
@@ -396,3 +398,4 @@ void stop_ubifs(int stop)
 		start_syslogd();
 #endif
 }
+

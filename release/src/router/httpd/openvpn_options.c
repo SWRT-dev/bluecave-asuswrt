@@ -423,8 +423,6 @@ add_option (char *p[], int line, int unit)
 
 		if(p[2])
 			nvram_pf_set(prefix, "port", p[2]);
-		else
-			nvram_pf_set(prefix, "port", "1194");
 
 		if(p[3])
 			nvram_pf_set(prefix, "proto", p[3]);
@@ -608,7 +606,8 @@ read_config_file (const char *file, int unit)
 	return ret;
 }
 
-void parse_openvpn_status(int unit){
+void parse_openvpn_status(int unit)
+{
 	FILE *fpi, *fpo;
 	char buf[512];
 	char *token;
@@ -670,7 +669,7 @@ void parse_openvpn_status(int unit){
 				break;
 			}
 		}
-		if(fpi) fclose(fpi);
-		if(fpo) fclose(fpo);
 	}
+	if(fpi) fclose(fpi);
+	if(fpo) fclose(fpo);
 }

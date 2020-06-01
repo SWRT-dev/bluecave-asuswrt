@@ -99,7 +99,7 @@ function initial(){
 		document.getElementById("wan_ctrl").innerHTML = "<#PPTP_desc2#>" +  wan_ipaddr;
 
 		//check DUT is belong to private IP.
-		setTimeout("show_warning_message();", 100);
+		setTimeout("show_warning_message();", 1000);
 	}
 
 	//setting pptpd_ms_network_option and pptpd_broadcast_option

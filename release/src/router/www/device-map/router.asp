@@ -184,7 +184,6 @@ function initial(){
 		document.getElementById("t0").className = "tabclick_NW";
 		document.getElementById("wl_wpa_psk_title").innerHTML = "<#Network_key#>";
 		document.getElementById("t3").style.display = "none";
-		document.getElementById("pincode").style.display = "none";
 	}
 	else{
 		if(parent.band5g_support){
@@ -211,6 +210,9 @@ function initial(){
 			document.getElementById("t0").style.display = "";
 		}
 	}
+
+	if(lyra_hide_support)
+		document.getElementById("pincode").style.display = "none";
 
 	if(parent.sw_mode == 2){
 		if(parent.wlc_express != 0){

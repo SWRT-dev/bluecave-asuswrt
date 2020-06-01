@@ -24,6 +24,8 @@ var wanObj = {
 	},
 
 	"pppoe": {
+		"wan_dhcpenable_x": "1",
+		"wan_dnsenable_x": "1",
 		"wan_pppoe_username": "",
 		"wan_pppoe_passwd": ""
 	},
@@ -216,6 +218,10 @@ var modemObj = {
 
 var systemVariable = {
 	"originWanType": "", /* ToDo: Secondary WAN support */
+	"originPppAccount":{
+		"username": "",
+		"password": ""
+	},
 	"manualWanSetup": false,
 	"wanDnsenable": "",
 	"detwanResult": {

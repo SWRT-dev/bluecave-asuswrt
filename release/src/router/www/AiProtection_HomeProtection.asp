@@ -160,7 +160,7 @@ function initial(){
 	show_menu();
 	//	https://www.asus.com/support/FAQ/1008719/
 	httpApi.faqURL("1008719", function(url){document.getElementById("faq").href=url;});
-	if(lyra_hide_support){
+	if(based_modelid == "MAP-AC1750"){
 		$("#scenario_tr").css({"visibility":"hidden"});
 		$("#scenario_img").attr({"height":"0"});
 		$("#security_scan_tr").hide();

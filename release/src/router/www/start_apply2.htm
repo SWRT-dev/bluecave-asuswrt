@@ -392,7 +392,7 @@ function showWlHint(updateFlag){
 		wlHintCss += "</style>";
 
 		var wlHintJs = '<script>setInterval(function(){var a;if(window.XMLHttpRequest)a=new XMLHttpRequest;else{if(!window.ActiveXObject)return!1;a=new ActiveXObject("Microsoft.XMLHTTP")}a.onreadystatechange=function(){4==a.readyState&&200==a.status&&(top.location.href="/")},a.open("GET","/httpd_check.xml",!0),a.send(null)},';
-		wlHintJs += (action_script == "reboot")?restart_time*1000:"3e3";
+		wlHintJs += (action_script == "reboot")?restart_time*1000:"5000";
 		wlHintJs += ');<\x2Fscript>';
 
 		var wlHintHtml = '';
@@ -566,7 +566,17 @@ function initial(){
 		setTimeout("parent.location.href='/qis/QIS_internet_account.htm';", restart_time*1000);
 	}	
 	else if(action_script == "saveNvram"){
-		return;
+		if(getflag == "finish"){
+			if(parent.document.getElementById("hidden_frame")){
+				setTimeout("parent.location.href='/qis/QIS_finish.htm';", restart_time*1000);
+			}
+			else{
+				parent.parent.showLoading(restart_time, "waiting");
+				setTimeout("showdr_advise('finish');", (restart_time+1)*1000);
+			}
+		}
+		else
+			return;
 	}
 	else if(getflag == "background"){
 		return;
@@ -609,9 +619,6 @@ function initial(){
 			else
 				setTimeout("top_delay_redirect('"+next_page+"');", restart_time*1000);
 		}
-	}
-	else if(getflag == "background"){
-			return;
 	}
 	else if(action_script == "reboot" || action_script.search("restart_subnet") !== -1){
 		parent.showLoading(restart_time);

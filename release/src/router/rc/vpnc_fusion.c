@@ -200,6 +200,27 @@ void update_vpnc_state(const int vpnc_idx, const int state, const int reason)
 	else if(state == WAN_STATE_STOPPING) {
 		snprintf(tmp, sizeof(tmp), "/var/run/ppp-vpn%d.status", vpnc_idx);
 		unlink(tmp);
+	}	
+}
+
+void update_ovpn_vpnc_state(const int vpnc_idx, const int state, const int reason)
+{
+	char tmp[100];
+	char prefix[16];
+	VPNC_PROFILE *prof = NULL;
+
+	_dprintf("%s(%d, %d, %d)\n", __FUNCTION__, vpnc_idx, state, reason);
+
+	prof = vpnc_get_profile_by_vpnc_id(vpnc_profile, MAX_VPNC_PROFILE, vpnc_idx);
+	
+	if(prof && prof->protocol == VPNC_PROTO_OVPN)
+	{
+		snprintf(prefix , sizeof(prefix), "vpn_client%d_", prof->config.ovpn.ovpn_idx);
+		if(state == WAN_STATE_STOPPED && reason == WAN_STOPPED_REASON_IPGATEWAY_CONFLICT)
+		{
+			nvram_set_int(strlcat_r(prefix, "state", tmp, sizeof(tmp)), OVPN_STS_ERROR);			
+			nvram_set_int(strlcat_r(prefix, "errno", tmp, sizeof(tmp)), OVPN_ERRNO_ROUTE);
+		}		
 	}
 }
 
@@ -310,15 +331,16 @@ void vpnc_add_firewall_rule(const int unit, const char *vpnc_ifname)
 	vpnc_set_policy_by_ifname(vpnc_ifname, 1);
 }
 
-void
+int
 vpnc_up(const int unit, const char *vpnc_ifname)
 {
 	char tmp[100], prefix[] = "vpnc_", wan_prefix[] = "wanXXXXXXXXXX_", vpnc_prefix[] = "vpncXXXX_";
 	char *wan_ifname = NULL, *wan_proto = NULL;
-	int default_wan;	
+	int default_wan;
+	struct in_addr wan_ip, lan_ip, netmask;
 	
 	if(!vpnc_ifname)
-		return;
+		return -1;
 
 	_dprintf("[%s, %d]unit=%d, vpnc_ifname=%s\n", __FUNCTION__, __LINE__, unit, vpnc_ifname);
 	
@@ -334,6 +356,21 @@ vpnc_up(const int unit, const char *vpnc_ifname)
 	else
 		wan_ifname = nvram_safe_get(strlcat_r(wan_prefix, "pppoe_ifname", tmp, sizeof(tmp)));
 
+	//check ip conflict
+	_dprintf("[%s, %d]wan_ip=%s\n", __FUNCTION__, __LINE__, nvram_safe_get(strlcat_r(vpnc_prefix, "ipaddr", tmp, sizeof(tmp))));
+	inet_aton(nvram_safe_get(strlcat_r(vpnc_prefix, "ipaddr", tmp, sizeof(tmp))), &wan_ip);
+	inet_aton(nvram_safe_get("lan_ipaddr"), &lan_ip);
+	inet_aton(nvram_safe_get("lan_netmask"), &netmask);
+
+	_dprintf("[%s, %d]wan_ip=%x, lan_ip=%x, lan_netmask=%x\n", __FUNCTION__, __LINE__, wan_ip.s_addr, lan_ip.s_addr, netmask.s_addr);
+	if((wan_ip.s_addr & netmask.s_addr) == (lan_ip.s_addr & netmask.s_addr))
+	{
+		_dprintf("%s: ip conflict\n", __FUNCTION__);
+		update_vpnc_state(unit, WAN_STATE_STOPPED, WAN_STOPPED_REASON_IPGATEWAY_CONFLICT);
+		update_ovpn_vpnc_state(unit, WAN_STATE_STOPPED, WAN_STOPPED_REASON_IPGATEWAY_CONFLICT);
+		return -1;		
+	}
+	
 	//get default_wan
 	default_wan = nvram_get_int("default_wan");	
 
@@ -369,7 +406,8 @@ vpnc_up(const int unit, const char *vpnc_ifname)
 	/* Add firewall rules for VPN client */
 	vpnc_add_firewall_rule(unit, vpnc_ifname);
 
-	update_vpnc_state(unit, WAN_STATE_CONNECTED, 0);	
+	update_vpnc_state(unit, WAN_STATE_CONNECTED, 0);
+	return 0;
 }
 
 int
@@ -422,15 +460,16 @@ vpnc_ipup_main(int argc, char **argv)
 	// load vpnc profile list	
 	vpnc_init();
 
-	vpnc_up(unit, vpnc_ifname);
-
-	//add routing table
+	if(!vpnc_up(unit, vpnc_ifname))
+	{
+		//add routing table
 #ifdef USE_MULTIPATH_ROUTE_TABLE	
-	set_routing_table(1, unit);
+		set_routing_table(1, unit);
 #endif
 
-	//set up default wan
-	change_default_wan_as_vpnc_updown(unit, 1);
+		//set up default wan
+		change_default_wan_as_vpnc_updown(unit, 1);
+	}
 
 	_dprintf("%s:: done\n", __FUNCTION__);
 	return 0;
@@ -962,13 +1001,14 @@ int vpnc_ovpn_route_up_main(int argc, char **argv)
 
 	if(vpnc_idx != -1 )
 	{	
+		if(!vpnc_up(vpnc_idx, ifname))
+		{
 #ifdef USE_MULTIPATH_ROUTE_TABLE	
-		set_routing_table(1, vpnc_idx);
+			set_routing_table(1, vpnc_idx);
 #endif
-		vpnc_up(vpnc_idx, ifname);
-
-		//set up default wan
-		change_default_wan_as_vpnc_updown(vpnc_idx, 1);
+			//set up default wan
+			change_default_wan_as_vpnc_updown(vpnc_idx, 1);
+		}
 	}
 	return 0;
 }
@@ -1807,7 +1847,6 @@ start_vpnc_by_unit(const int unit)
 		if (VPNC_PROTO_PPTP == prof->protocol) {
 			fprintf(fp, "plugin pptp.so\n");
 			fprintf(fp, "pptp_server '%s'\n", prof->basic.server);
-			fprintf(fp, "vpnc 1\n");
 			/* see KB Q189595 -- historyless & mtu */
 			if (nvram_match(strlcat_r(wan_prefix, "proto", tmp, sizeof(tmp)), "pptp") || nvram_match(strlcat_r(wan_prefix, "proto", tmp, sizeof(tmp)), "l2tp"))
 				fprintf(fp, "nomppe-stateful mtu 1300\n");
@@ -1916,7 +1955,6 @@ start_vpnc_by_unit(const int unit)
 				"section peer\n"
 				"port 1701\n"
 				"peername %s\n"
-				"vpnc 1\n"
 				"hostname %s\n"
 				"lac-handler sync-pppd\n"
 				"persist yes\n"
@@ -2326,3 +2364,22 @@ int clean_vpnc_setting_value(const int vpnc_idx)
 	return 0;
 }
 
+int is_vpnc_dns_active()
+{
+	char prefix[] = "vpncXXXX_", tmp[128];
+	int i;
+
+	vpnc_init();
+
+	for (i = 0; i < vpnc_profile_num; i++) {
+		if (vpnc_profile[i].active &&
+		    (vpnc_profile[i].protocol == VPNC_PROTO_PPTP || vpnc_profile[i].protocol == VPNC_PROTO_L2TP)) {
+			snprintf(prefix, sizeof(prefix), "vpnc%d_", vpnc_profile[i].vpnc_idx);
+			if (nvram_get_int(strlcat_r(prefix, "state_t", tmp, sizeof(tmp))) == WAN_STATE_CONNECTED &&
+			    nvram_invmatch(strlcat_r(prefix, "dns", tmp, sizeof(tmp)), ""))
+				return 1;
+		}
+	}
+
+	return 0;
+}

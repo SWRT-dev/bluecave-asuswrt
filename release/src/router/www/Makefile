@@ -14,7 +14,8 @@ MODELS_HAVE_USB3 = AC2900 \
 	RP-AC68U
 
 MODELS_HAVE_TRAFFIC_ANALYZER = RT-AC3200 RT-AC87U RT-AC88U RT-AC86U RT-AC3100 RT-AC5300 GT-AC5300 GT-AC9600 DSL-AC68U RT-AC68U \
-	4G-AC68U RT-AC68R RT-AC68W RT-AC68RW RT-AC1900P RT-AC67U RT-AC56U RT-AC56R RT-AC85U RT-AC85P RT-AC65U BRT-AC828 BLUECAVE
+	4G-AC68U RT-AC68R RT-AC68W RT-AC68RW RT-AC1900P RT-AC67U RT-AC56U RT-AC56R RT-AC85U RT-AC85P RT-AC65U BRT-AC828 BLUECAVE RT-AX92U MAP-AC1300 \
+	MAP-AC2200 MAP-AC2200V
 
 all:
 ifeq ($(and $(HND_ROUTER),$(RTCONFIG_VISUALIZATION)),y)
@@ -51,12 +52,6 @@ ifeq ($(and $(HND_ROUTER),$(RTCONFIG_VISUALIZATION)),y)
 	install -m 644 $(VISPAGES) $(INSTALLDIR)/www
 endif # CONFIG_VISUALIZATION
 	# INSTALL MODEL DEPENDENT files
-ifeq ($(and $(RTCONFIG_AMAS),$(RTCONFIG_WIFI_SON)),y)
-	mkdir -p $(INSTALLDIR)/www/www-sys
-	cp ../www/sysdep/$(BUILD_NAME)/www/* $(INSTALLDIR)/www/www-sys -rfL || true
-	rm -rf $(INSTALLDIR)/www/www-sys/images
-	cp ../www/sysdep/$(BUILD_NAME)/www/images $(INSTALLDIR)/www/. -rfL || true
-endif
 	cp ../www/sysdep/$(BUILD_NAME)/www $(INSTALLDIR)/. -rfL || true
 	rm -rf $(INSTALLDIR)/www/Makefile
 	rm -rf $(INSTALLDIR)/www/sysdep
@@ -68,15 +63,15 @@ endif
 	rm -rf $(INSTALLDIR)/www/model_patch
 	rm -rf $(INSTALLDIR)/www/.gitignore
 	rm -rf `find $(INSTALLDIR) -name "*.bak"`
+	rm -rf $(INSTALLDIR)/www/device-map/compatibility.asp
+	cp -rf $(INSTALLDIR)/www/images/new/* $(INSTALLDIR)/www/images/
+	rm -rf $(INSTALLDIR)/www/images/new
 
 ifeq ($(RTCONFIG_AMAS),y)
 ifneq ($(RTCONFIG_DSL),y)
 	cp $(TOP)/www/sysdep/BLUECAVE/www/QIS_wizard.htm $(INSTALLDIR)/www/QIS_wizard.htm
 	cp $(TOP)/www/sysdep/BLUECAVE/www/mobile $(INSTALLDIR)/www/mobile -rf
 	cp $(TOP)/www/sysdep/BLUECAVE/www/require/modules/modem.js $(INSTALLDIR)/www/require/modules/ -rf
-ifneq ($(RTCONFIG_WIFI_SON),y)
-	rm -rf $(INSTALLDIR)/www/images/qis
-endif
 	rm -rf $(INSTALLDIR)/www/qis
 	rm -rf $(INSTALLDIR)/www/qis_m
 	rm -rf $(INSTALLDIR)/www/QIS_wizard_m.htm
@@ -346,7 +341,6 @@ endif
 ifeq ($(RTCONFIG_OPENVPN), y)
 	cd $(INSTALLDIR)/www && ln -sf ../etc/openvpn/server1/client.ovpn && cd $(TOP)/www
 else
-	rm -rf $(INSTALLDIR)/www/merlin.js
 	rm -rf $(INSTALLDIR)/www/ajax_openvpn_server.asp
 	rm -rf $(INSTALLDIR)/www/Advanced_VPN_OpenVPN.asp
 ifneq ($(RTCONFIG_ACCEL_PPTPD), y)
@@ -394,6 +388,18 @@ ifneq ($(RTCONFIG_BWDPI)$(RTCONFIG_BWDPI_DEP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/mals.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/recount.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/recount_hover.svg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/add.svg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/add_hover.svg
+	rm -rf $(INSTALLDIR)/www/images/New_ui/disable.svg
+	rm -rf $(INSTALLDIR)/www/images/save.svg
+	rm -rf $(INSTALLDIR)/www/images/save_hover.svg
+	rm -rf $(INSTALLDIR)/www/images/save_active.svg
+	rm -rf $(INSTALLDIR)/www/images/delete.svg
+	rm -rf $(INSTALLDIR)/www/images/delete_hover.svg
+	rm -rf $(INSTALLDIR)/www/images/delete_active.svg
+	rm -rf $(INSTALLDIR)/www/images/edit.svg
+	rm -rf $(INSTALLDIR)/www/images/edit_hover.svg
+	rm -rf $(INSTALLDIR)/www/images/edit_active.svg
 ifneq ($(RTCONFIG_PARENTALCTRL),y)
 	rm -rf $(INSTALLDIR)/www/blocking.asp
 endif
@@ -475,7 +481,6 @@ endif
 
 ifneq ($(BUILD_NAME),$(filter $(BUILD_NAME), $(MODELS_HAVE_TRAFFIC_ANALYZER)))
 	rm -rf $(INSTALLDIR)/www/TrafficAnalyzer_Statistic.asp
-	rm -rf $(INSTALLDIR)/www/images/New_ui/TrafficAnalyzer.gif
 	rm -rf $(INSTALLDIR)/www/images/New_ui/cancel.svg
 	rm -rf $(INSTALLDIR)/www/chart.js
 	rm -rf $(INSTALLDIR)/www/datepicker.css
@@ -530,24 +535,25 @@ ifneq ($(RTCONFIG_WTFAST), y)
 	rm -rf $(INSTALLDIR)/www/images/wtfast_back_hover.svg
 	rm -rf $(INSTALLDIR)/www/images/wtfast_device.svg
 	rm -rf $(INSTALLDIR)/www/images/wtfast_point.gif
-	rm -rf $(INSTALLDIR)/www/images/GameBoost_AiProtection.png
-	rm -rf $(INSTALLDIR)/www/images/GameBoost_QoS.png
-	rm -rf $(INSTALLDIR)/www/images/GameBoost_WTFast.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/game.svg
-	rm -rf $(INSTALLDIR)/www/images/New_ui/mainimage_img_Game.png
-	rm -rf $(INSTALLDIR)/www/images/New_ui/add.svg
-	rm -rf $(INSTALLDIR)/www/images/New_ui/add_hover.svg
 ifneq ($(RTCONFIG_BWDPI)$(RTCONFIG_BWDPI_DEP),y)
 	rm -rf $(INSTALLDIR)/www/images/New_ui/delete.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/delete_hover.svg
 endif
-	rm -rf $(INSTALLDIR)/www/images/New_ui/disable.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/enable.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/logout.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/logout_hover.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade.svg
 	rm -rf $(INSTALLDIR)/www/images/New_ui/upgrade_hover.svg
 endif
+ifneq ($(RTCONFIG_WTF_REDEEM)$(RTCONFIG_WTFAST), y)
+	rm -rf $(INSTALLDIR)/www/images/New_ui/game.svg
+	rm -rf $(INSTALLDIR)/www/GameBoost.asp
+	rm -rf $(INSTALLDIR)/www/images/New_ui/GameBoost_AiProtection.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/GameBoost_QoS.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/GameBoost_WTFast.png
+	rm -rf $(INSTALLDIR)/www/images/New_ui/mainimage_img_Game.jpg
+endif
+
 ifneq ($(RTCONFIG_IPSEC), y)
 	rm -rf $(INSTALLDIR)/www/Advanced_VPN_IPSec.asp
 	rm -rf $(INSTALLDIR)/www/ajax_ipsec.asp
@@ -649,8 +655,10 @@ else ifeq ($(BUILD_NAME),BRT-AC828)
 	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_BRTAC828.js modules/menuTree.js
 else ifeq ($(BUILD_NAME),BLUECAVE)
 	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_BLUECAVE.js modules/menuTree.js
-else ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME), MAP-AC1300 MAP-AC2200 MAP-AC1750 RT-AC92U))
+else ifeq ($(BUILD_NAME),$(filter $(BUILD_NAME), MAP-AC1300 MAP-AC2200 MAP-AC2200V RT-AC92U))
 	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_LYRA.js modules/menuTree.js
+else ifeq ($(BUILD_NAME),MAP-AC1750)
+	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_TRIO.js modules/menuTree.js
 else ifeq ($(BUILD_NAME),VZW-AC1300)
 	cd $(INSTALLDIR)/www/require && mv menuTrees/menuTree_VZW-AC1300.js modules/menuTree.js
 else ifeq ($(RTCONFIG_BWDPI),y)

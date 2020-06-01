@@ -162,6 +162,13 @@ function wl_chanspec_list_change(){
 						}
 					}	
 
+					if(is_RU_sku){
+						_wl_channel = ["36/80", "52/80", "132/80"];
+						if(band5g2_support){
+							_wl_channel = ["36/80", "52/80"];
+						}
+					}
+
 					wl_channel_list_5g = _wl_channel;									
 				}
 				else if(bw_cap == "2"){		// 40MHz
@@ -189,6 +196,13 @@ function wl_chanspec_list_change(){
 									}
 								}
 							}	
+						}
+					}
+
+					if(is_RU_sku){
+						_wl_channel = ["36l", "44l", "52l", "60l", "132l", "140l"];
+						if(band5g2_support){
+							_wl_channel = ["36l", "44l", "52l", "60l"];
 						}
 					}
 					
@@ -366,6 +380,10 @@ function wl_chanspec_list_change(){
 					}
 				}
 
+				if(is_RU_sku){
+					_wl_channel = ["132/80"];
+				}
+
 				wl_channel_list_5g_2 = _wl_channel;								
 			}
 			else if(bw_cap == "2"){		// 40 MHz
@@ -396,6 +414,10 @@ function wl_chanspec_list_change(){
 					}
 				}
 				
+				if(is_RU_sku){
+					_wl_channel = ["132l", "140l"];
+				}
+
 				wl_channel_list_5g_2 = _wl_channel;	
 			}
 			else{		//20MHz
@@ -426,11 +448,58 @@ function wl_chanspec_list_change(){
 	/* Reconstruct channel array from new chanspecs */
 	document.form.wl_channel.length = chanspecs.length;
 	if(band == 1 || band == 2){
+		var _bw = document.form.wl_bw.value;
+		var _array_80 = ['0', '42', '58', '138'];
+		var _array_40 = ['0', '38', '46', '54', '62', '134', '142'];
+		if(is_RU_sku){
+			if(band == 2){
+				if(_bw == '3'){
+					chanspecs = ["0", "132/80"];
+					_array_80 = ['0', '138'];
+				}
+				else if(_bw == '2'){
+					chanspecs = ["0", "132l", "140l"];
+					_array_40 = ['0', '134', '142'];
+				}
+			}
+			else{
+				if(_bw == '3'){
+					if(band5g2_support){
+						chanspecs = ["0", "36/80", "52/80"];
+						_array_80 = ['0', '42', '58'];
+					}
+				}
+				else if(_bw == '2'){
+					chanspecs = ['0', '36l', '44l', '52l', '60l', '132l', '140l'];
+					_array_40 = ['0', '38', '46', '54', '62', '134', '142'];
+					if(band5g2_support){
+						chanspecs = ['0', '36l', '44l', '52l', '60l'];
+						_array_40 = ['0', '38', '46', '54', '62'];
+					}
+				}
+			}
+		}
+
 		for (var i in chanspecs){
-			if (chanspecs[i] == 0)
+			if (chanspecs[i] == 0){
 				document.form.wl_channel[i] = new Option("<#Auto#>", chanspecs[i]);
-			else
-				document.form.wl_channel[i] = new Option(chanspecs[i].toString().replace("/80", "").replace("u", "").replace("l", ""), chanspecs[i]);
+			}	
+			else{
+				if(is_RU_sku){
+					if(_bw == '3'){
+						document.form.wl_channel[i] = new Option(_array_80[i], chanspecs[i]);
+					}
+					else if(_bw == '2'){
+						document.form.wl_channel[i] = new Option(_array_40[i], chanspecs[i]);
+					}
+					else{
+						document.form.wl_channel[i] = new Option(chanspecs[i].toString().replace("/80", "").replace("u", "").replace("l", ""), chanspecs[i]);
+					}
+				}
+				else{
+					document.form.wl_channel[i] = new Option(chanspecs[i].toString().replace("/80", "").replace("u", "").replace("l", ""), chanspecs[i]);
+				}
+			}	
 			document.form.wl_channel[i].value = chanspecs[i];
 			if (chanspecs[i] == cur && bw_cap == '<% nvram_get("wl_bw"); %>'){
 				document.form.wl_channel[i].selected = true;
@@ -450,6 +519,8 @@ function wl_chanspec_list_change(){
 
 		add_options_x2(document.form.wl_channel, chanspecs_string, chanspecs, cur_control_channel);
 	}
+
+        change_channel(document.form.wl_channel);
 }
 
 function wlextchannel_fourty(v){
@@ -477,49 +548,43 @@ function change_channel(obj){
 	var selected_channel = obj.value;
 	var channel_length =obj.length;
 	var band = document.form.wl_unit.value;
+	var smart_connect = document.form.smart_connect_x.value;
+	cur = '<% nvram_get("wl_chanspec"); %>';
+	cur_extend_channel = cur.slice(-1);			//current control channel
+
 	if(document.form.wl_bw.value != 1){   // 20/40 MHz or 40MHz
 		if(channel_length == 12){    // 1 ~ 11
 			if(selected_channel >= 1 && selected_channel <= 4){
 				extend_channel = ["<#WLANConfig11b_EChannelAbove#>"];
 				extend_channel_value = ["l"];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);				
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 'l');				
 			}
 			else if(selected_channel >= 5 && selected_channel <= 7){
 				extend_channel = ["<#WLANConfig11b_EChannelAbove#>", "<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["l", "u"];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);							
 			}
 			else if(selected_channel >= 8 && selected_channel <= 11){
 				extend_channel = ["<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["u"];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);								
-			}
-			else{				//for 0: Auto
-				extend_channel = ["<#Auto#>"];
-				extend_channel_value = [""];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 'u');								
 			}
 		}
 		else{		// 1 ~ 13
 			if(selected_channel >= 1 && selected_channel <= 4){
 				extend_channel = ["<#WLANConfig11b_EChannelAbove#>"];
 				extend_channel_value = ["l"];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 'l');							
 			}
 			else if(selected_channel >= 5 && selected_channel <= 9){
 				extend_channel = ["<#WLANConfig11b_EChannelAbove#>", "<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["l", "u"];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);							
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, cur_extend_channel);							
 			}
 			else if(selected_channel >= 10 && selected_channel <= 13){
 				extend_channel = ["<#WLANConfig11b_EChannelBelow#>"];
 				extend_channel_value = ["u"];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);								
-			}
-			else{				//for 0: Auto
-				extend_channel = ["<#Auto#>"];
-				extend_channel_value = [""];
-				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value);
+				add_options_x2(document.form.wl_nctrlsb, extend_channel, extend_channel_value, 'u');								
 			}
 		}
 	}

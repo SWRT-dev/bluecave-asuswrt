@@ -65,6 +65,10 @@
 #include "pc.h"
 #endif
 
+#ifdef RTCONFIG_INTERNETCTRL
+#include "ic.h"
+#endif
+
 #define IFUP (IFF_UP | IFF_RUNNING | IFF_BROADCAST | IFF_MULTICAST)
 
 #if LINUX_KERNEL_VERSION >= KERNEL_VERSION(3,2,0)
@@ -628,6 +632,10 @@ extern void update_cfe_ac3200();
 extern void update_cfe_ac3200_128k();
 extern void bsd_defaults(void);
 #endif
+#ifdef RTCONFIG_BCM_MFG
+extern void hnd_mfg_init();
+extern void hnd_mfg_services();
+#endif
 #ifdef HND_ROUTER
 extern void fc_init();
 extern void fc_fini();
@@ -635,10 +643,6 @@ extern void hnd_nat_ac_init(int bootup);
 #ifdef RTCONFIG_LAN4WAN_LED
 extern void setLANLedOn(void);
 extern void setLANLedOff(void);
-#endif
-#ifdef RTCONFIG_HNDMFG
-extern void hnd_mfg_init();
-extern void hnd_mfg_services();
 #endif
 extern int mtd_erase_image_update();
 extern int wait_to_forward_state(char *ifname);
@@ -703,6 +707,9 @@ extern void start_eth_bh_mon();
 extern int ethbh_peer_detect(char *nic, char *timeout, char *msg);
 extern int check_eth_time;
 extern int eth_down_time;
+#endif
+#if defined(HND_ROUTER) && !defined(RTCONFIG_HND_ROUTER_AX)
+extern void wl_fail_db(int unit, int state, int count);
 #endif
 #endif
 
@@ -900,7 +907,7 @@ extern void enable_ip_forward(void);
 extern void convert_routes(void);
 extern void start_default_filter(int lanunit);
 extern int ipt_addr_compact(const char *s, int af, int strict);
-extern void filter_setting(char *wan_if, char *wan_ip, char *lan_if, char *lan_ip, char *logaccept, char *logdrop);
+extern void filter_setting(int wan_unit, char *lan_if, char *lan_ip, char *logaccept, char *logdrop);
 #ifdef WEB_REDIRECT
 extern void redirect_setting(void);
 #endif
@@ -913,6 +920,10 @@ extern void set_load_balance(void);
 extern void ip2class(char *lan_ip, char *netmask, char *buf);
 #ifdef RTCONFIG_WIFI_SON
 extern void set_cap_apmode_filter(void);
+#endif
+extern void write_extra_filter(FILE *fp);
+#ifdef RTCONFIG_IPV6
+extern void write_extra_filter6(FILE *fp);
 #endif
 
 /* pc.c */
@@ -929,6 +940,11 @@ extern void config_blocking_redirect(FILE *fp);
 // pc_tmp.c
 #ifdef RTCONFIG_PARENTALCTRL
 extern int pc_tmp_main(int argc, char *argv[]);
+#endif
+
+/* ic.c */
+#ifdef RTCONFIG_INTERNETCTRL
+extern int ic_main(int argc, char *argv[]);
 #endif
 
 // ppp.c
@@ -966,6 +982,7 @@ extern int vpnc_ovpn_route_up_main(int argc, char **argv);
 #else
 extern void update_vpnc_state(char *prefix, int state, int reason);
 #endif
+extern int is_vpnc_dns_active(void);
 #endif
 
 /*rc_ipsec.c*/
@@ -1079,6 +1096,7 @@ extern void stop_jffs2(int stop);
 static inline void start_jffs2(void) { }
 static inline void stop_jffs2(int stop) { }
 #endif
+extern void userfs_prepare(const char *folder);
 
 // watchdog.c
 extern void led_control_normal(void);
@@ -1373,6 +1391,7 @@ extern void subtime(struct timeval *a, struct timeval *b, struct timeval *res);
 extern void setupset(fd_set *theset, int *numfds);
 extern void waitforconnects();
 extern int tcpcheck_main(int argc, char *argv[]);
+extern int tcpcheck_retval(int timeout, char *host_port);
 
 // readmem.c
 #ifdef BUILD_READMEM
@@ -1617,7 +1636,7 @@ extern int firmware_check_main(int argc, char *argv[]);
 #ifdef RTCONFIG_HTTPS
 extern int rsasign_check_main(int argc, char *argv[]);
 extern int rsarootca_check_main(int argc, char *argv[]);
-extern char *pwdec(const char *input, char *output);
+extern char *pwdec(const char *input, char *output, int output_len);
 extern char *pwdec_dsl(char *input);
 #endif
 extern int service_main(int argc, char *argv[]);
@@ -1637,18 +1656,15 @@ extern int firmware_check_update_main(int argc, char *argv[]);
 #endif
 #ifdef RTCONFIG_FRS_FEEDBACK
 extern void start_sendfeedback(void);
-#endif
-#ifdef RTCONFIG_PUSH_EMAIL
-extern void start_DSLsendmail(void);
 #ifdef RTCONFIG_DBLOG
 extern void start_senddblog(char *path);
 extern void start_dblog(int option);
 extern void stop_dblog(void);
 #endif /* RTCONFIG_DBLOG */
 #ifdef RTCONFIG_DSL_TCLINUX
-extern void start_DSLsenddiagmail(void);
+extern void start_sendDSLdiag(void);
 #endif
-#endif
+#endif /* RTCONFIG_FRS_FEEDBACK */
 #ifdef RTCONFIG_SNMPD
 extern void start_snmpd(void);
 extern void stop_snmpd(void);
@@ -1770,8 +1786,6 @@ extern void overwrite_captive_portal_adv_ssid(void);
 #endif
 #if defined(RTCONFIG_COOVACHILLI)
 extern int restart_coovachilli_if_conflicts(char *wan_ip, char *wan_mask);
-#else
-static inline int restart_coovachilli_if_conflicts(char *wan_ip, char *wan_mask) { return 0; }
 #endif
 #ifdef RTCONFIG_PERMISSION_MANAGEMENT
 extern void PMS_Init_Database();
@@ -1848,6 +1862,7 @@ extern void extract_data(char *path, FILE *fp);
 extern int merge_log(char *path, int len);
 extern void stop_dpi_engine_service(int forced);
 extern void start_dpi_engine_service();
+extern void start_wrs_wbl_service();
 extern void setup_wrs_conf();
 extern void auto_sig_check();
 extern void sqlite_db_check();
@@ -1976,10 +1991,6 @@ extern int roam_assistant_main(int argc, char *argv[]);
 
 #ifdef RTCONFIG_DHCP_OVERRIDE
 extern int detectWAN_arp_main(int argc, char **argv);
-#endif
-
-#ifdef RTCONFIG_PUSH_EMAIL
-extern void am_send_mail(int type, char *path);
 #endif
 
 #if defined(RTCONFIG_KEY_GUARD)
@@ -2197,6 +2208,7 @@ extern void asm1042_upgrade(int);
 extern void oauth_google_gen_token_email(void);
 extern void oauth_google_update_token(void);
 extern int oauth_google_send_message(const char* receiver, const char* subject, const char* message, const char* attached_files[], int attached_files_count);
+extern void oauth_google_check_token_status(void);
 #endif
 
 #if defined(RTCONFIG_QCA_LBD)
@@ -2204,8 +2216,45 @@ extern int gen_lbd_config_file(void);
 extern void stop_qca_lbd(void);
 extern void start_qca_lbd(void);
 #endif
+
+// dsl_fb.c
 #ifdef RTCONFIG_FRS_FEEDBACK
 extern int do_feedback(const char* feedback_file, char* attach_cmd);
 #endif
+
+#if defined(RTCONFIG_BCM_7114) || defined(HND_ROUTER)
+typedef struct probe_4366_param_s {
+	int bECode_2G;
+	int bECode_5G;
+	int bECode_5G_2;
+	int bECode_fabid;
+} probe_4366_param_t;
+#endif /* RTCONFIG_BCM_7114 || HND_ROUTER */
+
+#if defined(RTAX88U)
+typedef struct probe_PCIE_param_s {
+	int bPCIE_down;
+} probe_PCIE_param_t;
+#endif /* RTAX88U */
+
+#ifdef RTCONFIG_BCMARM
+typedef struct WiFi_temperature_s {
+	double t2g;
+	double t5g;
+	double t5g2;
+} WiFi_temperature_t;
+double get_cpu_temp();
+int get_wifi_temps(WiFi_temperature_t *wt);
+#endif /* RTCONFIG_BCMARM */
+
+#ifdef RTCONFIG_GN_WBL
+extern void add_GN_WBL_EBTbrouteRule();
+extern void add_GN_WBL_ChainRule(FILE *fp);
+extern void add_GN_WBL_ForwardRule(FILE *fp);
+#ifdef RTCONFIG_LANTIQ
+extern void GN_WBL_restart();
+#endif
+#endif
+
 #endif	/* __RC_H__ */
 

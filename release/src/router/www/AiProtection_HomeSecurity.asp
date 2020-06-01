@@ -27,6 +27,11 @@ function initial(){
 	}
 	if(yadns_support)
 		$("#item_yandex").css("display", "list-item");
+
+	if(!isSupport("webs_filter") || !isSupport("apps_filter")){
+		$("#item_filter").css("display", "none");
+		$("#Link_to_ParentalCtrl").attr("href", "ParentalControl.asp");
+	}
 }
 
 </script>

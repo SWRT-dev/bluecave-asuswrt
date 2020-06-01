@@ -368,6 +368,24 @@ void trim_space(char *str)
 	}
 }
 
+void trim_colon(char *str)
+{
+	int i=0, len=0, j=0;
+	if (!str) return;
+	len=strlen(str);
+	for(i=0; i<len; i++)
+	{
+		if(str[i]==':')
+		{
+			for(j=i; j<len; j++)
+			{
+				str[j]=str[j+1];
+			}
+		len--;
+		}
+	}
+}
+
 void toLowerCase(char *str) {
 	char *p;
 
@@ -381,3 +399,4 @@ void toUpperCase(char *str) {
 	for(p = str; *p != '\0'; p++)
 		if(*p >= 'a' && *p <='z') *p -= 32;
 }
+

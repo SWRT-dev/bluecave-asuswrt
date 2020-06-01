@@ -122,7 +122,7 @@ var buildno = '<% nvram_get("buildno"); %>';
 //var rcno = '<% nvram_get("rcno"); %>';
 var extendno = '<% nvram_get("extendno"); %>';
 var FWString = '';
-var modelname =  '<% nvram_get("modelname"); %>';
+
 FWString = firmver+"."+buildno;
 //if(rcno.length > 0)
 //	FWString += "rc"+rcno;
@@ -136,10 +136,8 @@ function initial(){
 
 	if(amesh_support && (isSwMode("rt") || isSwMode("ap"))) {
 		$(".aimesh_manual_fw_update_hint").css("display", "block");
-		var get_cfg_clientlist_ori = [<% get_cfg_clientlist(); %>];
 		var have_node = false;
-		var get_cfg_clientlist = [];
-		get_cfg_clientlist = get_cfg_clientlist_ori[0];
+		var get_cfg_clientlist = httpApi.hookGet("get_cfg_clientlist", true);
 		$("#fw_version_tr").empty();
 		var html = "";
 		html += "<tr id='update_div' style='display:none;'>";
@@ -217,7 +215,7 @@ function initial(){
 				html += "<th>";
 				html += model_name + " ( " + labelMac + " )";
 				html += "<br>";
-				html += "<#AiMesh_NodeLocation#> : " + alias;
+				html += "<#AiMesh_NodeLocation#> : " + htmlEnDeCode.htmlEncode(alias);
 				html += "</th>";
 				html += "<td id='amas_" + mac_id + "'>";
 				html += "<div id='current_version'><#ADSL_FW_item1#> : " + fwver + "</div>";
@@ -492,6 +490,7 @@ function detect_update(){
 		}
 		else{
 			document.start_update.action_mode.value="apply";
+			document.start_update.webs_update_trigger.value="AFC.asp";
 			document.start_update.action_script.value="start_webs_update";
 			document.start_update.submit();
 		}
@@ -504,6 +503,7 @@ function detect_update(){
 				((first_link_status == "2" && first_link_auxstatus == "0") || (first_link_status == "2" && first_link_auxstatus == "2")) ||
 				((secondary_link_status == "2" && secondary_link_auxstatus == "0") || (secondary_link_status == "2" && secondary_link_auxstatus == "2"))){
 		document.start_update.action_mode.value="apply";
+		document.start_update.webs_update_trigger.value="AFC.asp";
 		document.start_update.action_script.value="start_webs_update";
 		document.getElementById('update_states').style.display="";
 		document.getElementById('update_states').innerHTML="<#check_proceeding#>";
@@ -988,7 +988,7 @@ function check_fw_relese_note_status() {
 			success: function() {
 				switch(cfg_note) {
 					case "0" :
-						check_fw_relese_note_status();
+						setTimeout(function(){check_fw_release_note_status();}, 1000);
 						break;
 					case "1" :
 						show_fw_relese_note_result(true);
@@ -1002,16 +1002,18 @@ function check_fw_relese_note_status() {
 		});
 	}
 }
-function show_fw_relese_note_result(_status) {
-	if($(".confirm_block").children().find("#status_iframe").contents().find("#amas_relese_note").length == 0)
-		show_fw_relese_note_result(_status);
+function show_fw_release_note_result(_status) {
+	/*if($(".confirm_block").children().find("#status_iframe").contents().find("#amas_release_note").length == 0)
+		show_fw_release_note_result(_status);*/
 
 	if(_status) {
-		$(".confirm_block").children().find("#status_iframe").attr("src", "get_release_note_amas.asp");//reload
+		$(".confirm_block").children().find("#status_iframe").attr("src", "get_release_note_amas.asp?flag=1");//reload and flag_show
+		$(".confirm_block").children().find("#status_iframe").load();
+		/*
 		$(".confirm_block").children().find("#status_iframe").load(function() {
-			$(".confirm_block").children().find("#status_iframe").contents().find("#amas_relese_note").css("display", "");
-			$(".confirm_block").children().find("#status_iframe").contents().find("#amas_relese_note_hint").css("display", "none");
-		});
+			$(".confirm_block").children().find("#status_iframe").contents().find("#amas_release_note").css("display", "");
+			$(".confirm_block").children().find("#status_iframe").contents().find("#amas_release_note_hint").css("display", "none");
+		});*/
 	}
 	else
 		$(".confirm_block").children().find("#status_iframe").contents().find("#amas_relese_note_hint").val("Fail to grab release note");/* untranslated */
@@ -1069,13 +1071,16 @@ function check_AiMesh_fw_version(_fw) {
 	var support_manual_fw_num = 18000;
 	var manual_status = false;
 	var fw_array = _fw.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)\.([^_]+)_([^-]+)/);
-	if (fw_array) {
-		var fw_id = fw_array[5];
-		var fw_num = fw_array[6];
-		if( (parseInt(fw_id) > support_manual_fw_id) ||
-		    (parseInt(fw_id) == support_manual_fw_id) && (parseInt(fw_num) >= support_manual_fw_num) ) {
+	if(fw_array){
+		var fw_id = parseInt(fw_array[5]) || 0;
+		var fw_num = parseInt(fw_array[6]) || 0;
+		if(fw_id > support_manual_fw_id ||
+				(fw_id == support_manual_fw_id && fw_num >= support_manual_fw_num)){
 			manual_status = true;
 		}
+	}
+	if(support_site_modelid == "GT-AC2900_SH"){
+		manual_status = false;
 	}
 	return manual_status;
 }
@@ -1224,7 +1229,7 @@ function check_AiMesh_fw_version(_fw) {
 			<tr id="manually_upgrade_tr">
 				<th><#FW_item5#></th>
 				<td>
-					<input type="file" id="filename" name="file" class="input" style="color:#FFCC00;*color:#000;width: 194px;">
+					<input type="file" name="file" class="input" style="color:#FFCC00;*color:#000;width: 194px;">
 					<input type="button" name="upload" class="button_gen" onclick="submitForm()" value="<#CTL_upload#>" />
 				</td>
 			</tr>			
@@ -1342,3 +1347,4 @@ function check_AiMesh_fw_version(_fw) {
 </form>
 </body>
 </html>
+

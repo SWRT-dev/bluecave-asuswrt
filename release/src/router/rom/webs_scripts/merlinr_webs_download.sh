@@ -72,6 +72,9 @@ elif [ "$forsq" == "1" ]; then
 elif [ "$urlpath" == "" ]; then
 	echo "---- wget fw Real ----" > /tmp/webs_upgrade.log
 	wget $wget_options https://update.paldier.com/$firmware_file -O $firmware_path
+	if [ "$rsa_enabled" != "" ]; then
+		wget $wget_options https://update.paldier.com/$firmware_rsasign -O /tmp/rsasign.bin
+	fi
 else
 	echo "---- wget fw URL ----" > /tmp/webs_upgrade.log
 	wget $wget_options $urlpath/$firmware_file -O $firmware_path
@@ -118,3 +121,4 @@ fi
 rm -f /tmp/rsasign.bin
 
 nvram set webs_state_upgrade=1
+

@@ -55,8 +55,6 @@ static const char *mangle_fn_ipv6 = "/tmp/mangle_rules_ipv6";
 
 int etable_flag = 0;
 int manual_return = 0;
-#define GUEST_INIT_MARKNUM 10 /*10 ~ 30 for Guest Network. */
-#define INITIAL_MARKNUM    30 /*30 ~ X  for LAN . */
 
 /*
 	ip / mac / ip-range status
@@ -861,7 +859,6 @@ static int add_qos_rules(char *pcWANIF)
 //		eval("ip6tables-restore", (char*)mangle_fn_ipv6);
 	}
 #endif
-	run_custom_script("qos-start", 0, "rules", NULL);
 	QOSDBG("[qos] iptables DONE!\n");
 
 	return 0;
@@ -1138,7 +1135,6 @@ static int start_tqos(void)
 
 	fclose(f);
 	chmod(qosfn, 0700);
-	run_custom_script("qos-start", 0, "init", NULL);
 	eval((char *)qosfn, "start");
 	QOSDBG("[qos] tc done!\n");
 

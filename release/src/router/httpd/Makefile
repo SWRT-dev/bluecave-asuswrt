@@ -24,7 +24,6 @@ ifeq ($(RTCONFIG_BCMWL6),y)
 CFLAGS += -I$(SRCBASE)/wl/exe/
 endif
 endif
-CFLAGS += -I$(TOP)/push_log
 CFLAGS += -DASUS_DDNS -DTRANSLATE_ON_FLY -DFLASH_EMULATOR -DLinux -DWSC 
 
 ifeq ($(RTCONFIG_NETOOL),y)
@@ -162,7 +161,7 @@ endif
 LIBS += -lm
 
 ifeq ($(RTCONFIG_PUSH_EMAIL),y)
-CFLAGS += -L$(TOP)/openssl/include
+CFLAGS += -I$(TOP)/openssl/include
 LIBS += -L$(TOP)/openssl -lcrypto -lssl -ldl
 endif
 
@@ -322,3 +321,4 @@ endif
 	@$(CC) $(CFLAGS) -M $< > $@
 
 -include $(OBJS:%.o=.%.depend)
+

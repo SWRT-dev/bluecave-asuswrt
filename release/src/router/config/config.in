@@ -69,9 +69,9 @@ config RTCONFIG_HND_ROUTER
 	bool "Bcm hnd bsp"
 	default n
 
-config RTCONFIG_HNDMFG
-	bool "HND MFG mode"
-	depends on RTCONFIG_HND_ROUTER
+config RTCONFIG_BCM_MFG
+	bool "BCM MFG mode"
+	depends on RTCONFIG_BCMARM && RTCONFIG_BCMWL6
 	default n
 
 config RTCONFIG_DFS_US
@@ -286,6 +286,11 @@ config RTCONFIG_BCMWL6A
 	depends on RTCONFIG_BCMARM && RTCONFIG_BCMWL6
 	default n
 
+config RTCONFIG_BCM4708
+	bool "BCM WL 6.37.14"
+	depends on RTCONFIG_BCMARM && RTCONFIG_BCMWL6
+	default n
+
 config RTCONFIG_WIRELESSWAN
 	bool "Wireless WAN Function"
 	default n
@@ -357,6 +362,10 @@ config RTCONFIG_PARENTALCTRL
 	bool "Parental Control Function"
 	default n
 
+config RTCONFIG_INTERNETCTRL
+	bool "Internet Control Function"
+	default n
+
 config RTCONFIG_YANDEXDNS
 	bool "Yandex.DNS Support"
 	default n
@@ -381,6 +390,14 @@ config RTCONFIG_SYSSTATE
 	bool "Support additional debug logs"
 	default n
 
+config RTCONFIG_AHS
+	bool "Auto Healing System"
+	default n
+
+config RTCONFIG_LIBASC
+	bool "ASUS server command library"
+	default n
+
 config RTCONFIG_DUALWAN
 	bool "Dual WAN Support"
 	default n
@@ -395,6 +412,10 @@ config RTCONFIG_USER_LOW_RSSI
 
 config RTCONFIG_NEW_USER_LOW_RSSI
 	bool "User specified accepted min rssi"
+	default n
+
+config RTCONFIG_FRS_FEEDBACK
+	bool "Feedback features Support"
 	default n
 
 config RTCONFIG_PUSH_EMAIL
@@ -1640,6 +1661,10 @@ config RTCONFIG_SSID_AMAPS
 	bool "Single SSID rule as ASUS_2X(MAC)_AMAPS"
 	default n
 
+config RTCONFIG_PTHSAFE_POPEN
+	bool "pthread safe popen workaround"
+	default n
+
 config RTCONFIG_WIFI_SON
 	bool "WiFi SON for Lyra series"
 	depends on RTCONFIG_QCA
@@ -1797,6 +1822,22 @@ config RTCONFIG_OPENSSL11
 
 endchoice
 
+config RTCONFIG_ASD
+	bool "RTCONFIG_ASD support"
+	default n
+
+config RTCONFIG_FRS_LIVE_UPDATE
+	bool "RTCONFIG_FRS_LIVE_UPDATE support"
+	default n
+
+config RTCONFIG_GN_WBL
+	bool "Guest Network white and black list support"
+	default n
+
+config RTCONFIG_AMAZON_WSS
+	bool "AMAZON WSS (WiFi Simple Setup) certificate (depends on GN_WBL feature)"
+	default n
+
 config RTCONFIG_SOFTCENTER
 	bool "softcenter"
 	default n
@@ -1804,16 +1845,3 @@ config RTCONFIG_SOFTCENTER
 config RTCONFIG_SMARTDNS
 	bool "smart dns"
 	default n
-
-config RTCONFIG_FRS_LIVE_UPDATE
-	bool "RTCONFIG_FRS_LIVE_UPDATE support"
-	default n
-
-config RTCONFIG_UUPLUGIN
-	bool "UU plugin support"
-	default n
-
-config RTCONFIG_FRS_FEEDBACK
-	bool "Feedback features Support"
-	default n
-

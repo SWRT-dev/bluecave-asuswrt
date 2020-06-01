@@ -208,7 +208,8 @@ function initial(){
 		document.getElementById('desc_title').innerHTML = "<#ParentalCtrl_Desc_TS#>";
 		document.getElementById('web_title').innerHTML = "<#Web_Title#> - <#Time_Scheduling#>";
 		document.getElementById('PC_enable').innerHTML = "<#ParentalCtrl_Enable_TS#>";
-		document.getElementById('switch_menu').style.display = "";
+		if(isSupport("webs_filter") && isSupport("apps_filter"))
+			document.getElementById('switch_menu').style.display = "";
 	}
 	document.getElementById('disable_NAT').href = "Advanced_SwitchCtrl_Content.asp?af=ctf_disable_force";	//this id is include in string : #ParentalCtrl_disable_NAT#
 
@@ -768,7 +769,7 @@ function addRow_main(upper){
 		return false;
 	}
 	
-	if(!check_macaddr(document.form.PC_mac, check_hwaddr_flag(document.form.PC_mac))){
+	if(!check_macaddr(document.form.PC_mac, check_hwaddr_flag(document.form.PC_mac, 'inner'))){
 		document.form.PC_mac.focus();
 		document.form.PC_mac.select();
 		return false;	

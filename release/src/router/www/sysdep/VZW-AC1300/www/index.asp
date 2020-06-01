@@ -26,6 +26,9 @@ function initial(){
 	show_menu();
 	updateClientList();
 	updateClientListBackground();
+	setInterval(function(){
+		updateClientListBackground();
+	}, 1000*60*3);
 }
 
 function updateClientList(){
@@ -44,19 +47,8 @@ function updateClientList(){
 }
 
 function updateClientListBackground() {
-	$.ajax({
-		url: '/update_networkmapd.asp',
-		dataType: 'script', 
-		error: function(xhr) {
-			setTimeout("updateClientListBackground();", 1000);
-		},
-		success: function(response) {
-			document.networkmapdRefresh.submit();
-			setTimeout("updateClientListBackground();", 180000);
-		}
-	});
+	document.networkmapdRefresh.submit();
 }
-
 
 function handleClientData(){
 	wlClient = [];

@@ -5,7 +5,7 @@ LIBS =
 LDFLAGS	= 
 
 CFLAGS	+= -I$(TOP)/openssl/include
-LIBS += -L$(TOP)/openssl -lssl -lcrypto
+LIBS += -L$(TOP)/openssl -lssl -lcrypto $(if $(RTCONFIG_OPENSSL11),-lpthread,)
 
 ifneq ($(RTCONFIG_BCMARM),y)
 LIBS += -lpthread

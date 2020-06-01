@@ -99,6 +99,7 @@ var webs_state_update;
 var webs_state_error;
 var webs_state_info;
 var wan_unit_orig = '<% nvram_get("wan_unit"); %>';
+var fileflex_text = "<#FileFlex_desc0#>";
 
 function initial(){
 	show_menu();
@@ -445,8 +446,6 @@ function show_apps(){
 	if(apps_array == "" && (appnet_support || appbase_support)){
 		apps_array = [["downloadmaster", "", "", "no", "no", "", "", "<#DM_EnableHint#>", "downloadmaster_png", "", "", ""],
 									["mediaserver", "", "", "no", "no", "", "", "", "mediaserver_png", "", "", ""]];
-		if(nodm_support)
-			apps_array[1][0] = "mediaserver2";
 
 		if(aicloudipk_support)
 			apps_array.push(["aicloud", "", "", "no", "no", "", "", "AiCloud 2.0 utilities", "aicloud_png", "", "", ""]);
@@ -483,16 +482,13 @@ function show_apps(){
 			apps_array.splice(media2_idx[0], 1);
 	}
 	else{
-		if(nodm_support)
-			var media_idx = apps_array.getIndexByValue2D("mediaserver");
-		else
-			var media_idx = apps_array.getIndexByValue2D("mediaserver2");
+		var media_idx = apps_array.getIndexByValue2D("mediaserver2");
 
 		if(media_idx[1] != -1 && media_idx != -1)
 			apps_array.splice(media_idx[0], 1);
 
 		var media_idx = apps_array.getIndexByValue2D("mediaserver");
-		if(!nodm_support && (media_idx == -1 || media_idx[1] == -1)){
+		if(media_idx == -1 || media_idx[1] == -1){
 			var apps_len = apps_array.length;
 			apps_array[apps_len] = ["mediaserver", "", "", "no", "no", "", "", "", "mediaserver_png", "", "", ""];
 		}
@@ -613,10 +609,7 @@ function show_apps(){
 		if(apps_array[i][0] == "Download Master")
 			apps_array[i][0] = "downloadmaster";
 		else if(apps_array[i][0] == "Media Server"){
-			if(!nodm_support)
-				apps_array[i][0] = "mediaserver";
-			else
-				apps_array[i][0] = "mediaserver2";
+			apps_array[i][0] = "mediaserver";
 		}
 		else if(apps_array[i][0] == "AiCloud 2.0")
 			apps_array[i][0] = "aicloud";
@@ -678,6 +671,9 @@ function show_apps(){
 	stoppullstate = 1;
 	cookie.set("hwaddr", '<% nvram_get("lan_hwaddr"); %>', 1000);
 	cookie.set("apps_last", "", 1000);
+	//re-turn FormTitle height
+	if($("#FormTitle > table").height() > $("#FormTitle").height())
+		$("#FormTitle").height($("#FormTitle > table").height());
 }
 
 /* 

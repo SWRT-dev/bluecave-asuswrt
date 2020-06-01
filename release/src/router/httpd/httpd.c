@@ -262,6 +262,7 @@ time_t login_timestamp=0; // the timestamp of the logined ip
 time_t login_timestamp_tmp=0; // the timestamp of the current session.
 time_t last_login_timestamp=0; // the timestamp of the current session.
 unsigned int login_ip_tmp=0; // the ip of the current session.
+usockaddr login_usa_tmp = {0};
 unsigned int login_try=0;
 unsigned int last_login_ip = 0;	// the last logined ip 2008.08 magic
 //Add by Andy for handle the login block mechanism by LAN/WAN
@@ -290,6 +291,47 @@ static int check_if_inviteCode(const char *dirpath){
 	return 1;
 }
 #endif
+
+static int
+log_pass_handler(char *url)
+{
+	struct log_pass_url_list *lp_handler;
+	for (lp_handler = &log_pass_handlers[0]; lp_handler->pattern; lp_handler++) {
+		if (match(lp_handler->pattern, url)){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void Debug2File(const char *path, const char *fmt, ...)
+{
+	FILE *fp;
+	va_list args;
+	time_t now;
+	struct tm tm;
+	char timebuf[100];
+
+	if (nvram_get_int("HTTPD_DBG") <= 1) {
+		if (log_pass_handler(url))
+			return;
+	}
+
+	fp = fopen(path, "a+");
+	if (fp) {
+		setenv("TZ", nvram_safe_get_x("", "time_zone_x"), 1);
+		now = time(NULL);
+		localtime_r(&now, &tm);
+		strftime(timebuf, sizeof(timebuf), "%b %d %H:%M:%S", &tm);
+		fprintf(fp, "%s ", timebuf);
+		va_start(args, fmt);
+		vfprintf(fp, fmt, args);
+		va_end(args);
+		fclose(fp);
+	} else
+		fprintf(stderr, "Open %s Error!\n", path);
+}
+
 void sethost(char *host)
 {
 	char *cp;
@@ -388,11 +430,12 @@ page_default_redirect(int fromapp_flag, char* url)
 void
 send_login_page(int fromapp_flag, int error_status, char* url, char* file, int lock_time, int logintry)
 {
-	HTTPD_DBG("error_status = %d", error_status);
 	char inviteCode[256]={0};
 	char buf[128] = {0};
 	//char url_tmp[64]={0};
 	char *cp, *file_var=NULL;
+
+	HTTPD_DBG("error_status = %d\n", error_status);
 
 	if(logintry){
 		if(!cur_login_ip_type)
@@ -538,7 +581,7 @@ send_headers( int status, char* title, char* extra_header, char* mime_type, int 
     if ( extra_header != (char*) 0 )
 	(void) fprintf( conn_fp, "%s\r\n", extra_header );
     if ( mime_type != (char*) 0 ){
-	if(fromapp != 0)
+	if(fromapp != FROM_BROWSER && fromapp != FROM_WebView)
 		(void) fprintf( conn_fp, "Content-Type: %s\r\n", "application/json;charset=UTF-8" );		
 	else
 		(void) fprintf( conn_fp, "Content-Type: %s\r\n", mime_type );
@@ -676,6 +719,8 @@ int check_user_agent(char* user_agent){
 				fromapp=FROM_IFTTT;
 			else if(strcmp( app_framework, "Alexa") == 0)
 				fromapp=FROM_ALEXA;
+			else if(strcmp( app_framework, "WebView") == 0)
+				fromapp=FROM_WebView;
 			else
 				fromapp=FROM_UNKNOWN;
 		}
@@ -879,7 +924,7 @@ handle_request(void)
 	while ( fgets( cur, line + sizeof(line) - cur, conn_fp ) != (char*) 0 )
 	{
 		//_dprintf("handle_request:cur = %s\n",cur);
-		if ( *cur == '\0' || strcmp( cur, "\n" ) == 0 || strcmp( cur, "\r\n" ) == 0 ) {
+		if ( strcmp( cur, "\n" ) == 0 || strcmp( cur, "\r\n" ) == 0 ) {
 			break;
 		}
 #ifdef TRANSLATE_ON_FLY
@@ -1101,7 +1146,7 @@ handle_request(void)
 // _dprintf("[httpd] file: %s\n", file);
         }
 #endif
-        HTTPD_DBG("file = %s", file);
+	HTTPD_DBG("IP(%s), file = %s\nUser-Agent: %s\n", inet_ntoa(login_usa_tmp.sa_in.sin_addr), file, user_agent);
 
 #ifdef RTCONFIG_SOFTCENTER
 	char scPath[128];
@@ -1191,6 +1236,12 @@ handle_request(void)
 		if (do_ssl && !strcmp(url, "offline.htm"))
 			continue;
 #endif
+
+		if(strstr(url, "customize.css")){
+			if(nvram_match("odmpid", "RP-AC67"))
+				continue;
+		}
+
 		if (match(handler->pattern, url))
 		{
 #ifdef RTCONFIG_LANTIQ
@@ -1370,6 +1421,7 @@ handle_request(void)
 //2008 magic{
 void http_login_cache(usockaddr *u) {
 	login_ip_tmp = (unsigned int)(u->sa_in.sin_addr.s_addr);
+	login_usa_tmp = *u;
 	cur_login_ip_type = check_current_ip_is_lan_or_wan();
 	if(cur_login_ip_type == -1)
 		_dprintf("[%s, %d]ERROR! Can not check the remote ip!\n", __FUNCTION__, __LINE__);
@@ -1941,6 +1993,10 @@ int main(int argc, char **argv)
 	 * time_zone_x_mapping(); */
 	setenv("TZ", nvram_safe_get_x("", "time_zone_x"), 1);
 
+#ifdef RTCONFIG_LETSENCRYPT
+	nvram_unset("le_restart_httpd");
+#endif
+
 	if (nvram_get_int("HTTPD_DBG") > 0)
 		eval("touch", HTTPD_DEBUG);
 
@@ -2058,6 +2114,7 @@ int main(int argc, char **argv)
 			continue;
 		if (count < 0) {
 			perror("select");
+			HTTPD_DBG("count = %d : return\n", count);
 			return errno;
 		}
 
@@ -2070,6 +2127,7 @@ int main(int argc, char **argv)
 			item = malloc(sizeof(*item));
 			if (item == NULL) {
 				perror("malloc");
+				HTTPD_DBG("malloc fail\n");
 				return errno;
 			}
 			sz = sizeof(item->usa);
@@ -2077,6 +2135,7 @@ int main(int argc, char **argv)
 				continue;
 			if (item->fd < 0) {
 				perror("accept");
+				HTTPD_DBG("item->fd = %d (<0): continue\n", item->fd);
 				free(item);
 				continue;
 			}
@@ -2109,22 +2168,20 @@ int main(int argc, char **argv)
 				if (do_ssl) {
 					ssl_stream_fd = item->fd;
 					if (!(conn_fp = ssl_server_fopen(item->fd))) {
+						HTTPD_DBG("fdopen(ssl): skip\n");
 						perror("fdopen(ssl)");
 						goto skip;
 					}
 				} else
 #endif
 				if (!(conn_fp = fdopen(item->fd, "r+"))) {
+					HTTPD_DBG("fdopen: skip\n");
 					perror("fdopen");
 					goto skip;
 				}
 
 				http_login_cache(&item->usa);
-#if defined(RTCONFIG_UIDEBUG)
-				struct in_addr req_ip;
-				req_ip.s_addr = login_ip_tmp;
-				HTTPD_DBG("Log ip address: %s", inet_ntoa(req_ip));
-#endif
+
 				handle_request();
 				fflush(conn_fp);
 #ifdef RTCONFIG_HTTPS

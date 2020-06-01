@@ -10,7 +10,7 @@ endif
 CFLAGS += -I$(TOP)/openssl/include
 LDFLAGS += $(EXTRALDFLAGS) -L$(TOP)/nvram${BCMEX}${EX7} -lnvram -L$(TOP)/shared -lshared
 LDFLAGS += -lcrypt
-LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl
+LDFLAGS += -L$(TOP)/openssl -lcrypto -lssl $(if $(RTCONFIG_OPENSSL11),-lpthread,)
 
 
 INSTALL = install

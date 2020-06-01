@@ -108,7 +108,7 @@ endif
 ifeq ($(RTCONFIG_HTTPS),y)
 CFLAGS += -I$(TOP)/mssl -I$(TOP)/openssl/include -DHAVE_SSL
 LDFLAGS += -L$(TOP)/mssl -L$(TOP)/openssl
-LIBS += -lmssl -lssl -lcrypto -ldl
+LIBS += -lmssl -lssl -lcrypto -ldl $(if $(RTCONFIG_OPENSSL11),-lpthread,)
 endif
 
 #end of Yau add

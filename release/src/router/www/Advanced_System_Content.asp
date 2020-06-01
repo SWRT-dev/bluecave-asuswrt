@@ -52,6 +52,10 @@
 	border: 1px solid #999;
 	color: #999;
 }
+.highlight{
+	background: #78535b;
+    border: 1px solid #f06767;
+}
 </style>
 <script>
 time_day = uptimeStr.substring(5,7);//Mon, 01 Aug 2011 16:25:44 +0800(1467 secs since boot....
@@ -238,6 +242,7 @@ function initial(){
 		document.getElementById("telnet_tr").style.display = "";
 		document.form.telnetd_enable[0].disabled = false;
 		document.form.telnetd_enable[1].disabled = false;
+		telnet_enable(httpApi.nvramGet(["telnetd_enable"]).telnetd_enable);
 	}
 	// load shell_timeout_x
 	document.form.shell_timeout_x.value = orig_shell_timeout_x;
@@ -441,6 +446,9 @@ function applyRule(){
 		else
 			document.form.dns_probe.value = "0";
 
+		if(document.form.https_lanport.value != '<% nvram_get("https_lanport"); %>')
+			alert('<#Change_HttpsLanport_Hint#>');
+
 		showLoading();
 
 		var action_script_tmp = "restart_time;restart_upnp;";
@@ -527,7 +535,14 @@ function validForm(){
 		document.form.http_passwd2.focus();
 		document.form.http_passwd2.select();
 		return false;
-	}	
+	}
+
+	if(document.form.http_passwd2.value.length > 16){
+		showtext(document.getElementById("alert_msg2"),"* <#JS_max_password#>");
+		document.form.http_passwd2.focus();
+		document.form.http_passwd2.select();
+		return false;
+	}
 
 	if(document.form.http_passwd2.value != document.form.v_password2.value){
 		showtext(document.getElementById("alert_msg2"),"* <#File_Pop_content_alert_desc7#>");
@@ -601,9 +616,26 @@ function validForm(){
 		return false;
 	}
 
+	if(document.form.sshd_enable.value != 0){
+		if (!validator.range(document.form.sshd_port_x, 1, 65535))
+			return false;
+		else if(isPortConflict(document.form.sshd_port.value, "ssh")){
+			alert(isPortConflict(document.form.sshd_port.value, "ssh"));
+			document.form.sshd_port.focus();
+			return false;
+		}
+		else{
+			document.form.sshd_port.value = document.form.sshd_port_x.value;
+			document.form.sshd_port.disabled = false;
+		}
+	}
+	else{
+		document.form.sshd_port.disabled = true;
+	}
+
 	if (!validator.range(document.form.http_lanport, 1, 65535))
 		/*return false;*/ document.form.http_lanport = 80;
-	if (HTTPS_support && !validator.range(document.form.https_lanport, 1, 65535) && !tmo_support)
+	if (HTTPS_support && !validator.range(document.form.https_lanport, 1025, 65535) && !tmo_support)
 		return false;
 
 	if (document.form.misc_http_x[0].checked) {
@@ -615,14 +647,16 @@ function validForm(){
 	else{
 		document.form.misc_httpport_x.value = '<% nvram_get("misc_httpport_x"); %>';
 		document.form.misc_httpsport_x.value = '<% nvram_get("misc_httpsport_x"); %>';
-	}	
-
-	if(document.form.sshd_enable.value != 0){
-		if (!validator.range(document.form.sshd_port, 1, 65535))
-			return false;
 	}
-	else{
-		document.form.sshd_port.disabled = true;
+
+	if(document.form.sshd_port_x.value == document.form.https_lanport.value){
+		alert("<#SSH_HttpsLanPort_Conflict_Hint#>");
+		$("#sshd_port_x").addClass("highlight");
+		$("#port_conflict_sshdport").show();
+		$("#https_lanport_input").addClass("highlight");
+		$("#port_conflict_httpslanport").show();
+		document.form.sshd_port_x.focus();
+		return false;
 	}
 
 	if(!validator.rangeAllowZero(document.form.shell_timeout_x, 10, 999, orig_shell_timeout_x))
@@ -632,22 +666,26 @@ function validForm(){
 			isPortConflict(document.form.misc_httpport_x.value)){
 		alert(isPortConflict(document.form.misc_httpport_x.value));
 		document.form.misc_httpport_x.focus();
+		document.form.misc_httpport_x.select();
 		return false;
 	}
 	else if(!document.form.misc_httpsport_x.disabled &&
 			isPortConflict(document.form.misc_httpsport_x.value) && HTTPS_support){
 		alert(isPortConflict(document.form.misc_httpsport_x.value));
 		document.form.misc_httpsport_x.focus();
+		document.form.misc_httpsport_x.select();
 		return false;
 	}
 	else if(isPortConflict(document.form.https_lanport.value) && HTTPS_support && !tmo_support){
 		alert(isPortConflict(document.form.https_lanport.value));
 		document.form.https_lanport.focus();
+		document.form.https_lanport.select();
 		return false;
 	}
 	else if(document.form.misc_httpsport_x.value == document.form.misc_httpport_x.value && HTTPS_support){
 		alert("<#https_port_conflict#>");
 		document.form.misc_httpsport_x.focus();
+		document.form.misc_httpsport_x.select();
 		return false;
 	}
 	else if(!validator.rangeAllowZero(document.form.http_autologout, 10, 999, '<% nvram_get("http_autologout"); %>'))
@@ -736,7 +774,7 @@ var timezones = [
 	["UTC4_2",	"(GMT-04:00) <#TZ18_1#>"],
 	["UTC4DST_2",	"(GMT-04:00) <#TZ19#>"],
 	["NST3.30DST",	"(GMT-03:30) <#TZ20#>"],
-	["EBST3DST_1",	"(GMT-03:00) <#TZ21#>"],
+	["EBST3",	"(GMT-03:00) <#TZ21#>"],	//EBST3DST_1
 	["UTC3",	"(GMT-03:00) <#TZ22#>"],
 	["EBST3DST_2",	"(GMT-03:00) <#TZ23#>"],
 	["UTC2",	"(GMT-02:00) <#TZ24#>"],
@@ -767,13 +805,13 @@ var timezones = [
 	["UTC-3_1",	"(GMT+03:00) <#TZ46#>"],
 	["UTC-3_2",	"(GMT+03:00) <#TZ47#>"],
 	["UTC-3_3",	"(GMT+03:00) <#TZ40_1#>"],
-	["UTC-3_4",	"(GMT+03:00) <#TZ44#>"],
-	["UTC-3_5",	"(GMT+03:00) <#TZ45#>"],
+	["UTC-3_4",	"(GMT+03:00) <#TZ44#>"],	
 	["IST-3",	"(GMT+03:00) <#TZ48#>"],
 	["UTC-3_6",	"(GMT+03:00) <#TZ48_1#>"],
 	["UTC-3.30DST",	"(GMT+03:30) <#TZ49#>"],	
 	["UTC-4_1",	"(GMT+04:00) <#TZ50#>"],
 	["UTC-4_5",	"(GMT+04:00) <#TZ50_2#>"],
+	["UTC-4_7",	"(GMT+04:00) <#TZ45#>"],	//UTC-3_5
 	["UTC-4_4",	"(GMT+04:00) <#TZ50_1#>"],
 	["UTC-4_6",	"(GMT+04:00) <#TZ51#>"],
 	["UTC-4.30",	"(GMT+04:30) <#TZ52#>"],
@@ -1206,6 +1244,12 @@ function clean_scorebar(obj){
 function check_sshd_enable(obj_value){
 	if(obj_value != 0){
 		document.getElementById('sshd_port_tr').style.display = "";
+		if(obj_value == 1){
+			document.getElementById('SSH_Port_Suggestion1').style.display = "";
+		}
+		else{
+			document.getElementById('SSH_Port_Suggestion1').style.display = "none";
+		}
 		//document.getElementById('remote_access_tr').style.display = "";		//hide remote access and remote forwarding temporally
 		//document.getElementById('remote_forwarding_tr').style.display = "";
 		//sshd_remote_access(document.form.sshd_remote);
@@ -1215,6 +1259,7 @@ function check_sshd_enable(obj_value){
 	}
 	else{
 		document.getElementById('sshd_port_tr').style.display = "none";
+		document.getElementById('SSH_Port_Suggestion1').style.display = "none";
 		//document.getElementById('remote_access_tr').style.display = "none";		//hide remote access and remote forwarding temporally
 		//document.getElementById('remote_access_port_tr').style.display = "none";
 		//document.getElementById('remote_forwarding_tr').style.display = "none";
@@ -1242,6 +1287,9 @@ function check_sshd_enable(obj_value){
 	}
 
 }*/
+function telnet_enable(flag){
+	document.getElementById('SSH_Port_Suggestion2').style.display = (flag == 1) ? "":"none";
+}
 
 function display_spec_IP(flag){
 	if(flag == 0){
@@ -1434,6 +1482,15 @@ function pullPingTargetList(obj){
 	else
 		hidePingTargetList();
 }
+
+function reset_portconflict_hint(){
+	if($("#sshd_port_x").hasClass("highlight"))
+		$("#sshd_port_x").removeClass("highlight");
+	if($("#https_lanport_input").hasClass("highlight"))
+		$("#https_lanport_input").removeClass("highlight");
+	$("#port_conflict_sshdport").hide();
+	$("#port_conflict_httpslanport").hide();
+}
 </script>
 </head>
 
@@ -1472,6 +1529,7 @@ function pullPingTargetList(obj){
 <input type="hidden" name="ncb_enable" value="<% nvram_get("ncb_enable"); %>">
 <input type="hidden" name="dns_probe" value="<% nvram_get("dns_probe"); %>">
 <input type="hidden" name="wandog_enable" value="<% nvram_get("wandog_enable"); %>">
+<input type="hidden" name="sshd_port" value="<% nvram_get("sshd_port"); %>" disabled>
 
 <table class="content" align="center" cellpadding="0" cellspacing="0">
   <tr>
@@ -1514,7 +1572,7 @@ function pullPingTargetList(obj){
 				<tr>
 					<th width="40%"><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_new#></a></th>
 					<td>
-						<input type="password" autocomplete="off" name="http_passwd2" tabindex="2" onKeyPress="return validator.isString(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="16" onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off"/>
+						<input type="password" autocomplete="new-password" name="http_passwd2" tabindex="2" onKeyPress="return validator.isString(this, event);" onkeyup="chkPass(this.value, 'http_passwd');" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="17" onBlur="clean_scorebar(this);" autocorrect="off" autocapitalize="off"/>
 						&nbsp;&nbsp;
 						<div id="scorebarBorder" style="margin-left:180px; margin-top:-25px; display:none;" title="<#LANHostConfig_x_Password_itemSecur#>">
 							<div id="score"></div>
@@ -1525,7 +1583,7 @@ function pullPingTargetList(obj){
 				<tr>
 					<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(11,4)"><#PASS_retype#></a></th>
 					<td>
-						<input type="password" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return validator.isString(this, event);" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="16" autocorrect="off" autocapitalize="off"/>
+						<input type="password" autocomplete="off" name="v_password2" tabindex="3" onKeyPress="return validator.isString(this, event);" onpaste="setTimeout('paste_password();', 10)" class="input_18_table" maxlength="17" autocorrect="off" autocapitalize="off"/>
 						<div style="margin:-25px 0px 5px 175px;"><input type="checkbox" name="show_pass_1" onclick="pass_checked(document.form.http_passwd2);pass_checked(document.form.v_password2);"><#QIS_show_pass#></div>
 						<span id="alert_msg2" style="color:#FC0;margin-left:8px;display:inline-block;"></span>
 					
@@ -1798,8 +1856,9 @@ function pullPingTargetList(obj){
 				<tr id="telnet_tr">
 					<th><#Enable_Telnet#></th>
 					<td>
-						<input type="radio" name="telnetd_enable" class="input" value="1" <% nvram_match_x("LANHostConfig", "telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
-						<input type="radio" name="telnetd_enable" class="input" value="0" <% nvram_match_x("LANHostConfig", "telnetd_enable", "0", "checked"); %>><#checkbox_No#>
+						<input type="radio" name="telnetd_enable" value="1" onchange="telnet_enable(this.value);" <% nvram_match_x("LANHostConfig", "telnetd_enable", "1", "checked"); %>><#checkbox_Yes#>
+						<input type="radio" name="telnetd_enable" value="0" onchange="telnet_enable(this.value);" <% nvram_match_x("LANHostConfig", "telnetd_enable", "0", "checked"); %>><#checkbox_No#>
+						<div style="color: #FFCC00;display:none;" id="SSH_Port_Suggestion2">* <#SSH_Port_Suggestion2#></div>
 					</td>
 				</tr>
 				<tr id="sshd_enable_tr">
@@ -1807,15 +1866,18 @@ function pullPingTargetList(obj){
 					<td>
 						<select name="sshd_enable" class="input_option" onchange="check_sshd_enable(this.value);">
 							<option value="0" <% nvram_match("sshd_enable", "0", "selected"); %>><#checkbox_No#></option>
-							<option value="1" <% nvram_match("sshd_enable", "1", "selected"); %>><#checkbox_Yes#></option>
 							<option value="2" <% nvram_match("sshd_enable", "2", "selected"); %>>LAN only</option>
+							<option value="1" <% nvram_match("sshd_enable", "1", "selected"); %>>LAN & WAN</option>
 						</select>
 					</td>
 				</tr>
 				<tr id="sshd_port_tr">
 					<th width="40%"><#Port_SSH#></th>
 					<td>
-						<input type="text" class="input_6_table" maxlength="5" name="sshd_port" onKeyPress="return validator.isNumber(this,event);" value='<% nvram_get("sshd_port"); %>' autocorrect="off" autocapitalize="off">
+						<input type="text" class="input_6_table" maxlength="5" id="sshd_port_x" name="sshd_port_x" onKeyPress="return validator.isNumber(this,event);" autocorrect="off" autocapitalize="off" value='<% nvram_get("sshd_port_x"); %>' onkeydown="reset_portconflict_hint();">
+						<span id="port_conflict_sshdport" style="color: #e68282; display: none;">Port Conflict</span>
+						<div style="color: #FFCC00;">* <#SSH_Port_Suggestion#></div>
+						<div style="color: #FFCC00;display:none;" id="SSH_Port_Suggestion1">* <#SSH_Port_Suggestion1#></div>
 					</td>
 				</tr>
 				<!--tr id="remote_access_tr" style="display:none">
@@ -1886,8 +1948,10 @@ function pullPingTargetList(obj){
 				<tr id="https_lanport">
 					<th><#System_HTTPS_LAN_Port#></th>
 					<td>
-						<input type="text" maxlength="5" class="input_6_table" name="https_lanport" value="<% nvram_get("https_lanport"); %>" onKeyPress="return validator.isNumber(this,event);" onBlur="change_url(this.value, 'https_lan');" autocorrect="off" autocapitalize="off">
-						<span id="https_access_page"></span>
+						<input type="text" maxlength="5" class="input_6_table" id="https_lanport_input" name="https_lanport" value="<% nvram_get("https_lanport"); %>" onKeyPress="return validator.isNumber(this,event);" onBlur="change_url(this.value, 'https_lan');" autocorrect="off" autocapitalize="off" onkeydown="reset_portconflict_hint();">
+						<span id="port_conflict_httpslanport" style="color: #e68282; display: none;">Port Conflict</span>
+						<div id="https_access_page" style="color: #FFCC00;"></div>
+						<div style="color: #FFCC00;">* <#HttpsLanport_Hint#></div>
 					</td>
 				</tr>
 			</table>
@@ -1980,3 +2044,4 @@ function pullPingTargetList(obj){
 <div id="footer"></div>
 </body>
 </html>
+

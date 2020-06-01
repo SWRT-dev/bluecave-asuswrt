@@ -115,6 +115,9 @@ OBJS += bwdpi_utils.o
 OBJS += bwdpi_utils.o
 OBJS += mac_name_tbl.o
 OBJS += stun.o
+ifeq ($(RTCONFIG_AHS),y)
+OBJS += $(if $(wildcard notify_ahs.c),notify_ahs.o,prebuild/notify_ahs.o)
+endif
 OBJS += timer_utils.o
 OBJS += scripts.o
 ifeq ($(RTCONFIG_TRAFFIC_LIMITER),y)
@@ -293,6 +296,7 @@ CFLAGS += -DSMART_CONNECT
 endif
 OBJS += $(if $(wildcard sysdeps/amas/amas_dwb.c),amas_dwb.o,prebuild/amas_dwb.o)
 endif
+OBJS += $(if $(wildcard amas_utils.c),amas_utils.o, prebuild/amas_utils.o)
 vpath %.c sysdeps/amas
 endif
 
@@ -409,3 +413,4 @@ prebuild/%.o:
 	@$(CC) $(CFLAGS) -E $< > $@
 
 -include $(OBJS:%.o=.%.depend)
+

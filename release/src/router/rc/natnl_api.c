@@ -53,7 +53,7 @@ void stop_aae()
 void start_mastiff()
 {
 #ifdef CONFIG_BCMWL5
-#if !(defined(HND_ROUTER) && defined(RTCONFIG_HNDMFG))
+#ifndef RTCONFIG_BCM_MFG
 	if (factory_debug())
 #endif
 #else

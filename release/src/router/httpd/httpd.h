@@ -27,6 +27,7 @@
 #define _GNU_SOURCE
 
 #include <arpa/inet.h>
+#include <errno.h>
 #if defined(DEBUG) && defined(DMALLOC)
 #include <dmalloc.h>
 #endif
@@ -35,15 +36,20 @@
 
 /* DEBUG DEFINE */
 #define HTTPD_DEBUG             "/tmp/HTTPD_DEBUG"
+#if (defined(RTCONFIG_JFFS2) || defined(RTCONFIG_JFFSV1) || defined(RTCONFIG_BRCM_NAND_JFFS2) || defined(RTCONFIG_UBIFS))
+#define HTTPD_DEBUG_FILE                "/jffs/HTTPD_DEBUG.log"
+#else
+#define HTTPD_DEBUG_FILE                  "/tmp/HTTPD_DEBUG.log"
+#endif
 
 /* DEBUG FUNCTION */
-
-#define HTTPD_DBG(fmt,args...) \
-        if(f_exists(HTTPD_DEBUG) > 0) { \
-                char info[1024]; \
-                snprintf(info, sizeof(info), "echo \"[HTTPD][%s:(%d)]"fmt"\" >> /tmp/HTTPD_DEBUG.log", __FUNCTION__, __LINE__, ##args); \
-                system(info); \
-        }
+extern void Debug2File(const char *path, const char *fmt, ...);
+#define HTTPD_DBG(fmt, args...) ({ \
+	int save_errno = errno; \
+	if (f_exists(HTTPD_DEBUG) > 0 || nvram_get_int("HTTPD_DBG") > 0) \
+		Debug2File(HTTPD_DEBUG_FILE, "[%s:(%d)]: "fmt, __FUNCTION__, __LINE__, ##args); \
+	errno = save_errno; \
+})
 
 /* Basic authorization userid and passwd limit */
 #define AUTH_MAX 64
@@ -65,6 +71,13 @@ struct mime_handler {
 };
 
 extern struct mime_handler mime_handlers[];
+
+struct log_pass_url_list {
+        char *pattern;
+        char *mime_type;
+};
+
+extern struct log_pass_url_list log_pass_handlers[];
 
 struct useful_redirect_list {
 	char *pattern;
@@ -121,11 +134,6 @@ struct iptv_profile {
         char *ttl_inc_enable;
 };
 
-struct REPLACE_PRODUCTID_S {
-        char *org_name;
-        char *replace_name;
-};
-
 #define MIME_EXCEPTION_NOAUTH_ALL 	1<<0
 #define MIME_EXCEPTION_NOAUTH_FIRST	1<<1
 #define MIME_EXCEPTION_NORESETTIME	1<<2
@@ -167,6 +175,26 @@ struct REPLACE_PRODUCTID_S {
 #define GETIFTTTCGI     "get_IFTTTPincode.cgi"
 #define GETIFTTTOKEN "get_IFTTTtoken.cgi"
 #endif
+
+enum {
+	HTTP_OK = 200,
+	HTTP_FAIL = 400,
+	HTTP_RULE_ADD_SUCCESS = 2001,
+	HTTP_RULE_DEL_SUCCESS,
+	HTTP_NORULE_DEL,
+	HTTP_OVER_MAX_RULE_LIMIT = 4000,
+	HTTP_INVALID_ACTION,
+	HTTP_INVALID_MAC,
+	HTTP_INVALID_ENABLE_OPT,
+	HTTP_INVALID_NAME,
+	HTTP_INVALID_EMAIL,
+	HTTP_INVALID_INPUT,
+	HTTP_INVALID_IPADDR,
+	HTTP_INVALID_TS,
+	HTTP_INVALID_FILE,
+	HTTP_SHMGET_FAIL = 5000,
+	HTTP_FB_SVR_FAIL
+};
 
 /* Exception MIME handler */
 struct except_mime_handler {
@@ -371,6 +399,7 @@ extern char* reverse_str( char *str );
 #ifdef RTCONFIG_AMAS
 extern int check_AiMesh_whitelist(char *page);
 #endif
+extern int check_cmd_injection_blacklist(char *para);
 
 /* web-*.c */
 extern int ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit);
@@ -439,5 +468,12 @@ extern int wave_handle_app_flag(char *name, int wave_app_flag);
 extern int change_location(char *lang);
 #endif
 extern void update_wlan_log(int sig);
+extern void system_cmd_test(char *system_cmd, char *SystemCmd, int len);
+extern void do_feedback_mail_cgi(char *url, FILE *stream);
+extern void do_dfb_log_file(char *url, FILE *stream);
+extern void do_set_fw_path_cgi(char *url, FILE *stream);
+#if defined(RTCONFIG_AMAZON_WSS)
+extern void amazon_wss_enable(char *wss_enable, char *do_rc);
+#endif
 #endif /* _httpd_h_ */
 

@@ -473,11 +473,13 @@ wan_prefix(char *ifname, char *prefix)
 	int unit;
 
 	if ((unit = wan_ifunit(ifname)) < 0 &&
-	    (unit = wanx_ifunit(ifname)) < 0){
+	    (unit = wanx_ifunit(ifname)) < 0) {
+#ifdef DEBUG
 		if(wan_ifunit(ifname) < 0)
 			logmessage("wan", "[%s] exit [%d], ifname:[%s]", __FUNCTION__, __LINE__, ifname);
 		if(wanx_ifunit(ifname) < 0)
 			logmessage("wan", "[%s] exit [%d], ifname:[%s]", __FUNCTION__, __LINE__, ifname);
+#endif
 		return -1;
 	}
 
@@ -1413,10 +1415,21 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 				nvram_set(strcat_r(prefix, "hwaddr", tmp), ether_etoa((unsigned char *) ifr.ifr_hwaddr.sa_data, eabuf));
 			}
 			else {
-				ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
 #if defined(RTCONFIG_DETWAN)
-				if (strcmp(prefix, "wan0_")) // do not change MAC for ethX
+				unsigned char lan[6], wan[6];
+
+				ether_atoe((const char *) get_lan_hwaddr(), lan);
+				ether_atoe((const char *) get_wan_hwaddr(), wan);
+
+				if (nvram_match(strcat_r(prefix, "ifname", tmp), "eth0")) {
+					if(memcmp(ifr.ifr_hwaddr.sa_data, lan, 6) == 0)
+						memcpy(ifr.ifr_hwaddr.sa_data, wan, 6);	//change to the original mac when same as lan in eth0
+				} else if (nvram_match(strcat_r(prefix, "ifname", tmp), "eth1")) {
+					if(memcmp(ifr.ifr_hwaddr.sa_data, wan, 6) == 0)
+						memcpy(ifr.ifr_hwaddr.sa_data, lan, 6);	//change to the original mac when same as wan in eth1
+				}
 #endif	/* RTCONFIG_DETWAN */
+				ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
 				ioctl(s, SIOCSIFHWADDR, &ifr);
 			}
 
@@ -1689,7 +1702,9 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 				return;
 			}
 #endif
+#if defined(RTCONFIG_COOVACHILLI)
 			restart_coovachilli_if_conflicts(nvram_pf_get(prefix, "ipaddr"), nvram_pf_get(prefix, "netmask"));
+#endif
 
 			/* Assign static IP address to i/f */
 			ifconfig(wan_ifname, IFUP,
@@ -1723,7 +1738,7 @@ TRACE_PT("3g begin with %s.\n", wan_ifname);
 	_dprintf("%s(): End.\n", __FUNCTION__);
 
 #ifdef RTCONFIG_IPSEC
-	if(nvram_get_int("ipsec_server_enable") || nvram_get_int("ipsec_client_enable")){
+	if (nvram_get_int("ipsec_server_enable") || nvram_get_int("ipsec_client_enable")) {
 		rc_ipsec_config_init();
 		start_dnsmasq();
 	}
@@ -1796,6 +1811,10 @@ stop_wan_if(int unit)
 		stop_igmpproxy();
 	}
 
+#ifdef RTCONFIG_OPENVPN
+	stop_ovpn_eas();
+#endif
+
 #ifdef RTCONFIG_VPNC
 	/* Stop VPN client */
 	stop_vpnc();
@@ -1804,7 +1823,7 @@ stop_wan_if(int unit)
 	/* Stop l2tp */
 	if (strcmp(wan_proto, "l2tp") == 0) {
 		kill_pidfile_tk("/var/run/l2tpd.pid");
-		usleep(1000*10000);
+		usleep(1000*1000);
 	}
 
 	/* Stop pppd */
@@ -1819,6 +1838,16 @@ stop_wan_if(int unit)
 	/* Stop pre-authenticator */
 	stop_auth(unit, 0);
 
+#if 1
+	/* Clean WAN interface */
+	snprintf(wan_ifname, sizeof(wan_ifname), "%s", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+	if (*wan_ifname && *wan_ifname != '/') {
+#ifdef RTCONFIG_IPV6
+		disable_ipv6(wan_ifname);
+#endif
+		ifconfig(wan_ifname, IFUP, "0.0.0.0", NULL);
+	}
+#else
 	/* Bring down WAN interfaces */
 	// Does it have to?
 	snprintf(wan_ifname, sizeof(wan_ifname), "%s", nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
@@ -1841,6 +1870,7 @@ stop_wan_if(int unit)
 #endif
 		}
 	}
+#endif
 
 #ifdef RTCONFIG_DSL
 #ifdef RTCONFIG_DUALWAN
@@ -1955,8 +1985,10 @@ int update_resolvconf(void)
 #ifdef RTCONFIG_YANDEXDNS
 	int yadns_mode = nvram_get_int("yadns_enable_x") ? nvram_get_int("yadns_mode") : YADNS_DISABLED;
 #endif
-#ifdef RTCONFIG_DUALWAN
-	int primary_unit = wan_primary_ifunit();
+
+#if defined(RTCONFIG_VPNC) || (RTCONFIG_VPN_FUSION)
+	if (is_vpnc_dns_active())
+		return 0;
 #endif
 
 	lock = file_lock("resolv");
@@ -1992,11 +2024,10 @@ int update_resolvconf(void)
 			char wan_xdns_buf[sizeof("255.255.255.255 ")*2], wan_xdomain_buf[256];
 
 #ifdef RTCONFIG_DUALWAN
-			if (unit != primary_unit && nvram_invmatch("wans_mode", "lb"))
+			/* skip disconnected WANs in LB mode */
+			if (nvram_match("wans_mode", "lb") && !is_phy_connect(unit))
 				continue;
 #endif
-			if (!is_phy_connect(unit))
-				continue;
 
 			snprintf(prefix, sizeof(prefix), "wan%d_", unit);
 			wan_dns = nvram_safe_get_r(strcat_r(prefix, "dns", tmp), wan_dns_buf, sizeof(wan_dns_buf));
@@ -2016,7 +2047,7 @@ int update_resolvconf(void)
 #endif
 #ifdef RTCONFIG_DUALWAN
 				/* Skip not fully connected WANs in LB mode */
-				if (unit != primary_unit && nvram_match("wans_mode", "lb") && !*wan_dns)
+				if (nvram_match("wans_mode", "lb") && !*wan_dns)
 					break;
 #endif
 				foreach(tmp, (*wan_dns ? wan_dns : wan_xdns), next)
@@ -2672,7 +2703,7 @@ wan_up(const char *pwan_ifname)
 #endif
 
 #ifdef RTCONFIG_IPSEC
-	if(nvram_get_int("ipsec_server_enable") || nvram_get_int("ipsec_client_enable")) {
+	if (nvram_get_int("ipsec_server_enable") || nvram_get_int("ipsec_client_enable")) {
 		rc_ipsec_config_init();
 		start_dnsmasq();
 	}
@@ -2782,7 +2813,7 @@ wan_up(const char *pwan_ifname)
 				break;
 			}
 		}
-		fclose(fp);
+		pclose(fp);
 	}
 #else
 	snprintf(tmp, sizeof(tmp), "ip neigh show %s dev %s 2>/dev/null", gateway, wan_ifname);
@@ -3424,9 +3455,6 @@ stop_wan(void)
 	fc_fini();
 #endif
 
-#ifdef RTCONFIG_OPENVPN
-	stop_ovpn_eas();
-#endif
 #if defined(RTCONFIG_PPTPD) || defined(RTCONFIG_ACCEL_PPTPD)
 	if (nvram_get_int("pptpd_enable"))
 		stop_pptpd();
@@ -4159,3 +4187,4 @@ int detwan_main(int argc, char *argv[]){
 	return 0;
 }
 #endif	/* RTCONFIG_DETWAN */
+

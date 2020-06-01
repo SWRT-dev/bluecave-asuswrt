@@ -316,7 +316,7 @@ function add_device(flag, target){
 		return false;
 	}
 
-	if(!check_macaddr(document.getElementById("device_mac"), check_hwaddr_flag(document.getElementById("device_mac")))){
+	if(!check_macaddr(document.getElementById("device_mac"), check_hwaddr_flag(document.getElementById("device_mac"), 'inner'))){
 		document.getElementById("device_mac").focus();
 		document.getElementById("device_mac").select();
 		return false;	

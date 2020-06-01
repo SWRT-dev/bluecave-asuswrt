@@ -248,7 +248,7 @@ function addRow_main(obj, length){
 		document.form.PC_devicename.focus();
 		return false;
 	}
-	else if(!check_macaddr(document.form.PC_devicename, check_hwaddr_flag(document.form.PC_devicename))){
+	else if(!check_macaddr(document.form.PC_devicename, check_hwaddr_flag(document.form.PC_devicename, 'inner'))){
 		document.form.PC_devicename.focus();
 		document.form.PC_devicename.select();
 		return false;

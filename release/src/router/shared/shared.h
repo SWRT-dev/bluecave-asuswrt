@@ -46,6 +46,18 @@
 #include <ftw.h>
 #include "network_utility.h"
 
+#ifdef RTCONFIG_AHS
+#include "notify_ahs.h"
+#endif /* RTCONFIG_AHS */
+
+#if defined(RTCONFIG_PTHSAFE_POPEN)
+#define	popen	PS_popen
+#define	pclose	PS_pclose
+#define	PS_SOCK	"/tmp/ps_sock"
+extern FILE *PS_popen(const char *, const char *);
+extern int PS_pclose(FILE *);
+#endif
+
 /* Endian conversion functions. */
 #define __bswap16(x) (uint16_t)	( \
 				(((uint16_t)(x) & 0x00ffu) << 8) | \
@@ -154,6 +166,17 @@
 #define FBWIFI_MARK_MASK	FBWIFI_MARK_SET(0x3)
 #define FBWIFI_MARK_INV_MASK	(~(FBWIFI_MARK_SET(0x3)))
 #define QOS_MASK		(0x3F)
+
+/* QoS related define */
+#define IS_TQOS()               (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 0)   // T.QoS
+#define IS_AQOS()               (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 1)   // A.QoS
+#define IS_BW_QOS()             (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 2)   // Bandwidth limiter
+#define IS_GFN_QOS()            (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") == 3)   // GeForce NOW QoS (Nvidia)
+#define IS_NON_AQOS()           (nvram_get_int("qos_enable") == 1 && nvram_get_int("qos_type") != 1)   // non A.QoS = others QoS (T.QoS / bandwidth monitor ... etc.)
+
+/* Guest network mark */
+#define GUEST_INIT_MARKNUM 10   /*10 ~ 30 for Guest Network. */
+#define INITIAL_MARKNUM    30   /*30 ~ X  for LAN . */
 
 #ifdef RTCONFIG_INTERNAL_GOBI
 #define DEF_SECOND_WANIF	"usb"
@@ -338,7 +361,7 @@ enum {
 #define GIF_PREFIXLEN  0x0002  /* return prefix length */
 #define GIF_PREFIX     0x0004  /* return prefix, not addr */
 
-#define EXTEND_AIHOME_API_LEVEL		19
+#define EXTEND_AIHOME_API_LEVEL		21
 
 #define EXTEND_HTTPD_AIHOME_VER		0
 
@@ -407,6 +430,7 @@ enum {
 	FROM_ASSIA,
 	FROM_IFTTT,
 	FROM_ALEXA,
+	FROM_WebView,
 	FROM_UNKNOWN
 };
 
@@ -454,7 +478,7 @@ struct ip_mask_s {
 #define VLAN_MAX_NUM			8	/* FIXME */
 #endif
 
-#define DHCP_STATICLIST_EXAMPLE		"<00:03:7f:00:00:02>192.168.100.200"
+#define DHCP_STATICLIST_EXAMPLE		"<00:03:7f:00:00:02>192.168.100.200>192.192.168.100.001"
 #define SUBNET_RULE_EXAMPLE		"<192.168.100.254>255.255.255.128>1>192.168.100.102>192.168.100.253>864000>12345678901234567890123456789012>192.168.100.100>192.168.100.099>1>"
 #define SUBNET_STATICLIST_EXAMPLE	"00:03:7f:20:00:01 192.168.120.101;"
 #define STATIC_MAC_IP_BINDING_PER_LAN	64
@@ -516,11 +540,6 @@ struct vlan_rules_s {
 
 extern char *read_whole_file(const char *target);
 extern char *get_line_from_buffer(const char *buf, char *line, const int line_size);
-extern char *get_upper_str(const char *const str, char **target);
-extern int upper_strcmp(const char *const str1, const char *const str2);
-extern int upper_strncmp(const char *const str1, const char *const str2, int count);
-extern char *upper_strstr(const char *const str, const char *const target);
-extern int stricmp(char const *a, char const *b, int len);
 #if defined(HND_ROUTER)
 // defined (__GLIBC__) && !defined(__UCLIBC__)
 size_t strlcpy(char *dst, const char *src, size_t size);
@@ -675,6 +694,7 @@ enum {
 	MODEL_RTAC55U,
 	MODEL_RTAC55UHP,
 	MODEL_RT4GAC55U,
+	MODEL_RTAC59U,
 	MODEL_PLN12,
 	MODEL_PLAC56,
 	MODEL_PLAC66U,
@@ -735,6 +755,7 @@ enum {
 	MODEL_RPAC87,
 	MODEL_RTAC85U,
 	MODEL_RTAC85P,
+	MODEL_RTACRH26,
 	MODEL_RTN800HP,
 	MODEL_RTAC88N,
 	MODEL_BRTAC828,
@@ -749,6 +770,22 @@ enum {
 	MODEL_GTAX6000,
 	MODEL_GTAX6000N,
 	MODEL_GTAX6000S,
+	MODEL_RTAC1200V2,
+	MODEL_RTN19,
+	MODEL_TUFAC1750,
+	MODEL_RTAX88U,
+	MODEL_GTAX11000,
+	MODEL_RTAX92U,
+	MODEL_RTAX95Q,
+	MODEL_RTAX58U,
+	MODEL_RTAX56U,
+	MODEL_SHAC1300,
+	MODEL_RPAC92,
+	MODEL_ZENWIFICD6R,
+	MODEL_ZENWIFICD6N,
+	MODEL_RTAX86U,
+	MODEL_RTAX68U,
+	MODEL_MAX
 };
 
 /* NOTE: Do not insert new entries in the middle of this enum,
@@ -1027,6 +1064,9 @@ enum led_id {
 	LED_CENTRAL_SIG3,
 	LED_INDICATOR_SIG1,
 	LED_INDICATOR_SIG2,
+#ifdef K3C	
+	LED_INDICATOR_SIG3,
+#endif
 #endif	
 #ifdef RTCONFIG_MMC_LED
 	LED_MMC,
@@ -1516,11 +1556,15 @@ extern void add_beacon_vsie(char *hexdata);
 extern void del_beacon_vsie(char *hexdata);
 extern int get_port_status(int unit);
 extern int is_wlsta_exist(int unit, int vidx);
+extern int get_wl_count();
+extern int get_eth_count();
+extern int cal_space(char *s1);
 #if defined(RTCONFIG_BCMWL6)
 extern int get_wl_sta_list(void);
 extern int get_maxassoc(char *ifname);
 extern int wl_add_ie(int unit, uint32 pktflag, int ielen, uchar *oui, uchar *data);
 extern void wl_del_ie_with_oui(int unit, uchar *oui);
+extern void wait_connection_finished(int band);
 #endif
 #if defined(RTCONFIG_LANTIQ)
 extern int get_wl_sta_list(void);
@@ -1739,6 +1783,7 @@ extern int remove_word(char *buffer, const char *word);
 extern void trim_space(char *str);
 extern void toLowerCase(char *str);
 extern void toUpperCase(char *str);
+extern void trim_colon(char *str);
 
 // file.c
 extern int check_if_file_exist(const char *file);
@@ -2333,13 +2378,15 @@ extern int wanport_status(int wan_unit);
 extern void erase_symbol(char *old, char *sym);
 
 /* pwenc.c */
+#if defined(RTCONFIG_NVRAM_ENCRYPT) || defined(RTCONFIG_ASD) || defined(RTCONFIG_AHS)
+extern int pw_enc(const char *input, char *output);
+extern int pw_dec(const char *input, char *output, int len);
+extern int pw_enc_blen(const char *input);
+extern int pw_dec_len(const char *input);
+#endif
 #ifdef RTCONFIG_NVRAM_ENCRYPT
 #define NVRAM_ENC_LEN	1024
 #define NVRAM_ENC_MAXLEN	4096
-extern int pw_enc(const char *input, char *output);
-extern int pw_dec(const char *input, char *output);
-extern int pw_enc_blen(const char *input);
-extern int pw_dec_len(const char *input);
 extern int set_enc_nvram(char *name, char *input, char *output);
 extern int enc_nvram(char *name, char *input, char *output);
 extern int dec_nvram(char *name, char *input, char *output);
@@ -2530,4 +2577,7 @@ extern int is_amaslib_enabled();
 #endif /* defined(RTCONFIG_AMAS) */
 
 extern int get_chance_to_control(void);
+extern int amazon_wss_ap_isolate_support(char *prefix);
+
 #endif	/* !__SHARED_H__ */
+

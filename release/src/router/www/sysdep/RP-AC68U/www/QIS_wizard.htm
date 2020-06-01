@@ -2020,6 +2020,13 @@ function validForm(){
 		return false;
 	}
 
+	if(httpPassInput.value.length > 16){
+		alert("<#JS_max_password#>");
+		httpPassInput.focus();
+		httpPassInput.select();
+		return false;
+	}
+
 	if(!validator.string(httpPassInput)){
 		httpPassInput.focus();
 		httpPassInput.select();
@@ -2175,7 +2182,7 @@ function genOptions(){
 					<div class="icon_eye_open" style="width:32px;height:32px;display:table-cell;padding-right:110px;" onclick="pass_checked('http_passwd', this)"></div>
 				</div>
 				<div style="margin:22px 55px 41px 30px">
-					<input id="http_passwd" type="text" maxlength="64" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
+					<input id="http_passwd" type="text" maxlength="17" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
 				</div>
 			</div>
 			<div style="margin-left:38px;margin-bottom:150px;">
@@ -2183,7 +2190,7 @@ function genOptions(){
 					<div style="HelveticaNeueLT45_Light_regular,Helvetica_regular,Arial;font-size:1.5em;color:#B8D8FF;display:table-cell"><#PASS_retype#></div>
 				</div>
 				<div style="margin:22px 55px 41px 30px">
-					<input id="http_passwd_confirm" type="text" maxlength="64" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
+					<input id="http_passwd_confirm" type="text" maxlength="17" style="padding-left:18px;font-family:HelveticaNeueW10-45Ligh,Helvetica,Arial;font-size:1.875em;color:#DBDBDB;" value="" data-clear-btn="true"></input>
 				</div>
 			</div>
 
