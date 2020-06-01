@@ -542,12 +542,6 @@ void exec_uu_merlinr()
 	}
 }
 #endif
-#if !defined(RTAC68U) && !defined(GTAC5300) && !defined(GTAC2900) && !defined(RTAC86U)
-void start_sendfeedback(void)
-{
-
-}
-#endif
 
 #ifdef RTCONFIG_DUALWAN
 void set_load_balance(void)

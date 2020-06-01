@@ -8373,7 +8373,7 @@ int init_nvram(void)
 		nvram_set_int("led_wps_gpio", 6|GPIO_ACTIVE_LOW);
 #endif
 
-if defined(K3C)
+#if defined(K3C)
 		nvram_set_int("led_idr_sig3_gpio", 36|GPIO_ACTIVE_LOW);	// YELLOW
 		nvram_set_int("led_idr_sig1_gpio", 34);	// RED
 		nvram_set_int("led_idr_sig2_gpio", 35|GPIO_ACTIVE_LOW);	// BLUE

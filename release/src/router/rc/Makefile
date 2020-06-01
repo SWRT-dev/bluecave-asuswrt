@@ -412,7 +412,9 @@ OBJS += dsl_fb.o
 endif
 
 ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
+ifneq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), BLUECAVE K3 K3C R7900P SBRAC1900P RTAC68U EA6700))
 OBJS += frs_service.o
+endif
 endif
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += asustest.o
