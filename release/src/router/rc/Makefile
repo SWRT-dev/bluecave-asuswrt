@@ -327,6 +327,8 @@ OBJS += $(if $(wildcard k3ex.c), k3ex.o, prebuild/k3ex.o)
 else ifeq ($(K3C),y)
 OBJS += k3c.o
 OBJS += $(if $(wildcard k3cex.c), k3cex.o, prebuild/k3cex.o)
+else
+OBJS += merlinr.o
 endif
 # TODO, speedtest
 ifeq ($(RTCONFIG_SPEEDTEST),y)
@@ -1085,6 +1087,10 @@ endif
 ifeq ($(or $(RTAC68U),$(RT4GAC68U)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_enc_crc
 	@cd $(INSTALLDIR)/sbin && ln -sf rc fw_check
+endif
+
+ifeq ($(strip $(MERLINR_NAME)),$(filter $(MERLINR_NAME), SBRAC1900P SBRAC3200P K3C))
+	@cd $(INSTALLDIR)/sbin && ln -sf rc toolbox
 endif
 
 clean:

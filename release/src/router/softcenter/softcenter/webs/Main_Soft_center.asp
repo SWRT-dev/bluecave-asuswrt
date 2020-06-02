@@ -7,7 +7,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title>Merlin software center</title>
+<title sclang>Software Center</title>
 <link rel="stylesheet" type="text/css" href="index_style.css"/>
 <link rel="stylesheet" type="text/css" href="form_style.css"/>
 <link rel="stylesheet" type="text/css" href="/res/softcenter.css"/>
@@ -23,6 +23,7 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/form.js"></script>
 <script type="text/javascript" src="/res/softcenter.js"></script>
+<script type="text/javascript" src="/js/i18n.js"></script>
 <style>
 .cloud_main_radius_left {
 	-webkit-border-radius: 10px 0 0 10px;
@@ -131,17 +132,6 @@ input[type=button]:focus {
 	width:60%;
 	border-right: 1px solid #000;
 }
-.show-install-btn,
-.show-uninstall-btn{
-	border: none;
-	background: #444;
-	color: #fff;
-	padding: 10px 20px;
-	border-radius: 5px 5px 0px 0px;
-}
-.active {
-	background: #444f53;
-}
 .install-status-1 .uninstall-btn {
 	display: block;
 }
@@ -220,6 +210,7 @@ input[type=button]:focus {
 <script>
 var db_softcenter_ = {};
 var scarch = "mips";
+var giturl;
 var model = '<% nvram_get("model"); %>';
 var modelname = '<% nvram_get("modelname"); %>';
 var TIMEOUT_SECONDS = 18;
@@ -243,18 +234,21 @@ function appPostScript(moduleInfo, script) {
 		return;
 	}
 	//Current page must has prefix of "Module_"
-	var data = {"action_script":script, "action_mode":" Refresh "};
+	var data = {};
 	//currState.name = moduleInfo.name;
 	//TODO auto choose for home_url
 	data["softcenter_home_url"] = db_softcenter_["softcenter_home_url"];
 	data["softcenter_installing_todo"] = moduleInfo.name;
+	data["action_script"] = script;
 	if (script == "ks_app_install.sh") {
 		data["softcenter_installing_tar_url"] = moduleInfo.tar_url;
 		data["softcenter_installing_md5"] = moduleInfo.md5;
 		data["softcenter_installing_version"] = moduleInfo.version;
 		//Update title for this module
 		data[moduleInfo.name + "_title"] = moduleInfo.title;
-
+		data["action_mode"] = "ks_app_install";
+	} else if (script == "ks_app_remove.sh") {
+		data["action_mode"] = "ks_app_remove";
 	}
 	$.ajax({
 		type: "POST",
@@ -340,7 +334,7 @@ function showInstallInfo(module, scode) {
 		var infos = [
 			"操作失败",
 			"已安装",
-			"将被安装到jffs分区...",
+			"插件将被安装到jffs分区...",
 			"正在下载中...请耐心等待...",
 			"正在安装中...",
 			"安装成功！请5秒后刷新本页面！...",
@@ -353,7 +347,9 @@ function showInstallInfo(module, scode) {
 			"下载文件校验不一致！",
 			"然而并没有更新！",
 			"正在检查是否有更新~",
-			"检测更新错误！"
+			"检测更新错误！",
+			" wget下载错误，详情见系统日志！",
+			"卸载失败！请关闭插件后重试！"
 		];
 		document.getElementById("install_status").style.display = "";
 		$("#appInstallInfo").html(s + infos[code]);
@@ -405,9 +401,9 @@ function renderView(apps) {
 		'#{description}',
 		'</a>',
 		'<div class="opt">',
-		'<a type="button" class="install-btn" data-name="#{name}">安装</a>',
-		'<a type="button" class="update-btn" data-name="#{name}">更新</a>',
-		'<a type="button" class="uninstall-btn" data-name="#{name}">卸载</a>',
+		'<a type="button" class="install-btn" data-name="#{name}">' + dict["Install"] + '</a>',
+		'<a type="button" class="update-btn" data-name="#{name}">' + dict["Update"] + '</a>',
+		'<a type="button" class="uninstall-btn" data-name="#{name}">' + dict["Uninstall"] + '</a>',
 		'</div>',
 		'</dd>',
 		'</dl>'
@@ -420,8 +416,8 @@ function renderView(apps) {
 	});
 	$('#IconContainer').html(html.join(''));
 	//更新安装数
-	$('.show-install-btn').val('已安装(' + installCount + ')');
-	$('.show-uninstall-btn').val('未安装(' + uninstallCount + ')');
+	$('.show-install-btn').val(dict["Installed"] + '(' + installCount + ')');
+	$('.show-uninstall-btn').val(dict["Online"] + '(' + uninstallCount + ')');
 }
 function getRemoteData() {
 	var remoteURL = db_softcenter_["softcenter_home_url"] + '/' + scarch + '/softcenter/app.json.js';
@@ -434,7 +430,7 @@ function getRemoteData() {
 }
 function softceterInitData(data) {
 	var remoteData = data;
-	$("#spnOnlineVersion").html(remoteData.version);
+	$("#spnOnlineVersion").html("<em>" +remoteData.version + "</em>");
 	if (remoteData.version != db_softcenter_["softcenter_version"]) {
 		$("#updateBtn").show();
 		$("#updateBtn").click(function() {
@@ -521,6 +517,8 @@ function init(cb) {
 			cb();
 			return;
 		} else {
+			renderView(_mergeData({}));
+			cb();
 			getRemoteData()
 				.done(function(remoteData) {
 					//远端更新成功
@@ -532,8 +530,7 @@ function init(cb) {
 				})
 				.fail(function() {
 					//如果没有更新成功，比如没网络，就用空数据merge本地
-					renderView(_mergeData({}));
-					cb();
+					$("#spnOnlineVersion").html("<i>获取在线版本失败！请尝试重新刷新本页面，或者检查你的网络设置！</i>")
 				});
 		}
 		notice_show();
@@ -544,6 +541,7 @@ function init(cb) {
 $(function() {
 	//梅林要求用这个函数来显示左测菜单
 	show_menu(menu_hook);
+	sc_load_lang("sc1");
 	$.ajax({
 		type: "GET",
 		url: "/dbconf?p=softcenter",
@@ -551,7 +549,7 @@ $(function() {
 		success: function(response) {
 			db_softcenter_ = db_softcenter;
 			if(db_softcenter_["softcenter_server_tcode"] == "CN") {
-			        db_softcenter_["softcenter_home_url"] = "http://update.wifi.com.cn";
+			        db_softcenter_["softcenter_home_url"] = "https://sc.softcenter.site";
 			}
 			else if(db_softcenter_["softcenter_server_tcode"] == "GB") {
 			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
@@ -564,27 +562,33 @@ $(function() {
 			}
 			else
 			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
-			if(db_softcenter_["softcenter_arch"] == "mips")//for grx500
+			if(db_softcenter_["softcenter_arch"] == "mips"){//for grx500
 				scarch="mips";
-			else if (db_softcenter_["softcenter_arch"] == "armv7l")//for bcm4709
+				giturl="softcenter";
+			} else if (db_softcenter_["softcenter_arch"] == "armv7l"){//for bcm4709
 				scarch="arm";
-			else if (db_softcenter_["softcenter_arch"] == "armng")//for bcm6750/ipq4019
+				giturl="softcenterarm";
+			} else if (db_softcenter_["softcenter_arch"] == "armng"){//for bcm6750/ipq4019
 				scarch="armng";
-			else if (db_softcenter_["softcenter_arch"] == "aarch64")//for bcm4908/bcm6710
+				giturl="softcenterarmng";
+			} else if (db_softcenter_["softcenter_arch"] == "aarch64"){//for bcm4908/bcm6710
 				scarch="arm64";
-			else if (db_softcenter_["softcenter_arch"] == "mipsle")//for mtk7621
+				giturl="softcenterarm64";
+			} else if (db_softcenter_["softcenter_arch"] == "mipsle"){//for mtk7621
 				scarch="mipsle";
-			else if (db_softcenter_["softcenter_arch"] == "x86")//for grx750
-				scarch="x86";
-			else
+				giturl="softcentermipsle";
+			} else {
 				scarch="mips";
+				giturl="softcenter";
+			}
 			if (!db_softcenter_["softcenter_version"]) {
 				db_softcenter_["softcenter_version"] = "0.0";
 			}
-			$("#spnCurrVersion").html(db_softcenter_["softcenter_version"]);
+			$("#spnCurrVersion").html("<em>" + db_softcenter_["softcenter_version"] + "</em>");
+			$('#github').html('论坛技术支持： <a href="https://www.right.com.cn" target="_blank"> <i><u>right.com.cn</u></i> </a><br/>Github项目： <a href ="https://github.com/paldier/' + giturl +'" target="_blank"> <i><u>https://github.com/paldier</u></i> </a><br/>Shell & Web by： <i>sadoneli</i>, <i>Xiaobao</i>, <i>paldier</i>')
 			var jff2_scripts="<% nvram_get("jffs2_scripts"); %>";
 			if(jff2_scripts != 1){
-				$('#software_center_message').html('<h2><font color="#FF9900">错误！</font></h2><h2>软件中心不可用！因为你没有开启Enable JFFS custom scripts and configs选项！</h2><h2>请前往【系统管理】-<a href="Advanced_System_Content.asp"><u><em>【系统设置】</em></u></a>开启此选项再使用软件中心！！</h2>')
+				$('#software_center_message').html('<h1><font color="#FF9900">错误！</font></h1><h2>软件中心不可用！因为你没有开启Enable JFFS custom scripts and configs选项！</h2><h2>请前往【系统管理】-<a href="Advanced_System_Content.asp"><u><em>【系统设置】</em></u></a>开启此选项再使用软件中心！！</h2>')
 			}else{
 				init(function() {
 					toggleAppPanel(1);
@@ -623,7 +627,7 @@ $(function() {
 	});
 });
 function menu_hook(title, tab) {
-	tabtitle[tabtitle.length -1] = new Array("", "软件中心", "离线安装");
+	tabtitle[tabtitle.length -1] = new Array("",dict["Software Center"], dict["Offline installation"]);
 	tablink[tablink.length -1] = new Array("", "Main_Soft_center.asp", "Main_Soft_setting.asp");
 }
 function notice_show(){
@@ -693,30 +697,27 @@ function notice_show(){
 													<table width="100%" height="150px" style="border-collapse:collapse;">
 														<tr bgcolor="#444f53">
 															<td colspan="5" bgcolor="#444f53" class="cloud_main_radius">
-																<div style="padding:10px;width:95%;font-style:italic;font-size:14px;">
-																	<br/><br/>
+																<div style="width:95%;font-style:italic;font-size:14px;">
 																	<table width="100%">
 																		<tr>
 																			<td>
-																				<ul style="margin-top:-50px;padding-left:15px;">
-																					<li style="margin-top:-5px;">
-																						<h2 id="push_titile"><em>软件中心</em></h2>
-																					</li>
-																					<li style="margin-top:-5px;">
+																				<ul style="padding-left:25px;">
+																					<h2 id="push_titile"><em>软件中心&nbsp;-&nbsp;by&nbsp;MerlinR</em></h2>
+																					<li>
 																						<h4 id="push_content1" ><font color='#1E90FF'>交流反馈:&nbsp;&nbsp;</font><a href='https://github.com/paldier/softcenter' target='_blank'><em>1.软件中心GitHub项目</em></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href='https://t.me/merlinchat' target='_blank'><em>2.加入telegram群</em></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href='https://www.right.com.cn/forum/forum-173-1.html' target='_blank'><em>3.恩山论坛插件版块</em></a></h4>
 																					</li>
-																					<li id="push_content2_li" style="margin-top:-5px;">
+																					<li id="push_content2_li">
                                                                                     <h4 id="push_content2">如果你看到这个页面说明主服务器连接不上,如果获取不到在线版本说明节点服务器连接不上！</h4>
 																					</li>
-																					<li id="push_content3_li" style="margin-top:-5px;display: none;">
+																					<li id="push_content3_li" style="display: none;">
 																						<h4 id="push_content3"></h4>
 																					</li>
-																					<li id="push_content4_li" style="margin-top:-5px;display: none;">
+																					<li id="push_content4_li" style="display: none;">
 																						<h4 id="push_content4"></h4>
 																					</li>
-																					<li style="margin-top:-5px;">
-																						<h5>当前版本：<span id="spnCurrVersion"></span> 在线版本：<span id="spnOnlineVersion"></span>
-																						<input type="button" id="updateBtn" value="更新" style="display:none" /></h5>
+																					<li>
+																						<h5><font color='#1E90FF' sclang>Current version:</font><span id="spnCurrVersion"></span>&nbsp;&nbsp;<font color='#1E90FF' sclang>Latest version:</font><span id="spnOnlineVersion"></span>
+																						<input sclang type="button" id="updateBtn" value="Update" style="display:none" /></h5>
 																					</li>
 																				</ul>
 																			</td>
@@ -741,24 +742,20 @@ function notice_show(){
 														</tr>
 														<tr width="235px">
 															<td colspan="4" cellpadding="0" cellspacing="0" style="padding:0">
-																<input class="show-install-btn" type="button" value="已安装"/>
-																<input class="show-uninstall-btn" type="button" value="未安装"/>
+																<input sclang class="show-install-btn" type="button" value="Installed"/>
+																<input sclang class="show-uninstall-btn" type="button" value="Online"/>
 															</td>
 														</tr>
 														<tr bgcolor="#444f53" width="235px">
 															<td colspan="4" id="IconContainer">
-																<div id="software_center_message" style="text-align:center; line-height: 4em;">更新中...</div>
+																<div id="software_center_message" style="text-align:center; line-height: 4em;" sclang>loading...</div>
 															</td>
 														</tr>
 														<tr height="10px">
 															<td colspan="3"></td>
 														</tr>
 													</table>
-												<div class="KoolshareBottom">论坛技术支持： <a href="http://www.koolshare.cn" target="_blank"> <i><u>koolshare.cn</u></i> </a>
-													<br/>Github项目： <a href="https://github.com/koolshare/armsoft" target="_blank"> <i><u>github.com/koolshare</u></i> </a>
-													<br/>Shell & Web by： <a href="mailto:sadoneli@gmail.com"> <i>sadoneli</i> </a>, <i>Xiaobao</i>
-													<br/>修改版 by： <i>paldier</i>
-													<br/>Github项目： <a href="https://github.com/paldier/softcenter" target="_blank"> <i><u>https://github.com/paldier</u></i> </a>
+												<div class="KoolshareBottom" id="github">
 												</div>
 											</td>
 										</tr>

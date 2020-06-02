@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - System Information</title>
+<title>System Information</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="/js/table/table.css">
@@ -29,6 +29,19 @@ p{
 .row_title th {
 	width: unset;
 }
+.FormTitle i {
+    color: #FC0;
+    font-style: normal;
+}
+.FormTitle em {
+    color: #00ffe4;
+    font-style: normal;
+}
+.FormTitle b {
+    color: #1cfe16;
+    font-style: normal;
+	font-weight:normal;
+}
 </style>
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -46,6 +59,9 @@ var ctf_dis = "<% nvram_get("ctf_disable"); %>";
 var ctf_dis_force = "<% nvram_get("ctf_disable_force"); %>";
 var odmpid = "<% nvram_get("odmpid");%>";
 var ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
+var qca_sfe = "<% nvram_get("qca_sfe"); %>";
+var hwnat = "<% nvram_get("hwnat"); %>";
+var sc_mount = "<% nvram_get("sc_mount"); %>";
 
 overlib_str_tmp = "";
 overlib.isOut = true;
@@ -66,7 +82,10 @@ function initial(){
 		document.getElementById("fwver").innerHTML = buildno;
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
-
+	if(sc_mount == "1")
+		document.getElementById("sc_mount").innerHTML = '<span>Enable</span>';
+	else
+		document.getElementById("sc_mount").innerHTML = '<span>Disable</span>';
 
 	var rc_caps = "<% nvram_get("rc_support"); %>";
 	var rc_caps_arr = rc_caps.split(' ').sort();
@@ -108,7 +127,7 @@ function hwaccel_state(){
 	var qos_type = '<% nvram_get("qos_type"); %>';
 
 	if (hnd_support) {
-		code = "<span>Runner:</span> ";
+		code = "Runner:<span> ";
 
 		if ('<% nvram_get("runner_disable"); %>' == '1') {
 			code += "Disabled";
@@ -122,7 +141,7 @@ function hwaccel_state(){
 			code += "Enabled";
 		}
 
-		code += "&nbsp;&nbsp;-&nbsp;&nbsp;<span>Flow Cache:</span> ";
+		code += "</span>&nbsp;&nbsp;-&nbsp;&nbsp;Flow Cache:<span> ";
 		if ('<% nvram_get("fc_disable"); %>' == '1') {
 			code += "Disabled";
 			if ('<% nvram_get("fc_disable_force"); %>' == '1') {
@@ -134,9 +153,10 @@ function hwaccel_state(){
 		} else {
 			code += "Enabled";
 		}
+		code += "</span>";
 	} else {
 		if (ctf_dis_force == "1") {
-			code = "Disabled";
+			code = "<b>Disabled</b>";
 			if (ctf_dis_force == "1")
 				code += " <i>(by user)</i>";
 			else {
@@ -145,21 +165,22 @@ function hwaccel_state(){
 				if ((qos_enable == '1') && (qos_type == '0')) code += 'QoS, ';
 				if ('<% nvram_get("sw_mode"); %>' == '2') code += 'Repeater mode, ';
 				if ('<% nvram_get("ctf_disable_modem"); %>' == '1') code += 'USB modem, ';
-
 				// We're disabled but we don't know why
 				if (code.slice(-2) == "  ") code += "&lt;unknown&gt;, ";
-
 				// Trim two trailing chars, either "  " or ", "
-				code = code.slice(0,-2) + "</span></>";
+				code = code.slice(0,-2) + "</span>";
 			}
-		} else if (ctf_dis_force == "0") {
-			code = "<span>Enabled";
+		} else if (ctf_dis_force == "0" || qca_sfe == "1" || hwnat == "1") {
+			code = "<span><b>Enabled</b>";
 			if (ctf_fa != "") {
 				if (ctf_fa != "0")
-					code += " (CTF + FA)";
+					code += " <i>(CTF + FA)</i>";
 				else
-					code += " (CTF only)";
-	                }
+					code += "<i> (CTF only)</i>";
+			}  else if (qca_sfe == "1")
+					code += " <i>(SFE)</i>";
+			else if (hwnat == "1")
+					code += "<i> (HWNAT)</i>";
 			code += "</span>";
 		}
 	}
@@ -453,6 +474,10 @@ function update_sysinfo(e){
 					<tr>
 						<th>JFFS</th>
 						<td id="jffs_td"></td>
+					</tr>
+					<tr>
+						<th>JFFS extension</th>
+						<td id="sc_mount"></td>
 					</tr>
 				</table>
 

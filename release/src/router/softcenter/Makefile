@@ -38,6 +38,7 @@ else
 	install -d $(INSTALLDIR)/www/js
 	install -d $(INSTALLDIR)/www/res
 endif
+	install -d $(INSTALLDIR)/rom/etc/softcenter
 	install -d $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -d $(INSTALLDIR)/rom/etc/softcenter/res
 	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer
@@ -50,14 +51,12 @@ endif
 	install -d $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp/.boot
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp/.control
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300))
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300 TUF-AX3000))
 	install -d $(INSTALLDIR)/rom/etc/softcenter/ROG/res
 	install -d $(INSTALLDIR)/rom/etc/softcenter/ROG/webs
-else ifeq  ($(BUILD_NAME), $(filter $(BUILD_NAME), TUF-AX3000))
-	install -d $(INSTALLDIR)/rom/etc/softcenter/TUF/res
-	install -d $(INSTALLDIR)/rom/etc/softcenter/TUF/webs
 endif
 # softcenter
+	install -m 0755 softcenter/automount.sh $(INSTALLDIR)/rom/etc/softcenter
 	install -m 0755 softcenter/bin/base64_encode $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/jq $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter.sh $(INSTALLDIR)/rom/etc/softcenter/bin
@@ -76,6 +75,9 @@ endif
 	install -m 0755 softcenter/bin/sissylog $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/tinylog $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/versioncmp $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/res/sc1CN.json $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/sc1EN.json $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/sc1TW.json $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/icon-default.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/merlinr.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/upgrade.png $(INSTALLDIR)/rom/etc/softcenter/res
@@ -104,14 +106,10 @@ endif
 ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3C))	
 	install -m 0755 mtd $(INSTALLDIR)/sbin
 endif
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300))
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300 TUF-AX3000))
 	install -m 0755 softcenter/ROG/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/ROG/res
 	install -m 0755 softcenter/ROG/webs/Main_Soft_center.asp $(INSTALLDIR)/rom/etc/softcenter/ROG/webs
 	install -m 0755 softcenter/ROG/webs/Main_Soft_setting.asp $(INSTALLDIR)/rom/etc/softcenter/ROG/webs
-else ifeq  ($(BUILD_NAME), $(filter $(BUILD_NAME), TUF-AX3000))
-	install -m 0755 softcenter/TUF/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/TUF/res
-	install -m 0755 softcenter/TUF/webs/Main_Soft_center.asp $(INSTALLDIR)/rom/etc/softcenter/TUF/webs
-	install -m 0755 softcenter/TUF/webs/Main_Soft_setting.asp $(INSTALLDIR)/rom/etc/softcenter/TUF/webs
 endif
 	install -m 0755 jffsinit.sh $(INSTALLDIR)/usr/sbin
 ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3))

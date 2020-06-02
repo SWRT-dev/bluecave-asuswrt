@@ -29,6 +29,8 @@ export PERP_BASE=/jffs/softcenter/perp
 #softcenter_installing_status=13	#然而并没有更新！
 #softcenter_installing_status=14	#正在检查是否有更新~
 #softcenter_installing_status=15	#检测更新错误！
+#softcenter_installing_status=16	#下载错误，代码：！
+#softcenter_installing_status=17	#卸载失败！请关闭插件后重试！
 
 softcenter_home_url=`dbus get softcenter_home_url`
 CURR_TICK=`date +%s`
@@ -56,10 +58,15 @@ fi
 if [ "$KVER" == "3.10.14" ];then
 	ARCH_SUFFIX="mipsle"
 fi
-VER_SUFFIX=_version
-MD5_SUFFIX=_md5
-INSTALL_SUFFIX=_install
-UNINSTALL_SUFFIX=_uninstall
+
+MODEL=$(nvram get productid)
+if [ "$MODEL" == "GT-AC5300" ] || [ "$MODEL" == "GT-AX11000" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
+	ROG=1
+fi
+
+if [ "$(nvram get productid)" == "TUF-AX3000" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
+	TUF=1
+fi
 
 LOGGER() {
 #	echo $1
@@ -95,25 +102,21 @@ install_module() {
 	dbus save softcenter_installing_
 
 	URL_SPLIT="/"
-	#OLD_MD5=`dbus get softcenter_module_$softcenter_installing_module$MD5_SUFFIX`
-	OLD_VERSION=`dbus get softcenter_module_$softcenter_installing_module$VER_SUFFIX`
+	#OLD_MD5=`dbus get softcenter_module_${softcenter_installing_module}_md5`
+	OLD_VERSION=`dbus get softcenter_module_${softcenter_installing_module}_version`
 	if [ -z "$(dbus get softcenter_server_tcode)" ]; then
 		modelname=`nvram get modelname`
-		if [ "$modelname" == "K3" ]; then
+		if [ "$modelname" == "K3" ] || [ "$modelname" == "GTAC2900" ] || [ "$modelname" == "GTAC5300"  ] || [ "$modelname" == "RTAC86U" ] || [ "$modelname" == "RTAX86U" ] || [ "$modelname" == "RTAX68U" ] || [ "$modelname" == "RTAX82U" ] || [ "$modelname" == "TUFAX3000" ] || [ "$modelname" == "RTACRH17" ] || [ "$modelname" == "XWR3100" ]; then
 			dbus set softcenter_server_tcode=CN
-		elif [ "$modelname" == "SBRAC1900P" -o "$modelname" == "SBR-AC1900P" -o "$modelname" == "SBRAC3200P" -o "$modelname" == "SBR-AC3200P" -o "$modelname" == "R7900P" -o "$modelname" == "R8000P" ]; then
+		elif [ "$modelname" == "SBRAC1900P"  ] || [ "$modelname" == "SBR-AC1900P" ] || [ "$modelname" == "SBRAC3200P" ] || [ "$modelname" == "SBR-AC3200P" ] || [ "$modelname" == "R7900P" ] || [ "$modelname" == "R8000P" ] || [ "$modelname" == "R7000P" ]; then
 			dbus set softcenter_server_tcode=ALI
-		elif [ "$modelname" == "GTAC2900" -o "$modelname" == "GTAC5300" -o "$modelname" == "RTAC86U" -o "$modelname" == "RTAX86U" -o "$modelname" == "RTAX68U" -o "$modelname" == "RTAX58U" -o "$modelname" == "RTAX82U" -o "$modelname" == "TUFAX3000" -o "$modelname" == "RTACRH17" ]; then
-			dbus set softcenter_server_tcode=CN1
 		else
 			dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
 			[ -z "$(dbus get softcenter_server_tcode)" ] && dbus set softcenter_server_tcode=GB
 		fi
 	fi
 	eval `dbus export softcenter_server_tcode`
-	if [ "$softcenter_server_tcode" == "CN" ]; then
-		HOME_URL="http://update.wifi.com.cn/$ARCH_SUFFIX"
-	elif [ "$softcenter_server_tcode" == "CN1" ]; then
+	if [ "$softcenter_server_tcode" == "CN" ] || [ "$softcenter_server_tcode" == "CN1" ]; then
 		HOME_URL="https://sc.softcenter.site/$ARCH_SUFFIX"
 	elif [ "$softcenter_server_tcode" == "ALI" ]; then
 		HOME_URL="https://wufan.softcenter.site/$ARCH_SUFFIX"
@@ -121,8 +124,7 @@ install_module() {
 		HOME_URL="https://sc.paldier.com/$ARCH_SUFFIX"
 	fi
 
-	#HOME_URL=`dbus get softcenter_home_url`
-	TAR_URL=$HOME_URL$URL_SPLIT$softcenter_installing_tar_url
+	TAR_URL=${HOME_URL}${URL_SPLIT}${softcenter_installing_tar_url}
 	FNAME=`basename $softcenter_installing_tar_url`
 
 	if [ "$OLD_VERSION" = "" ]; then
@@ -130,7 +132,7 @@ install_module() {
 	fi
 
 	CMP=`versioncmp $softcenter_installing_version $OLD_VERSION`
-	if [ -f /jffs/softcenter/webs/Module_$softcenter_installing_module.sh -o "$softcenter_installing_todo" = "softcenter" ]; then
+	if [ -f "/jffs/softcenter/webs/Module_$softcenter_installing_module.sh" -o "$softcenter_installing_todo" = "softcenter" ]; then
 		CMP="-1"
 	fi
 	if [ "$CMP" = "-1" ]; then
@@ -140,17 +142,17 @@ install_module() {
 	rm -rf "/tmp/$softcenter_installing_module"
 	dbus set softcenter_installing_status="3"
 	sleep 1
-	wget --no-check-certificate --tries=1 --timeout=15 $TAR_URL
+	wget -t 2 -T 20 --dns-timeout=15 --no-check-certificate -q ${TAR_URL}
 	RETURN_CODE=$?
 
 	if [ "$RETURN_CODE" != "0" ]; then
-		dbus set softcenter_installing_status="12"
-		sleep 2
+		dbus set softcenter_installing_status="16"
+		sleep 3
 		dbus set softcenter_installing_status="0"
 		dbus set softcenter_installing_module=""
 		dbus set softcenter_installing_todo=""
 		LOGGER "wget $TAR_URL error, $RETURN_CODE"
-	exit 4
+		exit $RETURN_CODE
 	fi
 
 	md5sum_gz=$(md5sum /tmp/$FNAME | sed 's/ /\n/g'| sed -n 1p)
@@ -158,7 +160,7 @@ install_module() {
 		LOGGER "md5 not equal $md5sum_gz"
 		dbus set softcenter_installing_status="12"
 		rm -f $FNAME
-		sleep 2
+		sleep 3
 
 		dbus set softcenter_installing_status="0"
 		dbus set softcenter_installing_module=""
@@ -171,7 +173,7 @@ install_module() {
 		tar -zxf $FNAME
 		dbus set softcenter_installing_status="4"
 
-		if [ ! -f /tmp/$softcenter_installing_module/install.sh ]; then
+		if [ ! -f "/tmp/$softcenter_installing_module/install.sh" ]; then
 			dbus set softcenter_installing_status="0"
 			dbus set softcenter_installing_module=""
 			dbus set softcenter_installing_todo=""
@@ -183,26 +185,36 @@ install_module() {
 			exit 5
 		fi
 
-		if [ -f /tmp/$softcenter_installing_module/uninstall.sh ]; then
+		if [ -f "/tmp/$softcenter_installing_module/uninstall.sh" ]; then
 			chmod 755 /tmp/$softcenter_installing_module/uninstall.sh
-			mv /tmp/$softcenter_installing_module/uninstall.sh /jffs/softcenter/scripts/uninstall_$softcenter_installing_todo.sh
+			#mv /tmp/$softcenter_installing_module/uninstall.sh /jffs/softcenter/scripts/uninstall_$softcenter_installing_todo.sh
 		fi
 
+		if [ -d /tmp/${softcenter_installing_module}/ROG -a "$ROG" == "1" ]; then
+			cp -rf /tmp/${softcenter_installing_module}/ROG/* /tmp/${softcenter_installing_module}/
+		fi
+
+		if [ -d /tmp/${softcenter_installing_module}/ROG -a "$TUF" == "1" ]; then
+			# 骚红变橙色
+			find /tmp/${softcenter_installing_module}/ROG/ -name "*.asp" | xargs sed -i 's/3e030d/3e2902/g;s/91071f/92650F/g;s/680516/D0982C/g;s/cf0a2c/c58813/g;s/700618/74500b/g;s/530412/92650F/g'
+			find /tmp/${softcenter_installing_module}/ROG/ -name "*.css" | xargs sed -i 's/3e030d/3e2902/g;s/91071f/92650F/g;s/680516/D0982C/g;s/cf0a2c/c58813/g;s/700618/74500b/g;s/530412/92650F/g'
+			cp -rf /tmp/${softcenter_installing_module}/ROG/* /tmp/${softcenter_installing_module}/
+		fi
 		chmod a+x /tmp/$softcenter_installing_module/install.sh
 		sh /tmp/$softcenter_installing_module/install.sh
-		sleep 2
+		sleep 3
 
 		rm -f $FNAME
 		rm -rf "/tmp/$softcenter_installing_module"
 
 		if [ "$softcenter_installing_module" != "softcenter" ]; then
-			dbus set "softcenter_module_$softcenter_installing_module$MD5_SUFFIX=$softcenter_installing_md5"
-			dbus set "softcenter_module_$softcenter_installing_module$VER_SUFFIX=$softcenter_installing_version"
-			dbus set "softcenter_module_$softcenter_installing_module$INSTALL_SUFFIX=1"
-			dbus set "$softcenter_installing_module$VER_SUFFIX=$softcenter_installing_version"
+			dbus set softcenter_module_${softcenter_installing_module}_md5=${softcenter_installing_md5}
+			dbus set softcenter_module_${softcenter_installing_module}_version=${softcenter_installing_version}
+			dbus set softcenter_module_${softcenter_installing_module}_install=1
+			dbus set ${softcenter_installing_module}_version=${softcenter_installing_version}
 		else
-			dbus set softcenter_version=$softcenter_installing_version;
-			dbus set softcenter_md5=$softcenter_installing_md5
+			dbus set softcenter_version=${softcenter_installing_version};
+			dbus set softcenter_md5=${softcenter_installing_md5}
 		fi
 		dbus set softcenter_installing_module=""
 		dbus set softcenter_installing_todo=""
@@ -236,9 +248,12 @@ uninstall_module() {
 		exit 3
 	fi
 
-	ENABLED=`dbus get "$softcenter_installing_todo""_enable"`
+	local ENABLED=`dbus get ${softcenter_installing_todo}_enable`
 	if [ "$ENABLED" = "1" ]; then
-		LOGGER "please disable this module than try again"
+		LOGGER "please disable ${softcenter_installing_module} then try again"
+		dbus set softcenter_installing_status="17"
+		sleep 3
+		dbus set softcenter_installing_status="0"
 		exit 4
 	fi
 
@@ -248,11 +263,14 @@ uninstall_module() {
 	export softcenter_installing_status="6"
 	dbus save softcenter_installing_
 
-	dbus remove "softcenter_module_$softcenter_installing_module$MD5_SUFFIX"
-	dbus remove "softcenter_module_$softcenter_installing_module$VER_SUFFIX"
-	dbus remove "softcenter_module_$softcenter_installing_module$INSTALL_SUFFIX"
+	dbus remove softcenter_module_${softcenter_installing_module}_md5
+	dbus remove softcenter_module_${softcenter_installing_module}_version
+	dbus remove softcenter_module_${softcenter_installing_module}_install
+	dbus remove softcenter_module_${softcenter_installing_module}_description
+	dbus remove softcenter_module_${softcenter_installing_module}_name
+	dbus remove softcenter_module_${softcenter_installing_module}_title
 
-	txt=`dbus list $softcenter_installing_todo`
+	txt=`dbus list ${softcenter_installing_todo}`
 	printf "%s\n" "$txt" |
 	while IFS= read -r line; do
 		line2="${line%=*}"
@@ -267,21 +285,25 @@ uninstall_module() {
 	dbus set softcenter_installing_todo=""
 
 	#try to call uninstall script
-	if [ -f "/jffs/softcenter/scripts/$softcenter_installing_todo$UNINSTALL_SUFFIX.sh"]; then
- 		sh /jffs/softcenter/scripts/$softcenter_installing_todo$UNINSTALL_SUFFIX.sh
-	elif [ -f "/jffs/softcenter/scripts/uninstall_$softcenter_installing_todo.sh" ]; then
-		sh /jffs/softcenter/scripts/uninstall_$softcenter_installing_todo.sh
+	if [ -f "/jffs/softcenter/scripts/${softcenter_installing_todo}_uninstall.sh" ]; then
+ 		sh /jffs/softcenter/scripts/${softcenter_installing_todo}_uninstall.sh
+	elif [ -f "/jffs/softcenter/scripts/uninstall_${softcenter_installing_todo}.sh" ]; then
+		sh /jffs/softcenter/scripts/uninstall_${softcenter_installing_todo}.sh
 	else
-		rm -f /jffs/softcenter/webs/Module_$softcenter_installing_todo.asp
-        rm -f /jffs/softcenter/init.d/S*$softcenter_installing_todo.sh
+		if [ -n "${softcenter_installing_todo}" ]; then
+			rm -rf /jffs/softcenter/${softcenter_installing_todo}
+			rm -rf /jffs/softcenter/bin/${softcenter_installing_todo}
+			rm -rf /jffs/softcenter/init.d/*${softcenter_installing_todo}*
+			rm -rf /jffs/softcenter/scripts/${softcenter_installing_todo}*.sh
+			rm -rf /jffs/softcenter/res/icon-${softcenter_installing_todo}.png
+			rm -rf /jffs/softcenter/webs/Module_${softcenter_installing_todo}.asp
+		fi
 	fi
 }
 
 #LOGGER $BIN_NAME
 case $BIN_NAME in
 start)
-	sh /jffs/softcenter/perp/perp.sh stop
-	sh /jffs/softcenter/perp/perp.sh start
 	dbus set softcenter_installing_status=1
 	;;
 update)
