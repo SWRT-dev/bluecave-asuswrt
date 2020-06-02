@@ -13,7 +13,7 @@
   "Plug in a USB flash drive to enable softcenter.": "插入USB存儲設備來啟用軟體中心.",
   "Enable/Disable softcenter in jffs extended settings.": "在jffs擴展設置裡開啟軟體中心.",
   "jffs extended settings": "jffs擴展設置",
-  "Support EXT/FAT/NTFS partitions(BLUECAVE unsupport FAT).": "支持EXT/FAT/NTFS分區(BLUECAVE不支持FAT).",
+  "Support EXT/FAT/NTFS partitions(BLUECAVE/K3C/ARCH17/AC2200 unsupport FAT).": "支持EXT/FAT/NTFS分區(BLUECAVE/K3C/ARCH17/AC2200不支持FAT).",
   "No less than 1GB of free space.": "可用空間不能少於1GB.",
   "Must unmount the current partition before mounting other partitions.": "更換掛載分區前必須先卸載當前分區.",
   "Select a partition to mount": "設置掛載分區",

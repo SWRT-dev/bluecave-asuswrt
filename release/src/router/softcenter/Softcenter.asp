@@ -127,7 +127,7 @@ document.form.sc_mount.value = "0";
 										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc" sclang>jffs extended settings</div>
 										<div style="color:#FC0;padding-top:5px;margin-top:25px;margin-left:0px;float: left;" id="NoteBox" >
                                                                                         <li style="margin-top:5px;" sclang>This function must be enabled when JFFS is less than 50MB.</li>
-                                                                                        <li style="margin-top:5px;" sclang>Support EXT/FAT/NTFS partitions(BLUECAVE unsupport FAT).</li>
+                                                                                        <li style="margin-top:5px;" sclang>Support EXT/FAT/NTFS partitions(BLUECAVE/K3C/ARCH17/AC2200 unsupport FAT).</li>
                                                                                         <li style="margin-top:5px;" sclang>No less than 1GB of free space.</li>
                                                                                         <li style="margin-top:5px;" sclang>Must unmount the current partition before mounting other partitions.</li>
 										</div>

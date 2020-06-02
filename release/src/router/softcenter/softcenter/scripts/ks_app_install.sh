@@ -60,7 +60,7 @@ if [ "$KVER" == "3.10.14" ];then
 fi
 
 MODEL=$(nvram get productid)
-if [ "$MODEL" == "GT-AC5300" ] || [ "$MODEL" == "GT-AX11000" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
+if [ "$MODEL" == "GT-AC5300" ] || [ "$MODEL" == "GT-AC2900" ] || [ "$MODEL" == "GT-AX11000" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
 	ROG=1
 fi
 
