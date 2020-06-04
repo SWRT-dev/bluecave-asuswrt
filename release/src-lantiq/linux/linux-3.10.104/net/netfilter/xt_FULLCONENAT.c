@@ -1,9 +1,14 @@
 /*
  * Copyright (c) 2018 Chion Tang <tech@chionlab.moe>
+ * Copyright (c) 2019 lean <coolsnowwolf@gmail.com>
+ * Copyright (c) 2020 paldier <paldier@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
+ * 
+ * QCA ported by lean
+ * LANTIQ and MTK ported by paldier
  */
 
 #include <linux/kernel.h>

@@ -2421,7 +2421,7 @@ void btn_check(void)
 	pid_t pid;
 	char *argv[]={"/sbin/delay_exec","4","rc rc_service restart_allnet",NULL};
 #endif
-
+	eval("touch", "/tmp/watchdog_heartbeat");
 	if (handle_btn_in_mfg())
 		return;
 

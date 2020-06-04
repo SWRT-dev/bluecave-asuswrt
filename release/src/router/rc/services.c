@@ -7968,6 +7968,7 @@ start_services(void)
 	init_traffic_limiter();
 #endif
 	start_watchdog();
+	start_check_watchdog();
 #ifdef RTAC87U
 	start_watchdog02();
 #endif
@@ -8264,6 +8265,7 @@ stop_services(void)
 	stop_eth_obd();
 #endif
 #endif
+	stop_check_watchdog();
 	stop_watchdog();
 #ifdef RTCONFIG_FANCTRL
 	stop_phy_tempsense();
@@ -8732,6 +8734,12 @@ stop_watchdog(void)
 	killall_tk("watchdog");
 }
 
+void
+stop_check_watchdog(void)
+{
+	killall_tk("check_watchdog");
+}
+
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
 void
 stop_watchdog02(void)
@@ -8781,6 +8789,15 @@ start_watchdog(void)
 	pid_t whpid;
 
 	return _eval(watchdog_argv, NULL, 0, &whpid);
+}
+
+int
+start_check_watchdog(void)
+{
+	char *check_watchdog_argv[] = {"check_watchdog", NULL};
+	pid_t pid;
+
+	return _eval(check_watchdog_argv, NULL, 0, &pid);
 }
 
 #ifdef RTAC87U
@@ -9322,6 +9339,7 @@ void factory_reset(void)
 	nvram_set_int("led_status", LED_FACTORY_RESET);
 #endif
 	g_reboot = 1;
+	f_write_string("/tmp/reboot", "1", 0, 0);
 #ifdef RTCONFIG_REALTEK
 /* [MUST] : Need to Clarify ... */
 	set_led(LED_BLINK_SLOW, LED_BLINK_SLOW);
@@ -9488,6 +9506,7 @@ again:
 
 	if (strcmp(script, "reboot") == 0 || strcmp(script,"rebootandrestore")==0) {
 		g_reboot = 1;
+		f_write_string("/tmp/reboot", "1", 0, 0);
 
 #ifdef RTCONFIG_QCA_PLC_UTILS
 		reset_plc();
@@ -9875,6 +9894,7 @@ again:
 		}
 		if(action&RC_SERVICE_STOP) {
 			g_upgrade = 1;
+			f_write_string("/tmp/upgrade", "1", 0, 0);
 #ifdef RTCONFIG_WIRELESSREPEATER
 			if(sw_mode() == SW_MODE_REPEATER)
 			stop_wlcconnect();
@@ -10107,12 +10127,14 @@ again:
 	}
 	else if(strcmp(script, "wltest") == 0) {
 		nvram_set("asus_mfg", "3");
+		stop_check_watchdog();
 		stop_watchdog();
 		stop_infosvr();
 		stop_services_mfg();
 	}
 	else if(strcmp(script, "ethtest") == 0) {
 		nvram_set("asus_mfg", "3");
+		stop_check_watchdog();
 		stop_watchdog();
 		stop_infosvr();
 		stop_services_mfg();
@@ -13323,6 +13345,11 @@ _dprintf("test 2. turn off the USB power during %d seconds.\n", reset_seconds[re
 		if(action & RC_SERVICE_START) start_qca_lbd();
 	}
 #endif
+	else if (strcmp(script, "watchdog") == 0)
+	{
+		if (action & RC_SERVICE_STOP) stop_watchdog();
+		if (action & RC_SERVICE_START) start_watchdog();
+	}
 	else
 	{
 		fprintf(stderr,

@@ -238,7 +238,7 @@ endif
 
 OBJS := rc.o init.o interface.o lan.o wireless.o wan.o pppd.o auth.o services.o
 OBJS += firewall.o ppp.o services.o common.o
-OBJS += watchdog.o ntp.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
+OBJS += watchdog.o check_watchdog.o ntp.o $(if $(RTCONFIG_MULTIWAN_CFG),qos_multiwan.o,qos.o) udhcpc.o ate.o
 OBJS += format.o
 ifeq ($(RTCONFIG_CONNTRACK),y)
 OBJS += pctime.o
@@ -750,6 +750,7 @@ endif
 endif
 #	@cd $(INSTALLDIR)/sbin && ln -sf rc ots
 	@cd $(INSTALLDIR)/sbin && ln -sf rc watchdog
+	@cd $(INSTALLDIR)/sbin && ln -sf rc check_watchdog
 ifeq ($(RTCONFIG_CONNTRACK),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc pctime
 endif
@@ -1089,7 +1090,7 @@ ifeq ($(or $(RTAC68U),$(RT4GAC68U)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc fw_check
 endif
 
-ifeq ($(strip $(MERLINR_NAME)),$(filter $(MERLINR_NAME), SBRAC1900P SBRAC3200P K3C))
+ifeq ($(strip $(MERLINR_NAME)),$(filter $(MERLINR_NAME), SBRAC1900P SBRAC3200P XWR3100 K3C))
 	@cd $(INSTALLDIR)/sbin && ln -sf rc toolbox
 endif
 

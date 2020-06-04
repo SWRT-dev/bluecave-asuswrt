@@ -25,11 +25,13 @@
 #endif
 
 #if defined(K3)
-#include <k3.h>
+#include "k3.h"
+#elif defined(XWR3100)
+#include "xwr3100.h"
 #elif defined(R7900P) || defined(R8000P)
-#include <r7900p.h>
+#include "r7900p.h"
 #elif defined(K3C)
-#include <k3c.h>
+#include "k3c.h"
 #elif defined(SBRAC1900P)
 #include "ac1900p.h"
 #elif defined(SBRAC3200P)
@@ -413,6 +415,10 @@ static int rctest_main(int argc, char *argv[])
 			if (on) start_watchdog();
 			else stop_watchdog();
 		}
+		else if (strcmp(argv[1], "check_watchdog") == 0) {
+			if (on) start_check_watchdog();
+			else stop_check_watchdog();
+		}
 #ifdef RTAC87U
 		else if (strcmp(argv[1], "watchdog02") == 0) {
 			if (on) start_watchdog02();
@@ -772,6 +778,7 @@ static const applets_t applets[] = {
 #endif
 #endif
 	{ "watchdog",			watchdog_main			},
+	{ "check_watchdog",		check_watchdog_main		},
 #ifdef RTCONFIG_CONNTRACK
 	{ "pctime",                     pctime_main                     },
 #endif
@@ -942,6 +949,9 @@ static const applets_t applets[] = {
 #endif
 #ifdef RTCONFIG_ADTBW
 	{ "adtbw",			adtbw_main		},
+#endif
+#if defined(SBRAC1900P) || defined(SBRAC3200P) || defined(XWR3100) || defined(K3C)
+	{ "toolbox",			merlinr_toolbox		},
 #endif
 	{NULL, NULL}
 };

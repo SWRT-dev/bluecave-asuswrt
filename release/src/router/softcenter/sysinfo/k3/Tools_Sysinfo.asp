@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - System Information</title>
+<title>System Information</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="/js/table/table.css">
@@ -29,6 +29,19 @@ p{
 .row_title th {
 	width: unset;
 }
+.FormTitle i {
+    color: #FC0;
+    font-style: normal;
+}
+.FormTitle em {
+    color: #00ffe4;
+    font-style: normal;
+}
+.FormTitle b {
+    color: #1cfe16;
+    font-style: normal;
+	font-weight:normal;
+}
 </style>
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -48,6 +61,7 @@ var rtkswitch = "<% sysinfo("ethernet.rtk"); %>";
 var odmpid = "<% nvram_get("odmpid");%>";
 var ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
 var modelname = "<% nvram_get("modelname"); %>";
+var sc_mount = "<% nvram_get("sc_mount"); %>";
 overlib_str_tmp = "";
 overlib.isOut = true;
 function initial(){
@@ -73,6 +87,11 @@ function initial(){
 		document.getElementById("fwver").innerHTML = buildno;
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
+	if(sc_mount == "1")
+		document.getElementById("sc_mount").innerHTML = '<span>Enabled</span>';
+	else
+		document.getElementById("sc_mount").innerHTML = '<span>Disabled</span>';
+
 	var rc_caps = "<% nvram_get("rc_support"); %>";
 	var rc_caps_arr = rc_caps.split(' ').sort();
 	rc_caps = rc_caps_arr.toString().replace(/,/g, " ");
@@ -222,11 +241,11 @@ function show_etherstate(){
 				continue;
 			} else {
 				if (port == "0")
-					port_array.unshift(["LAN2 ", (line[7] & 0xFFF), state2, devicename]);
+					port_array.push(["LAN2 ", (line[7] & 0xFFF), state2, devicename]);
 				else if (port == "1")
 					port_array.unshift(["LAN1 ", (line[7] & 0xFFF), state2, devicename]);
 				else if (port == "2")
-					port_array.unshift(["LAN3 ", (line[7] & 0xFFF), state2, devicename]);
+					port_array.push(["LAN3 ", (line[7] & 0xFFF), state2, devicename]);
 			}
 			} else {
 			if (port == "8") {		// CPU Port
@@ -554,6 +573,10 @@ function update_sysinfo(e){
 						<th>JFFS</th>
 						<td id="jffs_td"></td>
 					</tr>
+					<tr>
+						<th>JFFS extension</th>
+						<td id="sc_mount"></td>
+					</tr>
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -612,3 +635,4 @@ function update_sysinfo(e){
 <div id="footer"></div>
 </body>
 </html>
+

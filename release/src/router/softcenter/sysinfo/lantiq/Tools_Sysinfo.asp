@@ -83,9 +83,9 @@ function initial(){
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
 	if(sc_mount == "1")
-		document.getElementById("sc_mount").innerHTML = '<span>Enable</span>';
+		document.getElementById("sc_mount").innerHTML = '<span>Enabled</span>';
 	else
-		document.getElementById("sc_mount").innerHTML = '<span>Disable</span>';
+		document.getElementById("sc_mount").innerHTML = '<span>Disabled</span>';
 
 	var rc_caps = "<% nvram_get("rc_support"); %>";
 	var rc_caps_arr = rc_caps.split(' ').sort();
@@ -363,7 +363,7 @@ function update_sysinfo(e){
                 <td valign="top">
                 <div>&nbsp;</div>
                 <div class="formfonttitle">Tools - System Information</div>
-                <div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+		<div style="margin:10px 0 10px 5px;" class="splitLine"></div>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
 					<thead>

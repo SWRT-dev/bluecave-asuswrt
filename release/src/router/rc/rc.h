@@ -1120,7 +1120,8 @@ extern void rssi_check_unit(int unit);
 extern void led_table_ctrl(int on_off);
 #endif
 extern void timecheck(void);
-
+// check_watchdog.c
+extern int check_watchdog_main(int argc, char *argv[]);
 // usbled.c
 extern int usbled_main(int argc, char *argv[]);
 #ifdef RTCONFIG_FANCTRL
