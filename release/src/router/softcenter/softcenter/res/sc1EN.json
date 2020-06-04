@@ -1,0 +1,21 @@
+{
+  "Software Center": "Software Center",
+  "Software Center, Offline installation": "Software Center, Offline installation",
+  "On this page, you can upload the plugin's offline installation package for manual installation;": "On this page, you can upload the plugin's offline installation package for manual installation;",
+  "Offline installation will automatically decompress the tar.gz suffix archived package, then find out the install.sh file in the first level folder of the archived package and execute it;": "Offline installation will automatically decompress the tar.gz suffix archived package, then find out the install.sh file in the first level folder of the archived package and execute it;",
+  "It is recommended to write the plugin version, md5 and other information to the install.sh file;": "It is recommended to write the plugin version, md5 and other information to the install.sh file;",
+  "Note : You should choose offline installation package of the supported CPU architectures to install, otherwise it will not run;": "Note : You should choose offline installation package of the supported CPU architectures to install, otherwise it will not run;",
+  "Offline installation": "Offline installation",
+  "Upload": "Upload",
+  "Done": "Done",
+  "Install": "Install",
+  "Update": "Update",
+  "Uninstall": "Uninstall",
+  "Installed": "Installed",
+  "Online": "Online",
+  "Current version:": "Current version:",
+  "Latest version:": "Latest version:",
+  "loading...": "loading...",
+  "Softcenter - Offline installation": "Software Center - Offline installation"
+}
+
