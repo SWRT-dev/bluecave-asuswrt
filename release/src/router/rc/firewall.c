@@ -1836,7 +1836,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	symlink(name, NAT_RULES);
 
 	wan_unit = wan_ifunit(wan_if);
-	if(is_phy_connect(wan_unit)){
+	if(is_phy_connect2(wan_unit)){
 		/* force nat update */
 		nvram_set_int("nat_state", NAT_STATE_UPDATE);
 _dprintf("nat_rule: start_nat_rules 1.\n");
@@ -2227,7 +2227,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	symlink(name, NAT_RULES);
 
 	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit) {
-		if(is_phy_connect(unit)){
+		if(is_phy_connect2(unit)){
 			/* force nat update */
 			nvram_set_int("nat_state", NAT_STATE_UPDATE);
 _dprintf("nat_rule: start_nat_rules 2.\n");

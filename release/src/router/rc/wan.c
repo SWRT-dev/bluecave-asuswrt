@@ -2025,7 +2025,7 @@ int update_resolvconf(void)
 
 #ifdef RTCONFIG_DUALWAN
 			/* skip disconnected WANs in LB mode */
-			if (nvram_match("wans_mode", "lb") && !is_phy_connect(unit))
+			if (nvram_match("wans_mode", "lb") && !is_phy_connect2(unit))
 				continue;
 #endif
 

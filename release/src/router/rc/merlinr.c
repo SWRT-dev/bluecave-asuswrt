@@ -841,7 +841,7 @@ void softcenter_eval(int sig)
 	//	snprintf(path, sizeof(path), "%s/softcenter-unmount.sh", sc);
 	//	snprintf(action, sizeof(action), "unmount");
 	} else {
-		logmessage("Softcenter", "sig=%s, bug?",sig);
+		logmessage("Softcenter", "sig=%d, bug?",sig);
 		return;
 	}
 	char *eval_argv[] = { path, action, NULL };

@@ -3138,7 +3138,7 @@ define KernelConfig
 	sed -i "/CONFIG_PPP_FILTER/d" $(1); \
 	echo "# CONFIG_PPP_FILTER is not set" >>$(1); \
 	sed -i "/CONFIG_PPP_MULTILINK/d" $(1); \
-	echo "# CONFIG_PPP_MULTILINK is not set" >>$(1); \
+	echo "CONFIG_PPP_MULTILINK=y" >>$(1); \
 if [ "$(TUNEK)" != "n" ]; then \
 	if [ "$(RALINK)" = "y" ] || [ "$(QCA)" = "y" ]; then \
 		sed -i "/CONFIG_NVRAM_SIZE/d" $(1); \

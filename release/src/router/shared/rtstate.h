@@ -303,6 +303,7 @@ enum {
 #define WANSCAP_5G	0x10
 #define WANSCAP_USB	0x20
 #define WANSCAP_WAN2	0x40
+#define WANSCAP_SFPP	0x80	/* SFP+ */
 
 // the following definition is for wans_dualwan
 #define WANS_DUALWAN_IF_NONE    0
@@ -314,6 +315,7 @@ enum {
 #define WANS_DUALWAN_IF_5G      6
 #define WANS_DUALWAN_IF_WAN2	7
 #define WANS_DUALWAN_IF_USB2    8
+#define WANS_DUALWAN_IF_SFPP	9
 
 // the following definition is for free_caches()
 #define FREE_MEM_NONE  "0"
@@ -354,6 +356,7 @@ extern char *link_wan_nvname(int unit, char *buf, int size);
 extern int is_internet_connect(int unit);
 extern int is_wan_connect(int unit);
 extern int is_phy_connect(int unit);
+extern int is_phy_connect2(int unit);
 extern int is_ip_conflict(int unit);
 extern int get_wan_unit(char *ifname);
 extern char *get_wan_ifname(int unit);
@@ -367,12 +370,13 @@ extern char *get_usb_ehci_port(int port);
 extern char *get_usb_ohci_port(int port);
 extern int get_usb_port_number(const char *usb_port);
 extern int get_usb_port_host(const char *usb_port);
-#ifdef RTCONFIG_DUALWAN
 extern void set_wanscap_support(char *feature);
+#ifdef RTCONFIG_DUALWAN
 extern void add_wanscap_support(char *feature);
 extern int get_wans_dualwan(void);
 extern int get_dualwan_by_unit(int unit);
 extern int get_wanunit_by_type(int wan_type);
+extern char *get_wantype_str_by_unit(int unit);
 extern int get_dualwan_primary(void);
 extern int get_dualwan_secondary(void);
 extern int get_gate_num(void);
@@ -396,3 +400,4 @@ extern int get_wantype_by_modemunit(int modem_unit);
 extern char *get_userdns_r(const char *prefix, char *buf, size_t buflen);
 
 #endif	/* !__RTSTATE_H__ */
+

@@ -3723,7 +3723,7 @@ pppd/stamp-h1: kernel_header
 
 pppd: pppd/stamp-h1
 	@$(SEP)
-	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) HAVE_MULTILINK=y USE_TDB=y \
+	@$(MAKE) -C pppd MFLAGS='$(if $(RTCONFIG_IPV6),HAVE_INET6=y,) \
 	EXTRACFLAGS="$(EXTRACFLAGS) -idirafter $(KDIR)/include"'
 
 pppd-clean:
