@@ -15,7 +15,23 @@ clean(){
 	dbus remove soft_name
 }
 
+detect_package(){
+	local TEST="$1"
+	local KEYWORDS="ss|ssr|shadowsocks|shadowsocksr|v2ray|trojan|clash|wireguard|koolss|brook"
+	local KEY_MATCH=$(echo "${TEST}" | grep -Eo "$KEYWORDS")
+	if [ -n "$KEY_MATCH" ]; then
+		echo_date =======================================================
+		echo_date "检测到离线安装包：${soft_name} 含非法关键词！！！"
+		echo_date "根据法律规定，软件中心将不会安装此插件！！！"
+		echo_date "删除相关文件并退出..."
+		echo_date =======================================================
+		clean
+		exit 1
+	fi
+}
 install_tar(){
+	#do the right thing
+	detect_package "$soft_name"
 	name=`echo "$soft_name"|sed 's/.tar.gz//g'|awk -F "_" '{print $1}'|awk -F "-" '{print $1}'`
 	INSTALL_SUFFIX=_install
 	VER_SUFFIX=_version

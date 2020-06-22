@@ -68,3 +68,22 @@
 	width: 740px;
 	margin: 1px 0;
 }
+.show-install-btn, .show-uninstall-btn {
+	border: none;
+	background: #444;
+	color: #fff;
+	padding: 10px 20px;
+	border-radius: 5px 5px 0px 0px;
+}
+.active {
+	background: #444f53;
+	border: 1px solid #444f53;
+}
+#log_content1 {
+	width:99%;
+	font-family:'Lucida Console';
+	font-size:12px;
+	background:#475A5F;
+	color:#FFFFFF;
+}
+

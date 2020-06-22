@@ -31,7 +31,7 @@
 </style>
 <script>
 var sc_disk='<% nvram_get("sc_disk"); %>';
-
+var sctype;
 var partitions_array = [];
 function show_partition(){
 require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
@@ -45,12 +45,13 @@ for(var j=0; j < usbDevicesList[i].partition.length; j++){
 partitions_array.push(usbDevicesList[i].partition[j].mountPoint);
 var accessableSize = simpleNum(usbDevicesList[i].partition[j].size-usbDevicesList[i].partition[j].used);
 var totalSize = simpleNum(usbDevicesList[i].partition[j].size);
+sctype=usbDevicesList[i].partition[j].format || "";
 if(usbDevicesList[i].partition[j].status == "unmounted")
 continue;
-if(usbDevicesList[i].partition[j].partName==sc_disk)
-code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" selected="selected">'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB)</option>';
+if((usbDevicesList[i].partition[j].partName==sc_disk)&&((usbDevicesList[i].partition[j].format.indexOf("ext") != -1)||(usbDevicesList[i].partition[j].format.indexOf("tntfs") != -1)))
+code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" selected="selected">'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB ' + sctype + ')</option>';
 else
-code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" >'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB)</option>';
+code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" >'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB ' + sctype + ')</option>';
 mounted_partition++;
 }
 }
@@ -67,7 +68,12 @@ function init() {
 function applyRule() {
 if(document.getElementById("usb_disk_id").value==0)
 {
-alert("无法启用，请插入U盘或移动硬盘");
+alert(dict['No Disk']);
+return;
+}
+if((sctype == "tfat")||(sctype =="fat"))
+{
+alert(dict['Unsupportfat']);
 return;
 }
 document.form.submit();
@@ -127,7 +133,7 @@ document.form.sc_mount.value = "0";
 										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc" sclang>jffs extended settings</div>
 										<div style="color:#FC0;padding-top:5px;margin-top:25px;margin-left:0px;float: left;" id="NoteBox" >
                                                                                         <li style="margin-top:5px;" sclang>This function must be enabled when JFFS is less than 50MB.</li>
-                                                                                        <li style="margin-top:5px;" sclang>Support EXT/FAT/NTFS partitions(BLUECAVE/K3C/ARCH17/AC2200 unsupport FAT).</li>
+                                                                                        <li style="margin-top:5px;" sclang>Support EXT/NTFS partitions.</li>
                                                                                         <li style="margin-top:5px;" sclang>No less than 1GB of free space.</li>
                                                                                         <li style="margin-top:5px;" sclang>Must unmount the current partition before mounting other partitions.</li>
 										</div>

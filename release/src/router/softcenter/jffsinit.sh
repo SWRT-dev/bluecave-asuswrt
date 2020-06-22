@@ -10,10 +10,6 @@ elif [ "$MODEL" == "TUF-AX3000" ] || [ "$(nvram get merlinr_tuf)" == "1" ] ;then
 fi
 
 if [ $SPACE_AVAL -gt 51200 -a "$(nvram get sc_mount)" == 0 ];then
-if [ ! -d /jffs/softcenter ]; then
-	mkdir -p /jffs/softcenter
-	cp -rf /rom/etc/softcenter/* /jffs/softcenter/
-fi
 mkdir -p /jffs/softcenter/init.d
 mkdir -p /jffs/softcenter/bin
 mkdir -p /jffs/softcenter/etc
@@ -28,9 +24,7 @@ else
 if [ "$(nvram get sc_mount)" == 1 ];then
 	mdisk=`nvram get sc_disk`
 	usb_disk="/tmp/mnt/$mdisk"
-	if [ "$MODEL" == "BLUECAVE" -o "$MODEL" == "RT-ACRH17" -o "$MODEL" == "RT-AC2200" ];then
-		[ -n "$(mount |grep $usb_disk |grep tfat)" ] && logger "Unsupport TFAT!" && exit 1
-	fi
+	[ -n "$(mount |grep $usb_disk |grep tfat)" ] && logger "Unsupport TFAT!" && exit 1
 	if [ ! -e "$usb_disk" ]; then
 		nvram set sc_mount="0"
 		nvram commit
@@ -85,7 +79,7 @@ chmod 755 /jffs/softcenter/perp/*
 chmod 755 /jffs/softcenter/perp/.boot/*
 chmod 755 /jffs/softcenter/perp/.control/*
 chmod 755 /jffs/softcenter/automount.sh
-echo 1.2.0 > /jffs/softcenter/.soft_ver
+echo 1.2.7 > /jffs/softcenter/.soft_ver
 dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "-" -f1|cut -c2-6`
 ARCH=`uname -m`
 KVER=`uname -r`
@@ -104,6 +98,7 @@ else
 fi
 
 dbus set softcenter_api=`cat /jffs/softcenter/.soft_ver`
+dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
 nvram set sc_installed=1
 nvram commit
 # creat wan-start file
@@ -111,9 +106,9 @@ mkdir -p /jffs/scripts
 
 	if [ -z "$(dbus get softcenter_server_tcode)" ]; then
 		modelname=`nvram get modelname`
-		if [ "$modelname" == "K3" -o "$modelname" == "GTAC2900" -o "$modelname" == "GTAC5300" -o "$modelname" == "RTAC86U" -o "$modelname" == "RTAX86U" -o "$modelname" == "RTAX68U" -o "$modelname" == "RTAX82U" -o "$modelname" == "TUFAX3000" -o "$modelname" == "RTACRH17" -o "$modelname" == "RTAX56U" ]; then
+		if [ "$modelname" == "K3" -o "$modelname" == "XWR3100" ]; then
 			dbus set softcenter_server_tcode=CN
-		elif [ "$modelname" == "SBRAC1900P" -o "$modelname" == "SBR-AC1900P" -o "$modelname" == "SBRAC3200P" -o "$modelname" == "SBR-AC3200P" -o "$modelname" == "R7900P" -o "$modelname" == "R8000P" ]; then
+		elif [ "$modelname" == "SBRAC1900P" -o "$modelname" == "SBR-AC1900P" -o "$modelname" == "SBRAC3200P" -o "$modelname" == "SBR-AC3200P" -o "$modelname" == "R7900P" -o "$modelname" == "R8000P" -o "$modelname" == "R7000P" ]; then
 			dbus set softcenter_server_tcode=ALI
 		else
 			dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
@@ -132,6 +127,4 @@ export PERP_BASE=/softcenter/perp
 
 EOF
 fi
-
-
 

@@ -938,7 +938,7 @@ function ppp_echo_control(flag){
 									<input type="radio" name="wan_nat_x" class="input" value="0" <% nvram_match("wan_nat_x", "0", "checked"); %>><#checkbox_No#>
 								</td>
 							</tr>				
-							<tr id="nat_type_tr">
+							<tr id="nat_type_tr" style="display:none">
 								<th>NAT Type</th>
 								<td>
 									<input type="radio" name="nat_type" class="input" value="0" <% nvram_match("nat_type", "0", "checked"); %>>Symmetric

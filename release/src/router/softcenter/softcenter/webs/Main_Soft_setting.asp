@@ -89,7 +89,7 @@ function upload_ok(isok) {
 function start_install() {
 	document.form.action_mode.value = ' Refresh ';
 	document.form.action = "/applydb.cgi?p=soft";
-    document.form.action_script.value = "ks_tar_intall.sh";
+    document.form.action_script.value = "ks_tar_install.sh";
 	document.form.enctype = "";
 	document.form.encoding = "";
 	document.form.submit();
