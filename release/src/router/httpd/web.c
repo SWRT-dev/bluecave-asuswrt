@@ -6049,17 +6049,15 @@ static int get_cpu_temperature(int eid, webs_t wp, int argc, char_t **argv)
 	if (f_read_string("/sys/class/thermal/thermal_zone0/temp", temperature, sizeof(temperature)) <= 0)
 		*temperature = '\0';
 	return websWrite(wp, "%d", safe_atoi(temperature));
-#elif  defined(RTCONFIG_LANTIQ)
+#elif defined(RTCONFIG_LANTIQ)
 	FILE *fp;
 	int temperature;
-	system("awk 'NR==1' /sys/kernel/debug/ltq_tempsensor/allsensors | cut -c25-26 >/tmp/allsensors.txt");
-	if ((fp = fopen("/tmp/allsensors.txt", "r")) != NULL) {
-		fscanf(fp, "%d", &temperature);
+	if ((fp = fopen("/sys/kernel/debug/ltq_tempsensor/allsensors", "r")) != NULL) {
+		fscanf(fp, "TS_CODE= %*[0-9]; TEMP   = %d; CH_SEL = %*[0-9]", &temperature);
 		fclose(fp);
 	}
-	unlink("/tmp/allsensors.txt");
 
-	return websWrite(wp, "%d", temperature);
+	return websWrite(wp, "%d", (temperature/1000));
 #else
 	FILE *fp;
 	int temperature = -1;

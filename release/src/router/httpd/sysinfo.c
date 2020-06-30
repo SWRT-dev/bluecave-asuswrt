@@ -637,36 +637,33 @@ unsigned int get_phy_temperature(int radio)
 	}
 #elif defined(RTCONFIG_LANTIQ)
 	int temp = 0, retval = 0;
-	char *tmp;
-	if (radio == 2) {
-		system("iwpriv wlan0 gTemperature >/tmp/output.txt");
-	} else if (radio == 5) {
-		system("iwpriv wlan2 gTemperature >/tmp/output.txt");
-	} else if (radio == 7) {
-		system("cut -c25-26 /sys/kernel/debug/ltq_tempsensor/allsensors >/tmp/output.txt");
-	} else {
-		return retval;
-	}
-	char *buffer = read_whole_file("/tmp/output.txt");
+	FILE *fp;
 
-	if (buffer) {
-		if (radio == 7) {
-			sscanf(buffer, "%d", &temp);
-			free(buffer);
-			retval = temp;
-		} else {
-			tmp = strstr(buffer, "gTemperature:");
-			if (tmp) {
-				sscanf(tmp, "gTemperature:%d", &temp);
-				free(buffer);			
-				retval = temp;
-			} else {
-				free(buffer);
-				retval = 0;
-			}
+	if (radio == 2 || radio == 5) {
+		char buffer[99];
+		char iw[]="iwpriv wlan0 gTemperature";
+		char s[]="wlan0     gTemperature:%%d %%*[0-9 ]";
+		if (radio == 2) {
+			snprintf(iw, sizeof(iw), "iwpriv wlan0 gTemperature");
+			snprintf(s, sizeof(s), "wlan0     gTemperature:%%d %%*[0-9 ]");
+		} else if (radio == 5) {
+			snprintf(iw, sizeof(iw), "iwpriv wlan2 gTemperature");
+			snprintf(s, sizeof(s), "wlan2     gTemperature:%%d %%*[0-9 ]");
 		}
-	} else { retval = 99; }
-	unlink("/tmp/output.txt");
+		if ((fp = popen(iw, "r")) != NULL) {
+			if(fgets(buffer, 100, fp) != NULL) {
+				sscanf(buffer, s, &temp);
+			}
+			pclose(fp);
+			retval = temp;
+		}
+	} else if (radio == 7) {
+		if ((fp = fopen("/sys/kernel/debug/ltq_tempsensor/allsensors", "r")) != NULL) {
+			fscanf(fp, "TS_CODE= %*[0-9]; TEMP   = %d; CH_SEL = %*[0-9]", &temp);
+			fclose(fp);
+			retval = (temp/1000);
+		}
+	}
 	return retval;
 #elif defined(RTCONFIG_QCA)
 	int temp = 0, retval = 0;
@@ -674,11 +671,10 @@ unsigned int get_phy_temperature(int radio)
 		system("thermaltool -i wifi0 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
 	} else if (radio == 5) {
 		system("thermaltool -i wifi1 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
-	} else if (radio == 7) {
-		retval = 0;
 	} else {
-		return retval;
+		return retval;//4019 not support
 	}
+
 	char *buffer = read_whole_file("/tmp/output.txt");
 	if (buffer) {
 		if (radio != 7) {
