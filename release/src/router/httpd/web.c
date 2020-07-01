@@ -15787,7 +15787,7 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char *result = NULL;
 	char *temp = NULL;
 	char *name = websGetVar(wp, "p","");
-	char *userm = strstr(url, "use_rm=1");
+	char *userm = websGetVar(wp, "use_rm", "");
 	char scPath[128];
 	char *post_db_buf = post_json_buf;
 
@@ -15825,8 +15825,8 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				strcpy(dbval, temp+1);
 				strncpy(dbvar, dbjson[j], strlen(dbjson[j])-strlen(temp));
 			//logmessage("HTTPD", "name: %s post: %s", dbvar, dbval);
-			if(userm)
-				doSystem("dbus remove %s", dbvar);
+			if(*userm || dbval[0]=='\0')
+				dbclient_rm(&client, dbvar, strlen(dbvar));
 			else
 				dbclient_bulk(&client, "set", dbvar, strlen(dbvar), dbval, strlen(dbval));
 		}
@@ -15856,9 +15856,9 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				temp=strstr(dbjson[j], "=");
 				strcpy(dbval, temp+1);
 				strncpy(dbvar, dbjson[j], strlen(dbjson[j])-strlen(temp));
-			//logmessage("HTTPD", "name: %s post: %s", dbvar, dbval);
-			if(userm)
-				doSystem("dbus remove %s", dbvar);
+			//logmessage("HTTPD", "dbvar: %s dbval: %s", dbvar, dbval);
+			if(*userm || dbval[0]=='\0')
+				dbclient_rm(&client, dbvar, strlen(dbvar));
 			else
 				dbclient_bulk(&client, "set", dbvar, strlen(dbvar), dbval, strlen(dbval));
 		}
@@ -15999,7 +15999,7 @@ do_logread(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	//sscanf(url, "logreaddb.cgi?%s", filename);
 	char *filename = websGetVar(wp, "p","");
 	char *script = websGetVar(wp, "script", "");
-	if(script){
+	if(*script){
 		sprintf(scPath, "/jffs/softcenter/scripts/%s", script);
 		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
 		sys_script("syscmd.sh");

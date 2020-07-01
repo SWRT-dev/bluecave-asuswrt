@@ -39,6 +39,7 @@ typedef struct _dbclient {
 typedef int (*fn_db_parse)(dbclient* client, webs_t wp, char* prefix, char* key, char* value);
 
 int dbclient_start(dbclient* client);
+int dbclient_rm(dbclient* client, const char* key, int nk);
 int dbclient_bulk(dbclient* client, const char* command, const char* key, int nk, const char* value, int nv);
 int dbclient_end(dbclient* client);
 int dbclient_list(dbclient* client, char* prefix, webs_t wp, fn_db_parse fn);

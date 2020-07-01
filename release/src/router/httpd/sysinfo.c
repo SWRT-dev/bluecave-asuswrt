@@ -651,7 +651,7 @@ unsigned int get_phy_temperature(int radio)
 			snprintf(s, sizeof(s), "wlan2     gTemperature:%%d %%*[0-9 ]");
 		}
 		if ((fp = popen(iw, "r")) != NULL) {
-			if(fgets(buffer, 100, fp) != NULL) {
+			if(fgets(buffer, 99, fp) != NULL) {
 				sscanf(buffer, s, &temp);
 			}
 			pclose(fp);
