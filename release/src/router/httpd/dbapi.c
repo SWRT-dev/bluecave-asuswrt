@@ -151,6 +151,7 @@ int dbclient_rm(dbclient* client, const char* key, int nk) {
     n1 = nk + 2 + 6;
     check_buf(client, n1 + HEADER_PREFIX);
     n2 = snprintf(client->buf, client->buf_max, "%s%07d remove %s\n", MAGIC, n1, key);
+    client->buf[n2] = '\0';
     write(client->remote_fd, client->buf, n2);
 
     return 0;
