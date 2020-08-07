@@ -24,7 +24,7 @@
 #define PREFIX_RESULT "/_result/"
 #define PREFIX_RESULT_LEN (9)
 #define UPLOAD_API "/_upload"
-#define PREFIX_PATH "/jffs/softcneter"
+#define PREFIX_PATH "/jffs/softcenter"
 
 //#define DEBUG
 
