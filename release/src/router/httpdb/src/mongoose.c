@@ -9780,6 +9780,9 @@ int mg_match_prefix(const char *pattern, int pattern_len, const char *str) {
 //added by janson
 int mg_has_prefix(const struct mg_str *uri, const char *prefix) {
     size_t prefix_len = strlen(prefix);
+    if(NULL == uri || NULL == uri->p) {
+        return 0;
+    }
     return uri->len >= prefix_len && memcmp(uri->p, prefix, prefix_len) == 0;
 }
 

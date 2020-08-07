@@ -7,6 +7,10 @@
 #include <json.h>
 #include <sys/queue.h>
 #include <getopt.h>
+#include <syslog.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
 #include <dbapi.h>
 #include <khash.h>
 
@@ -121,16 +125,39 @@ struct dblist_ctx {
     int index;
 };
 
+struct global_cfg_t {
+    pid_t ppid;
+    int daemon;
+    int log_level;
+
+    char http_port[64];
+    char https_port[64];
+    char www[128];
+    char reverse[128];
+    char cert[256];
+};
+
 static const char *s_error_500 = "HTTP/1.1 500 Failed\r\n";
 static const char *s_content_len_0 = "Content-Length: 0\r\n";
 static const char *s_connection_close = "Connection: close\r\n";
 static struct http_backend s_vhost_backends[100], s_default_backends[100];
 static int s_num_vhost_backends = 0, s_num_default_backends = 0;
-static int s_sig_num = 0;
 static int s_backend_keepalive = 0;
 static FILE *s_log_file = NULL;
 static struct mg_serve_http_opts s_http_server_opts = {0};
 static struct mg_serve_http_opts s_http_tmp_opts = {0};
+static struct global_cfg_t gcfg = {0};
+static int start_main(void);
+
+enum
+{
+    APP_DBG = 0,
+    APP_INFO,
+    APP_WRN,
+    APP_ERR,
+    APP_COUNT
+};
+#define app_log(_level, _fmt, _args...) do {if(_level >= gcfg.log_level){ if(gcfg.daemon) {syslog(LOG_NOTICE, _fmt, ##_args);} else { fprintf(stdout, _fmt, ##_args); }}} while(0)
 
 static void init_req_mgr(struct json_req_mgr* mgr) {
     mgr->req_map = kh_init(32);
@@ -285,11 +312,6 @@ static void ev_handler_https(struct mg_connection *nc, int ev, void *ev_data);
 
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, int https);
 static void write_log(const char *fmt, ...);
-
-static void signal_handler(int sig_num) {
-    signal(sig_num, signal_handler);
-    s_sig_num = sig_num;
-}
 
 static void send_http_err(struct mg_connection *nc, const char *err_line) {
     mg_printf(nc, "%s%s%s\r\n", err_line, s_content_len_0, s_connection_close);
@@ -777,7 +799,7 @@ static int process_json(struct conn_data* conn, struct http_message *hm) {
             buf[n] = '\0';
 
             n = strtol(fields[0].ptr, NULL, 10);
-            //printf("set id=%d flen=%d dst=%s\n", n, fields[0].len, dst);
+            app_log(APP_DBG, "set id=%d flen=%d dst=%s\n", n, fields[0].len, dst);
             system(dst);
 
             new_json_request(&sreq_mgr, nc, n, time(NULL));
@@ -955,6 +977,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, int http
                 struct http_message *hm = (struct http_message *) ev_data;
 
                 check_timeout(&sreq_mgr, time(NULL));
+                //printf("url=%.*s\n", hm->uri.len, hm->uri.p);
 
                 if(hm != NULL && mg_has_prefix(&hm->uri, PREFIX_API)) {
                     result = process_json(conn, hm);
@@ -1193,6 +1216,184 @@ static void handle_upload(struct mg_connection *nc, int ev, void *p) {
   }
 }
 
+int markas_exit = 0;
+static void child_sig(int sig)
+{
+    if (sig == SIGUSR1) {
+        markas_exit = 1;
+    }
+}
+
+static void ppkill(void)
+{
+    pid_t pid = gcfg.ppid;
+    if(pid > 0) {
+        kill(pid, SIGUSR1);
+    }
+}
+
+static void daemonize(void)
+{
+    /* Fork off the parent process */
+    pid_t pid = fork();
+    if (pid < 0) exit(1);
+
+    /* If we got a good PID, then
+       we can exit the parent process. */
+    if (pid > 0) exit(0);
+
+    /* Cancel certain signals */
+    signal(SIGCHLD, SIG_DFL); /* A child process dies */
+    signal(SIGTSTP, SIG_IGN); /* Various TTY signals */
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGABRT, SIG_IGN);
+    signal(SIGHUP, SIG_IGN); /* Ignore hangup signal */
+    signal(SIGUSR1, child_sig);
+
+    /* Create a new SID for the child process */
+    pid_t sid = setsid();
+    if (sid < 0) exit(1);
+
+    /* Redirect standard files to /dev/null */
+    FILE *funused = freopen("/dev/null", "r", stdin);
+    funused = freopen("/dev/null", "r", stdout);
+    funused = freopen("/dev/null", "r", stderr);
+    (void)&funused;
+
+    /* Open the log file */
+    openlog("httpdb", LOG_PID, LOG_DAEMON);
+
+    /* init env */
+    gcfg.ppid = getpid();
+
+    pid_t pc = 0, pr = 0, refork = 1;
+    for(;;)
+    {
+        if(markas_exit)
+        {
+            exit(1);
+        }
+        else if(refork)
+        {
+            pc = fork();
+            refork = 0;
+        }
+        if(pc < 0)
+        {
+            exit(1);
+        }
+        else if(pc == 0)
+        {
+            start_main();
+            exit(0);
+        }
+        else
+        {
+            pr = waitpid(pc, NULL, 0);
+            if (pr == -1)
+            {
+                exit(1);
+            }
+            else if (pr == pc)
+            {
+                refork = 1;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    closelog();
+}
+
+static int start_main(void) {
+    struct mg_mgr mgr;
+    struct mg_connection *nc_http = NULL, *nc_https = NULL;
+    struct http_backend *be = NULL;
+
+    signal(SIGPIPE, SIG_IGN);
+    mg_mgr_init(&mgr, NULL);
+
+    if(gcfg.reverse[0] != '\0') {
+        be = &s_default_backends[s_num_default_backends++];
+        STAILQ_INIT(&be->conns);
+
+        be->vhost = NULL;
+        be->uri_prefix = "/";
+        be->host_port = gcfg.reverse;
+        be->redirect = 0;
+        be->uri_prefix_replacement = be->uri_prefix;
+    }
+
+    init_req_mgr(&sreq_mgr);
+
+    if (strlen(gcfg.http_port) > 0) {
+        if ((nc_http = mg_bind(&mgr, gcfg.http_port, ev_handler_http)) == NULL) {
+            app_log(APP_ERR, "mg_bind(%s) failed\n", gcfg.http_port);
+            ppkill();
+            exit(EXIT_FAILURE);
+        }
+        mg_register_http_endpoint(nc_http, UPLOAD_API, handle_upload);
+    }
+
+    if (strlen(gcfg.https_port) > 0) {
+        if ((nc_https = mg_bind(&mgr, gcfg.https_port, ev_handler_https)) == NULL) {
+            app_log(APP_ERR, "mg_bind(%s) failed\n", gcfg.https_port);
+            ppkill();
+            exit(EXIT_FAILURE);
+        }
+        mg_register_http_endpoint(nc_https, UPLOAD_API, handle_upload);
+    }
+
+#if MG_ENABLE_SSL
+    if (nc_https != NULL) {
+        const char *err_str = mg_set_ssl(nc_https, gcfg.cert, NULL);
+        if (err_str != NULL) {
+            app_log(APP_ERR, "Error loading SSL cert: %s\n", err_str);
+            ppkill();
+            exit(1);
+        }
+    }
+#endif
+
+    /* if (s_num_vhost_backends + s_num_default_backends == 0) {
+        fprintf(stderr,  "not http or https found\n");
+        print_usage_and_exit(argv[0]);
+    }
+
+    if(NULL == nc_http && NULL == nc_https) {
+        fprintf(stderr,  "not http or https found\n");
+        exit(1);
+    } */
+
+    if(nc_http != NULL) {
+        mg_set_protocol_http_websocket(nc_http);
+    }
+
+    if(nc_https != NULL) {
+        mg_set_protocol_http_websocket(nc_https);
+    }
+
+    if(gcfg.http_port[0] != '\0') {
+        app_log(APP_ERR, "Http on addr %s\n", gcfg.http_port);
+    }
+    if(gcfg.https_port[0] != '\0') {
+        app_log(APP_ERR, "Https on addr %s\n", gcfg.http_port);
+    }
+    app_log(APP_ERR, "root=%s\nupload=/tmp/upload\n", gcfg.www);
+    for(;;) {
+        mg_mgr_poll(&mgr, 1000);
+    }
+
+    /* Cleanup */
+    mg_mgr_free(&mgr);
+
+    return EXIT_SUCCESS;
+}
+
 static void print_usage_and_exit(const char *prog_name) {
     fprintf(stderr,
             "Usage: %s [-p http_port] [-s https_port] [-l log] [-r reverse_host]"
@@ -1215,51 +1416,46 @@ const struct option long_options[] = {
 };
 
 int main(int argc, char *argv[]) {
-    struct mg_mgr mgr;
-    struct mg_connection *nc_http = NULL, *nc_https = NULL;
-    struct http_backend *be;
-    char http_port[64], https_port[64], www[128], reverse[128];
-    char *vhost = NULL, *cert = NULL;
-    int c = 0;//IMPORTANT use int
-    char* mime_types = ".txt=application/octet-stream;.sh=application/octet-stream;.log=text/html; charset=utf-8";
+    int c = 0;
+    static char* mime_types = ".txt=application/octet-stream;.sh=application/octet-stream;.log=text/html; charset=utf-8";
 
-    mg_mgr_init(&mgr, NULL);
+    memset(&gcfg, 0, sizeof(gcfg));
+    strcpy(gcfg.www, PREFIX_PATH"/webs/");
+    strcpy(gcfg.cert, PREFIX_PATH"/lib/ssl.pem");
+    gcfg.log_level = APP_ERR;
 
     s_backend_keepalive = 1;
     s_log_file = stdout;
-    vhost = NULL;
-    cert = PREFIX_PATH"/lib/ssl.pem";
-    //s_http_server_opts.document_root = "../tests/web_root";
-    //s_http_server_opts.enable_directory_listing = "no";
-    //s_http_server_opts.url_rewrites = "/_root=/web_root";
     s_http_server_opts.custom_mime_types = mime_types;
+    s_http_server_opts.document_root = gcfg.www;
 
-    s_http_tmp_opts.document_root = "/tmp/upload";
+    s_http_tmp_opts.document_root = "/tmp/upload/";
     s_http_tmp_opts.enable_directory_listing = "no";
     s_http_tmp_opts.custom_mime_types = mime_types;
 
-    strcpy(http_port, "3030");
-    https_port[0] = '\0';
-    strcpy(www, PREFIX_PATH"/webs/");
-    reverse[0] = '\0';
-
     while (c >= 0) {
-        c = getopt_long(argc, argv, "p:s:c:r:w:h", long_options, NULL);
+        c = getopt_long(argc, argv, "p:s:c:r:w:h:l:d", long_options, NULL);
         switch(c) {
+            case 'd':
+                gcfg.daemon = 1;
+                break;
+            case 'l':
+                gcfg.log_level = atoi(optarg);
+                break;
             case 'p':
-                strncpy(http_port, optarg, 63);
+                strncpy(gcfg.http_port, optarg, 63);
                 break;
             case 's':
-                strncpy(https_port, optarg, 63);
+                strncpy(gcfg.https_port, optarg, 63);
                 break;
             case 'c':
-                cert = optarg;
+                strncpy(gcfg.cert, optarg, 255);
                 break;
             case 'r':
-                strncpy(reverse, optarg, 127);
+                strncpy(gcfg.reverse, optarg, 127);
                 break;
             case 'w':
-                strncpy(www, optarg, 127);
+                strncpy(gcfg.www, optarg, 127);
                 break;
             case 'h':
                 print_usage_and_exit(argv[0]);
@@ -1269,90 +1465,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    s_http_server_opts.document_root = www;
-
-    be =
-        vhost != NULL ? &s_vhost_backends[s_num_vhost_backends++]
-        : &s_default_backends[s_num_default_backends++];
-    STAILQ_INIT(&be->conns);
-
-    be->vhost = vhost;
-    be->uri_prefix = "/";
-    be->host_port = reverse;
-    be->redirect = 0;
-    be->uri_prefix_replacement = be->uri_prefix;
-
-    /* if ((r = strchr(be->uri_prefix, '=')) != NULL) {
-     *r = '\0';
-     be->uri_prefix_replacement = r + 1;
-     } */
-
-    printf(
-            "Adding backend for %s%s : %s "
-            "[redirect=%d,prefix_replacement=%s]\n",
-            be->vhost == NULL ? "" : be->vhost, be->uri_prefix, be->host_port,
-            be->redirect, be->uri_prefix_replacement);
-
-    init_req_mgr(&sreq_mgr);
-
-    if (strlen(http_port) > 0) {
-        if ((nc_http = mg_bind(&mgr, http_port, ev_handler_http)) == NULL) {
-            fprintf(stderr, "mg_bind(%s) failed\n", http_port);
-            exit(EXIT_FAILURE);
-        }
-        mg_register_http_endpoint(nc_http, UPLOAD_API, handle_upload);
+    if(gcfg.daemon > 0) {
+        daemonize();
+    } else {
+        start_main();
     }
 
-    if (strlen(https_port) > 0) {
-        if ((nc_https = mg_bind(&mgr, https_port, ev_handler_https)) == NULL) {
-            fprintf(stderr, "mg_bind(%s) failed\n", https_port);
-            exit(EXIT_FAILURE);
-        }
-        mg_register_http_endpoint(nc_https, UPLOAD_API, handle_upload);
-    }
-
-#if MG_ENABLE_SSL
-    if (cert != NULL && nc_https != NULL) {
-        const char *err_str = mg_set_ssl(nc_https, cert, NULL);
-        if (err_str != NULL) {
-            fprintf(stderr, "Error loading SSL cert: %s\n", err_str);
-            exit(1);
-        }
-    }
-#endif
-
-    if (s_num_vhost_backends + s_num_default_backends == 0) {
-        fprintf(stderr,  "not http or https found\n");
-        print_usage_and_exit(argv[0]);
-    }
-
-    if(NULL == nc_http && NULL == nc_https) {
-        fprintf(stderr,  "not http or https found\n");
-        exit(1);
-    }
-
-    if(nc_http != NULL) {
-        mg_set_protocol_http_websocket(nc_http);
-    }
-
-    if(nc_https != NULL) {
-        mg_set_protocol_http_websocket(nc_https);
-    }
-
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
-    /* Run event loop until signal is received */
-    printf("Starting http on port %s\nhttps on port %s \nwww=%s\n upload path=/tmp/upload\n", http_port, https_port, www);
-    while (s_sig_num == 0) {
-        mg_mgr_poll(&mgr, 1000);
-    }
-
-    /* Cleanup */
-    mg_mgr_free(&mgr);
-
-    printf("Exiting on signal %d\n", s_sig_num);
-
-    return EXIT_SUCCESS;
+    return 0;
 }
 
