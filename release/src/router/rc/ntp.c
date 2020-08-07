@@ -79,7 +79,7 @@ static void ntp_service()
 #endif
 #ifdef RTCONFIG_UUPLUGIN
 		if(nvram_get_int("uu_enable"))
-#if defined(R8000P) || defined(R7900P) || defined(K3) || defined(SBRAC3200P) || defined(RTAC3100) || defined(RTAC3200) || defined(EA6700) || defined(RAX20) || defined(SBRAC1900P)
+#if defined(R8000P) || defined(R7900P) || defined(K3) || defined(SBRAC3200P) || defined(RTAC3100) || defined(RTAC3200) || defined(EA6700) || defined(RAX20) || defined(SBRAC1900P) || defined(RMAC2100)
 		exec_uu_merlinr();
 #else
 		exec_uu();

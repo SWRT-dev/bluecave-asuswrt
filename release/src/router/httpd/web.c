@@ -17328,6 +17328,10 @@ struct mime_handler mime_handlers[] = {
 	{ "applydb.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_applydb_cgi, do_auth },
 	{ "logreaddb.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_logread_cgi, do_auth },
 	{ "ssupload.cgi*", "text/html", no_cache_IE7, do_ssupload_post, do_ssupload_cgi, do_auth },
+//v1.5
+//	{ "_scapi*", "text/html", no_cache_IE7, do_html_post_and_get, do_scapi_cgi, do_auth },
+//	{ "_sctemp*", "text/html", no_cache_IE7, do_html_post_and_get, do_sctemp_cgi, do_auth },
+//	{ "_scupload*", "text/html", no_cache_IE7, do_scupload_post, do_scupload_cgi, do_auth },
 #endif
 	{ "upgrade.cgi*", "text/html", no_cache_IE7, do_upgrade_post, do_upgrade_cgi, do_auth},
 	{ "upload.cgi*", "text/html", no_cache_IE7, do_upload_post, do_upload_cgi, do_auth },
