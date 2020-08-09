@@ -7096,7 +7096,9 @@ httpdb-install: httpdb
 skipdbv2/Makefile: skipdbv2/CMakeLists.txt
 	cd skipdbv2 && cmake -DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_EXE_LINKER_FLAGS="-L$(STAGEDIR)/usr/lib -lev" 
+	-DCMAKE_EXE_LINKER_FLAGS="-L$(STAGEDIR)/usr/lib -lev" \
+	-DLIBEV_INCLUDE_DIRS="$(TOP)/libev-4.22" \
+	-DLIBEV_LIBRARIES="$(TOP)/libev-4.22/.libs"
 
 skipdbv2: libev-4.22 skipdbv2/Makefile
 	$(MAKE) -C $@

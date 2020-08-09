@@ -32,7 +32,7 @@ JFile *JFile_new(void)
 	JFile *self = (JFile *)calloc(1, sizeof(JFile));
 	//JFile_setPath_(self, "default");
 	JFile_setJournalingOn_(self, 1);
-	self->logHighWaterMark = 1024*1024*8;
+	self->logHighWaterMark = 1024*1024*16;
 	self->fullSync = 1;
 	return self;
 }
@@ -129,7 +129,7 @@ void JFile_open(JFile *self)
 			fcntl(fileno(self->log), F_PREALLOCATE, self->logHighWaterMark);
 		#else
 			// FIXME by jannson Linux
-			//posix_fallocate(fileno(self->log), -1, self->logHighWaterMark);
+			//posix_fallocate(fileno(self->log), 0, self->logHighWaterMark);
 		#endif
 	}
 	else

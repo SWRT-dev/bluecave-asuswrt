@@ -31,6 +31,7 @@ Kudos to Daniel A. Koepke
 	#define NON_EXTERN_INLINES
 #else
 	#if defined __GNUC__ && __GNUC__ >= 4
+		//TODO?
 		//#define NON_EXTERN_INLINES
 	#endif
 #endif

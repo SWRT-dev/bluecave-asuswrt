@@ -18,6 +18,7 @@
 
 //"list "
 #define LIST_LEN 5
+#define READ_TIMEOUT (800)
 
 typedef struct _dbclient {
     int remote_fd;
@@ -133,7 +134,7 @@ int parse_common_result(dbclient *client) {
     char* magic = MAGIC;
 
     do {
-        n1 = read_util(client, HEADER_PREFIX, 110);
+        n1 = read_util(client, HEADER_PREFIX, READ_TIMEOUT);
         if(n1 < 0) {
             return n1;
         }
@@ -149,7 +150,7 @@ int parse_common_result(dbclient *client) {
             return -4;
         }
 
-        n1 = read_util(client, n2, 110);
+        n1 = read_util(client, n2, READ_TIMEOUT);
         if(n1 < 0) {
             return n1;
         }
@@ -172,7 +173,7 @@ int parse_get_result(dbclient *client) {
     char *p1, *p2, *magic = MAGIC;
 
     do {
-        n1 = read_util(client, HEADER_PREFIX, 110);
+        n1 = read_util(client, HEADER_PREFIX, READ_TIMEOUT);
         if(n1 < 0) {
             return n1;
         }
@@ -223,7 +224,7 @@ int parse_list_result(dbclient *client) {
     char *p1, *p2, *magic = MAGIC;
 
     for(;;) {
-        n1 = read_util(client, HEADER_PREFIX, 110);
+        n1 = read_util(client, HEADER_PREFIX, READ_TIMEOUT);
         if(n1 < 0) {
             return n1;
         }
@@ -256,7 +257,7 @@ int parse_list_result(dbclient *client) {
         p1 = strstr(p2, " ");
         *p1 = '=';
 
-        if(p2[n2-1] != '\n') {
+        if(client->buf[n2-1] != '\n') { /* skipd will change '\n' to '\0' and save */
             printf("%s\n", p2);
         } else {
             printf("%s", p2);
@@ -272,7 +273,7 @@ int parse_script_result(dbclient *client) {
     char* magic = MAGIC;
 
     for(;;) {
-        n1 = read_util(client, HEADER_PREFIX, 110);
+        n1 = read_util(client, HEADER_PREFIX, READ_TIMEOUT);
         if(n1 < 0) {
             return n1;
         }
@@ -438,7 +439,7 @@ int main(int argc, char **argv, char * envp[])
 
     remote_fd = create_client_fd("/tmp/.skipd_server_sock");
     if(-1 == remote_fd) {
-#if 0
+#if 1
         //Try to restart skipd
         system("service start_skipd >/dev/null 2>&1 &");
         sleep(1);
@@ -508,6 +509,10 @@ int main(int argc, char **argv, char * envp[])
 
             setnonblock(remote_fd);
             n1 = parse_get_result(gclient);
+            if(n1 != 0) {
+                //fprintf(stderr, "err n1=%d\n", n1);
+                exit(1);
+            }
         } else if(!strcmp("remove", argv[1])) {
             if(argc < 3) {
                 err = -14;
@@ -569,6 +574,10 @@ int main(int argc, char **argv, char * envp[])
 
             setnonblock(remote_fd);
             n1 = parse_get_result(gclient);
+            if(n1 != 0) {
+                //fprintf(stderr, "err n1=%d\n", n1);
+                exit(1);
+            }
         } else if(!strcmp("ram", argv[1])) {
             if((argc < 3) || (NULL == strstr(argv[2], "="))) {
                 err = -16;
@@ -622,7 +631,9 @@ int main(int argc, char **argv, char * envp[])
 
             //setnonblock(remote_fd);
             //n1 = parse_common_result(client);
-        } else if(!strcmp("time", argv[1])) {
+        }
+
+        /* if(!strcmp("time", argv[1])) {
             if(argc < 5) {
                 err = -21;
                 break;
@@ -641,7 +652,8 @@ int main(int argc, char **argv, char * envp[])
 
             //setnonblock(remote_fd);
             //n1 = parse_common_result(client);
-        }
+        } */
+
     } while(0);
     if(err < 0) {
         help();

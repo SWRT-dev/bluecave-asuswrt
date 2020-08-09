@@ -834,6 +834,7 @@ void SkipDB_mergeInto_(SkipDB *self, SkipDB *other)
 		Datum k = SkipDBRecord_keyDatum(r);
 		Datum v = SkipDBRecord_valueDatum(r);
 		SkipDB_at_put_(other, k, v);
+	    SkipDB_sync(other);
 	}
 }
 
