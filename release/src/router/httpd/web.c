@@ -16172,6 +16172,7 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		}
 		websWrite(wp,"]}\n" );
 		free(dup_pattern);
+		dbclient_end(&client);
 	}else{//post
 		json_object *root = NULL;
 		json_object *idObj = NULL;
@@ -16231,7 +16232,7 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			dbclient_end(&client);
 			memset(scPath,'\0',sizeof(scPath));
 			snprintf(scPath, sizeof(scPath), "/tmp/upload/%d",id);
-			for(i=0; i<15; i++){
+			for(i=0; i<10; i++){
 				usleep(100000);//wait for script
 				if(check_if_file_exist(scPath)){
 					if((fp = fopen(scPath, "r"))!= NULL){
