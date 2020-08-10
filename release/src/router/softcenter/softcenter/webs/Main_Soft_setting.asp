@@ -7,7 +7,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1"/>
 <link rel="shortcut icon" href="images/favicon.png"/>
 <link rel="icon" href="images/favicon.png"/>
-<title>软件中心 - 离线安装</title>
+<title sclang>Softcenter - Offline installation</title>
 <link rel="stylesheet" type="text/css" href="index_style.css"/>
 <link rel="stylesheet" type="text/css" href="form_style.css"/>
 <link rel="stylesheet" type="text/css" href="usp_style.css"/>
@@ -25,9 +25,11 @@
 <script type="text/javascript" src="/dbconf?p=adm_&v=<% uptime(); %>"></script>
 <script type="text/javascript" src="/res/softcenter.js"></script>
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
+<script type="text/javascript" src="/js/i18n.js"></script>
 <script>
 function init(menu_hook) {
 	show_menu();
+	sc_load_lang("sc1");
 }
 function onSubmitCtrl(o, s) {
 	document.form.action_mode.value = s;
@@ -38,7 +40,7 @@ function reload_Soft_Center(){
 location.href = "/Main_Soft_center.asp";
 }
 function menu_hook(title, tab) {
-	tabtitle[tabtitle.length -1] = new Array("", "软件中心", "离线安装");
+	tabtitle[tabtitle.length -1] = new Array("", dict["Software Center"], dict["Offline installation"]);
 	tablink[tablink.length -1] = new Array("", "Main_Soft_center.asp", "Main_Soft_setting.asp");
 }
 function upload_software() {
@@ -89,7 +91,7 @@ function upload_ok(isok) {
 function start_install() {
 	document.form.action_mode.value = ' Refresh ';
 	document.form.action = "/applydb.cgi?p=soft";
-    document.form.action_script.value = "ks_tar_install.sh";
+	document.form.action_script.value = "ks_tar_install.sh";
 	document.form.enctype = "";
 	document.form.encoding = "";
 	document.form.submit();
@@ -163,37 +165,36 @@ function checkCmdRet(){
 								<tr>
 									<td bgcolor="#4D595D" colspan="3" valign="top">
 										<div>&nbsp;</div>
-										<div style="float:left;" class="formfonttitle">软件中心，离线安装页面</div>
+										<div sclang style="float:left;" class="formfonttitle">Software Center, Offline installation</div>
 										<div style="float:right; width:15px; height:25px;margin-top:10px"><img id="return_btn" onclick="reload_Soft_Center();" align="right" style="cursor:pointer;position:absolute;margin-left:-30px;margin-top:-25px;" title="返回软件中心" src="/images/backprev.png" onMouseOver="this.src='/images/backprevclick.png'" onMouseOut="this.src='/images/backprev.png'"></img></div>
-										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
+										<div style="margin:30px 0 10px 5px;" class="splitLine"></div>
 										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc"></div>
 										<div style="padding-top:5px;margin-top:0px;float: left;" id="NoteBox" >
-											<li>通过本页面，你可以上传插件的离线安装包来安装插件,此功能需要在蓝洞及K3C固件上使用; </li>
-											<li>离线安装会自动解压tar.gz后缀的压缩包，识别压缩包一级目录下的install.sh文件并执行； </li>
-											<li>建议开发者将插件版本号，md5等信息在install.sh文件内进行写入； </li>
-											<li>此页面也能用来安装SS离线安装包，方便用户进行回滚操作，上传前需要将历史文件包改名为shadowsocks.tar.gz，建议安装时关闭SS，安装后需要重新提交才能看到安装的版本号； </li>
+											<li sclang>On this page, you can upload the plugin's offline installation package for manual installation;</li>
+											<li sclang>Offline installation will automatically decompress the tar.gz suffix archived package, then find out the install.sh file in the first level folder of the archived package and execute it;</li>
+											<li sclang>It is recommended to write the plugin version, md5 and other information to the install.sh file;</li>
+											<li sclang>Note : You should choose offline installation package of the supported CPU architectures to install, otherwise it will not run;</li>
 										</div>
 										<div class="formfontdesc" id="cmdDesc"></div>
 										<table style="margin:10px 0px 0px 0px;" width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable" id="routing_table">
 											<thead>
 											<tr>
-												<td colspan="2">软件中心 - 高级设置</td>
+												<td sclang colspan="2">Softcenter - Offline installation</td>
 											</tr>
 											</thead>
 											<tr>
-												<th><a class="hintstyle" href="javascript:void(0);" onclick="openssHint(24)">离线安装插件</a></th>
+												<th><a sclang class="hintstyle" href="javascript:void(0);" onclick="openssHint(24)">Offline installation</a></th>
 												<td>
-													<input type="button" id="upload_btn" class="button_gen" onclick="upload_software();" value="上传并安装"/>
+													<input sclang type="button" id="upload_btn" class="button_gen" onclick="upload_software();" value="Upload"/>
 													<input style="color:#FFCC00;*color:#000;width: 200px;" id="ss_file" type="file" name="file"/>
 													<img id="loadingicon" style="margin-left:5px;margin-right:5px;display:none;" src="/images/InternetScan.gif">
-													<span id="file_info" style="display:none;">完成</span>
+													<span sclang id="file_info" style="display:none;">Done</span>
 												</td>
 											</tr>
                                     	</table>
                                     	<div id="log_content" style="margin-top:10px;display: block;">
-											<textarea cols="63" rows="15" wrap="off" readonly="readonly" id="log_content1" style="width:99%; font-family:'Courier New', Courier, mono; font-size:11px;background:#475A5F;color:#FFFFFF;"></textarea>
+											<textarea cols="63" rows="40" wrap="off" readonly="readonly" id="log_content1"></textarea>
 										</div>
-										<div style="margin-left:5px;margin-top:10px;margin-bottom:10px"><img src="/images/New_ui/export/line_export.png"></div>
 										<div class="KoolshareBottom">
 											<br/>论坛技术支持： <a href="http://www.koolshare.cn" target="_blank"> <i><u>www.koolshare.cn</u></i> </a> <br/>
 											后台技术支持： <i>Xiaobao</i> <br/>
@@ -215,3 +216,4 @@ function checkCmdRet(){
 	<div id="footer"></div>
 </body>
 </html>
+

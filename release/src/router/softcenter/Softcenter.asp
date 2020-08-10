@@ -71,7 +71,7 @@ if(document.getElementById("usb_disk_id").value==0)
 alert(dict['No Disk']);
 return;
 }
-if((sctype == "tfat")||(sctype =="fat"))
+if((sctype == "tfat")||(sctype =="fat")||(sctype =="vfat"))
 {
 alert(dict['Unsupportfat']);
 return;

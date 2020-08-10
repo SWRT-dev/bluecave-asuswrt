@@ -1,9 +1,8 @@
 #!/bin/sh
 
 #From dbus to local variable
-eval `dbus export softcenter_installing_`
+eval $(dbus export softcenter_installing_)
 source /jffs/softcenter/scripts/base.sh
-export PERP_BASE=/jffs/softcenter/perp
 
 #softcenter_installing_module 	#正在安装的模块
 #softcenter_installing_todo 	#希望安装的模块
@@ -32,14 +31,14 @@ export PERP_BASE=/jffs/softcenter/perp
 #softcenter_installing_status=16	#下载错误，代码：！
 #softcenter_installing_status=17	#卸载失败！请关闭插件后重试！
 
-softcenter_home_url=`dbus get softcenter_home_url`
-CURR_TICK=`date +%s`
+softcenter_home_url=$(dbus get softcenter_home_url)
+CURR_TICK=$(date +%s)
 BIN_NAME=$(basename "$0")
 BIN_NAME="${BIN_NAME%.*}"
 if [ "$ACTION" != "" ]; then
 	BIN_NAME=$ACTION
 fi
-ARCH=`uname -m`
+ARCH=$(uname -m)
 if [ "$ARCH" == "armv7l" ]; then
 	ARCH_SUFFIX="arm"
 elif [ "$ARCH" == "aarch64" ]; then
@@ -51,7 +50,7 @@ elif [ "$ARCH" == "mipsle" ]; then
 else
 	ARCH_SUFFIX="arm"
 fi
-KVER=`uname -r`
+KVER=$(uname -r)
 if [ "$KVER" == "4.1.52" -o "$KVER" == "3.14.77" ];then
 	ARCH_SUFFIX="armng"
 fi
@@ -62,9 +61,7 @@ fi
 MODEL=$(nvram get productid)
 if [ "$MODEL" == "GT-AC5300" ] || [ "$MODEL" == "GT-AC2900" ] || [ "$MODEL" == "GT-AX11000" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
 	ROG=1
-fi
-
-if [ "$(nvram get productid)" == "TUF-AX3000" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
+elif [ "$MODEL" == "TUF-AX3000" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
 	TUF=1
 fi
 
@@ -74,39 +71,39 @@ LOGGER() {
 }
 
 install_module() {
-	if [ "$softcenter_home_url" = "" -o "$softcenter_installing_md5" = "" -o "$softcenter_installing_version" = "" ]; then
-		LOGGER "input error, something not found"
+	if [ "${softcenter_home_url}" = "" -o "${softcenter_installing_md5}" = "" -o "${softcenter_installing_version}" = "" ]; then
+		LOGGER "【软件中心】input error, something not found"
 		exit 1
 	fi
 
-	if [ "$softcenter_installing_tick" = "" ]; then
+	if [ "${softcenter_installing_tick}" = "" ]; then
 		export softcenter_installing_tick=0
 	fi
-	LAST_TICK=`expr $softcenter_installing_tick + 20`
-	if [ "$LAST_TICK" -ge "$CURR_TICK" -a "$softcenter_installing_module" != "" ]; then
-		LOGGER "module $softcenter_installing_module is installing"
+	LAST_TICK=$(expr ${softcenter_installing_tick} + 20)
+	if [ "${LAST_TICK}" -ge "${CURR_TICK}" -a "${softcenter_installing_module}" != "" ]; then
+		LOGGER "【软件中心】module ${softcenter_installing_module} is installing"
 		exit 2
 	fi
 
-	if [ "$softcenter_installing_todo" = "" ]; then
+	if [ "${softcenter_installing_todo}" = "" ]; then
 		#curr module name not found
-		LOGGER "module name not found"
+		LOGGER "【软件中心】module name not found"
 		exit 3
 	fi
 
 	# Just ignore the old installing_module
-	export softcenter_installing_module=$softcenter_installing_todo
-	export softcenter_installing_tick=`date +%s`
+	export softcenter_installing_module=${softcenter_installing_todo}
+	export softcenter_installing_tick=$(date +%s)
 	dbus set softcenter_installing_status="2"
 	sleep 1
 	dbus save softcenter_installing_
 
 	URL_SPLIT="/"
-	#OLD_MD5=`dbus get softcenter_module_${softcenter_installing_module}_md5`
-	OLD_VERSION=`dbus get softcenter_module_${softcenter_installing_module}_version`
+	#OLD_MD5=$(dbus get softcenter_module_${softcenter_installing_module_md5})
+	OLD_VERSION=$(dbus get softcenter_module_${softcenter_installing_module}_version)
 	if [ -z "$(dbus get softcenter_server_tcode)" ]; then
-		modelname=`nvram get modelname`
-		if [ "$modelname" == "K3" ] || [ "$modelname" == "GTAC2900" ] || [ "$modelname" == "GTAC5300"  ] || [ "$modelname" == "RTAC86U" ] || [ "$modelname" == "RTAX86U" ] || [ "$modelname" == "RTAX68U" ] || [ "$modelname" == "RTAX82U" ] || [ "$modelname" == "TUFAX3000" ] || [ "$modelname" == "RTACRH17" ] || [ "$modelname" == "XWR3100" ]; then
+		modelname=$(nvram get modelname)
+		if [ "$modelname" == "K3" ] || [ "$modelname" == "XWR3100" ]; then
 			dbus set softcenter_server_tcode=CN
 		elif [ "$modelname" == "SBRAC1900P"  ] || [ "$modelname" == "SBR-AC1900P" ] || [ "$modelname" == "SBRAC3200P" ] || [ "$modelname" == "SBR-AC3200P" ] || [ "$modelname" == "R7900P" ] || [ "$modelname" == "R8000P" ] || [ "$modelname" == "R7000P" ]; then
 			dbus set softcenter_server_tcode=ALI
@@ -115,7 +112,7 @@ install_module() {
 			[ -z "$(dbus get softcenter_server_tcode)" ] && dbus set softcenter_server_tcode=GB
 		fi
 	fi
-	eval `dbus export softcenter_server_tcode`
+	eval $(dbus export softcenter_server_tcode)
 	if [ "$softcenter_server_tcode" == "CN" ] || [ "$softcenter_server_tcode" == "CN1" ]; then
 		HOME_URL="https://sc.softcenter.site/$ARCH_SUFFIX"
 	elif [ "$softcenter_server_tcode" == "ALI" ]; then
@@ -125,20 +122,20 @@ install_module() {
 	fi
 
 	TAR_URL=${HOME_URL}${URL_SPLIT}${softcenter_installing_tar_url}
-	FNAME=`basename $softcenter_installing_tar_url`
+	FNAME=$(basename ${softcenter_installing_tar_url})
 
 	if [ "$OLD_VERSION" = "" ]; then
 		OLD_VERSION=0
 	fi
 
-	CMP=`versioncmp $softcenter_installing_version $OLD_VERSION`
-	if [ -f "/jffs/softcenter/webs/Module_$softcenter_installing_module.sh" -o "$softcenter_installing_todo" = "softcenter" ]; then
+	CMP=$(versioncmp ${softcenter_installing_version} ${OLD_VERSION})
+	if [ -f "/jffs/softcenter/webs/Module_${softcenter_installing_module}.sh" -o "${softcenter_installing_todo}" = "softcenter" ]; then
 		CMP="-1"
 	fi
 	if [ "$CMP" = "-1" ]; then
 
 	cd /tmp
-	rm -f $FNAME
+	rm -f ${FNAME}
 	rm -rf "/tmp/$softcenter_installing_module"
 	dbus set softcenter_installing_status="3"
 	sleep 1
@@ -151,43 +148,43 @@ install_module() {
 		dbus set softcenter_installing_status="0"
 		dbus set softcenter_installing_module=""
 		dbus set softcenter_installing_todo=""
-		LOGGER "wget $TAR_URL error, $RETURN_CODE"
-		exit $RETURN_CODE
+		LOGGER "【软件中心】wget ${TAR_URL} error, ${RETURN_CODE}"
+		exit ${RETURN_CODE}
 	fi
 
-	md5sum_gz=$(md5sum /tmp/$FNAME | sed 's/ /\n/g'| sed -n 1p)
+	md5sum_gz=$(md5sum /tmp/${FNAME} | sed 's/ /\n/g'| sed -n 1p)
 	if [ "$md5sum_gz"x != "$softcenter_installing_md5"x ]; then
-		LOGGER "md5 not equal $md5sum_gz"
+		LOGGER "【软件中心】md5 not equal $md5sum_gz"
 		dbus set softcenter_installing_status="12"
-		rm -f $FNAME
+		rm -f ${FNAME}
 		sleep 3
 
 		dbus set softcenter_installing_status="0"
 		dbus set softcenter_installing_module=""
 		dbus set softcenter_installing_todo=""
 
-		rm -f $FNAME
+		rm -f ${FNAME}
 		rm -rf "/tmp/$softcenter_installing_module"
 		exit
 	else
-		tar -zxf $FNAME
+		tar -zxf ${FNAME}
 		dbus set softcenter_installing_status="4"
 
-		if [ ! -f "/tmp/$softcenter_installing_module/install.sh" ]; then
+		if [ ! -f /tmp/${softcenter_installing_module}/install.sh ]; then
 			dbus set softcenter_installing_status="0"
 			dbus set softcenter_installing_module=""
 			dbus set softcenter_installing_todo=""
 
-			#rm -f $FNAME
-			#rm -rf "/tmp/$softcenter_installing_module"
+			#rm -f ${FNAME}
+			#rm -rf "/tmp/${softcenter_installing_module}"
 
-			LOGGER "package hasn't install.sh"
+			LOGGER "【软件中心】package hasn't install.sh"
 			exit 5
 		fi
 
-		if [ -f "/tmp/$softcenter_installing_module/uninstall.sh" ]; then
-			chmod 755 /tmp/$softcenter_installing_module/uninstall.sh
-			#mv /tmp/$softcenter_installing_module/uninstall.sh /jffs/softcenter/scripts/uninstall_$softcenter_installing_todo.sh
+		if [ -f /tmp/${softcenter_installing_module}/uninstall.sh ]; then
+			chmod 755 /tmp/${softcenter_installing_module}/uninstall.sh
+			mv /tmp/{softcenter_installing_module}/uninstall.sh /jffs/softcenter/scripts/uninstall_${softcenter_installing_todo}.sh
 		fi
 
 		if [ -d /tmp/${softcenter_installing_module}/ROG -a "$ROG" == "1" ]; then
@@ -200,11 +197,12 @@ install_module() {
 			find /tmp/${softcenter_installing_module}/ROG/ -name "*.css" | xargs sed -i 's/3e030d/3e2902/g;s/91071f/92650F/g;s/680516/D0982C/g;s/cf0a2c/c58813/g;s/700618/74500b/g;s/530412/92650F/g'
 			cp -rf /tmp/${softcenter_installing_module}/ROG/* /tmp/${softcenter_installing_module}/
 		fi
-		chmod a+x /tmp/$softcenter_installing_module/install.sh
-		sh /tmp/$softcenter_installing_module/install.sh
+
+		chmod a+x /tmp/${softcenter_installing_module}/install.sh
+		sh /tmp/${softcenter_installing_module}/install.sh
 		sleep 3
 
-		rm -f $FNAME
+		rm -f ${FNAME}
 		rm -rf "/tmp/$softcenter_installing_module"
 
 		if [ "$softcenter_installing_module" != "softcenter" ]; then
@@ -222,7 +220,7 @@ install_module() {
 	fi
 
 	else
-		LOGGER "current version is newest version"
+		LOGGER "【软件中心】current version is newest version"
 		dbus set softcenter_installing_status="13"
 		sleep 3
 
@@ -233,24 +231,24 @@ install_module() {
 }
 
 uninstall_module() {
-	if [ "$softcenter_installing_tick" = "" ]; then
+	if [ "${softcenter_installing_tick}" = "" ]; then
 		export softcenter_installing_tick=0
 	fi
-	LAST_TICK=`expr $softcenter_installing_tick + 20`
-	if [ "$LAST_TICK" -ge "$CURR_TICK" -a "$softcenter_installing_module" != "" ]; then
-		LOGGER "module $softcenter_installing_module is installing"
+	LAST_TICK=$(expr ${softcenter_installing_tick} + 20)
+	if [ "${LAST_TICK}" -ge "${CURR_TICK}" -a "${softcenter_installing_module}" != "" ]; then
+		LOGGER "【软件中心】module ${softcenter_installing_module} is installing"
 		exit 2
 	fi
 
-	if [ "$softcenter_installing_todo" = "" -o "$softcenter_installing_todo" = "softcenter" ]; then
+	if [ "${softcenter_installing_todo}" = "" -o "${softcenter_installing_todo}" = "softcenter" ]; then
 		#curr module name not found
-		LOGGER "module name not found"
+		LOGGER "【软件中心】module name not found"
 		exit 3
 	fi
 
-	local ENABLED=`dbus get ${softcenter_installing_todo}_enable`
-	if [ "$ENABLED" = "1" ]; then
-		LOGGER "please disable ${softcenter_installing_module} then try again"
+	local ENABLED=$(dbus get ${softcenter_installing_todo}_enable)
+	if [ "${ENABLED}" == "1" ]; then
+		LOGGER "【软件中心】please disable ${softcenter_installing_module} then try again"
 		dbus set softcenter_installing_status="17"
 		sleep 3
 		dbus set softcenter_installing_status="0"
@@ -258,8 +256,8 @@ uninstall_module() {
 	fi
 
 	# Just ignore the old installing_module
-	export softcenter_installing_module=$softcenter_installing_todo
-	export softcenter_installing_tick=`date +%s`
+	export softcenter_installing_module=${softcenter_installing_todo}
+	export softcenter_installing_tick=$(date +%s)
 	export softcenter_installing_status="6"
 	dbus save softcenter_installing_
 
@@ -270,12 +268,12 @@ uninstall_module() {
 	dbus remove softcenter_module_${softcenter_installing_module}_name
 	dbus remove softcenter_module_${softcenter_installing_module}_title
 
-	txt=`dbus list ${softcenter_installing_todo}`
+	txt=$(dbus list ${softcenter_installing_todo})
 	printf "%s\n" "$txt" |
 	while IFS= read -r line; do
 		line2="${line%=*}"
-		if [ "$line2" != "" ]; then
-			dbus remove $line2
+		if [ "${line2}" != "" ]; then
+			dbus remove ${line2}
 		fi
 	done
 
@@ -302,23 +300,25 @@ uninstall_module() {
 }
 
 #LOGGER $BIN_NAME
-case $BIN_NAME in
-start)
-	dbus set softcenter_installing_status=1
-	;;
+case $ACTION in
 update)
+	[ -n "$SCAPI" ] && http_response $1
 	install_module
 	;;
 install)
+	[ -n "$SCAPI" ] && http_response $1
 	install_module
 	;;
 ks_app_install)
+	[ -n "$SCAPI" ] && http_response $1
 	install_module
 	;;
 ks_app_remove)
+	[ -n "$SCAPI" ] && http_response $1
 	uninstall_module
 	;;
 *)
+	[ -n "$SCAPI" ] && http_response $1
 	install_module
 	;;
 esac

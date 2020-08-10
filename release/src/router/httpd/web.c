@@ -16151,6 +16151,8 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	char script[99], p[15], db_cmd[128], scPath[256], notify_cmd[128];
 	char *post_db_buf = post_json_buf;
 	char *name = NULL;
+	FILE *fp;
+	char buf[4096];
 	dbclient client;
 	dbclient_start(&client);
 
