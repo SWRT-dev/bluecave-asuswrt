@@ -15,6 +15,7 @@
  * MA 02111-1307 USA
  *
  * Copyright 2019-2020, paldier <paldier@hotmail.com>.
+ * Copyright 2019-2020, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
  * 
  *
@@ -470,46 +471,30 @@ GODONE:
 #if !defined(BLUECAVE) && !defined(GTAC2900)
 void exec_uu_merlinr()
 {
-	FILE *fpmodel, *fpmac, *fpuu, *fpurl, *fpmd5, *fpcfg;
+	FILE *fp;
 	char buf[128];
 	int download,i;
 	char *dup_pattern, *g, *gg;
-	char p[10][100];
+	char p[2][100];
 	if(nvram_get_int("sw_mode") == 1){
 		add_rc_support("uu_accel");
-		if ((fpmodel = fopen("/var/model", "w"))){
-			fprintf(fpmodel, nvram_get("productid"));
-			fclose(fpmodel);
-		}
-		if ((fpmac = fopen("/var/label_macaddr", "w"))){
-			char *etmac=nvram_get("et2macaddr");
-			toUpperCase(etmac);
-			fprintf(fpmac, etmac);
-			fclose(fpmac);
-		}
-		if ((fpuu = fopen("/var/uu_plugin_dir", "w"))){
-			fprintf(fpuu, "/jffs");
-			fclose(fpuu);
-		}
-		system("mkdir -p /tmp/uu");
+		mkdir("/tmp/uu", 0755);
 		download = system("wget -t 2 -T 30 --dns-timeout=120 --header=Accept:text/plain -q --no-check-certificate 'https://router.uu.163.com/api/script/monitor?type=asuswrt-merlin' -O /tmp/uu/script_url");
 		if (!download){
 			_dprintf("download uuplugin script info successfully\n");
-			if ((fpurl = fopen("/tmp/uu/script_url", "r"))!=NULL){
-				fgets(buf, 128, fpurl);
-				fclose(fpurl);
+			if ((fp = fopen("/tmp/uu/script_url", "r"))!=NULL){
+				fgets(buf, 128, fp);
+				fclose(fp);
 				unlink("/tmp/uu/script_url");
 				i=0;
 				g = dup_pattern = strdup(buf);
 				gg = strtok( g, "," );
 				while (gg != NULL)
-				//for(g = strsep(&dup_pattern, ","); g != NULL; g = strsep(&dup_pattern, ","))
 				{
 					if (gg!=NULL){
 						strcpy(p[i], gg);
 						i++;
 						++download;
-						//logmessage("K3", "download: %d",download);
 						gg = strtok( NULL, "," );
 					}
 				}
@@ -518,35 +503,31 @@ void exec_uu_merlinr()
 				{
 					_dprintf("URL: %s\n",p[0]);
 					_dprintf("MD5: %s\n",p[1]);
-					//logmessage("K3", "URL: %s,MD5: %s",p[0],p[1]);
 					if ( !doSystem("wget -t 2 -T 30 --dns-timeout=120 --header=Accept:text/plain -q --no-check-certificate %s -O /tmp/uu/uuplugin_monitor.sh", p[0]))
 					{
 						_dprintf("download uuplugin script successfully\n");
-						if ((fpcfg = fopen("/tmp/uu/uuplugin_monitor.config", "w"))){
-							fprintf(fpcfg, "router=asuswrt-merlin\n");
-							fprintf(fpcfg, "model=\n");
-							fclose(fpcfg);
+						if ((fp = fopen("/tmp/uu/uuplugin_monitor.config", "w"))){
+							fprintf(fp, "router=asuswrt-merlin\n");
+							fprintf(fp, "model=\n");
+							fclose(fp);
 						}
-						if((fpmd5=popen("md5sum /tmp/uu/uuplugin_monitor.sh | sed 's/[ ][ ]*/ /g' | cut -d' ' -f1", "r")))
+						if((fp=popen("md5sum /tmp/uu/uuplugin_monitor.sh | sed 's/[ ][ ]*/ /g' | cut -d' ' -f1", "r")))
 						{
 							memset(buf,'\0',sizeof(buf));
-							if((fread(buf, 1, 128, fpmd5)))
+							if((fread(buf, 1, 128, fp)))
 							{
 								buf[32]='\0';
 								buf[33]='\0';
-								//logmessage("K3", "MD5: %s,MD5: %s",buf,p[1]);
 								if ( !strcasecmp(buf, p[1]))
 								{
 									pid_t pid;
 									char *uu_argv[] = { "/tmp/uu/uuplugin_monitor.sh", NULL };
 									_dprintf("prepare to execute uuplugin stript...\n");
-									//logmessage("K3", "prepare to execute uuplugin stript...");
 									chmod("/tmp/uu/uuplugin_monitor.sh", 0755);
 									_eval(uu_argv, NULL, 0, &pid);
-									//eval("/tmp/uu/uuplugin_monitor.sh");
 								}
 							}
-							pclose(fpmd5);
+							pclose(fp);
 						}
 					}
 				}
