@@ -184,7 +184,7 @@ install_module() {
 
 		if [ -f /tmp/${softcenter_installing_module}/uninstall.sh ]; then
 			chmod 755 /tmp/${softcenter_installing_module}/uninstall.sh
-			mv /tmp/{softcenter_installing_module}/uninstall.sh /jffs/softcenter/scripts/uninstall_${softcenter_installing_todo}.sh
+			mv /tmp/${softcenter_installing_module}/uninstall.sh /jffs/softcenter/scripts/uninstall_${softcenter_installing_todo}.sh
 		fi
 
 		if [ -d /tmp/${softcenter_installing_module}/ROG -a "$ROG" == "1" ]; then

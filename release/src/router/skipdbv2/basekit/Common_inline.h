@@ -57,7 +57,11 @@ Kudos to Daniel A. Koepke
 #else
 	// in .h 
 	#define IO_DECLARE_INLINES
+#ifdef HND_ROUTER
+	#define IOINLINE inline
+#else
 	#define IOINLINE extern inline
+#endif
 #endif 
 
 #endif
