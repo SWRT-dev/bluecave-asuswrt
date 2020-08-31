@@ -82,9 +82,9 @@ DIST_COMMON = $(top_srcdir)/Make_global.am $(srcdir)/Makefile.in \
 	$(srcdir)/Makefile.am $(top_srcdir)/configure \
 	$(am__configure_deps) $(srcdir)/libnfnetlink.pc.in COPYING \
 	README build-aux/compile config.guess build-aux/config.guess \
-	config.sub build-aux/config.sub depcomp install-sh \
-	build-aux/install-sh missing build-aux/missing ltmain.sh \
-	build-aux/ltmain.sh $(top_srcdir)/build-aux/compile \
+	config.sub build-aux/config.sub depcomp build-aux/depcomp \
+	install-sh build-aux/install-sh missing build-aux/missing \
+	ltmain.sh build-aux/ltmain.sh $(top_srcdir)/build-aux/compile \
 	$(top_srcdir)/build-aux/config.guess \
 	$(top_srcdir)/build-aux/config.sub \
 	$(top_srcdir)/build-aux/install-sh \
