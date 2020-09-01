@@ -37,6 +37,7 @@ function show_partition(){
 require(['/require/modules/diskList.js?hash=' + Math.random().toString()], function(diskList){
 var code="";
 var free=dict['Free'];
+var Unsupportfat=dict['Unsupportfat'];
 var mounted_partition = 0;
 partitions_array = [];
 var usbDevicesList = diskList.list();
@@ -48,8 +49,10 @@ var totalSize = simpleNum(usbDevicesList[i].partition[j].size);
 sctype=usbDevicesList[i].partition[j].format || "";
 if(usbDevicesList[i].partition[j].status == "unmounted")
 continue;
-if((usbDevicesList[i].partition[j].partName==sc_disk)&&((usbDevicesList[i].partition[j].format.indexOf("ext") != -1)||(usbDevicesList[i].partition[j].format.indexOf("tntfs") != -1)))
+if((usbDevicesList[i].partition[j].partName==sc_disk)&&((usbDevicesList[i].partition[j].format.indexOf("ext") != -1)||(usbDevicesList[i].partition[j].format.indexOf("ntfs") != -1)))
 code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" selected="selected">'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB ' + sctype + ')</option>';
+else if(usbDevicesList[i].partition[j].format.indexOf("fat") != -1)
+code +='<option value="0">' + Unsupportfat + '</option>';
 else
 code +='<option value="'+ usbDevicesList[i].partition[j].partName+'" >'+ usbDevicesList[i].partition[j].partName+'(' + free +':'+accessableSize+' GB ' + sctype + ')</option>';
 mounted_partition++;
@@ -69,11 +72,6 @@ function applyRule() {
 if(document.getElementById("usb_disk_id").value==0)
 {
 alert(dict['No Disk']);
-return;
-}
-if((sctype == "tfat")||(sctype =="fat")||(sctype =="vfat"))
-{
-alert(dict['Unsupportfat']);
 return;
 }
 document.form.submit();
@@ -183,3 +181,4 @@ document.form.sc_mount.value = "0";
 	<div id="footer"></div>
 </body>
 </html>
+
