@@ -247,9 +247,9 @@ void start_ubifs(void)
 
 	_dprintf("*** ubifs: %s %d, %d, %d\n", UBIFS_VOL_NAME, dev, part, size);
 #ifndef RTCONFIG_NVRAM_FILE
-	if (nvram_match("ubifs_format", "1")) {
+	if (nvram_match("ubifs_format", "1") || nvram_match("jffs2_format", "1")) {
 		nvram_set("ubifs_format", "0");
-
+		nvram_set("jffs2_format", "0");
 		if (ubifs_erase(dev, part)) {
 			error("formatting");
 			return;
