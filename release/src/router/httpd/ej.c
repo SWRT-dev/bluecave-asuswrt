@@ -189,7 +189,7 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 			char GET_PID_STR[32]={0};
 			char *p_PID_STR = NULL;
 			char *PID_STR = nvram_safe_get("productid");
-#if defined(R7900P) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3) || defined(K3C) || defined(R8000P) || defined(RAX20)
+#if defined(R7000P) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3) || defined(K3C) || defined(R8000P) || defined(RAX20)
 			char *modelname = nvram_safe_get("modelname");
 			int merlinr_len;
 #endif
@@ -200,7 +200,7 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 			pid_len = strlen(PID_STR);
 			get_pid_len = strlen(GET_PID_STR);
 
-#if defined(R7900P) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3) || defined(K3C) || defined(R8000P) || defined(RAX20)
+#if defined(R7000P) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3) || defined(K3C) || defined(R8000P) || defined(RAX20)
 			merlinr_len = strlen(modelname);
 			if (merlinr_len && strcmp(RP_PID_STR, modelname) != 0)
 				strlcpy(RP_PID_STR, modelname, merlinr_len+1);
