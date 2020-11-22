@@ -210,7 +210,18 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				sprintf(result, "%d", freq);
 			}
 #if defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710)
-			strcpy(result, "1500");
+			else if (
+#if defined(RTAX55) || defined(RTAX1800)
+					get_model() == MODEL_RTAX55
+#elif defined(RTAX56U)
+					get_model() == MODEL_RTAX56U
+#elif defined(RTAX58U) || defined(TUFAX3000)
+					get_model() == MODEL_RTAX58U
+#elif defined(RTAX82U)
+					get_model() == MODEL_RTAX82U
+#endif
+					)
+				strcpy(result, "1500");
 #endif
 			else
 #endif

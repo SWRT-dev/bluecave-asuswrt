@@ -4294,14 +4294,6 @@ start_smartdns(void)
 		fprintf(fp, "server 114.114.114.114\n");
 		fprintf(fp, "server 119.29.29.29\n");
 		fprintf(fp, "server 223.5.5.5\n");
-		//We can only get apple China's cdn through China's isp dns,the others are apple's global cdn, such as 8.8.8.8, 114.114.114.114
-		fprintf(fp, "server 222.222.222.222 -group applecdn\n");// china telecom
-		fprintf(fp, "server 202.99.160.68 -group applecdn\n");// china unicom
-		fprintf(fp, "server 221.131.143.69 -group applecdn\n");// china mobile
-		fprintf(fp, "nameserver /apple.com/applecdn\n");
-		fprintf(fp, "nameserver /icloud.com/applecdn\n");
-		//fprintf(fp, "address /icloud.com/17.253.144.10\n");
-		//fprintf(fp, "address /apple.com/17.253.144.10\n");
 #if !defined(K3) && !defined(SBRAC1900P) && !defined(SBRAC3200P) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
 	} else {
 		fprintf(fp, "server 8.8.8.8\n");
