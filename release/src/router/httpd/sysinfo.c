@@ -43,12 +43,15 @@
 #include <shared.h>
 #include <rtstate.h>
 
-#ifdef HND_ROUTER
+#if defined(HND_ROUTER)
 #include "bcmwifi_rates.h"
 #include "wlioctl_defs.h"
 #endif
+#if defined(RTCONFIG_RALINK)
+#include <ralink.h>
+#else
 #include <wlioctl.h>
-
+#endif
 #include <wlutils.h>
 #include <sys/sysinfo.h>
 #include <sys/statvfs.h>
@@ -209,7 +212,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				free(buffer);
 				sprintf(result, "%d", freq);
 			}
-#if defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710)
+#if defined(RTCONFIG_HND_ROUTER_AX_675X)
 			else if (
 #if defined(RTAX55) || defined(RTAX1800)
 					get_model() == MODEL_RTAX55
@@ -714,7 +717,29 @@ unsigned int get_phy_temperature(int radio)
 	unlink("/tmp/output.txt");
 	return retval;
 #elif defined(RTCONFIG_RALINK)
-    return 0;
+	struct iwreq wrq;
+	char temp[18];
+	char *interface = NULL;
+
+	if (radio == 2) {
+		interface = nvram_safe_get("wl0_ifname");
+	} else if (radio == 5) {
+		interface = nvram_safe_get("wl1_ifname");
+	} else if (radio == 52) {
+		interface = nvram_safe_get("wl2_ifname");
+	}
+	memset(temp, 0, 18);
+	memset(&wrq, 0, sizeof(wrq));
+	wrq.u.data.pointer = &temp;
+	wrq.u.data.length  = 18;
+	wrq.u.data.flags   = ASUS_SUBCMD_RADIO_TEMPERATURE;
+	if (wl_ioctl(interface, RTPRIV_IOCTL_ASUSCMD, &wrq) < 0)
+		return 0;
+	else {
+		unsigned int *i;
+		i=(unsigned int *)temp;
+		return *i;
+	}
 #endif
 }
 

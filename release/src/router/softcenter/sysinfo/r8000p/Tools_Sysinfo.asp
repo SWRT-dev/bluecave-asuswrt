@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - System Information</title>
+<title>System Information</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="/js/table/table.css">
@@ -90,8 +90,12 @@ function update_temperatures(){
 		},
 		success: function(response){
 			code = "<b>2.4 GHz:</b><span> " + curr_coreTmp_2_raw + "</span>";
-			if (band5g_support)
+			if (wl_info.band5g_2_support) {
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-1:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-2:</b> <span>" + curr_coreTmp_52_raw + "</span>";
+			} else if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+			}
 			if (curr_coreTmp_cpu != "")
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + parseInt(curr_coreTmp_cpu) +"&deg;C</span>";
 			document.getElementById("temp_td").innerHTML = code;
@@ -176,7 +180,7 @@ function show_etherstate(){
 	var line;
 	var wan_array;
 	var port_array= Array();
-	if ((based_modelid == "RT-AC86U") || (based_modelid == "GT-AC5300") || (based_modelid == "GT-AC2900")) {
+	if (hnd_support) {
 		show_etherstate_hnd();
 		return;
 	} else if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U")
@@ -286,6 +290,9 @@ function show_etherstate_hnd(){
 		var speedMapping = new Array();
 		speedMapping["M"] = "100 Mbps";
 		speedMapping["G"] = "1 Gbps";
+		speedMapping["Q"] = "2.5 Gbps";
+		speedMapping["F"] = "5 Gbps";
+		speedMapping["T"] = "10 Gbps";
 		speedMapping["X"] = "Unplugged";
 		var parseArray = [];
 		for (var prop in _array) {
@@ -379,7 +386,7 @@ function update_sysinfo(e){
 </script>
 </head>
 
-<body onload="initial();" onunLoad="return unload_body();">
+<body onload="initial();" onunLoad="return unload_body();" class="bg">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -595,3 +602,4 @@ function update_sysinfo(e){
 <div id="footer"></div>
 </body>
 </html>
+
