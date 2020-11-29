@@ -4229,7 +4229,7 @@ endif
 	$(call save_src_config, $@)
 	$(MAKE) bin
 
-BLUE-% blue-%:
+BLUE% blue%:
 	$(call save_src_config, $@)
 	$(MAKE) bin
 
