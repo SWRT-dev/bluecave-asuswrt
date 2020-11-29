@@ -26104,6 +26104,11 @@ struct AiMesh_whitelist AiMesh_whitelists[] = {
 	{"message.htm", NULL},
 	{"error_page.htm", NULL},
 	{"Main_Login.asp", NULL},
+#if defined(K3) || defined(R8500) || defined(XWR3100) || defined(TY6201_RTK) || defined(TY6201_BCM)
+#if defined(MERLINR_VER_MAJOR_R) || defined(MERLINR_VER_MAJOR_X)
+	{"key.asp", NULL},
+#endif
+#endif
 	{ NULL, NULL }
 };
 #endif

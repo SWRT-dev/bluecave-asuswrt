@@ -20,11 +20,8 @@ install:
 	install -d $(INSTALLDIR)/usr/bin
 	install -d $(INSTALLDIR)/usr/share
 	install -d $(INSTALLDIR)/usr/lib
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3 XWR3100))
 ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3))
 	install -d $(INSTALLDIR)/mcu
-endif
-	install -d $(INSTALLDIR)/rom/cfe/
 endif
 	install -d $(INSTALLDIR)/rom/etc
 ifeq ($(HND_ROUTER), y)
@@ -119,10 +116,6 @@ ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3))
 	install -m 0755 uhmi $(INSTALLDIR)/usr/sbin
 	install -m 0755 weather $(INSTALLDIR)/usr/sbin
 	install -m 0755 wl_cr $(INSTALLDIR)/usr/sbin
-	install -m 0644 cfe.bin $(INSTALLDIR)/rom/cfe/
-endif
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), XWR3100))
-	install -m 0644 xwr.bin $(INSTALLDIR)/rom/cfe/
 endif
 	install -m 0755 plugin.sh $(INSTALLDIR)/usr/sbin
 	install -m 0755 helper.sh $(INSTALLDIR)/usr/sbin
@@ -157,6 +150,14 @@ else ifeq ($(EA6700),y)
 else
 	install -m 0755 sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www
 endif
-
+ifeq ($(or $(MERLINR_VER_MAJOR_R),$(MERLINR_VER_MAJOR_X)),y)
+ifeq ($(or $(K3),$(R8500),$(XWR3100),$(TY6201_RTK),$(TY6201_BCM)),y)
+ifeq ($(HND_ROUTER), y)
+	install -m 0755 key.asp $(INSTALLDIR)/www/www
+else
+	install -m 0755 key.asp $(INSTALLDIR)/www
+endif
+endif
+endif
 clean:
 
