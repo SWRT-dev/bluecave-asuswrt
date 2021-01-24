@@ -539,277 +539,154 @@ void exec_uu_merlinr()
 #endif
 
 #ifdef RTCONFIG_DUALWAN
+#define IPTABLES_MARK_LB_SET(x)	((((x)&0xf)|0x8)<<28)			//mark for load-balance
+#define IPTABLES_MARK_LB_MASK	IPTABLES_MARK_LB_SET(0xf)
 void set_load_balance(void)
 {
-	int unit=0,gate_num,which_if,count=0,count2=0;
+	int unit=0,count=0, i;
 	char *lan_ifname = nvram_safe_get("lan_ifname");
 	char buffer[32],buffer2[32],buffer3[32];
 	char mask[16];
 	char prefix[9];
 	char tmp[100];
-	int dualwan,dualwan1;
-	char *if_array[3];
-	//char *argv[6];
-	char *wans_lb_ratio,*nvp,*buff,*portbuf,*portp,*proto="";
-	char *ratio;
-	int ratio1,ratio2,ratio2_1,ratio2_2,ratio_total;
+	int dualwan;
+	char *if_array[] = { "lan", "wan0", "wan1" };
+	char *ratio,*nvp,*buff,*portbuf,*portp,*proto="";
+	char *r2;
+	int wan_weight[2],ratio2_1,ratio2_2,weight_total;
 	char *wan_iface[2];
-	if_array[0] = "lan";
-	if_array[1] = "wan0";
-	if_array[2] = "wan1";
+
 	eval("iptables", "-t", "mangle", "-N", "balance");
 	eval("iptables", "-t", "mangle", "-F", "balance");
 	eval("iptables", "-t", "mangle", "-D", "PREROUTING", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "balance");
-	sprintf(buffer, "0x%x/0x%x", 0x80000000, 0x80000000);
+	sprintf(buffer, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
 	snprintf(mask, 16, "0x%x", 0xF0000000);
 	eval("iptables", "-t", "mangle", "-D", "PREROUTING", "-i", lan_ifname, "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
-	do
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
 	{
-		if ( is_wan_connect(unit) )
+		// when wan_down().
+		if(!is_wan_connect(unit))
+			continue;
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		wan_iface[0] = get_wan_ifname(unit);
+		wan_iface[1] = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+		if ( !strcmp(wan_iface[0], wan_iface[1]) )
+			dualwan = 0;
+		else
+			dualwan = (inet_addr(nvram_safe_get(strcat_r(prefix, "xipaddr", tmp))) != 0)? 1 : 0;
+		for(i = 0; i < dualwan; i++)
 		{
-			snprintf(prefix, 9, "wan%d_", unit);
-			wan_iface[0] = get_wan_ifname(unit);
-			wan_iface[1] = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-			if ( !strcmp(wan_iface[0], wan_iface[1]) )
-				dualwan = 0;
-			else
-				dualwan = inet_addr_(nvram_safe_get(strcat_r(prefix, "xipaddr", tmp))) != 0;
-			dualwan1 = 0;
-			do
-			{
-				eval("iptables", "-t", "mangle", "-D", "OUTPUT", "-o", wan_iface[dualwan1++], "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
-			}
-			while ( dualwan >= dualwan1 );
+			eval("iptables", "-t", "mangle", "-D", "OUTPUT", "-o", wan_iface[i], "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
 		}
-		++unit;
 	}
-	while ( unit != 2 );
-	if ( (!nvram_match("vpnc_auto_conn", "1") || strcmp(nvram_safe_get("vpnc_proto"), "pptp") && strcmp(nvram_safe_get("vpnc_proto"), "l2tp") && strcmp(nvram_safe_get("vpnc_proto"), "openvpn")) && get_nr_wan_unit() > 1 )
-	{
-		if ( nvram_match("wans_mode", "lb") )
+#if defined(RTCONFIG_VPNC)
+	/* Not to set load balance rule when vpnc is activated */
+	vpnc_proto = nvram_safe_get("vpnc_proto");
+	if ((nvram_match("vpnc_auto_conn", "1") || !strcmp(vpnc_proto, "pptp") || !strcmp(vpnc_proto, "l2tp") || !strcmp(vpnc_proto, "openvpn")))
+		return;
+#endif
+	if (get_nr_wan_unit() <= 1 || !nvram_match("wans_mode", "lb"))
+		return;
+	if ( get_gate_num() <= 1 )
+		return;
+	ratio =nvram_safe_get("wans_lb_ratio");
+	r2=strchr(ratio, ':');
+	if (r2 == NULL)
+		return;
+	wan_weight[0] = atoi(ratio);
+	wan_weight[1] = atoi(r2 + 1);
+	if(wan_weight[0] <= 0 || wan_weight[1] <= 0)
+		return;
+	weight_total = wan_weight[0] + wan_weight[1];
+	// skip packets to LAN and specific WAN
+	for(i = 0; i < ARRAY_SIZE(if_array); i++) {
+		snprintf(buffer, sizeof(buffer), "%s_gateway", if_array[[i]);
+		if ( !strcmp(if_array[i], "lan") || (strlen(nvram_safe_get(buffer)) <= 6) )
+			snprintf(buffer, sizeof(buffer), "%s_ipaddr", if_array[i]);
+		snprintf(buffer, sizeof(buffer), "%s_ipaddr", if_array[i]);
+		snprintf(buffer2, sizeof(buffer2), "%s_netmask", if_array[i]);
+		snprintf(tmp, sizeof(tmp), "%s/%s", nvram_safe_get(buffer), nvram_safe_get(buffer2));
+		if(strlen(tmp) > 14)
 		{
-			if ( get_gate_num() > 1 )
+			eval("iptables", "-t", "mangle", "-A", "balance", "-d", tmp, "-j", "RETURN");
+		}
+	}
+	nvp = strdup(nvram_safe_get("lb_skip_port"));
+	while ( nvp )
+	{
+		buff = strsep(&nvp, "<");
+		if ( !buff )
+			break;
+		if ( vstrsep(buff, ">") == 3 )
+		{
+			portp = strdup(port);
+			while ( portp )
 			{
-				wans_lb_ratio =nvram_safe_get("wans_lb_ratio");
-				ratio=strchr(wans_lb_ratio, ':');
-				if ( ratio )
+				portbuf = strsep(&portp, ",");
+				if ( !portbuf )
+					break;
+				if ( !strcmp(proto, "TCP") || !strcmp(proto, "BOTH") )
 				{
-					ratio1 = atoi(wans_lb_ratio);
-					ratio2 = atoi(ratio + 1);
-					ratio2_1 = (ratio2 == 0 ? 1 : 0);
-					ratio2_2 = (ratio2 < 0 ? 1 : 0);
-					if ( ratio2 > 0 )
-					{
-						ratio2_1 = (ratio1 == 0? 1 : 0);
-						ratio2_2 = (ratio1 < 0 ? 1 : 0);
-					}
-					gate_num = ratio2;
-					if ( ratio2_2 || ratio2_1 )
-						which_if = 1;
-					else
-						which_if = 0;
-					if ( !ratio2_2 && !ratio2_1 )
-					{
-						ratio_total = ratio1 + ratio2;
-						do
-						{
-							snprintf(buffer, 32, "%s_gateway", if_array[which_if]);
-							if ( !strcmp(if_array[which_if], "lan") || (strlen(nvram_safe_get(buffer)) <= 6) )
-								snprintf(buffer, 32, "%s_ipaddr", if_array[which_if]);
-							snprintf(buffer2, 32, "%s_netmask", if_array[which_if]);
-							snprintf(tmp, 100, "%s/%s", nvram_safe_get(buffer), nvram_safe_get(buffer2));
-							if ( strlen(tmp) > 14 )
-							{
-								eval("iptables","-t","mangle","-A","balance","-d",tmp,"-j","RETURN");
-							}
-							++which_if;
-						}
-						while ( which_if != 3 );
-						nvp = strdup(nvram_safe_get("lb_skip_port"));
-						while ( nvp )
-						{
-							buff = strsep(&nvp, "<");
-							if ( !buff )
-								break;
-							if ( vstrsep(buff, ">") == 3 )
-							{
-								portp = strdup(port);
-								while ( portp )
-								{
-									portbuf = strsep(&portp, ",");
-									if ( !portbuf )
-										break;
-									if ( !strcmp(proto, "TCP") || !strcmp(proto, "BOTH") )
-									{
-										eval("iptables","-t","mangle","-A","balance","-p","tcp","-m","tcp","--dport",portbuf,"-j","RETURN");
-									}
-									if ( !strcmp(proto, "UDP") || !strcmp(proto, "BOTH") )
-									{
-										eval("iptables","-t","mangle","-A","balance","-p","udp","-m","udp","--dport",portbuf,"-j","RETURN");
-									}
-								}
-								free(portp);
-							}
-						}
-						free(nvp);
-						sprintf(buffer, "0x%x/0x%x", 0x80000000, 0x80000000);
-						eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark",buffer,"-j","RETURN");
-						eval("iptables","-t","mangle","-A","balance","-m","state","--state","ESTABLISHED,RELATED","-j","RETURN");
-						sprintf(buffer, "%d", get_gate_num());
-						sprintf(buffer3, "0x%x/0x%x", 0x80000000, 0xF0000000);
+					eval("iptables","-t","mangle","-A","balance","-p","tcp","-m","tcp","--dport",portbuf,"-j","RETURN");
+				}
+				if ( !strcmp(proto, "UDP") || !strcmp(proto, "BOTH") )
+				{
+					eval("iptables","-t","mangle","-A","balance","-p","udp","-m","udp","--dport",portbuf,"-j","RETURN");
+				}
+			}
+			free(portp);
+		}
+	}
+	free(nvp);
+	sprintf(buffer, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
+	eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark",buffer,"-j","RETURN");
+	eval("iptables","-t","mangle","-A","balance","-m","state","--state","ESTABLISHED,RELATED","-j","RETURN");
+	sprintf(buffer, "%d", get_gate_num());
+	sprintf(buffer3, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
 						while ( 1 )
 						{
-							if ( ratio1 == gate_num )
+							if ( wan_weight[0] == wan_weight[1] )
 							{
-								sprintf(buffer2, "%d", count);
-								++count;
+								sprintf(buffer2, "%d", count++);
 								eval("iptables","-t","mangle","-A","balance","-m","statistic","--mode","nth","--every",buffer,"--packet",buffer2,"-j","CONNMARK","--set-mark",buffer3);
 							}
 							else
 							{
-								if ( count2 == 1 )
+								if (unit == WAN_UNIT_MAX -1)
 									eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark","0","-j","CONNMARK","--set-mark",buffer3);
 								else
 								{
-                  v29 = _aeabi_i2f(v45);//bcm only?floatsisf(v45)
-                  v30 = _aeabi_i2f(v50);//floatsisf(v50)
-                  v31 = _aeabi_fdiv(v29, v30);//_divsf3(v29, v30)
-                  _aeabi_f2d(v31);//__extendsfdf2(v31)
-                  snprintf((char *)bl_buf2, 0x20u, "%.2f");//v31?
-                  argv[0] = "iptables";
-                  argv[2] = "mangle";
-                  argv[1] = "-t";
-                  v62 = (const char *)bl_buf2;
-                  argv[3] = "-A";
-                  v66 = (const char *)bl_buf3;
-                  argv[4] = "balance";
-                  argv[5] = "-m";
-                  v58 = "statistic";
-                  v59 = "--mode";
-                  v60 = "random";
-                  v61 = "--probability";
-                  v63 = "-j";
-                  v64 = "CONNMARK";
-                  v65 = "--set-mark";
-                  v67 = 0;
-                }
-                eval(argv, 0, 0, 0);
-              }
-              v32 = v25;
-              v33 = 0;
-              argv[0] = "iptables";
-              ++v25;
-              argv[1] = "-t";
-              argv[2] = "mangle";
-              argv[3] = "-A";
-              argv[4] = "PREROUTING";
-              argv[5] = "-i";
-              v34 = (const char *)get_wan_ifname(v32);
-              v61 = "--state";
-              v59 = "-m";
-              v62 = "NEW";
-              v60 = "state";
-              v67 = 0;
-              v63 = "-j";
-              v64 = "CONNMARK";
-              v65 = "--set-mark";
-              v66 = (const char *)bl_buf3;
-              v58 = v34;
-              eval(argv, 0, 0, 0);
-              if ( v25 == 2 )
-                break;
-              sprintf((char *)bl_buf3, "0x%x/0x%x", (v25 | 8) << 28, -268435456);
-            }
-            snprintf((char *)pos_str, 8u, "%d", 1);
-            v35 = nvram_safe_get("lan_ifname");
-            v62 = "--state";
-            argv[0] = "iptables";
-            v63 = "NEW";
-            argv[3] = "-I";
-            argv[1] = "-t";
-            argv[5] = pos_str;
-            v66 = 0;
-            argv[2] = "mangle";
-            argv[4] = "PREROUTING";
-            v58 = "-i";
-            v60 = "-m";
-            v61 = "state";
-            v64 = "-j";
-            v36 = (const char *)v35;
-            v59 = (const char *)v35;
-            v65 = "balance";
-            eval(argv, 0, 0, 0);
-            sprintf((char *)bl_buf1, "0x%x/0x%x", 2147483648);
-            snprintf((char *)pos_str, 8u, "%d", 2);
-            argv[0] = "iptables";
-            argv[3] = "-I";
-            argv[5] = pos_str;
-            argv[1] = "-t";
-            v63 = (const char *)bl_buf1;
-            v68 = mask;
-            argv[2] = "mangle";
-            v69 = 0;
-            argv[4] = "PREROUTING";
-            v58 = "-i";
-            v59 = v36;
-            v60 = "-m";
-            v61 = "connmark";
-            v62 = "--mark";
-            v64 = "-j";
-            v65 = "CONNMARK";
-            v66 = "--restore-mark";
-            v67 = "--mask";
-            eval(argv, 0, 0, 0);
-            sprintf((char *)bl_buf1, "0x%x/0x%x", 2147483648);
-            do
-            {
-              if ( is_wan_connect(v33) )
-              {
-                snprintf((char *)prefix, 9u, "wan%d_", v33);
-                v37 = (unsigned __int8 *)get_wan_ifname(v33);
-                wan_iface[0] = v37;
-                v38 = strcat_r(prefix, "ifname", tmp);
-                v39 = nvram_safe_get(v38);
-                wan_iface[1] = v39;
-                v40 = strcat_r(prefix, "xipaddr", tmp);
-                v41 = nvram_safe_get(v40);
-                if ( !strcmp((const char *)v37, (const char *)v39) )
-                  v42 = 0;
-                else
-                  v42 = inet_addr_((const char *)v41) != 0;
-                v43 = 0;
-                do
-                {
-                  argv[1] = "-t";
-                  argv[2] = "mangle";
-                  argv[0] = "iptables";
-                  v62 = (const char *)bl_buf1;
-                  v67 = (const char *)mask;
-                  argv[3] = "-A";
-                  argv[4] = "OUTPUT";
-                  argv[5] = "-o";
-                  v44 = wan_iface[v43++];
-                  v58 = (const char *)v44;
-                  v59 = "-m";
-                  v60 = "connmark";
-                  v61 = "--mark";
-                  v63 = "-j";
-                  v64 = "CONNMARK";
-                  v65 = "--restore-mark";
-                  v66 = "--mask";
-                  v68 = 0;
-                  eval(argv, 0, 0, 0);
-                }
-                while ( v42 >= v43 );
-              }
-              ++v33;
-            }
-            while ( v33 != 2 );
-          }
-        }
-      }
-    }
-  }
+									snprintf(buffer2, sizeof(buffer2), "%.2f", (float)wan_weight[unit]/weight_total);
+									eval("iptables", "-t", "mangle", "-A", "balance", "-m", "statistic", "--mode", "random", "--probability", buffer2, "-j", "CONNMARK", "--set-mark", buffer3);
+								}
+							}
+              				++unit;
+							eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "CONNMARK", "--set-mark", buffer3);
+              				if ( unit == 2 )
+                				break;
+              				sprintf(buffer3, "0x%x/0x%x",  IPTABLES_MARK_LB_SET(unit), IPTABLES_MARK_LB_MASK);
+            			}
+	// handle forwarding and outgoing connections
+	eval("iptables", "-t", "mangle", "-I", "PREROUTING", "1", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "balance");
+	sprintf(buffer, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
+	eval("iptables", "-t", "mangle", "-I", "PREROUTING", "2", "-i", lan_ifname, "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mask" mask);
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+	{
+		// when wan_down().
+		if(!is_wan_connect(unit))
+			continue;
+		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
+		wan_iface[0] = get_wan_ifname(unit);
+		wan_iface[1] = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+		if ( !strcmp(wan_iface[0], wan_iface[1]) )
+			dualwan = 0;
+		else
+			dualwan = (inet_addr(nvram_safe_get(strcat_r(prefix, "xipaddr", tmp))) != 0)? 1 : 0;
+		for(i = 0; i < dualwan; i++)
+		{
+			eval("iptables", "-t", "mangle", "-D", "OUTPUT", "-o", wan_iface[i], "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
+		}
+	}
 }
 #endif
 #if defined(RTCONFIG_SOFTCENTER)
