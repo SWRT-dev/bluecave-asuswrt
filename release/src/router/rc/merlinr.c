@@ -14,8 +14,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2019-2020, paldier <paldier@hotmail.com>.
- * Copyright 2019-2020, lostlonger<lostlonger.g@gmail.com>.
+ * Copyright 2019-2021, paldier <paldier@hotmail.com>.
+ * Copyright 2019-2021, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
  * 
  *
@@ -37,7 +37,6 @@
 #include <curl/curl.h>
 
 
-//bluecave has a bug in fat driver,all ln command have got an error
 void merlinr_insmod()
 {
 	eval("insmod", "nfnetlink");
@@ -140,7 +139,9 @@ void merlinr_init_done()
 		nvram_set("modelname", "RTAC86U");
 #elif defined(RTACRH17)
 		nvram_set("modelname", "RTACRH17");
-#elif defined(TUFAX3000) || defined(RTAX58U)
+#elif  defined(RTAX58U)
+		nvram_set("modelname", "RTAX58U");
+#elif defined(TUFAX3000)
 		nvram_set("modelname", "TUFAX3000");
 #elif defined(RTAX56U)
 		nvram_set("modelname", "RTAX56U");
@@ -163,7 +164,7 @@ void merlinr_init_done()
 #elif defined(RMAC2100)
 		nvram_set("modelname", "RMAC2100");
 #endif
-#if defined(R8000P) || defined(R7900P)
+#if defined(R8000P)
 	nvram_set("ping_target","www.taobao.com");
 #endif
 	nvram_commit();
@@ -389,10 +390,8 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 						nvram_set("webs_state_url", "");
 #if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100)
 						snprintf(info,sizeof(info),"3004_382_%s_%s-%s",modelname,fwver,tag);
-#elif (defined(RTAC82U) && defined(RTCONFIG_AMAS)) || defined(RTAC95U) || defined(RTAX56_XD4) || defined(RTAX95Q)
+#elif (defined(RTAC82U) && defined(RTCONFIG_AMAS)) || defined(RTAC95U) || defined(RTAX56_XD4) || defined(RTAX95Q) || defined(RTAC68U) || defined(RTAC3100) || defined(RTAC88U) || defined(RTAC5300)
 						snprintf(info,sizeof(info),"3004_386_%s_%s-%s",modelname,fwver,tag);
-#elif defined(RTAC68U) || defined(RTAC3100) || defined(RTAC88U)
-						snprintf(info,sizeof(info),"3004_385_%s_%s-%s",modelname,fwver,tag);
 #else
 						snprintf(info,sizeof(info),"3004_384_%s_%s-%s",modelname,fwver,tag);
 #endif
@@ -446,10 +445,8 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 GODONE:
 #if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100)
 	snprintf(info,sizeof(info),"3004_382_%s",nvram_get("extendno"));
-#elif (defined(RTAC82U) && defined(RTCONFIG_AMAS)) || defined(RTAC95U) || defined(RTAX56_XD4) || defined(RTAX95Q)
+#elif (defined(RTAC82U) && defined(RTCONFIG_AMAS)) || defined(RTAC95U) || defined(RTAX56_XD4) || defined(RTAX95Q) || defined(RTAC68U) || defined(RTAC3100) || defined(RTAC88U) || defined(RTAC5300)
 	snprintf(info,sizeof(info),"3004_386_%s",nvram_get("extendno"));
-#elif defined(RTAC68U) || defined(RTAC3100) || defined(RTAC88U)
-	snprintf(info,sizeof(info),"3004_385_%s",nvram_get("extendno"));
 #else
 	snprintf(info,sizeof(info),"3004_384_%s",nvram_get("extendno"));
 #endif
@@ -468,7 +465,7 @@ GODONE:
 	FWUPDATE_DBG("---- firmware check update finish ----");
 	return 0;
 }
-#if !defined(BLUECAVE) && !defined(GTAC2900)
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_RALINK)
 void exec_uu_merlinr()
 {
 	FILE *fp;
@@ -538,8 +535,40 @@ void exec_uu_merlinr()
 }
 #endif
 
+#if defined(RTCONFIG_SOFTCENTER)
+void softcenter_eval(int sig)
+{
+	//1=wan,2=nat,3=mount
+	pid_t pid;
+	char path[100], action[10], sc[]="/jffs/softcenter/bin";
+	if(SOFTCENTER_WAN == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-wan.sh", sc);
+		snprintf(action, sizeof(action), "start");
+	} else if (SOFTCENTER_NAT == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-net.sh", sc);
+		snprintf(action, sizeof(action), "start_nat");
+	} else if (SOFTCENTER_MOUNT == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-mount.sh", sc);
+		snprintf(action, sizeof(action), "start");
+	} else if (SOFTCENTER_SERVICES == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-services.sh", sc);
+		snprintf(action, sizeof(action), "start");
+	//enable it after 1.3.0
+	//} else if (SOFTCENTER_UNMOUNT == sig){
+	//	snprintf(path, sizeof(path), "%s/softcenter-unmount.sh", sc);
+	//	snprintf(action, sizeof(action), "unmount");
+	} else {
+		logmessage("Softcenter", "sig=%d, bug?",sig);
+		return;
+	}
+	char *eval_argv[] = { path, action, NULL };
+	_eval(eval_argv, NULL, 0, &pid);
+}
+#endif
+
+
 #ifdef RTCONFIG_DUALWAN
-#define IPTABLES_MARK_LB_SET(x)	((((x)&0xf)|0x8)<<28)			//mark for load-balance
+#define IPTABLES_MARK_LB_SET(x)	((((x)&0xf)|0x8)<<8)			//mark for load-balance
 #define IPTABLES_MARK_LB_MASK	IPTABLES_MARK_LB_SET(0xf)
 void set_load_balance(void)
 {
@@ -642,30 +671,28 @@ void set_load_balance(void)
 	eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark",buffer,"-j","RETURN");
 	eval("iptables","-t","mangle","-A","balance","-m","state","--state","ESTABLISHED,RELATED","-j","RETURN");
 	sprintf(buffer, "%d", get_gate_num());
-	sprintf(buffer3, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
-						while ( 1 )
-						{
-							if ( wan_weight[0] == wan_weight[1] )
-							{
-								sprintf(buffer2, "%d", count++);
-								eval("iptables","-t","mangle","-A","balance","-m","statistic","--mode","nth","--every",buffer,"--packet",buffer2,"-j","CONNMARK","--set-mark",buffer3);
-							}
-							else
-							{
-								if (unit == WAN_UNIT_MAX -1)
-									eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark","0","-j","CONNMARK","--set-mark",buffer3);
-								else
-								{
-									snprintf(buffer2, sizeof(buffer2), "%.2f", (float)wan_weight[unit]/weight_total);
-									eval("iptables", "-t", "mangle", "-A", "balance", "-m", "statistic", "--mode", "random", "--probability", buffer2, "-j", "CONNMARK", "--set-mark", buffer3);
-								}
-							}
-              				++unit;
-							eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "CONNMARK", "--set-mark", buffer3);
-              				if ( unit == 2 )
-                				break;
-              				sprintf(buffer3, "0x%x/0x%x",  IPTABLES_MARK_LB_SET(unit), IPTABLES_MARK_LB_MASK);
-            			}
+	//sprintf(buffer3, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
+	i = 0;
+	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
+	{
+        //if ( unit == 2 )
+			//break;
+		sprintf(buffer3, "0x%x/0x%x",  IPTABLES_MARK_LB_SET(unit), IPTABLES_MARK_LB_MASK);
+		if ( wan_weight[0] == wan_weight[1] )
+		{//1:1
+			sprintf(buffer2, "%d", i++);
+			eval("iptables","-t","mangle","-A","balance","-m","statistic","--mode","nth","--every",buffer,"--packet",buffer2,"-j","CONNMARK","--set-mark",buffer3);
+			/* NEED to set same mark in "ip rule fwmark" command */
+		} else {
+			if (unit == WAN_UNIT_MAX -1)//the last one NEED not the probability
+				eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark","0","-j","CONNMARK","--set-mark",buffer3);
+			else {
+				snprintf(buffer2, sizeof(buffer2), "%.2f", (float)wan_weight[unit]/weight_total);
+				eval("iptables", "-t", "mangle", "-A", "balance", "-m", "statistic", "--mode", "random", "--probability", buffer2, "-j", "CONNMARK", "--set-mark", buffer3);
+			}
+		}
+		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "CONNMARK", "--set-mark", buffer3);
+	}
 	// handle forwarding and outgoing connections
 	eval("iptables", "-t", "mangle", "-I", "PREROUTING", "1", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "balance");
 	sprintf(buffer, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
@@ -689,34 +716,331 @@ void set_load_balance(void)
 	}
 }
 #endif
-#if defined(RTCONFIG_SOFTCENTER)
-void softcenter_eval(int sig)
+
+#if defined(RTCONFIG_BWDPI) && !defined(BLUECAVE)
+/*
+	bwdpi.c for TrendMicro DPI engine / iQoS / WRS / APP partol
+
+	DPI engine 	: applications and devices identify engine
+	iQoS 		: tc control rule and qosd.conf
+	WRS 		: web protector or web content filter
+	APP partol	: apps filter
+	C&C		: C&C
+	VP		: virtual patch
+	DC		: data collection
+*/
+
+#include <bwdpi.h>
+
+static void show_help(char *base)
 {
-	//1=wan,2=nat,3=mount
-	pid_t pid;
-	char path[100], action[10], sc[]="/jffs/softcenter/bin";
-	if(SOFTCENTER_WAN == sig){
-		snprintf(path, sizeof(path), "%s/softcenter-wan.sh", sc);
-		snprintf(action, sizeof(action), "start");
-	} else if (SOFTCENTER_NAT == sig){
-		snprintf(path, sizeof(path), "%s/softcenter-net.sh", sc);
-		snprintf(action, sizeof(action), "start_nat");
-	} else if (SOFTCENTER_MOUNT == sig){
-		snprintf(path, sizeof(path), "%s/softcenter-mount.sh", sc);
-		snprintf(action, sizeof(action), "start");
-	} else if (SOFTCENTER_SERVICES == sig){
-		snprintf(path, sizeof(path), "%s/softcenter-services.sh", sc);
-		snprintf(action, sizeof(action), "start");
-	//enable it after 1.3.0
-	//} else if (SOFTCENTER_UNMOUNT == sig){
-	//	snprintf(path, sizeof(path), "%s/softcenter-unmount.sh", sc);
-	//	snprintf(action, sizeof(action), "unmount");
-	} else {
-		logmessage("Softcenter", "sig=%d, bug?",sig);
-		return;
+	printf("%s Usage :\n", base);
+	printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
+	printf("  mode: traffic / traffic_wan / app / client_apps / client_web\n");
+	printf("  name: NULL / MAC / APP_NAME\n");
+	printf("  dura: realtime / month / week / day\n");
+	printf("  date: NULL / date\n");
+}
+
+int bwdpi_main(int argc, char **argv)
+{
+	//dbg("[bwdpi] argc=%d, argv[0]=%s, argv[1]=%s, argv[2]=%s\n", argc, argv[0], argv[1], argv[2]);
+	int c;
+	char *mode = NULL, *name = NULL, *dura = NULL, *date = NULL;
+	char *MAC = NULL;
+	char *page = NULL;
+	int clean_flag = 0;
+
+	if (argc == 1){
+		printf("Usage :\n");
+		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
+		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
+		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
+		printf("  bwpdi history -m [MAC] -z -p [page]\n");
+		printf("  bwpdi app [0/1]\n");
+		printf("  bwpdi cc [0/1]\n");
+		printf("  bwpdi vp [0/1]\n");
+		printf("  bwpdi device -m [MAC]\n");
+		printf("  bwpdi device_info -m [MAC]\n");
+		printf("  bwpdi get_vp [0/2]\n");
+		printf("  bwpdi wrs_url\n");
+		printf("  bwpdi rewrite path1 path2 path3\n");
+		printf("  bwpdi checksize path size\n");
+		printf("  bwpdi extract path\n");
+		printf("  bwpdi get_app_patrol\n");
+		printf("  bwpdi get_anomaly [0/2]\n");
+		return 0;
 	}
-	char *eval_argv[] = { path, action, NULL };
-	_eval(eval_argv, NULL, 0, &pid);
+
+	if (!strcmp(argv[1], "iqos")){
+		if(argc != 3)
+		{
+			printf("  bwdpi iqos [start/stop/restart]\n");
+			return 0;
+		}
+		else
+		{
+			return tm_qos_main(argv[2]);
+		}
+	}
+	else if (!strcmp(argv[1], "qosd")){
+		if(argc != 3)
+		{
+			printf("  bwdpi qosd [start/stop/restart]\n");
+			return 0;
+		}
+		else
+		{
+			return qosd_main(argv[2]);
+		}
+	}
+	else if (!strcmp(argv[1], "wrs")){
+		if(argc != 3)
+		{
+			printf("  bwdpi wrs [start/stop/restart]\n");
+			return 0;
+		}
+		else
+		{
+			return wrs_main(argv[2]);
+		}
+
+	}
+	else if (!strcmp(argv[1], "stat")){
+		while ((c = getopt(argc, argv, "m:n:u:d:h")) != -1)
+		{
+			switch(c)
+			{
+				case 'm':
+					mode = optarg;
+					break;
+				case 'n':
+					name = optarg;
+					break;
+				case 'u':
+					dura = optarg;
+					break;
+				case 'd':
+					date = optarg;
+					break;
+				case 'h':
+					show_help(argv[1]);
+					break;
+				default:
+					printf("ERROR: unknown option %c\n", c);
+					break;
+			}
+		}
+		//dbg("[bwdpi] mode=%s, name=%s, dura=%s, date=%s\n", mode, name, dura, date);
+		return stat_main(mode, name, dura, date);
+	}
+	else if (!strcmp(argv[1], "history")){
+		while ((c = getopt(argc, argv, "m:zp:")) != -1)
+		{
+			switch(c)
+			{
+				case 'm':
+					MAC = optarg;
+					clean_flag = 0;
+					break;
+				case 'z':
+					printf("clear web history\n");
+					clean_flag = 1;
+					break;
+				case 'p':
+					page = optarg;
+					break;
+				default:
+					printf("  bwpdi history -m [MAC] -z -p [page]\n");
+					break;
+			}
+		}
+
+		if(clean_flag)
+		{
+			return clear_user_domain();
+		}
+		else
+		{
+			return web_history_main(MAC, page);
+		}
+	}
+	else if (!strcmp(argv[1], "app")){
+		if(argc != 3)
+		{
+			printf("  bwpdi app [0/1]\n");
+			return 0;
+		}
+		else
+		{
+			return wrs_app_main(argv[2]);
+		}
+	}
+	else if (!strcmp(argv[1], "cc")){
+		if(argc != 3)
+		{
+			printf("  bwpdi cc [0/1]\n");
+			return 0;
+		}
+		else
+		{
+			return set_cc(argv[2]);
+		}
+	}
+	else if (!strcmp(argv[1], "vp")){
+		if(argc != 3)
+		{
+			printf("  bwpdi vp [0/1]\n");
+			return 0;
+		}
+		else
+		{
+			return set_vp(argv[2]);
+		}
+	}
+	else if (!strcmp(argv[1], "dc")){
+		if(argc == 3)
+		{
+			return data_collect_main(argv[2], NULL);
+		}
+		else if(argc == 4)
+		{
+			return data_collect_main(argv[2], argv[3]);
+		}
+		else
+		{
+			printf("  bwpdi dc [start/stop/restart] [path]\n");
+			return 0;
+		}
+	}
+	else if (!strcmp(argv[1], "device")){
+		while ((c = getopt(argc, argv, "m:")) != -1)
+		{
+			switch(c)
+			{
+				case 'm':
+					name = optarg;
+					break;
+				default:
+					printf("  bwpdi device -m [MAC]\n");
+					break;
+			}
+		}
+		return device_main(name);
+	}
+	else if (!strcmp(argv[1], "device_info")){
+		while ((c = getopt(argc, argv, "m:")) != -1)
+		{
+			switch(c)
+			{
+				case 'm':
+					name = optarg;
+					break;
+				default:
+					printf("  bwpdi device_info -m [MAC]\n");
+					break;
+			}
+		}
+		return device_info_main(name);
+	}
+	else if (!strcmp(argv[1], "get_vp")){
+		if(argc != 3)
+		{
+			printf("  bwpdi get_vp [0/2]\n");
+			return 0;
+		}
+		else
+		{
+			return get_vp(argv[2]);
+		}
+	}
+	else if (!strcmp(argv[1], "wrs_url")){
+		if(argc != 2)
+		{
+			printf("  bwpdi wrs_url\n");
+			return 0;
+		}
+		else
+		{
+			return wrs_url_main();
+		}
+	}
+	else if (!strcmp(argv[1], "rewrite")){
+		if(argc != 5)
+		{
+			printf("  bwpdi rewrite path1 path2 path3\n");
+			return 0;
+		}
+		else
+		{
+			return rewrite_main(argv[2], argv[3], argv[4]);
+		}
+	}
+	else if (!strcmp(argv[1], "checksize")){
+		if(argc != 4)
+		{
+			printf("  bwpdi checksize path size\n");
+			return 0;
+		}
+		else
+		{
+			return check_filesize_main(argv[2], argv[3]);
+		}
+	}
+	else if (!strcmp(argv[1], "extract")){
+		if(argc != 3)
+		{
+			printf("  bwpdi extract path\n");
+			return 0;
+		}
+		else
+		{
+			return extract_data_main(argv[2]);
+		}
+	}
+	else if (!strcmp(argv[1], "get_app_patrol")){
+		if(argc != 2)
+		{
+			printf("  bwpdi get_app_patrol\n");
+			return 0;
+		}
+		else
+		{
+			return get_app_patrol_main();
+		}
+	}
+	else if (!strcmp(argv[1], "get_anomaly")){
+		if(argc != 3)
+		{
+			printf("  bwpdi get_anomaly [0/2]\n");
+			return 0;
+		}
+		else
+		{
+			return get_anomaly_main(argv[2]);
+		}
+	}
+	else{
+		printf("Usage :\n");
+		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
+		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
+		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
+		printf("  bwpdi history -m [MAC] -z -p [page]\n");
+		printf("  bwpdi app [0/1]\n");
+		printf("  bwpdi cc [0/1]\n");
+		printf("  bwpdi vp [0/1]\n");
+		printf("  bwpdi device -m [MAC]\n");
+		printf("  bwpdi device_info -m [MAC]\n");
+		printf("  bwpdi get_vp [0/2]\n");
+		printf("  bwpdi wrs_url\n");
+		printf("  bwpdi rewrite path1 path2 path3\n");
+		printf("  bwpdi checksize path size\n");
+		printf("  bwpdi extract path\n");
+		printf("  bwpdi get_app_patrol\n");
+		printf("  bwpdi get_anomaly [0/2]\n");
+		return 0;
+	}
+
+	return 1;
 }
 #endif
-
