@@ -2,10 +2,10 @@
 
 
 SPACE_AVAL=$(df|grep jffs | awk '{print $2}')
-MODEL=`nvram get productid`
-if [ "$MODEL" == "GT-AC5300" ] || [ "$MODEL" == "GT-AX11000" ] || [ "$MODEL" == "GT-AC2900" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
+MODEL=$(nvram get productid)
+if [ "${MODEL:0:3}" == "GT-" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
 	ROG=1
-elif [ "$MODEL" == "TUF-AX3000" ] || [ "$(nvram get merlinr_tuf)" == "1" ] ;then
+elif [ "${MODEL:0:3}" == "TUF" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
 	TUF=1
 fi
 
@@ -33,6 +33,7 @@ if [ "$(nvram get sc_mount)" == 1 ];then
 		logger "USB flash drive not detected!/没有找到可用的USB磁盘!" 
 		exit 1
 	else
+		rm -rf jffs/softcenter/bin /jffs/softcenter/res /jffs/softcenter/webs /jffs/softcenter/scripts /jffs/softcenter/lib
 		mkdir -p /jffs/softcenter
 		mkdir -p $usb_disk/bin
 		mkdir -p $usb_disk/res
@@ -43,7 +44,6 @@ if [ "$(nvram get sc_mount)" == 1 ];then
 		mkdir -p /jffs/softcenter/init.d
 		mkdir -p /jffs/softcenter/configs
 		mkdir -p /jffs/softcenter/ss
-		mkdir -p /jffs/softcenter/perp
 		ln -sf $usb_disk/bin /jffs/softcenter/
 		ln -sf $usb_disk/res /jffs/softcenter/
 		ln -sf $usb_disk/webs /jffs/softcenter/
@@ -61,7 +61,6 @@ cp -rf /rom/etc/softcenter/scripts/* /jffs/softcenter/scripts/
 cp -rf /rom/etc/softcenter/res/* /jffs/softcenter/res/
 cp -rf /rom/etc/softcenter/webs/* /jffs/softcenter/webs/
 cp -rf /rom/etc/softcenter/bin/* /jffs/softcenter/bin/
-cp -rf /rom/etc/softcenter/perp /jffs/softcenter/
 cp -rf /rom/etc/softcenter/automount.sh /jffs/softcenter/
 if [ "$ROG" == "1" ]; then
 	cp -rf /rom/etc/softcenter/ROG/res/* /jffs/softcenter/res/
@@ -78,26 +77,27 @@ chmod 755 /jffs/softcenter/scripts/*.sh
 chmod 755 /jffs/softcenter/configs/*.sh
 chmod 755 /jffs/softcenter/bin/*
 chmod 755 /jffs/softcenter/init.d/*
-chmod 755 /jffs/softcenter/perp/*
-chmod 755 /jffs/softcenter/perp/.boot/*
-chmod 755 /jffs/softcenter/perp/.control/*
 chmod 755 /jffs/softcenter/automount.sh
-echo 1.3.0 > /jffs/softcenter/.soft_ver
+echo 1.3.2 > /jffs/softcenter/.soft_ver
 dbus set softcenter_api="1.5"
 dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
-dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "-" -f1|cut -c2-6`
+#dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "-" -f1|cut -c2-6`
 nvram set sc_installed=1
 nvram commit
 ARCH=`uname -m`
 KVER=`uname -r`
 if [ "$ARCH" == "armv7l" ]; then
-	if [ "$KVER" == "4.1.52" -o "$KVER" == "3.14.77" ];then
+	if [ "$KVER" != "2.6.36.4brcmarm" ];then
 		dbus set softcenter_arch="armng"
 	else
 		dbus set softcenter_arch="$ARCH"
 	fi
-elif [ "$KVER" == "3.10.14" ];then
-	dbus set softcenter_arch="mipsle"
+elif [ "$ARCH" == "mips" ]; then
+	if [ "$KVER" == "3.10.14" ];then
+		dbus set softcenter_arch="mipsle"
+	else
+		dbus set softcenter_arch="$ARCH"
+	fi
 else
 	dbus set softcenter_arch="$ARCH"
 fi

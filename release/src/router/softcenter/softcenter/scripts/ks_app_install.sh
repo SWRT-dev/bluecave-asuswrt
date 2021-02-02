@@ -39,29 +39,36 @@ if [ "$ACTION" != "" ]; then
 	BIN_NAME=$ACTION
 fi
 ARCH=$(uname -m)
+KVER=$(uname -r)
 if [ "$ARCH" == "armv7l" ]; then
-	ARCH_SUFFIX="arm"
+	if [ "$KVER" != "2.6.36.4brcmarm" ];then
+#bcm675x/ipq4/5/6/80xx/mt7622
+		ARCH_SUFFIX="armng"
+	else
+#bcm470x
+		ARCH_SUFFIX="arm"
+	fi
 elif [ "$ARCH" == "aarch64" ]; then
+#bcm490x
 	ARCH_SUFFIX="arm64"
 elif [ "$ARCH" == "mips" ]; then
-	ARCH_SUFFIX="mips"
+	if [ "$KVER" == "3.10.14" ];then
+#mtk6721
+		ARCH_SUFFIX="mipsle"
+	else
+#grx500
+		ARCH_SUFFIX="mips"
+	fi
 elif [ "$ARCH" == "mipsle" ]; then
 	ARCH_SUFFIX="mipsle"
 else
 	ARCH_SUFFIX="arm"
 fi
-KVER=$(uname -r)
-if [ "$KVER" == "4.1.52" -o "$KVER" == "3.14.77" ];then
-	ARCH_SUFFIX="armng"
-fi
-if [ "$KVER" == "3.10.14" ];then
-	ARCH_SUFFIX="mipsle"
-fi
 
 MODEL=$(nvram get productid)
-if [ "$MODEL" == "GT-AC5300" ] || [ "$MODEL" == "GT-AC2900" ] || [ "$MODEL" == "GT-AX11000" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
+if [ "${MODEL:0:3}" == "GT-" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
 	ROG=1
-elif [ "$MODEL" == "TUF-AX3000" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
+elif [ "${MODEL:0:3}" == "TUF" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
 	TUF=1
 fi
 
@@ -109,6 +116,7 @@ install_module() {
 			dbus set softcenter_server_tcode=ALI
 		else
 			dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
+			#get null? anonymous firmware just set GB
 			[ -z "$(dbus get softcenter_server_tcode)" ] && dbus set softcenter_server_tcode=GB
 		fi
 	fi

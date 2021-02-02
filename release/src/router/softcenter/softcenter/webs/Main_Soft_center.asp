@@ -209,7 +209,7 @@ input[type=button]:focus {
 </style>
 <script>
 var db_softcenter_ = {};
-var scarch = "mips";
+var scarch = "arm";
 var giturl;
 var model = '<% nvram_get("model"); %>';
 var modelname = '<% nvram_get("modelname"); %>';
@@ -551,9 +551,6 @@ $(function() {
 			if(db_softcenter_["softcenter_server_tcode"] == "CN") {
 			        db_softcenter_["softcenter_home_url"] = "https://sc.softcenter.site";
 			}
-			else if(db_softcenter_["softcenter_server_tcode"] == "GB") {
-			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
-			}
 			else if(db_softcenter_["softcenter_server_tcode"] == "CN1") {
 			        db_softcenter_["softcenter_home_url"] = "https://sc.softcenter.site";
 			}
@@ -568,18 +565,18 @@ $(function() {
 			} else if (db_softcenter_["softcenter_arch"] == "armv7l"){//for bcm4709
 				scarch="arm";
 				giturl="softcenterarm";
-			} else if (db_softcenter_["softcenter_arch"] == "armng"){//for bcm6750/ipq4019
+			} else if (db_softcenter_["softcenter_arch"] == "armng"){//for bcm6750/ipq4/5/6/80xx/mt7622
 				scarch="armng";
 				giturl="softcenterarmng";
-			} else if (db_softcenter_["softcenter_arch"] == "aarch64"){//for bcm4908/bcm6710
+			} else if (db_softcenter_["softcenter_arch"] == "aarch64"){//for bcm490x
 				scarch="arm64";
 				giturl="softcenterarm64";
 			} else if (db_softcenter_["softcenter_arch"] == "mipsle"){//for mtk7621
 				scarch="mipsle";
 				giturl="softcentermipsle";
 			} else {
-				scarch="mips";
-				giturl="softcenter";
+				scarch="arm";
+				giturl="softcenterarm";
 			}
 			if (!db_softcenter_["softcenter_version"]) {
 				db_softcenter_["softcenter_version"] = "0.0";
@@ -755,7 +752,7 @@ function notice_show(){
 															<td colspan="3"></td>
 														</tr>
 													</table>
-												<div class="KoolshareBottom" id="github">
+												<div class="SCBottom" id="github">
 												</div>
 											</td>
 										</tr>

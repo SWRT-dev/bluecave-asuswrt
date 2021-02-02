@@ -567,6 +567,46 @@ void softcenter_eval(int sig)
 #endif
 
 
+static int
+reset_sc(int all)
+{
+	if(all){
+		killall_tk("skipd");
+		doSystem("rm -rf /jffs/db");
+		if(strcmp(nvram_get("preferred_lang"), "CN"))
+			printf("Database has been cleared.\n");
+		else
+			printf("数据库已清空！\n");
+	}
+	doSystem("rm -rf /jffs/softcenter/bin/*");
+	doSystem("rm -rf /jffs/softcenter/scripts/*");
+	doSystem("rm -rf /jffs/softcenter/webs/*");
+	doSystem("rm -rf /jffs/softcenter/res/*");
+	doSystem("rm -rf /jffs/softcenter");
+	doSystem("rm -rf /jffs/configs");
+	doSystem("rm -rf /jffs/scripts/dnsmasq.postconf");
+	doSystem("service restart_dnsmasq >/dev/null 2>&1");
+	sleep(1);
+	doSystem("jffsinit.sh >/dev/null 2>&1");
+	if(strcmp(nvram_get("preferred_lang"), "CN"))
+		printf("Software Center reset is complete, Please clear your browser cache and reopen the website page of the software center!\n");
+	else
+		printf("软件中心重置完成，请清空浏览器缓存后重新进入软件中心！\n");
+}
+
+int
+merlinr_toolbox(int argc, char **argv)
+{
+	if (argv[1] && !strcmp(argv[1], "reset")) {
+		if(argv[2] && !strcmp(argv[2], "all"))
+			reset_sc(1);
+		else
+			reset_sc(0);
+	}
+	return 0;
+}
+
+
 #ifdef RTCONFIG_DUALWAN
 #define IPTABLES_MARK_LB_SET(x)	((((x)&0xf)|0x8)<<8)			//mark for load-balance
 #define IPTABLES_MARK_LB_MASK	IPTABLES_MARK_LB_SET(0xf)

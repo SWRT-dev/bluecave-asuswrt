@@ -1,5 +1,5 @@
 /*  For software center  */
-.KoolshareBottom {
+.KoolshareBottom, .SCBottom {
 	width: 230px;
 	height: 100px;
 	background: url(/res/merlinr.png) 0px 3px no-repeat;

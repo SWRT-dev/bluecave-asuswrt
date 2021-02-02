@@ -24,6 +24,7 @@
 #define __MERLINR_H__
 extern void merlinr_init(void);
 extern void merlinr_init_done(void);
+extern int merlinr_toolbox(int argc, char **argv);
 #if defined(RTCONFIG_UUPLUGIN)
 extern void exec_uu_merlinr(void);
 #endif

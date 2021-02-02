@@ -1089,10 +1089,8 @@ ifeq ($(or $(RTAC68U),$(RT4GAC68U)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_enc_crc
 	@cd $(INSTALLDIR)/sbin && ln -sf rc fw_check
 endif
-
-ifeq ($(strip $(MERLINR_NAME)),$(filter $(MERLINR_NAME), SBRAC1900P SBRAC3200P XWR3100 K3C))
 	@cd $(INSTALLDIR)/sbin && ln -sf rc toolbox
-endif
+
 
 clean:
 	rm -f rc *.o .*.depend *.prep
