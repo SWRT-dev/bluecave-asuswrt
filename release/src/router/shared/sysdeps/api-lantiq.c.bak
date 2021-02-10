@@ -500,38 +500,6 @@ int get_radio(int unit, int subunit)
 		return get_radio_status(nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 }
 
-void set_radio(int on, int unit, int subunit)
-{
-	int led = (!unit)? LED_2G:LED_5G, onoff = (!on)? LED_OFF:LED_ON;
-	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX", athfix[]="athXXXXXX";
-	char path[sizeof(NAWDS_SH_FMT) + 6];
-
-	if (subunit > 0)
-	{   
-		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
-//		snprintf(athfix, sizeof(athfix), "ath%d0%d", unit, subunit);
-	}	
-	else
-	{   
-		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-//		snprintf(athfix, sizeof(athfix), "ath%d", unit);
-	}
-	strcpy(athfix, nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
-
-	if (*athfix != '\0')
-	{   
-	   	if(!strstr(athfix,"sta")) //all lan-interfaces except sta when running repeater mode
-			eval("ifconfig", athfix, on? "up" : "down");
-
-		/* Reconnect to peer WDS AP */
-		sprintf(path, NAWDS_SH_FMT, get_wififname(unit));
-		if (!subunit && !nvram_match(strcat_r(prefix, "mode_x", tmp), "0") && f_exists(path))
-			doSystem(path);
-	}
-
-	led_control(led, onoff);
-}
-
 char *wif_to_vif(char *wif)
 {
 	static char vif[32];
@@ -1346,25 +1314,88 @@ char *get_wlxy_ifname(int x, int y, char *buf)
 	return get_wlifname(x, y, y, buf);
 }
 
-int check_wave_ready(int unit)
+int check_wave_ready(int action)
 {
 	int time = 21;
 
 	nvram_unset("check_wave_ready");
 	while (!nvram_get_int("wave_ready"))
 	{
-		_dprintf("[%s][%d][%d] current action:[%d], waiting wave_ready=1\n", __func__, __LINE__, unit, nvram_get_int("wave_action_cur"));
+		_dprintf("[%s][%d][%d] current action:[%d], waiting wave_ready=1\n", __func__, __LINE__, action, nvram_get_int("wave_action_cur"));
 		--time;
 		sleep(3);
 		if (!time)
 		{
-			_dprintf("[%s][%d] wait wave_ready=1 over 60 seconds, please check wave_monitor status (current action:[%d]), skip [%d]\n", __func__, __LINE__, nvram_get_int("wave_action_cur"), unit);
+			_dprintf("[%s][%d] wait wave_ready=1 over 60 seconds, please check wave_monitor status (current action:[%d]), skip [%d]\n", __func__, __LINE__, nvram_get_int("wave_action_cur"), action);
 			nvram_set_int("check_wave_ready", -1);
 			return -1;
 		}
 	}
 	return 0;
 }
+
+int trigger_wave_monitor_and_wait(char *func, int line, int action, int time)
+{
+	int result;
+
+	result = check_wave_ready(action);
+	if ( result != -1 )
+	{
+		_dprintf("[%s][%d] %s(%d) trigger action:[%d]\n", __func__, __LINE__, func, line, action);
+		nvram_set_int("wave_action", action);
+		kill_pidfile_s("/var/run/wave_monitor.pid", 16);
+		if (time)
+			sleep(time);
+		result = check_wave_ready(action);
+	}
+	return result;
+}
+
+int trigger_wave_monitor(char *func, int line, int action)
+{
+	return trigger_wave_monitor_and_wait(func, line, action, 5);
+}
+
+void set_radio(int on, int unit, int subunit)
+{
+	int led = (!unit)? LED_2G:LED_5G, onoff = (!on)? LED_OFF:LED_ON;
+	char tmp[100], prefix[] = "wlXXXXXXXXXXXXXX", athfix[]="athXXXXXX";
+	char path[sizeof(NAWDS_SH_FMT) + 6];
+
+	if (subunit > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+
+	strcpy(athfix, nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+
+	if (*athfix != '\0')
+	{   
+	   	if(!strstr(athfix,"sta")) //all lan-interfaces except sta when running repeater mode
+		{
+			if(strcmp(athfix, "wlan0"))
+			{
+				if(onoff)
+					trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_ON);
+				else
+					trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_OFF);
+			}
+			if(strcmp(athfix, "wlan2"))
+			{
+				if(onoff)
+					trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_ON);
+				else
+					trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_OFF);
+			}
+
+		/* Reconnect to peer WDS AP */
+		sprintf(path, NAWDS_SH_FMT, get_wififname(unit));
+		if (!subunit && !nvram_match(strcat_r(prefix, "mode_x", tmp), "0") && f_exists(path))
+			doSystem(path);
+	}
+	led_control(led, onoff);
+}
+
 #if 0
 #ifdef RTCONFIG_AMAS
 void add_beacon_vsie(char *hexdata)
