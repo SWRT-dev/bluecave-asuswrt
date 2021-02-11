@@ -152,6 +152,71 @@ int set_wl_macfilter()
 	_dprintf("shared %s %d\n", __func__, __LINE__);
 	return 0;
 }
+
+
+int get_psta_status(int unit)
+{
+	FILE *fp;
+	int len, status;
+	char tmp[8192];
+	char *ap;
+
+	snprintf(tmp, sizeof(tmp), "iwconfig %s", get_staifname(unit));
+	if ((fp=popen(tmp, "r"))){
+		memset(tmp, 0, sizeof(tmp));
+		len = fread(tmp, 1, sizeof(tmp), fp)
+		pclose(fp);
+		if(len < 2)
+			status = 3;
+		else {
+			tmp[len-1] = 0;
+			if((ap = strstr(tmp, "Access Point:"))){
+				status = 2;
+				if(strstr(ap+13, "Not-Associated")){
+					snprintf(tmp, sizeof(tmp), "ifconfig | grep %s", get_staifname(unit));
+					if ((fp=popen(tmp, "r"))){
+						memset(tmp, 0, sizeof(tmp));
+						len = fread(tmp, 1, sizeof(tmp), fp)
+						pclose(fp);
+						status = 0;
+						if(len > 0)
+							return status;
+						status = 3;
+					} else
+						status = 0;
+				}
+			} else
+				status = 3;
+		}
+	} else
+		status = 3;
+	return status;
+}
+
+#ifdef RTCONFIG_AMAS
+void add_beacon_vsie(char *hexdata)
+{
+	nvram_set("amas_add_beacon_vsie", hexdata);
+	trigger_wave_monitor_and_wait(__func__, __LINE__, WAVE_ACTION_ADD_BEACON_VSIE, 1);
+}
+
+void del_beacon_vsie(char *hexdata)
+{
+	nvram_set("amas_del_beacon_vsie", hexdata);
+	trigger_wave_monitor_and_wait(__func__, __LINE__, WAVE_ACTION_DEL_BEACON_VSIE, 1);
+}
+#endif
+
+int wl_get_bw(int unit)
+{
+  if (unit)
+  {
+    if (unit < 1)
+      return 0;
+	return 80;
+  }
+  return 40;
+}
 //sta_info_t *wl_sta_info(char *ifname, struct ether_addr *ea)
 //{
 #if 0
@@ -534,10 +599,6 @@ err:
 #endif			
 }
 
-int get_psta_status(int unit)
-{
-return 0;
-}
 #endif
 
 
