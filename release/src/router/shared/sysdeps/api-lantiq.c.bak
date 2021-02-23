@@ -1398,67 +1398,6 @@ void set_radio(int on, int unit, int subunit)
 
 #if 0
 #ifdef RTCONFIG_AMAS
-void add_beacon_vsie(char *hexdata)
-{
-	// 0: Beacon
-	// 1: ProbeRequest
-	// 2: ProbeResponse
-	// 3: AuthenticationRequest
-	// 4: AuthenticationRespnse
-	// 5: AssocationRequest
-	// 6: AssociationResponse
-	// 7: ReassociationRequest
-	// 8: ReassociationResponse
-	char cmd[300] = {0};
-	int pktflag = 0x0;
-	int len = 0;
-	char *ifname = NULL;
-	strlen(ifname);
-
-	len = 3 + strlen(hexdata)/2;	/* 3 is oui's len */
-
-	ifname = get_wififname(0); // TODO: Should we get the band from nvram?
-	
-	//_dprintf("%s: wl0_ifname=%s\n", __func__, ifname);
-
-	if (ifname && strlen(ifname)) {
-		snprintf(cmd, sizeof(cmd), "hostapd_cli set_vsie -i%s %d DD%02X%02X%02X%02X%s", 
-			ifname, pktflag, (uint8_t)len, (uint8_t)OUI_ASUS[0],  (uint8_t)OUI_ASUS[1],  (uint8_t)OUI_ASUS[2], hexdata);
-		_dprintf("%s: cmd=%s\n", __func__, cmd);
-		system(cmd);
-	}
-}
-
-void del_beacon_vsie(char *hexdata)
-{
-	// 0: Beacon
-	// 1: ProbeRequest
-	// 2: ProbeResponse
-	// 3: AuthenticationRequest
-	// 4: AuthenticationRespnse
-	// 5: AssocationRequest
-	// 6: AssociationResponse
-	// 7: ReassociationRequest
-	// 8: ReassociationResponse
-	char cmd[300] = {0};
-	int pktflag = 0x0;
-	int len = 0;
-	char *ifname = NULL;
-
-	len = 3 + strlen(hexdata)/2;	/* 3 is oui's len */
-
-	ifname = get_wififname(0); // TODO: Should we get the band from nvram?
-
-	//_dprintf("%s: wl0_ifname=%s\n", __func__, ifname);
-
-	if (ifname && strlen(ifname)) {
-		snprintf(cmd, sizeof(cmd), "hostapd_cli del_vsie -i%s %d DD%02X%02X%02X%02X%s",
-			ifname, pktflag, (uint8_t)len,  (uint8_t)OUI_ASUS[0],  (uint8_t)OUI_ASUS[1],  (uint8_t)OUI_ASUS[2], hexdata);
-		_dprintf("%s: cmd=%s\n", __func__, cmd);
-		system(cmd);
-	}
-}
-
 void add_obd_probe_req_vsie(char *hexdata)
 {
 #define MAX_VSIE_LEN 1024
