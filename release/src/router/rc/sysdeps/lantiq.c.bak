@@ -1,0 +1,170 @@
+void wlconf_pre()
+{
+	generate_wl_para(0, -1);
+	generate_wl_para(1, -1);
+}
+
+int get_wlan_service_status(int bssidx, int vifidx)
+{
+	wl_wave_unit();
+	return wave_is_radio_on(bssidx, vifidx);
+}
+
+void set_wlan_service_status(int bssidx, int vifidx, int enabled)
+{
+	int time = 3;
+	int action = 0;
+	while(!nvram_get_int("wave_ready"))
+	{
+		_dprintf("[%s][%d] wave_ready==0, wait... [%d][%d][%d]\n", __func__, __LINE__, bssidx, vifidx, enabled);
+		--time;
+		sleep(10);
+		if(time == 0)
+		{
+			_dprintf("[%s][%d] wait wave_ready=1 over 20 seconds, please check wave_monitor status, skip [%d][%d][%d]\n", __func__, __LINE__, bssidx, vifidx, enabled);
+			return;
+		}
+	}
+	while(nvram_get_int("wave_action"))
+	{
+		_dprintf("wave_action != IDLE, wait... [%s]\n", __func__);
+		sleep(1);
+	}
+#if 0
+	if(bssidx || ((bssidx|enabled) = enabled, enabled != 1))
+	{
+		if((bssidx|enabled) != 0)
+		{
+			if(bssidx != 1)
+				return 1;
+			if(enabled == 1)
+				return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_ON);
+			else if(enabled)
+				return 1;
+			return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_OFF);
+		} else
+			return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_OFF);
+	} else
+		return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_ON);
+#endif
+	if(bssidx == 0 && enabled == 1)
+		trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_ON);
+	else if((bssidx == 0 && enabled == 0)
+		trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_OFF);
+	else if(bssidx == 1 && enabled == 1)
+		trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_ON);
+	else if(bssidx == 1 && enabled == 0)
+		trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_OFF);
+}
+#if 0
+int get_wlan_service_status(int bssidx, int vifidx)
+{
+#if 0
+	FILE *fp = NULL;
+	char maxassoc_file[128]={0};
+	char buf[64]={0};
+	char maxassoc[64]={0};
+	char tmp[128] = {0}, prefix[] = "wlXXXXXXXXXX_";
+	char *ifname = NULL;
+
+	if(vifidx > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", bssidx, vifidx);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d", bssidx);
+
+	ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+
+	snprintf(maxassoc_file, sizeof(maxassoc_file), "/tmp/maxassoc.%s", ifname);
+
+	doSystem("wl -i %s maxassoc > %s", ifname, maxassoc_file);
+
+	if ((fp = fopen(maxassoc_file, "r")) != NULL) {
+		fscanf(fp, "%s", buf);
+		fclose(fp);
+	}
+	sscanf(buf, "%s", maxassoc);
+
+	return atoi(maxassoc);
+#endif
+	return 0;
+}
+
+int set_wlan_service_status(int bssidx, int vifidx, int enabled)
+{
+
+#if 0
+	char tmp[128]={0}, prefix[] = "wlXXXXXXXXXX_", wlprefix[] = "wlXXXXXXXXXX_";
+	char *ifname = NULL;
+
+	if(vifidx > 0)
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", bssidx, vifidx);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d", bssidx);
+
+	memset(wlprefix, 0x00, sizeof(wlprefix));
+	snprintf(wlprefix, sizeof(wlprefix), "wl%d_", bssidx);
+
+	ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
+
+	if (enabled == 0) {
+		doSystem("wl -i %s maxassoc 0", ifname);
+	}
+	else {
+#ifdef HND_ROUTER
+		doSystem("wl -i %s maxassoc %d", ifname, nvram_get_int(strcat_r(wlprefix, "cfg_maxassoc", tmp)));
+#else
+		doSystem("wl -i %s maxassoc %d", ifname, nvram_get_int(strcat_r(wlprefix, "maxassoc", tmp)));
+#endif
+	}
+#endif
+	return 0;
+}
+#endif
+
+int Pty_procedure_check()
+{
+	return 0;
+}
+
+int is_default()
+{
+	if(g_reboot || g_upgrade || IS_ATE_FACTORY_MODE() || nvram_get_int("obd_Setting") == 1 || nvram_get_int("x_Setting") == 1 )
+		return 0;
+	else
+		return nvram_get_int("obdeth_Setting");
+}
+
+int no_need_obd(void)
+{
+	if(g_reboot || g_upgrade || IS_ATE_FACTORY_MODE() || (nvram_get("sw_mode") || nvram_get_int("sw_mode") != 1) || 
+    nvram_get_int("obd_Setting") == 1 || nvram_get_int("x_Setting") == 1 && nvram_get_int("obdeth_Setting") == 1 ) ||
+	!nvram_get_int("wave_ready"))
+		return -1;
+	else
+		return pids("obd");
+}
+
+int no_need_obdeth(void)
+{
+	if(g_reboot || g_upgrade || IS_ATE_FACTORY_MODE() || (nvram_get("sw_mode") || nvram_get_int("sw_mode") != 1) || 
+    nvram_get_int("obd_Setting") == 1 || nvram_get_int("x_Setting") == 1 || nvram_get_int("obdeth_Setting") == 1 ) ||
+	!nvram_get_int("wave_ready"))
+		return -1;
+	else
+		return pids("obd_eth");
+}
+
+int amas_wait_wifi_ready(void)
+{
+	int result = 0;
+
+	while(1)
+	{
+		result = nvram_get_int("wave_ready");
+		if (result)
+			break;
+		sleep(5);
+	}
+	return result;
+}
