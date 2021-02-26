@@ -4271,7 +4271,7 @@ start_smartdns(void)
 	fprintf(fp, "conf-file /etc/blacklist-ip.conf\n");
 	fprintf(fp, "conf-file /etc/whitelist-ip.conf\n");
 	//fprintf(fp, "conf-file /etc/seconddns.conf\n");
-	fprintf(fp, "bind [::]:9053\n");
+	fprintf(fp, "bind [::]:9053 -group master\n");
 	//fprintf(fp, "bind-tcp [::]:5353\n");
 	fprintf(fp, "cache-size 9999\n");
 	//fprintf(fp, "prefetch-domain yes\n");
@@ -4291,14 +4291,14 @@ start_smartdns(void)
 #if !defined(K3) && !defined(SBRAC1900P) && !defined(SBRAC3200P) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
 	if(!strncmp(nvram_get("territory_code"), "CN",2)){
 #endif
-		fprintf(fp, "server 114.114.114.114\n");
-		fprintf(fp, "server 119.29.29.29\n");
-		fprintf(fp, "server 223.5.5.5\n");
+		fprintf(fp, "server 114.114.114.114 -group master\n");
+		fprintf(fp, "server 119.29.29.29 -group master\n");
+		fprintf(fp, "server 223.5.5.5 -group master\n");
 #if !defined(K3) && !defined(SBRAC1900P) && !defined(SBRAC3200P) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
 	} else {
-		fprintf(fp, "server 8.8.8.8\n");
-		fprintf(fp, "server 208.67.222.222\n");
-		fprintf(fp, "server 1.1.1.1\n");
+		fprintf(fp, "server 8.8.8.8 -group master\n");
+		fprintf(fp, "server 208.67.222.222 -group master\n");
+		fprintf(fp, "server 1.1.1.1 -group master\n");
 	}
 #endif
 	for (unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; unit++) {
@@ -4316,7 +4316,7 @@ start_smartdns(void)
 		if (!*wan_dns && !*wan_xdns)
 			continue;
 		foreach(tmp, (*wan_dns ? wan_dns : wan_xdns), next)
-			fprintf(fp, "server %s\n", tmp);
+			fprintf(fp, "server %s -group master\n", tmp);
 	}
 	//fprintf(fp, "server %s\n", nvram_get("wan_dns1_x"));
 	//fprintf(fp, "server %s\n", nvram_get("wan_dns2_x"));
