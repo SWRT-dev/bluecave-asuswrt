@@ -122,7 +122,38 @@ int set_wlan_service_status(int bssidx, int vifidx, int enabled)
 }
 #endif
 
-int Pty_procedure_check()
+char *getWscStatus_enrollee(int unit)
+{
+	char buf[512];
+	FILE *fp;
+	int len;
+	char *pt1, *pt2;
+
+	snprintf(buf, sizeof(buf), "wpa_cli -i %s status", get_staifname(unit));
+	fp = popen(buf, "r");
+	if (fp) {
+		memset(buf, 0, sizeof(buf));
+		len = fread(buf, 1, sizeof(buf), fp);
+		pclose(fp);
+		if (len > 1) {
+			buf[len-1] = '\0';
+			pt1 = strstr(buf, "wpa_state=");
+			if (pt1) {
+				pt2 = pt1 + strlen("wpa_state=");
+				pt1 = strstr(pt2, "address=");
+				if (pt1) {
+					*pt1 = '\0';
+					chomp(pt2);
+				}
+				return pt2;
+			}
+		}
+	}
+
+	return "";
+}
+
+int Pty_procedure_check(int unit, int wlif_count)
 {
 	return 0;
 }
