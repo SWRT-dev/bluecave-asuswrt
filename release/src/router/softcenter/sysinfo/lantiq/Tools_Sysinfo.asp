@@ -112,8 +112,10 @@ function update_temperatures(){
 			if (band5g_support)
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
 
-			if (curr_coreTmp_cpu != "")
+			if (curr_coreTmp_cpu != "" && curr_coreTmp_cpu != "0")
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + parseInt(curr_coreTmp_cpu) +"&deg;C</span>";
+			else
+				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span><i>disabled</i></span>";
 			document.getElementById("temp_td").innerHTML = code;
 			setTimeout("update_temperatures();", 3000);
 		}
@@ -282,8 +284,10 @@ function show_memcpu(){
 	document.getElementById("mem_free_td").innerHTML = mem_stats_arr[1] + " MB";
 	document.getElementById("mem_buffer_td").innerHTML = mem_stats_arr[2] + " MB";
 	document.getElementById("mem_cache_td").innerHTML = mem_stats_arr[3] + " MB";
-	document.getElementById("mem_swap_td").innerHTML = mem_stats_arr[4] + " / " + mem_stats_arr[5] + " MB";
-
+	if (parseInt(mem_stats_arr[5]) == 0)
+		document.getElementById("mem_swap_td").innerHTML = "<span>No swap configured</span>";
+	else
+		document.getElementById("mem_swap_td").innerHTML = mem_stats_arr[4] + " / " + mem_stats_arr[5] + " MB";
 	document.getElementById("nvram_td").innerHTML = mem_stats_arr[6] + " / " + <% sysinfo("nvram.total"); %> + " bytes";
 	document.getElementById("jffs_td").innerHTML = mem_stats_arr[7];
 }

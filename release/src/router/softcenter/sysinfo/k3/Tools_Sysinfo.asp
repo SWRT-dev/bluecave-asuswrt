@@ -110,8 +110,12 @@ function update_temperatures(){
 		},
 		success: function(response){
 			code = "<b>2.4 GHz:</b><span> " + curr_coreTmp_2_raw + "</span>";
-			if (band5g_support)
+			if (wl_info.band5g_2_support) {
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-1:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-2:</b> <span>" + curr_coreTmp_52_raw + "</span>";
+			} else if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+			}
 			if (curr_coreTmp_cpu != "")
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + parseInt(curr_coreTmp_cpu) +"&deg;C</span>";
 			document.getElementById("temp_td").innerHTML = code;
@@ -123,30 +127,20 @@ function hwaccel_state(){
 	var qos_enable = '<% nvram_get("qos_enable"); %>';
 	var qos_type = '<% nvram_get("qos_type"); %>';
 	if (hnd_support) {
-		code = "Runner:<span> ";
-		if ('<% nvram_get("runner_disable"); %>' == '1') {
-			code += "Disabled";
-			if ('<% nvram_get("runner_disable_force"); %>' == '1') {
-				code += " <i>(by user)</i>";
-			} else {
-				if (qos_enable == '1')
-					code += " <i>(QoS)</i>";
-			}
-		} else {
-			code += "Enabled";
-		}
+		var machine_name = "<% get_machine_name(); %>";
+		if (machine_name.search("aarch64") != -1)
+			code = "Runner:<span> ";
+		else
+			code = "Archer:<span> ";
+
+		var state = "<% sysinfo("hwaccel.runner"); %>";
+
+		code += state;
+
 		code += "</span>&nbsp;&nbsp;-&nbsp;&nbsp;Flow Cache:<span> ";
-		if ('<% nvram_get("fc_disable"); %>' == '1') {
-			code += "Disabled";
-			if ('<% nvram_get("fc_disable_force"); %>' == '1') {
-				code += " <i>(by user)</i>";
-			} else {
-				if ((qos_enable == '1') && (qos_type != '1'))
-					code += " <i>(QoS)</i>";
-			}
-		} else {
-			code += "Enabled";
-		}
+		state = "<% sysinfo("hwaccel.fc"); %>";
+
+		code += state;
 		code += "</span>";
 	} else {
 		if (ctf_dis == "1") {
@@ -196,7 +190,7 @@ function show_etherstate(){
 	var line;
 	var wan_array;
 	var port_array= Array();
-	if (based_modelid == "RT-AC86U") {
+	if (hnd_support) {
 		show_etherstate_hnd();
 		return;
 	} else if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U")
@@ -322,6 +316,9 @@ function show_etherstate_hnd(){
 		var speedMapping = new Array();
 		speedMapping["M"] = "100 Mbps";
 		speedMapping["G"] = "1 Gbps";
+		speedMapping["Q"] = "2.5 Gbps";
+		speedMapping["F"] = "5 Gbps";
+		speedMapping["T"] = "10 Gbps";
 		speedMapping["X"] = "Unplugged";
 		var parseArray = [];
 		for (var prop in _array) {
@@ -415,7 +412,7 @@ function update_sysinfo(e){
 </script>
 </head>
 
-<body onload="initial();" onunLoad="return unload_body();">
+<body onload="initial();" onunLoad="return unload_body();" class="bg">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>

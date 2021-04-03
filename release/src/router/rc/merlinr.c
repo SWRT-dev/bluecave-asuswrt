@@ -390,10 +390,10 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 						nvram_set("webs_state_url", "");
 #if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100)
 						snprintf(info,sizeof(info),"3004_382_%s_%s-%s",modelname,fwver,tag);
-#elif (defined(RTAC82U) && defined(RTCONFIG_AMAS)) || defined(RTAC95U) || defined(RTAX56_XD4) || defined(RTAX95Q) || defined(RTAC68U) || defined(RTAC3100) || defined(RTAC88U) || defined(RTAC5300)
-						snprintf(info,sizeof(info),"3004_386_%s_%s-%s",modelname,fwver,tag);
-#else
+#elif defined(BLUECAVE)
 						snprintf(info,sizeof(info),"3004_384_%s_%s-%s",modelname,fwver,tag);
+#else
+						snprintf(info,sizeof(info),"3004_386_%s_%s-%s",modelname,fwver,tag);
 #endif
 						FWUPDATE_DBG("---- current version : %s ----", nvram_get("extendno"));
 						FWUPDATE_DBG("---- productid : %s_%s-%s ----", modelname, fwver, tag);
@@ -445,10 +445,10 @@ int merlinr_firmware_check_update_main(int argc, char *argv[])
 GODONE:
 #if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100)
 	snprintf(info,sizeof(info),"3004_382_%s",nvram_get("extendno"));
-#elif (defined(RTAC82U) && defined(RTCONFIG_AMAS)) || defined(RTAC95U) || defined(RTAX56_XD4) || defined(RTAX95Q) || defined(RTAC68U) || defined(RTAC3100) || defined(RTAC88U) || defined(RTAC5300)
-	snprintf(info,sizeof(info),"3004_386_%s",nvram_get("extendno"));
-#else
+#elif defined(BLUECAVE)
 	snprintf(info,sizeof(info),"3004_384_%s",nvram_get("extendno"));
+#else
+	snprintf(info,sizeof(info),"3004_386_%s",nvram_get("extendno"));
 #endif
 	nvram_set("webs_state_url", "");
 	nvram_set("webs_state_flag", "0");
@@ -592,6 +592,7 @@ reset_sc(int all)
 		printf("Software Center reset is complete, Please clear your browser cache and reopen the website page of the software center!\n");
 	else
 		printf("软件中心重置完成，请清空浏览器缓存后重新进入软件中心！\n");
+	return 0;
 }
 
 int

@@ -8,7 +8,7 @@
 <meta HTTP-EQUIV="Expires" CONTENT="-1">
 <link rel="shortcut icon" href="images/favicon.png">
 <link rel="icon" href="images/favicon.png">
-<title><#Web_Title#> - System Information</title>
+<title>System Information</title>
 <link rel="stylesheet" type="text/css" href="index_style.css">
 <link rel="stylesheet" type="text/css" href="form_style.css">
 <link rel="stylesheet" type="text/css" href="/js/table/table.css">
@@ -29,6 +29,19 @@ p{
 .row_title th {
 	width: unset;
 }
+.FormTitle i {
+    color: #FC0;
+    font-style: normal;
+}
+.FormTitle em {
+    color: #00ffe4;
+    font-style: normal;
+}
+.FormTitle b {
+    color: #1cfe16;
+    font-style: normal;
+	font-weight:normal;
+}
 </style>
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -48,6 +61,7 @@ var rtkswitch = "<% sysinfo("ethernet.rtk"); %>";
 var odmpid = "<% nvram_get("odmpid");%>";
 var ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
 var modelname = "<% nvram_get("modelname"); %>";
+var sc_mount = "<% nvram_get("sc_mount"); %>";
 overlib_str_tmp = "";
 overlib.isOut = true;
 function initial(){
@@ -73,6 +87,11 @@ function initial(){
 		document.getElementById("fwver").innerHTML = buildno;
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
+	if(sc_mount == "1")
+		document.getElementById("sc_mount").innerHTML = '<span>Enabled</span>';
+	else
+		document.getElementById("sc_mount").innerHTML = '<span>Disabled</span>';
+
 	var rc_caps = "<% nvram_get("rc_support"); %>";
 	var rc_caps_arr = rc_caps.split(' ').sort();
 	rc_caps = rc_caps_arr.toString().replace(/,/g, " ");
@@ -91,8 +110,12 @@ function update_temperatures(){
 		},
 		success: function(response){
 			code = "<b>2.4 GHz:</b><span> " + curr_coreTmp_2_raw + "</span>";
-			if (band5g_support)
+			if (wl_info.band5g_2_support) {
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-1:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-2:</b> <span>" + curr_coreTmp_52_raw + "</span>";
+			} else if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+			}
 			if (curr_coreTmp_cpu != "")
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + parseInt(curr_coreTmp_cpu) +"&deg;C</span>";
 			document.getElementById("temp_td").innerHTML = code;
@@ -104,30 +127,20 @@ function hwaccel_state(){
 	var qos_enable = '<% nvram_get("qos_enable"); %>';
 	var qos_type = '<% nvram_get("qos_type"); %>';
 	if (hnd_support) {
-		code = "Runner:<span> ";
-		if ('<% nvram_get("runner_disable"); %>' == '1') {
-			code += "Disabled";
-			if ('<% nvram_get("runner_disable_force"); %>' == '1') {
-				code += " <i>(by user)</i>";
-			} else {
-				if (qos_enable == '1')
-					code += " <i>(QoS)</i>";
-			}
-		} else {
-			code += "Enabled";
-		}
+		var machine_name = "<% get_machine_name(); %>";
+		if (machine_name.search("aarch64") != -1)
+			code = "Runner:<span> ";
+		else
+			code = "Archer:<span> ";
+
+		var state = "<% sysinfo("hwaccel.runner"); %>";
+
+		code += state;
+
 		code += "</span>&nbsp;&nbsp;-&nbsp;&nbsp;Flow Cache:<span> ";
-		if ('<% nvram_get("fc_disable"); %>' == '1') {
-			code += "Disabled";
-			if ('<% nvram_get("fc_disable_force"); %>' == '1') {
-				code += " <i>(by user)</i>";
-			} else {
-				if ((qos_enable == '1') && (qos_type != '1'))
-					code += " <i>(QoS)</i>";
-			}
-		} else {
-			code += "Enabled";
-		}
+		state = "<% sysinfo("hwaccel.fc"); %>";
+
+		code += state;
 		code += "</span>";
 	} else {
 		if (ctf_dis == "1") {
@@ -177,7 +190,7 @@ function show_etherstate(){
 	var line;
 	var wan_array;
 	var port_array= Array();
-	if (based_modelid == "RT-AC86U") {
+	if (hnd_support) {
 		show_etherstate_hnd();
 		return;
 	} else if ((based_modelid == "RT-N16") || (based_modelid == "RT-AC87U")
@@ -226,7 +239,7 @@ function show_etherstate(){
 					port = "4";	// This is LAN 4 (RTL) from QTN
 					devicename = '<span class="ClientName">&lt;unknown&gt;</span>';
 				}
-			} else if (modelname == "EA6700") {
+			} else if (modelname == "EA6700" || modelname == "DIR868L") {
 				port++;		// Port starts at 0
 				if (port == "5") port = 0;	// Last port is WAN
 			}
@@ -290,6 +303,9 @@ function show_etherstate_hnd(){
 		var speedMapping = new Array();
 		speedMapping["M"] = "100 Mbps";
 		speedMapping["G"] = "1 Gbps";
+		speedMapping["Q"] = "2.5 Gbps";
+		speedMapping["F"] = "5 Gbps";
+		speedMapping["T"] = "10 Gbps";
 		speedMapping["X"] = "Unplugged";
 		var parseArray = [];
 		for (var prop in _array) {
@@ -383,7 +399,7 @@ function update_sysinfo(e){
 </script>
 </head>
 
-<body onload="initial();" onunLoad="return unload_body();">
+<body onload="initial();" onunLoad="return unload_body();" class="bg">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -541,6 +557,10 @@ function update_sysinfo(e){
 						<th>JFFS</th>
 						<td id="jffs_td"></td>
 					</tr>
+					<tr>
+						<th>JFFS extension</th>
+						<td id="sc_mount"></td>
+					</tr>
 				</table>
 
 				<table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3"  class="FormTable">
@@ -599,3 +619,4 @@ function update_sysinfo(e){
 <div id="footer"></div>
 </body>
 </html>
+

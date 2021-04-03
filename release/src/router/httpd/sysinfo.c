@@ -212,7 +212,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				free(buffer);
 				sprintf(result, "%d", freq);
 			}
-#if defined(RTCONFIG_HND_ROUTER_AX_675X)
+#if defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710)
 			else if (
 #if defined(RTAX55) || defined(RTAX1800)
 					get_model() == MODEL_RTAX55
@@ -228,6 +228,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 #endif
 			else
 #endif
+
 			{
 				tmp = nvram_safe_get("clkfreq");
 				if (*tmp)
@@ -576,6 +577,31 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 #elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
 			strcpy(result,"<i>off</i>");
 #endif
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER)
+		} else if(strlen(type) > 8 && strncmp(type,"hwaccel", 7) == 0 ) {
+			if (!strcmp(&type[8], "runner"))	// Also query Archer on 675x
+#if defined(RTAC86U) || defined(GTAC2900) || defined(R8000P)
+				system("cat /proc/modules | grep -m 1 -c pktrunner | sed -e \"s/0/Disabled/\" -e \"s/1/Enabled/\" >/tmp/output.txt");
+#else
+				system("/bin/fc status | grep \"HW Acceleration\" >/tmp/output.txt");
+#endif
+			else if (!strcmp(&type[8], "fc"))
+				system("/bin/fc status | grep \"Flow Learning\" >/tmp/output.txt");
+
+			char *buffer = read_whole_file("/tmp/output.txt");
+			if (buffer) {
+				if (strstr(buffer, "Enabled"))
+					strcpy(result,"Enabled");
+				else if (strstr(buffer, "Disabled"))
+					strcpy(result, "Disabled");
+				else
+					strcpy(result, "&lt;unknown&gt;");
+				free(buffer);
+			} else {
+				strcpy(result, "&lt;unknown&gt;");
+			}
+			unlink("/tmp/output.txt");
+#endif
 		} else {
 			strcpy(result,"Not implemented");
 		}
@@ -652,7 +678,7 @@ unsigned int get_phy_temperature(int radio)
 		interface = nvram_safe_get("wl0_ifname");
 	} else if (radio == 5) {
 		interface = nvram_safe_get("wl1_ifname");
-#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAC5300) || defined(RTAX89U) || defined(GTAX11000) || defined(RTAX92U)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAC5300) || defined(GTAX11000) || defined(RTAX92U)
 	} else if (radio == 52) {
 		interface = nvram_safe_get("wl2_ifname");
 #endif
@@ -702,8 +728,12 @@ unsigned int get_phy_temperature(int radio)
 		system("thermaltool -i wifi0 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
 	} else if (radio == 5) {
 		system("thermaltool -i wifi1 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
+#if defined(RTAC95U)
+	} else if (radio == 52) {
+		system("thermaltool -i wifi2 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
+#endif
 	} else {
-		return retval;//4019 not support
+		return retval;
 	}
 
 	char *buffer = read_whole_file("/tmp/output.txt");

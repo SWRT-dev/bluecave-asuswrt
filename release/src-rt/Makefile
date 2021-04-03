@@ -73,7 +73,7 @@ export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 export MERLINR_NAME := BLUECAVE
 #aimesh:R(384 and 385 and 386),non-aimesh:B(382 and 384)
 export MERLINR_VER_MAJOR :=R
-export MERLINR_VER_MINOR :=5.1.4b2
+export MERLINR_VER_MINOR :=5.1.4
 export MERLINR_VER := $(MERLINR_VER_MAJOR)$(MERLINR_VER_MINOR)
 export MERLINRVER := $(MERLINR_NAME)_$(MERLINR_VER)
 
@@ -784,6 +784,8 @@ ifeq ($(CONFIG_LANTIQ),y)
 	cd proprietary; cp -rf rom_lantiq_05.04.00.131_patch/* ${SRCBASE}/router/rom_lantiq/
 ifeq ($(K3C),y)
 	cd proprietary; cp -rf rom_lantiq_K3C_patch/* ${SRCBASE}/router/rom_lantiq/
+else
+	cd proprietary; cp -rf rom_lantiq_merlinr_patch/* ${SRCBASE}/router/rom_lantiq/
 endif
 	# cp -f proprietary/linux-3.10.104/firmware/lantiq/phy11g_ip_BE.bin linux/linux-3.10.104/firmware/lantiq/phy11g_ip_BE.bin
 endif

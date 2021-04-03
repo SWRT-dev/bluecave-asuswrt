@@ -42,6 +42,7 @@ endif
 	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme
 	install -d $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
 	install -d $(INSTALLDIR)/rom/etc/softcenter/webs
+	install -d $(INSTALLDIR)/rom/etc/softcenter/perp
 	install -d $(INSTALLDIR)/rom/etc/softcenter/scripts
 ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300 TUF-AX3000))
 	install -d $(INSTALLDIR)/rom/etc/softcenter/ROG/res
@@ -78,6 +79,7 @@ endif
 	install -m 0755 softcenter/res/layer/theme/default/loading-2.gif $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
 	install -m 0755 softcenter/webs/Main_Soft_center.asp $(INSTALLDIR)/rom/etc/softcenter/webs
 	install -m 0755 softcenter/webs/Main_Soft_setting.asp $(INSTALLDIR)/rom/etc/softcenter/webs
+	install -m 0755 softcenter/perp/perp.sh $(INSTALLDIR)/rom/etc/softcenter/perp
 	install -m 0755 softcenter/scripts/base.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/dummy_script.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
@@ -125,12 +127,10 @@ else ifeq ($(K3),y)
 	install -m 0755 sysinfo/k3/Tools_Sysinfo.asp $(INSTALLDIR)/www
 else ifeq ($(R7000P),y)
 	install -m 0755 sysinfo/r7000p/Tools_Sysinfo.asp $(INSTALLDIR)/www
-else ifeq ($(or $(R8000P),$(R7900P)),y)
-	install -m 0755 sysinfo/r8000p/Tools_Sysinfo.asp $(INSTALLDIR)/www/www
+else ifeq ($(or $(EA6700),$(DIR868L)),y)
+	install -m 0755 sysinfo/ea6700/Tools_Sysinfo.asp $(INSTALLDIR)/www
 else ifeq ($(HND_ROUTER), y)
 	install -m 0755 sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www/www
-else ifeq ($(EA6700),y)
-	install -m 0755 sysinfo/ea6700/Tools_Sysinfo.asp $(INSTALLDIR)/www
 else
 	install -m 0755 sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www
 endif

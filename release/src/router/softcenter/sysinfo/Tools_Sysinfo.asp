@@ -29,6 +29,19 @@ p{
 .row_title th {
 	width: unset;
 }
+.FormTitle i {
+    color: #FC0;
+    font-style: normal;
+}
+.FormTitle em {
+    color: #00ffe4;
+    font-style: normal;
+}
+.FormTitle b {
+    color: #1cfe16;
+    font-style: normal;
+	font-weight:normal;
+}
 </style>
 
 <script language="JavaScript" type="text/javascript" src="/state.js"></script>
@@ -47,6 +60,8 @@ var etherstate = "<% sysinfo("ethernet"); %>";
 var rtkswitch = "<% sysinfo("ethernet.rtk"); %>";
 var odmpid = "<% nvram_get("odmpid");%>";
 var ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
+var modelname = "<% nvram_get("modelname"); %>";
+var sc_mount = "<% nvram_get("sc_mount"); %>";
 overlib_str_tmp = "";
 overlib.isOut = true;
 function initial(){
@@ -72,6 +87,11 @@ function initial(){
 		document.getElementById("fwver").innerHTML = buildno;
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
+	if(sc_mount == "1")
+		document.getElementById("sc_mount").innerHTML = '<span>Enabled</span>';
+	else
+		document.getElementById("sc_mount").innerHTML = '<span>Disabled</span>';
+
 	var rc_caps = "<% nvram_get("rc_support"); %>";
 	var rc_caps_arr = rc_caps.split(' ').sort();
 	rc_caps = rc_caps_arr.toString().replace(/,/g, " ");
@@ -107,30 +127,20 @@ function hwaccel_state(){
 	var qos_enable = '<% nvram_get("qos_enable"); %>';
 	var qos_type = '<% nvram_get("qos_type"); %>';
 	if (hnd_support) {
-		code = "Runner:<span> ";
-		if ('<% nvram_get("runner_disable"); %>' == '1') {
-			code += "Disabled";
-			if ('<% nvram_get("runner_disable_force"); %>' == '1') {
-				code += " <i>(by user)</i>";
-			} else {
-				if (qos_enable == '1')
-					code += " <i>(QoS)</i>";
-			}
-		} else {
-			code += "Enabled";
-		}
+		var machine_name = "<% get_machine_name(); %>";
+		if (machine_name.search("aarch64") != -1)
+			code = "Runner:<span> ";
+		else
+			code = "Archer:<span> ";
+
+		var state = "<% sysinfo("hwaccel.runner"); %>";
+
+		code += state;
+
 		code += "</span>&nbsp;&nbsp;-&nbsp;&nbsp;Flow Cache:<span> ";
-		if ('<% nvram_get("fc_disable"); %>' == '1') {
-			code += "Disabled";
-			if ('<% nvram_get("fc_disable_force"); %>' == '1') {
-				code += " <i>(by user)</i>";
-			} else {
-				if ((qos_enable == '1') && (qos_type != '1'))
-					code += " <i>(QoS)</i>";
-			}
-		} else {
-			code += "Enabled";
-		}
+		state = "<% sysinfo("hwaccel.fc"); %>";
+
+		code += state;
 		code += "</span>";
 	} else {
 		if (ctf_dis == "1") {
@@ -543,6 +553,10 @@ function update_sysinfo(e){
 					<tr>
 						<th>JFFS</th>
 						<td id="jffs_td"></td>
+					</tr>
+					<tr>
+						<th>JFFS extension</th>
+						<td id="sc_mount"></td>
 					</tr>
 				</table>
 
