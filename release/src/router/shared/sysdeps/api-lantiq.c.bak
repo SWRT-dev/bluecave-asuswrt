@@ -115,12 +115,12 @@ static int __export_gpio(uint32_t gpio)
 		_dprintf("%s does not exist!\n", __func__);
 		return -1;
 	}
-	sprintf(gpio_path, "%s/gpio%d", GPIOLIB_DIR, gpio);
+	snprintf(gpio_path, sizeof(gpio_path),"%s/gpio%d", GPIOLIB_DIR, gpio);
 	if (d_exists(gpio_path))
 		return 0;
 
-	sprintf(export_path, "%s/export", GPIOLIB_DIR);
-	sprintf(gpio_str, "%d", gpio);
+	snprintf(export_path, sizeof(export_path), "%s/export", GPIOLIB_DIR);
+	snprintf(gpio_str, sizeof(gpio_str), "%d", gpio);
 	f_write_string(export_path, gpio_str, 0, 0);
 
 	return 0;
@@ -133,13 +133,13 @@ uint32_t gpio_dir(uint32_t gpio, int dir)
 	if (dir == GPIO_DIR_OUT) {
 		dir_str = "out";		/* output, low voltage */
 		*v = '\0';
-		sprintf(path, "%s/gpio%d/value", GPIOLIB_DIR, gpio);
-		if (f_read_string(path, v, sizeof(v)) > 0 && atoi(v) == 1)
+		snprintf(path, sizeof(path), "%s/gpio%d/value", GPIOLIB_DIR, gpio);
+		if (f_read_string(path, v, sizeof(v)) > 0 && safe_atoi(v) == 1)
 			dir_str = "high";	/* output, high voltage */
 	}
 
 	__export_gpio(gpio);
-	sprintf(path, "%s/gpio%d/direction", GPIOLIB_DIR, gpio);
+	snprintf(path, sizeof(path), "%s/gpio%d/direction", GPIOLIB_DIR, gpio);
 	f_write_string(path, dir_str, 0, 0);
 
 	return 0;
@@ -149,18 +149,18 @@ uint32_t get_gpio(uint32_t gpio)
 {
 	char path[PATH_MAX], value[10];
 
-	sprintf(path, "%s/gpio%d/value", GPIOLIB_DIR, gpio);
+	snprintf(path, sizeof(path), "%s/gpio%d/value", GPIOLIB_DIR, gpio);
 	f_read_string(path, value, sizeof(value));
 
-	return atoi(value);
+	return safe_atoi(value);
 }
 
 uint32_t set_gpio(uint32_t gpio, uint32_t value)
 {
 	char path[PATH_MAX], val_str[10];
 
-	sprintf(val_str, "%d", !!value);
-	sprintf(path, "%s/gpio%d/value", GPIOLIB_DIR, gpio);
+	snprintf(val_str, sizeof(val_str), "%d", !!value);
+	snprintf(path, sizeof(path), "%s/gpio%d/value", GPIOLIB_DIR, gpio);
 	f_write_string(path, val_str, 0, 0);
 
 	return 0;
@@ -405,9 +405,9 @@ int wl_ioctl(const char *ifname, int cmd, struct iwreq *pwrq)
 
 int wl_wave_unit(int unit){
 	if(unit == 1)
-		return 2;	/* 5G */
+		return LTQ_WIFI_BAND_5G_AP_IF;	/* 5G */
 	else
-		return 0;	/* 2G */
+		return LTQ_WIFI_BAND_2G_AP_IF;	/* 2G */
 }
 
 char *wl_vifname_wave(int unit, int subunit)
@@ -508,12 +508,12 @@ char *wif_to_vif(char *wif)
 
 	vif[0] = '\0';
 
-	for (unit = 0; unit < 2; unit++) {
-		for (subunit = 1; subunit < 4; subunit++) {
+	for (unit = 0; unit < MAX_NR_WL_IF; unit++) {
+		for (subunit = 1; subunit < MAX_NO_MSSID; subunit++) {
 			snprintf(prefix, sizeof(prefix), "wl%d.%d", unit, subunit);
 
 			if (nvram_match(strcat_r(prefix, "_ifname", tmp), wif)) {
-				sprintf(vif, "%s", prefix);
+				snprintf(vif, sizeof(vif), "%s", prefix);
 				goto RETURN_VIF;
 			}
 		}
@@ -1172,7 +1172,7 @@ static void set_nss_power_save_mode(void)
 	}
 
 	nss_min_freq = 110 * 1000000;
-	if (atoi(buf) == 1400000) {
+	if (safe_atoi(buf) == 1400000) {
 		nss_max_freq = 733 * 1000000;	/* IPQ8064 */
 	} else {
 		nss_max_freq = 800 * 1000000;	/* IPQ8065 */
@@ -1469,3 +1469,4 @@ void del_obd_probe_req_vsie(char *hexdata)
 }
 #endif /* RTCONFIG_AMAS */
 #endif
+
