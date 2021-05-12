@@ -4289,7 +4289,7 @@ start_smartdns(void)
 	//fprintf(fp, "log-size 128k\n");
 	//fprintf(fp, "log-num 2\n");
 #if !defined(K3) && !defined(SBRAC1900P) && !defined(SBRAC3200P) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
-	if(!strncmp(nvram_get("territory_code"), "CN",2)){
+	if(!strncmp(nvram_safe_get("territory_code"), "CN",2)){//Only the modified CFE of ac68u does not have this information(to unlock channels) 
 #endif
 		fprintf(fp, "server 114.114.114.114 -group master\n");
 		fprintf(fp, "server 119.29.29.29 -group master\n");
