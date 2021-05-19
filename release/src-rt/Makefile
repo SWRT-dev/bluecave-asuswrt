@@ -70,12 +70,12 @@ export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 #K3C/K3/SBRAC1900P/SBRAC3200P/R7000/R8000/R7900P/R8000P/RTACRH17/RTAC85P/GTAC2900/GTAC5300/RTAC86U/RTAC68U/RTAC3100/RTAC3200/RTAC68P/BLUECAVE
 #RTAX58U/TUFAX3000/RTAX56U/RTAX88U
 #export LANTIQ_OVERCLOCK=y
-export MERLINR_NAME := BLUECAVE
+export SWRT_NAME := BLUECAVE
 #aimesh:R(384 and 385 and 386),non-aimesh:B(382 and 384)
-export MERLINR_VER_MAJOR :=R
-export MERLINR_VER_MINOR :=5.1.4
-export MERLINR_VER := $(MERLINR_VER_MAJOR)$(MERLINR_VER_MINOR)
-export MERLINRVER := $(MERLINR_NAME)_$(MERLINR_VER)
+export SWRT_VER_MAJOR :=R
+export SWRT_VER_MINOR :=5.1.4
+export SWRT_VER := $(SWRT_VER_MAJOR)$(SWRT_VER_MINOR)
+export SWRTVER := $(SWRT_NAME)_$(SWRT_VER)
 
 # tmp depend on busybox
 E2FSPROGS := $(if $(filter $(BUSYBOX),busybox-1.17.4),n,y)
@@ -115,11 +115,11 @@ EXSTRING="-$(EXTENDTYPE)"
 else
 EXSTRING=
 endif
-export EXTENDNO := $(MERLINRVER)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")$(EXSTRING)
+export EXTENDNO := $(SWRTVER)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")$(EXSTRING)
 endif
 
 ifeq ($(EXTENDNO),)
-export EXTENDNO := $(MERLINRVER)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")
+export EXTENDNO := $(SWRTVER)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")
 endif
 
 export SWPJNAME := $(shell git branch | grep "*" | grep "swpj-" | sed 's/.*swpj-//g')
@@ -137,7 +137,7 @@ export SWPJEXTENDNO := $(shell git describe --match swpj_$(SWPJNAME)_$(SWPJVERNO
 ifneq ($(SWPJEXTENDNO),)
 export EXTENDNO := $(SWPJEXTENDNO)
 else
-export EXTENDNO := $(MERLINRVER)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")
+export EXTENDNO := $(SWRTVER)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")
 endif
 endif
 
@@ -186,10 +186,10 @@ export MODEL
 export CFLAGS += -D$(MODEL)
 #bluecave bug: export bluecave in target.mak and export bluecave=y here
 export $(MODEL):=y
-export CFLAGS += -D$(MERLINR_NAME)
-export $(MERLINR_NAME)=y
-export CFLAGS += -DMERLINR_VER_MAJOR_$(MERLINR_VER_MAJOR)
-export MERLINR_VER_MAJOR_$(MERLINR_VER_MAJOR)=y
+export CFLAGS += -D$(SWRT_NAME)
+export $(SWRT_NAME)=y
+export CFLAGS += -DSWRT_VER_MAJOR_$(SWRT_VER_MAJOR)
+export SWRT_VER_MAJOR_$(SWRT_VER_MAJOR)=y
 endif
 
 EXTRA_KERNEL_YES_CONFIGS_1 := $(filter %=y %=Y,$(EXTRA_KERNEL_CONFIGS))
@@ -219,7 +219,7 @@ lowercase_B = $(shell echo $(BUILD_NAME) | tr A-Z a-z)
 BUILD_TIME := $(shell LC_ALL=C date -u)
 BUILD_USER ?= $(shell whoami)
 ifeq ($(BUILD_USER),paldier)
-BUILD_INFO := MerlinRdev
+BUILD_INFO := SWRTdev
 else
 BUILD_INFO := $(shell git log --pretty="%h" -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")
 endif
@@ -432,6 +432,7 @@ endif
 endif
 	@echo '$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER) $(BUILD_TIME)' > router/shared/version
 	@echo 'EXTENDNO=$(EXTENDNO)' > router/extendno.conf
+	@echo '#define RT_FWVER "$(SWRT_VER_MINOR)"' >> router/shared/version.h
 
 rt_ver_ntools:
 	-@rm -f ntools/version
@@ -785,7 +786,7 @@ ifeq ($(CONFIG_LANTIQ),y)
 ifeq ($(K3C),y)
 	cd proprietary; cp -rf rom_lantiq_K3C_patch/* ${SRCBASE}/router/rom_lantiq/
 else
-	cd proprietary; cp -rf rom_lantiq_merlinr_patch/* ${SRCBASE}/router/rom_lantiq/
+	cd proprietary; cp -rf rom_lantiq_swrt_patch/* ${SRCBASE}/router/rom_lantiq/
 endif
 	# cp -f proprietary/linux-3.10.104/firmware/lantiq/phy11g_ip_BE.bin linux/linux-3.10.104/firmware/lantiq/phy11g_ip_BE.bin
 endif

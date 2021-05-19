@@ -89,7 +89,7 @@
 #elif defined(R8000P)
 #include "r7900p.h"
 #else
-#include "merlinr.h"
+#include "swrt.h"
 #endif
 
 static int fatalsigs[] = {
@@ -8390,7 +8390,7 @@ int init_nvram(void)
 		nvram_set_int("led_idr_sig2_gpio", 6);	// BLUE
 
 		nvram_set_int("btn_wps_gpio", 30|GPIO_ACTIVE_LOW);
-		merlinr_init();
+		swrt_init();
 #endif
 		nvram_set_int("btn_rst_gpio", 0|GPIO_ACTIVE_LOW);
 
@@ -9140,7 +9140,7 @@ NO_USB_CAP:
 #endif
 
 #ifdef RTCONFIG_AMAS
-#if !defined(MERLINR_VER_MAJOR_B)
+#if !defined(SWRT_VER_MAJOR_B)
 	add_rc_support("amas");
 	if (nvram_get_int("amas_bdl"))
 	add_rc_support("amas_bdl");
@@ -11157,7 +11157,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 #if defined(K3C)
 			k3c_init_done();
 #else
-			merlinr_init_done();
+			swrt_init_done();
 #endif
 #endif
 #ifdef RTCONFIG_AMAS

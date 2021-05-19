@@ -328,7 +328,7 @@ else ifeq ($(K3C),y)
 OBJS += k3c.o
 OBJS += $(if $(wildcard k3cex.c), k3cex.o, prebuild/k3cex.o)
 else
-OBJS += merlinr.o
+OBJS += swrt.o
 endif
 # TODO, speedtest
 ifeq ($(RTCONFIG_SPEEDTEST),y)
@@ -414,7 +414,7 @@ OBJS += dsl_fb.o
 endif
 
 ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
-ifneq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), BLUECAVE K3 K3C R7900P SBRAC1900P RTAC68U EA6700))
+ifneq ($(SWRT_NAME), $(filter $(SWRT_NAME), BLUECAVE K3 K3C R7900P SBRAC1900P RTAC68U EA6700))
 OBJS += frs_service.o
 endif
 endif

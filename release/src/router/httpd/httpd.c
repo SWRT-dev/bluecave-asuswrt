@@ -945,7 +945,7 @@ handle_request(void)
 						{
 							char dictname[32];
 							_dprintf("handle_request: pLang->Lang = %s\n", pLang->Lang);
-							if (!check_lang_support_merlinr(pLang->Target_Lang))
+							if (!check_lang_support_swrt(pLang->Target_Lang))
 								break;
 
 							snprintf(dictname, sizeof(dictname), "%s.dict", pLang->Target_Lang);

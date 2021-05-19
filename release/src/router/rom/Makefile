@@ -169,7 +169,7 @@ endif
 endif
 else
 ifeq ($(RTCONFIG_HTTPS),y)
-	cp -f webs_scripts/merlinr_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
+	cp -f webs_scripts/swrt_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh
 ifeq ($(RTCONFIG_FBWIFI),y)
 	cp -f webs_scripts/fbwifi_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 else ifeq ($(RTAC68A),y)
@@ -180,8 +180,8 @@ else
 	cp -f webs_scripts/ssl_webs_update.sh $(INSTALLDIR)/usr/sbin/webs_update.sh
 endif
 ifeq ($(RTCONFIG_CFGSYNC),y)
-	cp -f webs_scripts/merlinr_webs_download.sh $(INSTALLDIR)/usr/sbin/webs_download.sh
-	cp -f webs_scripts/merlinr_webs_note.sh $(INSTALLDIR)/usr/sbin/webs_note.sh
+	cp -f webs_scripts/swrt_webs_download.sh $(INSTALLDIR)/usr/sbin/webs_download.sh
+	cp -f webs_scripts/swrt_webs_note.sh $(INSTALLDIR)/usr/sbin/webs_note.sh
 endif
 else
 	cp -f webs_scripts/nozip_webs_upgrade.sh $(INSTALLDIR)/usr/sbin/webs_upgrade.sh

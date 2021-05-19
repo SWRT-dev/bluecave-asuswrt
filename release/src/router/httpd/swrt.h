@@ -14,14 +14,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2018-2020, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2021, paldier <paldier@hotmail.com>.
  * All Rights Reserved.
  * 
  */
 
-#ifndef _merlinr_h_
-#define _merlinr_h_
-extern int get_lang_num_merlinr();
-extern int check_lang_support_merlinr(char *lang);
-extern int change_preferred_lang_merlinr(int finish);
+#ifndef _swrt_h_
+#define _swrt_h_
+extern int get_lang_num_swrt();
+extern int check_lang_support_swrt(char *lang);
+extern int change_preferred_lang_swrt(int finish);
 #endif

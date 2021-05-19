@@ -37,7 +37,7 @@
 #elif defined(SBRAC3200P)
 #include "ac3200p.h"
 #else
-#include "merlinr.h"
+#include "swrt.h"
 #endif
 
 #ifndef ARRAYSIZE
@@ -884,7 +884,7 @@ static const applets_t applets[] = {
 	{ "firmware_check",		firmware_check_main		},
 #if defined(RTCONFIG_FRS_LIVE_UPDATE)
 #if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_LANTIQ) || defined(HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
-	{ "firmware_check_update",	merlinr_firmware_check_update_main	},
+	{ "firmware_check_update",	swrt_firmware_check_update_main	},
 #else
 	{ "firmware_check_update",	firmware_check_update_main	},
 #endif
@@ -950,7 +950,7 @@ static const applets_t applets[] = {
 #ifdef RTCONFIG_ADTBW
 	{ "adtbw",			adtbw_main		},
 #endif
-	{ "toolbox",			merlinr_toolbox		},
+	{ "toolbox",			swrt_toolbox		},
 	{NULL, NULL}
 };
 

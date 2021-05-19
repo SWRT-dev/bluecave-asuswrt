@@ -32,7 +32,7 @@
 #include <dmalloc.h>
 #endif
 #include <rtconfig.h>
-#include "merlinr.h"
+#include "swrt.h"
 
 /* DEBUG DEFINE */
 #define HTTPD_DEBUG             "/tmp/HTTPD_DEBUG"
