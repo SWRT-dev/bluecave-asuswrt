@@ -3723,3 +3723,6 @@ AURA_Event_Attack_desc=Sistem potansiyel bir saldırıyı başarıyla engelledi�
 AURA_Event_Note=Not: Olay seçildikten sonra, sistem mevcut algılanan olaya göre farklı LED efektleri gösterecektir. Bu işlevi kullanırken cihazınızın LED'lerini kontrol edemezsiniz.
 UU_Accelerator=网易 UU 加速器
 UU_Accelerator_desc=UU 路由器插件为三大主机（PS4、Switch、Xbox One）、PC 外服端游提供加速。可实现多设备同时加速，畅享全球联机超快感！
+Softcenter=Softcenter
+Softcenter_tool=Tools
+TencentAcceleration=Tencent Acceleration

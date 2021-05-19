@@ -133,11 +133,11 @@ define(function(){
 				] 
 			},
 			{
-				menuName: "<#K3C_Tools#>",
+				menuName: "<#Softcenter_tool#>",
 				index: "menu_Tools",
 				tab: [
-					{url: "Tools_Sysinfo.asp", tabName: "<#K3C_Sysinfo#>"},
-					{url: "Softcenter.asp", tabName: "<#Softcenter#>"},
+					{url: "Tools_Sysinfo.asp", tabName: "Sysinfo"},
+					{url: "Softcenter.asp", tabName: "<#Softcenter_tool#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
