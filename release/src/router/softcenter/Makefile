@@ -20,7 +20,7 @@ install:
 	install -d $(INSTALLDIR)/usr/bin
 	install -d $(INSTALLDIR)/usr/share
 	install -d $(INSTALLDIR)/usr/lib
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3))
+ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), K3))
 	install -d $(INSTALLDIR)/mcu
 endif
 	install -d $(INSTALLDIR)/rom/etc
@@ -85,14 +85,14 @@ endif
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_tar_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	#install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3C))	
+ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), K3C))	
 	install -m 0755 mtd $(INSTALLDIR)/sbin
 endif
 ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300 TUF-AX3000))
 	install -m 0755 softcenter/ROG/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/ROG/res
 endif
 	install -m 0755 jffsinit.sh $(INSTALLDIR)/usr/sbin
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), K3))
+ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), K3))
 	install -m 0755 uhmiMsg $(INSTALLDIR)/usr/sbin
 	install -m 0644 mcu/app.2.2.120.bin $(INSTALLDIR)/mcu
 	install -m 0644 mcu/app.1.2.116.hex $(INSTALLDIR)/mcu
@@ -117,7 +117,7 @@ else
 	install -m 0755 scEN.json $(INSTALLDIR)/www/res
 	install -m 0755 scTW.json $(INSTALLDIR)/www/res
 	install -m 0755 Softcenter.asp $(INSTALLDIR)/www
-ifeq ($(MERLINR_NAME), $(filter $(MERLINR_NAME), SBRAC1900P SBRAC3200P))
+ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), SBRAC1900P SBRAC3200P))
 	install -m 0755 key.asp $(INSTALLDIR)/www
 endif
 endif
@@ -134,7 +134,7 @@ else ifeq ($(HND_ROUTER), y)
 else
 	install -m 0755 sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www
 endif
-ifeq ($(or $(MERLINR_VER_MAJOR_R),$(MERLINR_VER_MAJOR_X)),y)
+ifeq ($(or $(SWRT_VER_MAJOR_R),$(SWRT_VER_MAJOR_X)),y)
 ifeq ($(or $(K3),$(R8500),$(XWR3100),$(TY6201_RTK),$(TY6201_BCM)),y)
 ifeq ($(HND_ROUTER), y)
 	install -m 0755 key.asp $(INSTALLDIR)/www/www
