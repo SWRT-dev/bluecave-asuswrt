@@ -16153,7 +16153,7 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char_t *url, char_t *path, char_t *query)
 {
 	int i, id=0, count;
-	char script[99], p[15], db_cmd[128], scPath[256], notify_cmd[128];
+	char script[99], p[15], db_cmd[128], scPath[256];
 	char *post_db_buf = post_json_buf;
 	char *name = NULL;
 	FILE *fp;
@@ -16193,11 +16193,11 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			json_object_object_get_ex(root,"id", &idObj);
 			id = json_object_get_int(idObj);
 			json_object_object_get_ex(root,"method", &methodObj);
-			memset(script,'\0',sizeof(script));
+			memset(script, 0, sizeof(script));
 			sprintf(script,"%s", json_object_get_string(methodObj));
 			json_object_object_get_ex(root,"params", &paramsObj);
 			count  = json_object_array_length(paramsObj);
-			memset(p,'\0',sizeof(p));
+			memset(p, 0, sizeof(p));
 			for (i = 0; i < count; i++){
 				arrayObj = json_object_array_get_idx(paramsObj, i);
 				if (json_object_get_type(arrayObj) == json_type_int)
@@ -16216,11 +16216,9 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			}
 			if(!check_if_dir_exist("/tmp/upload"))
 				mkdir("/tmp/upload", 0755);
-			memset(db_cmd,'\0',sizeof(db_cmd));
-			memset(scPath,'\0',sizeof(scPath));
-			snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
-			strncpy(notify_cmd, script, strlen(script));
-			strcat(scPath, notify_cmd);
+			memset(db_cmd, 0, sizeof(db_cmd));
+			memset(scPath, 0, sizeof(scPath));
+			snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/%s", script);
 			if(*p){
 				snprintf(db_cmd, sizeof(db_cmd), " %d %s", id, p);
 				strcat(scPath, db_cmd);
@@ -16237,7 +16235,7 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			json_object_put(arrayObj);
 			json_object_put(root);
 			dbclient_end(&client);
-			memset(scPath,'\0',sizeof(scPath));
+			memset(scPath, 0, sizeof(scPath));
 			snprintf(scPath, sizeof(scPath), "/tmp/upload/%d",id);
 			for(i=0; i<10; i++){
 				usleep(100000);//wait for script
@@ -16269,7 +16267,7 @@ do_dbtemp_cgi(char *url, FILE *stream)
 	char dbname[100];
 	char logpath[128];
 	sscanf(url, "_temp/%s", dbname);
-	memset(logpath,'\0',sizeof(logpath));
+	memset(logpath, 0, sizeof(logpath));
 	sprintf(logpath, "/tmp/upload/%s", dbname);
 	if(check_if_file_exist(logpath))
 		do_file(logpath, stream);
@@ -16281,7 +16279,7 @@ do_dbroot_cgi(char *url, FILE *stream)
 	char dbname[100];
 	char logpath[128];
 	sscanf(url, "_root/%s", dbname);
-	memset(logpath,'\0',sizeof(logpath));
+	memset(logpath, 0, sizeof(logpath));
 	sprintf(logpath, "/jffs/softcenter/webs/%s", dbname);
 	if(check_if_file_exist(logpath))
 		do_file(logpath, stream);
@@ -16301,16 +16299,16 @@ dbresp_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		snprintf(msglist2.buf, sizeof(msglist2.buf), "%s", post_json_buf);
 		msglist3.id=0;
 		msglist4.id=0;
-		memset(msglist3.buf,'\0',sizeof(msglist3.buf));
-		memset(msglist4.buf,'\0',sizeof(msglist4.buf));
+		memset(msglist3.buf, 0, sizeof(msglist3.buf));
+		memset(msglist4.buf, 0, sizeof(msglist4.buf));
 	} else if(msglist.id>0 && msglist2.id>0 && msglist3.id==0){
 		msglist3.id=i;
 		snprintf(msglist3.buf, sizeof(msglist3.buf), "%s", post_json_buf);
 	} else {
 		msglist.id=0;
 		msglist2.id=0;
-		memset(msglist.buf,'\0',sizeof(msglist.buf));
-		memset(msglist2.buf,'\0',sizeof(msglist2.buf));
+		memset(msglist.buf, 0, sizeof(msglist.buf));
+		memset(msglist2.buf, 0, sizeof(msglist2.buf));
 		msglist4.id=i;
 		snprintf(msglist4.buf, sizeof(msglist4.buf), "%s", post_json_buf);
 	}
