@@ -6043,7 +6043,7 @@ static int get_cpu_temperature(int eid, webs_t wp, int argc, char_t **argv)
 
 	return websWrite(wp, "%3.3f", (double) temperature / 1000);
 #elif defined(RTCONFIG_QCA)
-#if defined(RTAC82U)
+#if defined(RTCONFIG_SOC_IPQ40XX)
 	return websWrite(wp, "0");//ipq401x not support
 #else
 	char temperature[6] = { 0 };
@@ -15924,8 +15924,8 @@ static int
 applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char_t *url, char_t *path, char_t *query)
 {
-	char *action_mode;
-	char *action_script;
+	char *action_mode = NULL;
+	char *action_script = NULL;
 	char dbjson[100][9999];
 	char dbvar[2048];
 	char dbval[9999];
@@ -15949,17 +15949,17 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	}
 	if ( !strcmp("", post_db_buf)){
 		//get
-		sprintf(post_db_buf, "%s", post_buf_backup+1);
+		snprintf(post_db_buf, sizeof(post_db_buf), "%s", post_buf_backup+1);
 		unescape(post_db_buf);
 		//logmessage("HTTPD", "url: %s,%s", post_db_buf, name);
-		strcpy(post_json_buf, post_db_buf);
+		strlcpy(post_json_buf, post_db_buf, sizeof(post_json_buf));
 		result = strtok( post_json_buf, "&" );
 		i =0;
 	while( result != NULL )
 	{
 		if (result!=NULL)
 		{
-		strcpy(dbjson[i], result);
+		strlcpy(dbjson[i], result, sizeof(dbjson[i]));
 		i++;
 			result = strtok( NULL, "&" );
 		}
@@ -15970,7 +15970,7 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				memset(dbvar,'\0',sizeof(dbvar));
 				memset(dbval,'\0',sizeof(dbval));
 				temp=strstr(dbjson[j], "=");
-				strcpy(dbval, temp+1);
+				strlcpy(dbval, temp+1, sizeof(dbval));
 				strncpy(dbvar, dbjson[j], strlen(dbjson[j])-strlen(temp));
 			//logmessage("HTTPD", "name: %s post: %s", dbvar, dbval);
 			if(*userm || dbval[0]=='\0')
@@ -15984,14 +15984,14 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	unescape(post_db_buf);
 	//logmessage("HTTPD", "name: %s post: %s", name, post_json_buf);
 	//logmessage("HTTPD", "name: %s post: %s", name, post_db_buf);
-	strcpy(post_json_buf, post_db_buf);
+	strlcpy(post_json_buf, post_db_buf, sizeof(post_json_buf));
 	result = strtok( post_json_buf, "&" );
 	i =0;
 	while( result != NULL )
 	{
 		if (result!=NULL)
 		{
-		strcpy(dbjson[i], result);
+		strlcpy(dbjson[i], result, sizeof(dbjson[i]));
 		i++;
 			result = strtok( NULL, "&" );
 		}
@@ -16002,7 +16002,7 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 				memset(dbvar,'\0',sizeof(dbvar));
 				memset(dbval,'\0',sizeof(dbval));
 				temp=strstr(dbjson[j], "=");
-				strcpy(dbval, temp+1);
+				strlcpy(dbval, temp+1, sizeof(dbval));
 				strncpy(dbvar, dbjson[j], strlen(dbjson[j])-strlen(temp));
 			//logmessage("HTTPD", "dbvar: %s dbval: %s", dbvar, dbval);
 			if(*userm || dbval[0]=='\0')
@@ -16017,7 +16017,7 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	if(!strcmp(action_mode, "toolscript") || !strcmp(action_mode, " Refresh ")){
 		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
 		strncpy(notify_cmd, action_script, 128);
-		strcat(scPath, notify_cmd);
+		strlcat(scPath, notify_cmd, sizeof(scPath));
 		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
 		sys_script("syscmd.sh");
 	}
@@ -16026,10 +16026,10 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	}
 	else if(*action_mode){
 		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/");
-		strncpy(notify_cmd, action_script, 128);
-		strcat(scPath, notify_cmd);
+		strlcpy(notify_cmd, action_script, sizeof(notify_cmd));
+		strlcat(scPath, notify_cmd, sizeof(scPath));
 		snprintf(db_cmd, sizeof(db_cmd), " %s", action_mode);
-		strcat(scPath, db_cmd);
+		strlcat(scPath, db_cmd, sizeof(scPath));
 		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
 		sys_script("syscmd.sh");
 	}
@@ -16100,17 +16100,17 @@ do_logread(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 {
 	char buf[4096];
 	char logpath[128], scPath[128];
-	FILE *fp;
+	FILE *fp = NULL;
 	//char filename[100];
 	//sscanf(url, "logreaddb.cgi?%s", filename);
 	char *filename = websGetVar(wp, "p","");
 	char *script = websGetVar(wp, "script", "");
 	if(*script){
-		sprintf(scPath, "/jffs/softcenter/scripts/%s", script);
+		snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/%s", script);
 		strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
 		sys_script("syscmd.sh");
 	}
-	sprintf(logpath, "/tmp/%s", filename);
+	snprintf(logpath, sizeof(logpath), "/tmp/%s", filename);
 	//logmessage("HTTPD", "logread: %s, url: %s", logpath, url);
 	//sleep(1);//
 	if(check_if_file_exist(logpath)){
@@ -16153,7 +16153,7 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 		char_t *url, char_t *path, char_t *query)
 {
 	int i, id=0, count;
-	char script[99], p[15], db_cmd[128], scPath[256];
+	char script[99], p[15], scPath[256];
 	char *post_db_buf = post_json_buf;
 	char *name = NULL;
 	FILE *fp;
@@ -16194,16 +16194,16 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			id = json_object_get_int(idObj);
 			json_object_object_get_ex(root,"method", &methodObj);
 			memset(script, 0, sizeof(script));
-			sprintf(script,"%s", json_object_get_string(methodObj));
+			snprintf(script, sizeof(script), "%s", json_object_get_string(methodObj));
 			json_object_object_get_ex(root,"params", &paramsObj);
 			count  = json_object_array_length(paramsObj);
 			memset(p, 0, sizeof(p));
 			for (i = 0; i < count; i++){
 				arrayObj = json_object_array_get_idx(paramsObj, i);
 				if (json_object_get_type(arrayObj) == json_type_int)
-					sprintf(p,"%d", json_object_get_int(arrayObj));
+					snprintf(p, sizeof(p), "%d", json_object_get_int(arrayObj));
 				else if (json_object_get_type(arrayObj) == json_type_string)
-					sprintf(p,"%s", json_object_get_string(arrayObj));
+					snprintf(p, sizeof(p), "%s", json_object_get_string(arrayObj));
 			}
 			json_object_object_get_ex(root,"fields", &fieldsObj);
 			if(json_object_get_type(fieldsObj)==json_type_object){
@@ -16216,18 +16216,13 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 			}
 			if(!check_if_dir_exist("/tmp/upload"))
 				mkdir("/tmp/upload", 0755);
-			memset(db_cmd, 0, sizeof(db_cmd));
 			memset(scPath, 0, sizeof(scPath));
-			snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/%s", script);
 			if(*p){
-				snprintf(db_cmd, sizeof(db_cmd), " %d %s", id, p);
-				strcat(scPath, db_cmd);
+				snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/%s %d %s &", script, id, p);
 			} else {
-				snprintf(db_cmd, sizeof(db_cmd), " %d", id);
-				strcat(scPath, db_cmd);
+				snprintf(scPath, sizeof(scPath), "/jffs/softcenter/scripts/%s %d &", script, id);
 			}
-			strlcpy(SystemCmd, scPath, sizeof(SystemCmd));
-			sys_script("syscmd.sh");
+			doSystem(scPath);
 			json_object_put(idObj);
 			json_object_put(methodObj);
 			json_object_put(paramsObj);
@@ -16268,7 +16263,7 @@ do_dbtemp_cgi(char *url, FILE *stream)
 	char logpath[128];
 	sscanf(url, "_temp/%s", dbname);
 	memset(logpath, 0, sizeof(logpath));
-	sprintf(logpath, "/tmp/upload/%s", dbname);
+	snprintf(logpath, sizeof(logpath), "/tmp/upload/%s", dbname);
 	if(check_if_file_exist(logpath))
 		do_file(logpath, stream);
 }
@@ -16280,7 +16275,7 @@ do_dbroot_cgi(char *url, FILE *stream)
 	char logpath[128];
 	sscanf(url, "_root/%s", dbname);
 	memset(logpath, 0, sizeof(logpath));
-	sprintf(logpath, "/jffs/softcenter/webs/%s", dbname);
+	snprintf(logpath, sizeof(logpath), "/jffs/softcenter/webs/%s", dbname);
 	if(check_if_file_exist(logpath))
 		do_file(logpath, stream);
 }
@@ -16326,7 +16321,7 @@ do_result_cgi(char *url, FILE *stream)
 {
 	int resultid;
 	char path[50],buf[2048];
-	FILE *fp;
+	FILE *fp = NULL;
 	sscanf(url, "_result/%d", &resultid);
 	snprintf(path, sizeof(path), "/tmp/upload/%d",resultid);
 	if(check_if_file_exist(path)){

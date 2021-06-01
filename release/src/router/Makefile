@@ -94,10 +94,10 @@ MODEL = $(subst -,,$(subst +,P,$(BUILD_NAME)))
 endif
 export CFLAGS += -D$(MODEL)
 export $(MODEL)=y
-export CFLAGS += -D$(MERLINR_NAME)
-export $(MERLINR_NAME)=y
-export CFLAGS += -DMERLINR_VER_MAJOR_$(MERLINR_VER_MAJOR)
-export MERLINR_VER_MAJOR_$(MERLINR_VER_MAJOR)=y
+export CFLAGS += -D$(SWRT_NAME)
+export $(SWRT_NAME)=y
+export CFLAGS += -DSWRT_VER_MAJOR_$(SWRT_VER_MAJOR)
+export SWRT_VER_MAJOR_$(SWRT_VER_MAJOR)=y
 
 export OLD_SRC=$(SRCBASE)/../src
 ifeq ($(RTCONFIG_REALTEK),y)

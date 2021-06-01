@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include "rc.h"
 #include <shared.h>
+#include <version.h>
 #include <shutils.h>
 #if defined(RTCONFIG_LANTIQ)
 #include <lantiq.h>

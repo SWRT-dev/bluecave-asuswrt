@@ -173,7 +173,7 @@ static int __iwpriv_get(const char *iface, char *cmd, char *buf, unsigned int bu
  * 	NULL	invalid parameter or error.
  *  otherwise:	success
  */
-static char *iwpriv_get(const char *iface, char *cmd)
+char *iwpriv_get(const char *iface, char *cmd)
 {
 	static char result[256];
 

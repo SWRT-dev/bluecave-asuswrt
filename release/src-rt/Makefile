@@ -73,7 +73,7 @@ export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 export SWRT_NAME := BLUECAVE
 #aimesh:R(384 and 385 and 386),non-aimesh:B(382 and 384)
 export SWRT_VER_MAJOR :=R
-export SWRT_VER_MINOR :=5.1.4
+export SWRT_VER_MINOR :=5.1.5b1
 export SWRT_VER := $(SWRT_VER_MAJOR)$(SWRT_VER_MINOR)
 export SWRTVER := $(SWRT_NAME)_$(SWRT_VER)
 
@@ -2751,6 +2751,10 @@ define RouterOptions
 	if [ "$(SMARTDNS)" = "y" ]; then \
 	sed -i "/RTCONFIG_SMARTDNS/d" $(1); \
 	echo "RTCONFIG_SMARTDNS=y" >>$(1); \
+	fi; \
+	if [ "$(SWRT)" = "y" ]; then \
+	sed -i "/RTCONFIG_SWRT/d" $(1); \
+	echo "RTCONFIG_SWRT=y" >>$(1); \
 	fi; \
 	)
 	$(call platformRouterOptions, $(1))

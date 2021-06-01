@@ -35,9 +35,205 @@
 #include <help_objlist.h>
 #include <wlan_config_api.h>
 
-int wav_ep_up(int unit)
+const int pre_rssi[] = {-91, -91, -91};
+
+int wav_ep_up(int band)
 {
-	return fapi_wlan_up(get_staifname(unit), 0, 1);
+	return fapi_wlan_up(get_staifname(band), 0, 1);
+}
+
+int get_usb_mode()
+{
+	int ret = 0;
+	FILE *fp;
+	char *tmp;
+	unsigned int value;
+	char buf[64];
+
+	memset(buf, 0, sizeof(buf));
+	if((fp = popen("mem -s 0x1a40c020 -du", "r")) != NULL)
+	{
+		fgets(buf, sizeof(buf), fp);
+		tmp = strchr(buf, ':');
+		if (tmp)
+		{
+			value = strtol(tmp + 1, NULL, 16);
+			_dprintf("Read 0x1a40c020 as [0x%08x]\n", value);
+			ret = 1;
+			if(value == 0x2000)
+				ret = 0;
+			else if (value)
+				ret = -1;
+		} else
+			ret = 0;
+		pclose(fp);
+	}
+	return ret;
+}
+
+void gen_config_sh()
+{
+	system("cp -f /rom/opt/lantiq/etc/rc.d/config.sh /etc/; cd /etc/rc.d; ln -s ../config.sh config.sh");
+}
+
+void usb_pwr_ctl(int onoff)
+{
+	FILE *fp;
+	char *tmp;
+	unsigned int value;
+	char cmd[64];
+	char buf[64];
+
+
+	memset(buf, 0, sizeof(buf));
+	if((fp = popen("mem -s 0x16c00000 -du", "r")) != NULL)
+	{
+		fgets(buf, sizeof(buf), fp);
+		tmp = strchr(buf, ':');
+		if(tmp)
+		{
+			value = strtol(tmp + 1, NULL, 16);
+			_dprintf("Read 0x16c00000 as [0x%08x]\n", value);
+			if(onoff == 1)
+			{
+				_dprintf("Set usb power [on]\n");
+				value = value | 0x80;
+			} else {
+				_dprintf("Set usb power [off]\n");
+		    	value = value & 0xFFFFFF7F;
+			}
+			_dprintf("Write 0x16c00000 as [0x%08x]\n", value);
+      		snprintf(cmd, sizeof(cmd), "mem -s 0x16c00000 -w 0x%08x -u", value);
+      		system(cmd);
+		} else {
+			v9 = 0;
+		}
+		pclose(fp);
+	}
+}
+
+void set_usb3_to_usb2()
+{
+	if (!get_usb_mode()){
+		_dprintf("[usb] already USB2 mode, skip\n");
+		return
+	}
+	_dprintf("[wait] usb3 to usb2 start\n");
+	_ejusb_main("-1", 0);
+	notify_rc_after_wait("restart_nasapps");
+	_dprintf("[warning] power off usb and change mode\n");
+	usb_pwr_ctl(0);
+	system("mem -s 0x1a40c020 -uw 0x2000");
+	usb_pwr_ctl(1);
+	_dprintf("[wait] usb3 to usb2 end\n");
+}
+
+void set_usb2_to_usb3()
+{
+	if (get_usb_mode() == 1){
+		_dprintf("[usb] already USB3 mode, skip\n");
+		return;
+	}
+	_dprintf("[wait] usb2 to usb3 start\n");
+	_ejusb_main("-1", 0);
+	notify_rc_after_wait("restart_nasapps");
+	_dprintf("[warning] power off usb and change mode\n");
+  	usb_pwr_ctl(0);
+	system("mem -s 0x1a40c020 -uw 0x0");
+	usb_pwr_ctl(1);
+	_dprintf("[wait] usb2 to usb3 end\n");
+}
+
+void apply_config_to_driver()
+{
+	trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_SET_STA_CONFIG);
+}
+
+int Pty_get_wlc_status(int band)
+{
+	return 0;
+}
+
+int Pty_start_wlc_connect(int band)
+{
+	int result = 0;
+	char *sta;
+
+	sta = get_staifname(band);
+	if(!is_if_up(sta))
+		result = eval("ifconfig", sta, "up");
+
+	return result;
+}
+
+int get_psta_rssi(int band)
+{
+	char *sta;
+	FILE *fp;
+  	int ant;
+  	int trssi;
+	int result;
+  	int rssi;
+	char tmp[128], buf[128];
+	int signal;
+
+	memset(tmp, 0, sizeof(tmp));
+  	signal = 0;
+	sta = get_staifname(band);
+	snprintf(tmp, sizeof(tmp), "/proc/net/mtlk/%s/PeerFlowStatus", sta);
+	if ((fp = fopen(tmp, "r")) != NULL)
+	{
+		ant = 0;
+		trssi = 0;
+		memset(buf, 0, sizeof(buf));
+		while (fgets(buf, sizeof(buf), fp))
+		{
+			if(strstr(buf, "RSSI"))
+			{
+				sscanf(buf, "%d", &signal);
+				++ant;
+				trssi += signal;
+			}
+		}
+		fclose(fp);
+		if (!ant)
+			return pre_rssi[band];
+		rssi = trssi/ant;
+		if(rssi == -128)
+			return pre_rssi[band];
+		result = -1;
+		if(rssi < 0)
+		{
+			result = pre_rssi[band];
+			if (rssi >= -91)
+				result = rssi;
+		}
+	} else
+		result = pre_rssi[band];
+
+	return result;
+}
+
+int Pty_stop_wlc_connect(int band)
+{
+	int result = 0;
+	char *sta;
+
+	sta = get_staifname(band);
+	if(is_if_up(sta))
+		result = eval("ifconfig", sta, "down");
+
+	return result;
+}
+
+int Pty_get_upstream_rssi(int band)
+{
+	return get_psta_rssi(band);
+}
+
+int get_psta_status()
+{
+	return getPapState();
 }
 
 void wlconf_pre()
@@ -73,22 +269,6 @@ void set_wlan_service_status(int bssidx, int vifidx, int enabled)
 		sleep(1);
 	}
 #if 0
-	if(bssidx || ((bssidx|enabled) = enabled, enabled != 1))
-	{
-		if((bssidx|enabled) != 0)
-		{
-			if(bssidx != 1)
-				return 1;
-			if(enabled == 1)
-				return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_ON);
-			else if(enabled)
-				return 1;
-			return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_OFF);
-		} else
-			return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_OFF);
-	} else
-		return trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_ON);
-#endif
 	if(bssidx == 0 && enabled == 1)
 		trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP2G_ON);
 	else if((bssidx == 0 && enabled == 0)
@@ -97,6 +277,17 @@ void set_wlan_service_status(int bssidx, int vifidx, int enabled)
 		trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_ON);
 	else if(bssidx == 1 && enabled == 0)
 		trigger_wave_monitor(__func__, __LINE__, WAVE_ACTION_RE_AP5G_OFF);
+#endif
+	switch(bssidx){
+	case 0:
+		trigger_wave_monitor(__func__, __LINE__, enabled ? WAVE_ACTION_RE_AP2G_ON : WAVE_ACTION_RE_AP2G_OFF);
+		break;
+	case 1:
+		trigger_wave_monitor(__func__, __LINE__, enabled ? WAVE_ACTION_RE_AP5G_ON : WAVE_ACTION_RE_AP5G_OFF);
+		break;
+	default:
+		break;
+	}
 }
 #if 0
 int get_wlan_service_status(int bssidx, int vifidx)
@@ -164,8 +355,27 @@ int set_wlan_service_status(int bssidx, int vifidx, int enabled)
 }
 #endif
 
+enum {
+	IFTYPE_WAN = 1,
+	IFTYPE_2G = 2,
+	IFTYPE_5G = 4,
+	IFTYPE_5G2 = 8
+};
+
 void set_pre_sysdep_config(int iftype)
 {
+	char word[256], *next = NULL, cmd[64], ifnames[128];
+	memset(cmd, 0, sizeof(cmd));
+	strcpy(ifnames, nvram_safe_get("sta_phy_ifnames"));
+	foreach(word, ifnames, next) {
+		snprintf(cmd, sizeof(cmd), "ppacmd dellan -i %s", word);
+		doSystem(cmd);
+	}
+	strcpy(ifnames, nvram_safe_get("eth_ifnames"));
+	foreach(word, ifnames, next) {
+		snprintf(cmd, sizeof(cmd), "ppacmd dellan -i %s", word);
+		doSystem(cmd);
+	}
 }
 
 void set_post_sysdep_config(int iftype)
@@ -173,18 +383,18 @@ void set_post_sysdep_config(int iftype)
 	char word[256], *next = NULL, cmd[64], ifnames[128];
 	int result, i;
 	memset(cmd, 0, sizeof(cmd));
-	if(iftype == 0x01){
+	if(iftype == IFTYPE_WAN){
 		strcpy(cmd, "ppacmd addlan -i eth1");
 		doSystem(cmd);
 	} else {
-		result = 0x07;	
+		result = 7;	
 		if(iftype){
-			result = (iftype & 0x02) != 0;
-			if((iftype & 0x04) != 0)
-				result |= 0x02;
+			result = (iftype & IFTYPE_2G) != 0;
+			if((iftype & IFTYPE_5G) != 0)
+				result |= 2;
 		}
-		if((iftype & 0x08) != 0)
-			result |= 0x04;
+		if((iftype & IFTYPE_5G2) != 0)
+			result |= 4;
 		strcpy(ifnames, nvram_safe_get("sta_ifnames"));
 		i = 0;
 		foreach(word, ifnames, next) {

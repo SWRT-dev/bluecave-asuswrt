@@ -4267,7 +4267,7 @@ start_smartdns(void)
 		logmessage(LOGNAME, "start smartdns failed\n");
 		return;
 	}
-	fprintf(fp, "server-name MerlinR-smartdns\n");
+	fprintf(fp, "server-name SWRT-smartdns\n");
 	fprintf(fp, "conf-file /etc/blacklist-ip.conf\n");
 	fprintf(fp, "conf-file /etc/whitelist-ip.conf\n");
 	//fprintf(fp, "conf-file /etc/seconddns.conf\n");
@@ -4288,13 +4288,13 @@ start_smartdns(void)
 	//fprintf(fp, "log-file /var/log/smartdns.log\n");
 	//fprintf(fp, "log-size 128k\n");
 	//fprintf(fp, "log-num 2\n");
-#if !defined(K3) && !defined(SBRAC1900P) && !defined(SBRAC3200P) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
+#if !defined(K3) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
 	if(!strncmp(nvram_safe_get("territory_code"), "CN",2)){//Only the modified CFE of ac68u does not have this information(to unlock channels) 
 #endif
 		fprintf(fp, "server 114.114.114.114 -group master\n");
 		fprintf(fp, "server 119.29.29.29 -group master\n");
 		fprintf(fp, "server 223.5.5.5 -group master\n");
-#if !defined(K3) && !defined(SBRAC1900P) && !defined(SBRAC3200P) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
+#if !defined(K3) && !defined(R8000P) && !defined(R7000P) && !defined(XWR3100)
 	} else {
 		fprintf(fp, "server 8.8.8.8 -group master\n");
 		fprintf(fp, "server 208.67.222.222 -group master\n");
