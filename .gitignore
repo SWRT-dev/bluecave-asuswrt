@@ -2,6 +2,8 @@ release/src-lantiq/tools/toolchain-mips_mips32_gcc-4.8-linaro_uClibc-0.9.33.2.tg
 release/src-lantiq/image/*
 release/src/router/rom_lantiq/
 *~
+swrtex.c
+tcode.c
 release/src-lantiq/proprietary/ltq_eip97_1.2.25
 *.log
 release/src/xz/src/liblzma/*.o

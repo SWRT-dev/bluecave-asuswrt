@@ -35,11 +35,165 @@
 #include <help_objlist.h>
 #include <wlan_config_api.h>
 
+#define MKNOD(name,mode,dev)		if (mknod(name,mode,dev))		perror("## mknod " name)
 const int pre_rssi[] = {-91, -91, -91};
 
 int wav_ep_up(int band)
 {
-	return fapi_wlan_up(get_staifname(band), 0, 1);
+	return fapi_wlan_up(get_staifname(band), NULL, 1);
+}
+
+char *wlc_nvname(char *keyword)
+{
+	return wl_nvname(keyword, nvram_get_int("wlc_band"), -1);
+}
+
+int wav_ep_down(int unit, unsigned int flags)
+{
+  	return fapi_wlan_down(get_staifname(unit), NULL, flags);
+}
+
+unsigned int getPapState(int unit)
+{
+	char buf[8192], sta[64];
+	FILE *fp;
+	int len;
+	char *pt1, *pt2;
+
+	strcpy(sta, get_staifname(unit));
+	sprintf(buf, "iwconfig %s", sta);
+	fp = popen(buf, "r");
+	if (fp) {
+		memset(buf, 0, sizeof(buf));
+		len = fread(buf, 1, sizeof(buf), fp);
+		pclose(fp);
+		if (len > 1) {
+			buf[len-1] = '\0';
+			pt1 = strstr(buf, "Access Point:");
+			if (pt1) {
+				pt2 = pt1 + strlen("Access Point:");
+				pt1 = strstr(pt2, "Not-Associated");
+				if (pt1) 
+				{
+					sprintf(buf, "ifconfig | grep %s", sta);
+				     	fp = popen(buf, "r");
+					if(fp)
+				   	{
+						 memset(buf, 0, sizeof(buf));
+						 len = fread(buf, 1, sizeof(buf), fp);
+						 pclose(fp);
+						 if(len>=1)
+						    return 0;
+						 else
+						    return 3;
+					}	
+				     	else	
+				   		return 0; //init
+				}	
+				else
+				   	return 2; //connect and auth ?????
+					
+				}
+			}
+		}
+	
+	return 3; // stop
+}
+
+int wlcconnect_core(void)
+{
+	int result;
+	result = getPapState(nvram_get_int("wlc_band"));
+	if(result != 2)
+		dbg("%s(0x%04x): check..wlconnect=%d \n", __func__, __LINE__, result);
+	return result;
+}
+
+int wlcscan_core(char *ofile, char *wif)
+{
+	int count = 0;
+	while (count != 2)
+	{
+		if(getSiteSurvey(get_wifname_band(wif), ofile))
+			break;
+		count++;
+		dbg("[rc] set scan results command failed, retry %d\n", count);
+		sleep(1);
+	}
+	return 0;
+}
+
+#if 0
+int ubi_remove_dev(const char *a1, int a2)
+{
+  int v3; // $s0
+  int result; // $v0
+  int v5; // $s1
+  int v6; // [sp+2Ch] [+10h] BYREF
+
+  v6 = a2;
+  v3 = open(a1, 0);
+  if ( v3 == -1 )
+  {
+    fprintf(stderr, "[%s][%d] cannot open", a1, v6);
+    result = -1;
+  }
+  else
+  {
+    v5 = ioctl(v3, 0x80046F41, &v6);
+    close(v3);
+    result = v5;
+  }
+  return result;
+}
+#endif
+
+void check_ubi_partition()
+{
+	int dev, part, size;
+
+	fprintf(stderr, "... check_ubi_partition() ...\n");
+	MKNOD("/dev/ubi1", S_IFCHR | 0666, makedev(248, 0));
+	MKNOD("/dev/ubi1_0", S_IFCHR | 0666, makedev(248, 1));
+	fprintf(stderr, "... start ubiattach ...\n");
+	system("ubiattach /dev/ubi_ctrl -m 8");
+	while(pids("ubiattach"))
+	{
+		fprintf(stderr, "... waiting ubiattach finished ...\n");
+		sleep(1);
+	}
+	fprintf(stderr, "... ubiattach finished ...\n");
+
+	if((ubi_getinfo("jffs2", &dev, &part, &size)) != 0)
+	{
+		fprintf(stderr, "... detach mtd8 ...\n");
+		system("ubidetach -p /dev/mtd8");
+    	fprintf(stderr, "... start flash_erase ...\n");
+		system("flash_erase /dev/mtd8 0 0");
+		while(pids("flash_erase"))
+		{
+			fprintf(stderr, "... waiting flash_erase finished ...\n");
+			sleep(1);
+		}
+		fprintf(stderr, "... flash_erase finished ...\n");
+		fprintf(stderr, "... start ubiattach ...\n");
+		system("ubiattach /dev/ubi_ctrl -m 8");
+		while(pids("ubiattach"))
+		{
+			fprintf(stderr, "... waiting ubiattach finished ...\n");
+			sleep(1);
+		}
+		fprintf(stderr, "... ubiattach finished ...\n");
+    	fprintf(stderr, "... start ubimkvol ...\n");
+    	system("ubimkvol /dev/ubi1 -N jffs2 -m");
+		while(pids("ubimkvol"))
+		{
+			fprintf(stderr, "... waiting ubimkvol finished ...\n");
+			sleep(1);
+		}
+		fprintf(stderr, "... ubimkvol finished ...\n");
+	}
+	fprintf(stderr, "... ubi_getinfo() finished ...\n");
 }
 
 int get_usb_mode()
@@ -105,8 +259,6 @@ void usb_pwr_ctl(int onoff)
 			_dprintf("Write 0x16c00000 as [0x%08x]\n", value);
       		snprintf(cmd, sizeof(cmd), "mem -s 0x16c00000 -w 0x%08x -u", value);
       		system(cmd);
-		} else {
-			v9 = 0;
 		}
 		pclose(fp);
 	}
