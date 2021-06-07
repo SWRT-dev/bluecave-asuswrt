@@ -17,37 +17,31 @@
  * Copyright 2019-2021, paldier <paldier@hotmail.com>.
  * Copyright 2019-2021, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
- * 
  *
  */
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+
 #include "rc.h"
 #include <shared.h>
 #include <version.h>
 #include <shutils.h>
-#if defined(RTCONFIG_LANTIQ)
-#include <lantiq.h>
-#endif
+#include <json.h>
 #include "swrt.h"
 #include <curl/curl.h>
 
 #if defined(RTCONFIG_SOFTCENTER)
 static void firmware_ver(void)
 {
-    char tmp[6];
+    char tmp[6] = {0};
     strncpy(tmp, RT_FWVER, 5);//5.x.x[beta]
 	doSystem("dbus set softcenter_firmware_version='%s'",tmp);
 }
 #endif
 
-void swrt_insmod()
-{
+void swrt_insmod(){
 	eval("insmod", "nfnetlink");
 	eval("insmod", "ip_set");
 	eval("insmod", "ip_set_bitmap_ip");
@@ -84,16 +78,15 @@ void swrt_init()
 	swrt_insmod();
 }
 
-void swrt_init_done()
-{
+void swrt_init_done(){
 	_dprintf("############################ SWRT init done #################################\n");
-#ifdef RTCONFIG_SOFTCENTER
-	if (!f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","0")){
+#if defined(RTCONFIG_SOFTCENTER)
+	if (!f_exists("/jffs/softcenter/scripts/ks_tar_install.sh") && nvram_match("sc_mount","0")){
 		doSystem("/usr/sbin/jffsinit.sh &");
 		logmessage("Softcenter/软件中心", "Installing/开始安装......");
 		logmessage("Softcenter/软件中心", "Wait a minute/1分钟后完成安装");
 		_dprintf("....softcenter ok....\n");
-	} else if (f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","0"))
+	} else if (f_exists("/jffs/softcenter/scripts/ks_tar_install.sh") && nvram_match("sc_mount","0"))
 		nvram_set("sc_installed","1");
 	//else if (!f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","1"))
 		//nvram_set("sc_installed","0");
@@ -107,7 +100,7 @@ void swrt_init_done()
 #endif
 #if defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK)
 	if(!nvram_get("bl_ver"))
-		nvram_set("bl_ver", nvram_get("blver"));
+		nvram_set("bl_ver", nvram_safe_get("blver"));
 #elif defined(RTCONFIG_LANTIQ)
 #if !defined(K3C)
 	if(!nvram_get("bl_ver"))
@@ -115,66 +108,100 @@ void swrt_init_done()
 #endif
 #endif
 	if(!nvram_get("modelname"))
-#if defined(K3)
-		nvram_set("modelname", "K3");
-#elif defined(K3C)
-		nvram_set("modelname", "K3C");
-#elif defined(SBRAC1900P)
+//non asus must be in front of asus
+#if defined(SBRAC1900P)
 		nvram_set("modelname", "SBRAC1900P");
-#elif defined(SBRAC3200P)
-		nvram_set("modelname", "SBRAC3200P");
 #elif defined(EA6700)
 		nvram_set("modelname", "EA6700");
-#elif defined(R8000P) || defined(R7900P)
+#elif defined(DIR868L)
+		nvram_set("modelname", "DIR868L");
+#elif defined(SBRAC3200P)
+		nvram_set("modelname", "SBRAC3200P");
+#elif defined(K3)
+		nvram_set("modelname", "K3");
+#elif defined(XWR3100)
+		nvram_set("modelname", "XWR3100");
+#elif defined(R7000P)
+		nvram_set("modelname", "R7000P");
+#elif defined(R8500)
+		nvram_set("modelname", "R8500");
+#elif defined(R8000P)
 		nvram_set("modelname", "R8000P");
-#elif defined(RTAC3100)
-		nvram_set("modelname", "RTAC3100");
-#elif defined(BLUECAVE)
-		nvram_set("modelname", "BLUECAVE");
-#elif defined(RTAC68U)
-		nvram_set("modelname", "RTAC68U");
-#elif defined(RTAC68P)
-		nvram_set("modelname", "RTAC68P");
-#elif defined(RTAC3200)
-		nvram_set("modelname", "RTAC3200");
-#elif defined(GTAC2900)
-		nvram_set("modelname", "GTAC2900");
-#elif defined(GTAC5300)
-		nvram_set("modelname", "GTAC5300");
-#elif defined(RTAC86U)
-		nvram_set("modelname", "RTAC86U");
-#elif defined(RTACRH17)
-		nvram_set("modelname", "RTACRH17");
-#elif  defined(RTAX58U)
-		nvram_set("modelname", "RTAX58U");
-#elif defined(TUFAX3000)
-		nvram_set("modelname", "TUFAX3000");
-#elif defined(RTAX56U)
-		nvram_set("modelname", "RTAX56U");
-#elif defined(RTAX88U)
-		nvram_set("modelname", "RTAX88U");
-#elif defined(GTAX11000)
-		nvram_set("modelname", "GTAX11000");
 #elif defined(RAX20)
 		nvram_set("modelname", "RAX20");
 #elif defined(RAX80)
 		nvram_set("modelname", "RAX80");
+#elif defined(RAX120)
+		nvram_set("modelname", "RAX120");
 #elif defined(RAX200)
 		nvram_set("modelname", "RAX200");
-#elif defined(TUFAC1750)
-		nvram_set("modelname", "TUFAC1750");
-#elif defined(RTACRH26)
-		nvram_set("modelname", "RTACRH26");
+#elif defined(K3C)
+		nvram_set("modelname", "K3C");
+//asus
+#elif defined(RTAC68U)
+		nvram_set("modelname", "RTAC68U");
+#elif defined(RTAC3200)
+		nvram_set("modelname", "RTAC3200");
+#elif defined(RTAC3100)
+		nvram_set("modelname", "RTAC3100");
+#elif defined(RTAC88U)
+		nvram_set("modelname", "RTAC88U");
+#elif defined(RTAC5300)
+		nvram_set("modelname", "RTAC5300");
+#elif defined(RTAC86U)
+		nvram_set("modelname", "RTAC86U");
+#elif defined(GTAC2900)
+		nvram_set("modelname", "GTAC2900");
+#elif defined(GTAC5300)
+		nvram_set("modelname", "GTAC5300");
+#elif defined(RTAX55) || defined(RTAX1800)
+		nvram_set("modelname", "RTAX55");
+#elif defined(RTAX56U)
+		nvram_set("modelname", "RTAX56U");
+#elif defined(RTAX58U) || defined(RTAX3000)
+		nvram_set("modelname", "RTAX58U");
+#elif defined(TUFAX3000)
+		nvram_set("modelname", "TUFAX3000");
+#elif defined(TUFAX5400)
+		nvram_set("modelname", "TUFAX5400");
+#elif defined(RTAX68U)
+		nvram_set("modelname", "RTAX68U");
+#elif defined(RTAX82U)
+		nvram_set("modelname", "RTAX82U");
+#elif defined(RTAX86U)
+		nvram_set("modelname", "RTAX86U");
+#elif defined(RTAX88U)
+		nvram_set("modelname", "RTAX88U");
+#elif defined(GTAX11000)
+		nvram_set("modelname", "GTAX11000");
+#elif defined(GTAXE11000)
+		nvram_set("modelname", "GTAX11000");
+#elif defined(BLUECAVE)
+		nvram_set("modelname", "BLUECAVE");
+#elif defined(RTAC82U)
+		nvram_set("modelname", "RTACRH17");
+#elif defined(RTAC95U)
+		nvram_set("modelname", "ZENWIFICT8");
+#elif defined(RTAX89U)
+		nvram_set("modelname", "RTAX89X");
 #elif defined(RTAC85P)
 		nvram_set("modelname", "RTAC85P");
 #elif defined(RMAC2100)
 		nvram_set("modelname", "RMAC2100");
+#elif defined(TUFAC1750)
+		nvram_set("modelname", "TUFAC1750");
 #endif
 #if defined(R8000P)
 	nvram_set("ping_target","www.taobao.com");
 #endif
 	nvram_commit();
+
+#if defined(SWRT_VER_MAJOR_B)
+	del_rc_support("amasRouter");
+	del_rc_support("amas");
+#endif
 }
+
 
 #define FWUPDATE_DBG(fmt,args...) \
         if(1) { \
@@ -572,522 +599,3 @@ void softcenter_eval(int sig)
 }
 #endif
 
-
-static int
-reset_sc(int all)
-{
-	if(all){
-		killall_tk("skipd");
-		doSystem("rm -rf /jffs/db");
-		if(strcmp(nvram_get("preferred_lang"), "CN"))
-			printf("Database has been cleared.\n");
-		else
-			printf("数据库已清空！\n");
-	}
-	doSystem("rm -rf /jffs/softcenter/bin/*");
-	doSystem("rm -rf /jffs/softcenter/scripts/*");
-	doSystem("rm -rf /jffs/softcenter/webs/*");
-	doSystem("rm -rf /jffs/softcenter/res/*");
-	doSystem("rm -rf /jffs/softcenter");
-	doSystem("rm -rf /jffs/configs");
-	doSystem("rm -rf /jffs/scripts/dnsmasq.postconf");
-	doSystem("service restart_dnsmasq >/dev/null 2>&1");
-	sleep(1);
-	doSystem("jffsinit.sh >/dev/null 2>&1");
-	if(strcmp(nvram_get("preferred_lang"), "CN"))
-		printf("Software Center reset is complete, Please clear your browser cache and reopen the website page of the software center!\n");
-	else
-		printf("软件中心重置完成，请清空浏览器缓存后重新进入软件中心！\n");
-	return 0;
-}
-
-int
-swrt_toolbox(int argc, char **argv)
-{
-	if (argv[1] && !strcmp(argv[1], "reset")) {
-		if(argv[2] && !strcmp(argv[2], "all"))
-			reset_sc(1);
-		else
-			reset_sc(0);
-	}
-	return 0;
-}
-
-
-#ifdef RTCONFIG_DUALWAN
-#define IPTABLES_MARK_LB_SET(x)	((((x)&0xf)|0x8)<<8)			//mark for load-balance
-#define IPTABLES_MARK_LB_MASK	IPTABLES_MARK_LB_SET(0xf)
-void set_load_balance(void)
-{
-	int unit=0,count=0, i;
-	char *lan_ifname = nvram_safe_get("lan_ifname");
-	char buffer[32],buffer2[32],buffer3[32];
-	char mask[16];
-	char prefix[9];
-	char tmp[100];
-	int dualwan;
-	char *if_array[] = { "lan", "wan0", "wan1" };
-	char *ratio,*nvp,*buff,*portbuf,*portp,*proto="";
-	char *r2;
-	int wan_weight[2],ratio2_1,ratio2_2,weight_total;
-	char *wan_iface[2];
-
-	eval("iptables", "-t", "mangle", "-N", "balance");
-	eval("iptables", "-t", "mangle", "-F", "balance");
-	eval("iptables", "-t", "mangle", "-D", "PREROUTING", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "balance");
-	sprintf(buffer, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
-	snprintf(mask, 16, "0x%x", 0xF0000000);
-	eval("iptables", "-t", "mangle", "-D", "PREROUTING", "-i", lan_ifname, "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
-	{
-		// when wan_down().
-		if(!is_wan_connect(unit))
-			continue;
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		wan_iface[0] = get_wan_ifname(unit);
-		wan_iface[1] = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-		if ( !strcmp(wan_iface[0], wan_iface[1]) )
-			dualwan = 0;
-		else
-			dualwan = (inet_addr(nvram_safe_get(strcat_r(prefix, "xipaddr", tmp))) != 0)? 1 : 0;
-		for(i = 0; i < dualwan; i++)
-		{
-			eval("iptables", "-t", "mangle", "-D", "OUTPUT", "-o", wan_iface[i], "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
-		}
-	}
-#if defined(RTCONFIG_VPNC)
-	/* Not to set load balance rule when vpnc is activated */
-	vpnc_proto = nvram_safe_get("vpnc_proto");
-	if ((nvram_match("vpnc_auto_conn", "1") || !strcmp(vpnc_proto, "pptp") || !strcmp(vpnc_proto, "l2tp") || !strcmp(vpnc_proto, "openvpn")))
-		return;
-#endif
-	if (get_nr_wan_unit() <= 1 || !nvram_match("wans_mode", "lb"))
-		return;
-	if ( get_gate_num() <= 1 )
-		return;
-	ratio =nvram_safe_get("wans_lb_ratio");
-	r2=strchr(ratio, ':');
-	if (r2 == NULL)
-		return;
-	wan_weight[0] = atoi(ratio);
-	wan_weight[1] = atoi(r2 + 1);
-	if(wan_weight[0] <= 0 || wan_weight[1] <= 0)
-		return;
-	weight_total = wan_weight[0] + wan_weight[1];
-	// skip packets to LAN and specific WAN
-	for(i = 0; i < ARRAY_SIZE(if_array); i++) {
-		snprintf(buffer, sizeof(buffer), "%s_gateway", if_array[[i]);
-		if ( !strcmp(if_array[i], "lan") || (strlen(nvram_safe_get(buffer)) <= 6) )
-			snprintf(buffer, sizeof(buffer), "%s_ipaddr", if_array[i]);
-		snprintf(buffer, sizeof(buffer), "%s_ipaddr", if_array[i]);
-		snprintf(buffer2, sizeof(buffer2), "%s_netmask", if_array[i]);
-		snprintf(tmp, sizeof(tmp), "%s/%s", nvram_safe_get(buffer), nvram_safe_get(buffer2));
-		if(strlen(tmp) > 14)
-		{
-			eval("iptables", "-t", "mangle", "-A", "balance", "-d", tmp, "-j", "RETURN");
-		}
-	}
-	nvp = strdup(nvram_safe_get("lb_skip_port"));
-	while ( nvp )
-	{
-		buff = strsep(&nvp, "<");
-		if ( !buff )
-			break;
-		if ( vstrsep(buff, ">") == 3 )
-		{
-			portp = strdup(port);
-			while ( portp )
-			{
-				portbuf = strsep(&portp, ",");
-				if ( !portbuf )
-					break;
-				if ( !strcmp(proto, "TCP") || !strcmp(proto, "BOTH") )
-				{
-					eval("iptables","-t","mangle","-A","balance","-p","tcp","-m","tcp","--dport",portbuf,"-j","RETURN");
-				}
-				if ( !strcmp(proto, "UDP") || !strcmp(proto, "BOTH") )
-				{
-					eval("iptables","-t","mangle","-A","balance","-p","udp","-m","udp","--dport",portbuf,"-j","RETURN");
-				}
-			}
-			free(portp);
-		}
-	}
-	free(nvp);
-	sprintf(buffer, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
-	eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark",buffer,"-j","RETURN");
-	eval("iptables","-t","mangle","-A","balance","-m","state","--state","ESTABLISHED,RELATED","-j","RETURN");
-	sprintf(buffer, "%d", get_gate_num());
-	//sprintf(buffer3, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
-	i = 0;
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
-	{
-        //if ( unit == 2 )
-			//break;
-		sprintf(buffer3, "0x%x/0x%x",  IPTABLES_MARK_LB_SET(unit), IPTABLES_MARK_LB_MASK);
-		if ( wan_weight[0] == wan_weight[1] )
-		{//1:1
-			sprintf(buffer2, "%d", i++);
-			eval("iptables","-t","mangle","-A","balance","-m","statistic","--mode","nth","--every",buffer,"--packet",buffer2,"-j","CONNMARK","--set-mark",buffer3);
-			/* NEED to set same mark in "ip rule fwmark" command */
-		} else {
-			if (unit == WAN_UNIT_MAX -1)//the last one NEED not the probability
-				eval("iptables","-t","mangle","-A","balance","-m","connmark","--mark","0","-j","CONNMARK","--set-mark",buffer3);
-			else {
-				snprintf(buffer2, sizeof(buffer2), "%.2f", (float)wan_weight[unit]/weight_total);
-				eval("iptables", "-t", "mangle", "-A", "balance", "-m", "statistic", "--mode", "random", "--probability", buffer2, "-j", "CONNMARK", "--set-mark", buffer3);
-			}
-		}
-		eval("iptables", "-t", "mangle", "-A", "PREROUTING", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "CONNMARK", "--set-mark", buffer3);
-	}
-	// handle forwarding and outgoing connections
-	eval("iptables", "-t", "mangle", "-I", "PREROUTING", "1", "-i", lan_ifname, "-m", "state", "--state", "NEW", "-j", "balance");
-	sprintf(buffer, "0x%x/0x%x", IPTABLES_MARK_LB_SET(0), IPTABLES_MARK_LB_SET(0));
-	eval("iptables", "-t", "mangle", "-I", "PREROUTING", "2", "-i", lan_ifname, "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mask" mask);
-	for(unit = WAN_UNIT_FIRST; unit < WAN_UNIT_MAX; ++unit)
-	{
-		// when wan_down().
-		if(!is_wan_connect(unit))
-			continue;
-		snprintf(prefix, sizeof(prefix), "wan%d_", unit);
-		wan_iface[0] = get_wan_ifname(unit);
-		wan_iface[1] = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
-		if ( !strcmp(wan_iface[0], wan_iface[1]) )
-			dualwan = 0;
-		else
-			dualwan = (inet_addr(nvram_safe_get(strcat_r(prefix, "xipaddr", tmp))) != 0)? 1 : 0;
-		for(i = 0; i < dualwan; i++)
-		{
-			eval("iptables", "-t", "mangle", "-D", "OUTPUT", "-o", wan_iface[i], "-m", "connmark", "--mark", buffer, "-j", "CONNMARK", "--restore-mark", "--mark", mask);
-		}
-	}
-}
-#endif
-
-#if defined(RTCONFIG_BWDPI) && !defined(BLUECAVE)
-/*
-	bwdpi.c for TrendMicro DPI engine / iQoS / WRS / APP partol
-
-	DPI engine 	: applications and devices identify engine
-	iQoS 		: tc control rule and qosd.conf
-	WRS 		: web protector or web content filter
-	APP partol	: apps filter
-	C&C		: C&C
-	VP		: virtual patch
-	DC		: data collection
-*/
-
-#include <bwdpi.h>
-
-static void show_help(char *base)
-{
-	printf("%s Usage :\n", base);
-	printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
-	printf("  mode: traffic / traffic_wan / app / client_apps / client_web\n");
-	printf("  name: NULL / MAC / APP_NAME\n");
-	printf("  dura: realtime / month / week / day\n");
-	printf("  date: NULL / date\n");
-}
-
-int bwdpi_main(int argc, char **argv)
-{
-	//dbg("[bwdpi] argc=%d, argv[0]=%s, argv[1]=%s, argv[2]=%s\n", argc, argv[0], argv[1], argv[2]);
-	int c;
-	char *mode = NULL, *name = NULL, *dura = NULL, *date = NULL;
-	char *MAC = NULL;
-	char *page = NULL;
-	int clean_flag = 0;
-
-	if (argc == 1){
-		printf("Usage :\n");
-		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
-		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
-		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
-		printf("  bwpdi history -m [MAC] -z -p [page]\n");
-		printf("  bwpdi app [0/1]\n");
-		printf("  bwpdi cc [0/1]\n");
-		printf("  bwpdi vp [0/1]\n");
-		printf("  bwpdi device -m [MAC]\n");
-		printf("  bwpdi device_info -m [MAC]\n");
-		printf("  bwpdi get_vp [0/2]\n");
-		printf("  bwpdi wrs_url\n");
-		printf("  bwpdi rewrite path1 path2 path3\n");
-		printf("  bwpdi checksize path size\n");
-		printf("  bwpdi extract path\n");
-		printf("  bwpdi get_app_patrol\n");
-		printf("  bwpdi get_anomaly [0/2]\n");
-		return 0;
-	}
-
-	if (!strcmp(argv[1], "iqos")){
-		if(argc != 3)
-		{
-			printf("  bwdpi iqos [start/stop/restart]\n");
-			return 0;
-		}
-		else
-		{
-			return tm_qos_main(argv[2]);
-		}
-	}
-	else if (!strcmp(argv[1], "qosd")){
-		if(argc != 3)
-		{
-			printf("  bwdpi qosd [start/stop/restart]\n");
-			return 0;
-		}
-		else
-		{
-			return qosd_main(argv[2]);
-		}
-	}
-	else if (!strcmp(argv[1], "wrs")){
-		if(argc != 3)
-		{
-			printf("  bwdpi wrs [start/stop/restart]\n");
-			return 0;
-		}
-		else
-		{
-			return wrs_main(argv[2]);
-		}
-
-	}
-	else if (!strcmp(argv[1], "stat")){
-		while ((c = getopt(argc, argv, "m:n:u:d:h")) != -1)
-		{
-			switch(c)
-			{
-				case 'm':
-					mode = optarg;
-					break;
-				case 'n':
-					name = optarg;
-					break;
-				case 'u':
-					dura = optarg;
-					break;
-				case 'd':
-					date = optarg;
-					break;
-				case 'h':
-					show_help(argv[1]);
-					break;
-				default:
-					printf("ERROR: unknown option %c\n", c);
-					break;
-			}
-		}
-		//dbg("[bwdpi] mode=%s, name=%s, dura=%s, date=%s\n", mode, name, dura, date);
-		return stat_main(mode, name, dura, date);
-	}
-	else if (!strcmp(argv[1], "history")){
-		while ((c = getopt(argc, argv, "m:zp:")) != -1)
-		{
-			switch(c)
-			{
-				case 'm':
-					MAC = optarg;
-					clean_flag = 0;
-					break;
-				case 'z':
-					printf("clear web history\n");
-					clean_flag = 1;
-					break;
-				case 'p':
-					page = optarg;
-					break;
-				default:
-					printf("  bwpdi history -m [MAC] -z -p [page]\n");
-					break;
-			}
-		}
-
-		if(clean_flag)
-		{
-			return clear_user_domain();
-		}
-		else
-		{
-			return web_history_main(MAC, page);
-		}
-	}
-	else if (!strcmp(argv[1], "app")){
-		if(argc != 3)
-		{
-			printf("  bwpdi app [0/1]\n");
-			return 0;
-		}
-		else
-		{
-			return wrs_app_main(argv[2]);
-		}
-	}
-	else if (!strcmp(argv[1], "cc")){
-		if(argc != 3)
-		{
-			printf("  bwpdi cc [0/1]\n");
-			return 0;
-		}
-		else
-		{
-			return set_cc(argv[2]);
-		}
-	}
-	else if (!strcmp(argv[1], "vp")){
-		if(argc != 3)
-		{
-			printf("  bwpdi vp [0/1]\n");
-			return 0;
-		}
-		else
-		{
-			return set_vp(argv[2]);
-		}
-	}
-	else if (!strcmp(argv[1], "dc")){
-		if(argc == 3)
-		{
-			return data_collect_main(argv[2], NULL);
-		}
-		else if(argc == 4)
-		{
-			return data_collect_main(argv[2], argv[3]);
-		}
-		else
-		{
-			printf("  bwpdi dc [start/stop/restart] [path]\n");
-			return 0;
-		}
-	}
-	else if (!strcmp(argv[1], "device")){
-		while ((c = getopt(argc, argv, "m:")) != -1)
-		{
-			switch(c)
-			{
-				case 'm':
-					name = optarg;
-					break;
-				default:
-					printf("  bwpdi device -m [MAC]\n");
-					break;
-			}
-		}
-		return device_main(name);
-	}
-	else if (!strcmp(argv[1], "device_info")){
-		while ((c = getopt(argc, argv, "m:")) != -1)
-		{
-			switch(c)
-			{
-				case 'm':
-					name = optarg;
-					break;
-				default:
-					printf("  bwpdi device_info -m [MAC]\n");
-					break;
-			}
-		}
-		return device_info_main(name);
-	}
-	else if (!strcmp(argv[1], "get_vp")){
-		if(argc != 3)
-		{
-			printf("  bwpdi get_vp [0/2]\n");
-			return 0;
-		}
-		else
-		{
-			return get_vp(argv[2]);
-		}
-	}
-	else if (!strcmp(argv[1], "wrs_url")){
-		if(argc != 2)
-		{
-			printf("  bwpdi wrs_url\n");
-			return 0;
-		}
-		else
-		{
-			return wrs_url_main();
-		}
-	}
-	else if (!strcmp(argv[1], "rewrite")){
-		if(argc != 5)
-		{
-			printf("  bwpdi rewrite path1 path2 path3\n");
-			return 0;
-		}
-		else
-		{
-			return rewrite_main(argv[2], argv[3], argv[4]);
-		}
-	}
-	else if (!strcmp(argv[1], "checksize")){
-		if(argc != 4)
-		{
-			printf("  bwpdi checksize path size\n");
-			return 0;
-		}
-		else
-		{
-			return check_filesize_main(argv[2], argv[3]);
-		}
-	}
-	else if (!strcmp(argv[1], "extract")){
-		if(argc != 3)
-		{
-			printf("  bwpdi extract path\n");
-			return 0;
-		}
-		else
-		{
-			return extract_data_main(argv[2]);
-		}
-	}
-	else if (!strcmp(argv[1], "get_app_patrol")){
-		if(argc != 2)
-		{
-			printf("  bwpdi get_app_patrol\n");
-			return 0;
-		}
-		else
-		{
-			return get_app_patrol_main();
-		}
-	}
-	else if (!strcmp(argv[1], "get_anomaly")){
-		if(argc != 3)
-		{
-			printf("  bwpdi get_anomaly [0/2]\n");
-			return 0;
-		}
-		else
-		{
-			return get_anomaly_main(argv[2]);
-		}
-	}
-	else{
-		printf("Usage :\n");
-		printf("  bwdpi [iqos/qosd/wrs] [start/stop/restart]\n");
-		printf("  bwdpi dc [start/stop/restart] [ptah]\n");
-		printf("  bwdpi stat -m [mode] -n [name] -u [dura] -d [date]\n");
-		printf("  bwpdi history -m [MAC] -z -p [page]\n");
-		printf("  bwpdi app [0/1]\n");
-		printf("  bwpdi cc [0/1]\n");
-		printf("  bwpdi vp [0/1]\n");
-		printf("  bwpdi device -m [MAC]\n");
-		printf("  bwpdi device_info -m [MAC]\n");
-		printf("  bwpdi get_vp [0/2]\n");
-		printf("  bwpdi wrs_url\n");
-		printf("  bwpdi rewrite path1 path2 path3\n");
-		printf("  bwpdi checksize path size\n");
-		printf("  bwpdi extract path\n");
-		printf("  bwpdi get_app_patrol\n");
-		printf("  bwpdi get_anomaly [0/2]\n");
-		return 0;
-	}
-
-	return 1;
-}
-#endif

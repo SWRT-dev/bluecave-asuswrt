@@ -54,28 +54,30 @@ p{
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/table/table.js"></script>
 <script>
-
 var ctf_dis = "<% nvram_get("ctf_disable"); %>";
 var ctf_dis_force = "<% nvram_get("ctf_disable_force"); %>";
 var odmpid = "<% nvram_get("odmpid");%>";
 var ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
 var qca_sfe = "<% nvram_get("qca_sfe"); %>";
 var hwnat = "<% nvram_get("hwnat"); %>";
+var modelname = "<% nvram_get("modelname"); %>";
 var sc_mount = "<% nvram_get("sc_mount"); %>";
-
 overlib_str_tmp = "";
 overlib.isOut = true;
-
 function initial(){
 	show_menu();
-
 	showbootTime();
 
-	if (odmpid != "")
-		document.getElementById("model_id").innerHTML = odmpid;
+	if (odmpid != "") {
+        if(modelname == productid)
+		    document.getElementById("model_id").innerHTML = "<span>" + modelname + "</span>";
+        else
+		    document.getElementById("model_id").innerHTML = "<span>" + odmpid + "</span>";
+		if (odmpid != based_modelid)
+			document.getElementById("model_id").innerHTML += " (base model: <span>" + based_modelid + "</span>)";
+	}
 	else
 		document.getElementById("model_id").innerHTML = productid;
-
 	var buildno = '<% nvram_get("buildno"); %>';
 	var extendno = '<% nvram_get("extendno"); %>';
 	if ((extendno == "") || (extendno == "0"))
@@ -91,14 +93,12 @@ function initial(){
 	var rc_caps_arr = rc_caps.split(' ').sort();
 	rc_caps = rc_caps_arr.toString().replace(/,/g, " ");
 	document.getElementById("rc_td").innerHTML = rc_caps;
-
 	hwaccel_state();
 	update_temperatures();
 	updateClientList();
 	show_etherstate();
 	update_sysinfo();
 }
-
 function update_temperatures(){
 	$.ajax({
 		url: '/ajax_coretmp.asp',
@@ -108,10 +108,12 @@ function update_temperatures(){
 		},
 		success: function(response){
 			code = "<b>2.4 GHz:</b><span> " + curr_coreTmp_2_raw + "</span>";
-
-			if (band5g_support)
+			if (wl_info.band5g_2_support) {
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-1:</b> <span>" + curr_coreTmp_5_raw + "</span>";
+				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz-2:</b> <span>" + curr_coreTmp_52_raw + "</span>";
+			} else if (band5g_support) {
 				code += "&nbsp;&nbsp;-&nbsp;&nbsp;<b>5 GHz:</b> <span>" + curr_coreTmp_5_raw + "</span>";
-
+			}
 			if (curr_coreTmp_cpu != "" && curr_coreTmp_cpu != "0")
 				code +="&nbsp;&nbsp;-&nbsp;&nbsp;<b>CPU:</b> <span>" + parseInt(curr_coreTmp_cpu) +"&deg;C</span>";
 			else
@@ -121,12 +123,9 @@ function update_temperatures(){
 		}
 	});
 }
-
-
 function hwaccel_state(){
 	var qos_enable = '<% nvram_get("qos_enable"); %>';
 	var qos_type = '<% nvram_get("qos_type"); %>';
-
 	if (hnd_support) {
 		code = "Runner:<span> ";
 
@@ -324,7 +323,7 @@ function update_sysinfo(e){
 </script>
 </head>
 
-<body onload="initial();" onunLoad="return unload_body();">
+<body onload="initial();" onunLoad="return unload_body();" class="bg">
 <div id="TopBanner"></div>
 
 <div id="Loading" class="popup_bg"></div>
@@ -400,8 +399,8 @@ function update_sysinfo(e){
 						<td id="rc_td"></td>
 					</tr>
 					<tr>
-						<th>System Up Time</th>
-						<td><span id="boot_days"></span> Day(s) <span id="boot_hours"></span> Hour(s) <span id="boot_minutes"></span> Minute(s) <span id="boot_seconds"></span> Second(s)</td>
+						<th><#General_x_SystemUpTime_itemname#></th>
+						<td><span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#></td>
 					</tr>
 
 					<tr>

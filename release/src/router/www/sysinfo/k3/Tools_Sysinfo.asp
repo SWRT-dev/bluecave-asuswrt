@@ -77,8 +77,15 @@ function initial(){
 		document.getElementById("wifi5_clients_tr").style.display = "";
 	}
 	showbootTime();
-	if (odmpid != "")
-		document.getElementById("model_id").innerHTML = odmpid;
+
+	if (odmpid != "") {
+        if(modelname == productid)
+		    document.getElementById("model_id").innerHTML = "<span>" + modelname + "</span>";
+        else
+		    document.getElementById("model_id").innerHTML = "<span>" + odmpid + "</span>";
+		if (odmpid != based_modelid)
+			document.getElementById("model_id").innerHTML += " (base model: <span>" + based_modelid + "</span>)";
+	}
 	else
 		document.getElementById("model_id").innerHTML = productid;
 	var buildno = '<% nvram_get("buildno"); %>';
@@ -492,8 +499,8 @@ function update_sysinfo(e){
 						<td id="rc_td"></td>
 					</tr>
 					<tr>
-						<th>System Up Time</th>
-						<td><span id="boot_days"></span> Day(s) <span id="boot_hours"></span> Hour(s) <span id="boot_minutes"></span> Minute(s) <span id="boot_seconds"></span> Second(s)</td>
+						<th><#General_x_SystemUpTime_itemname#></th>
+						<td><span id="boot_days"></span> <#Day#> <span id="boot_hours"></span> <#Hour#> <span id="boot_minutes"></span> <#Minute#> <span id="boot_seconds"></span> <#Second#></td>
 					</tr>
 
 					<tr>

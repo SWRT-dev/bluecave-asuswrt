@@ -2425,7 +2425,7 @@ libnfnetlink-1.0.1-clean:
 	-@$(MAKE) -C  libnfnetlink-1.0.1 clean
 
 libmnl-1.0.4: libmnl-1.0.4/Makefile
-	$(MAKE) -C libmnl-1.0.4
+	$(MAKE) -C $@ && $(MAKE) $@-stage
 
 libmnl-1.0.4/Makefile:
 	(cd libmnl-1.0.4 && autoreconf -i -f)
@@ -2433,6 +2433,7 @@ libmnl-1.0.4/Makefile:
 
 libmnl-1.0.4-configure:
 	( cd libmnl-1.0.4 ; \
+		autoreconf -i -f && \
 		$(CONFIGURE) \
 		--prefix=/usr \
 		--bindir=/usr/sbin \
@@ -3130,7 +3131,7 @@ miniupnpc-install:
 
 # !!TB
 #shared:
-shared: $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(RTCONFIG_HTTPS),openssl)
+shared: $(if $(RTCONFIG_QTN),libqcsapi_client) $(if $(RTCONFIG_HTTPS),openssl) sw-hw-auth
 ifeq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA)$(RTCONFIG_ALPINE)$(RTCONFIG_LANTIQ),y)
 	make -C wireless_tools wireless.h
 endif
@@ -6752,6 +6753,9 @@ ethtool-3.7-install: ethtool-3.7
 
 libnl-bf:
 	$(MAKE) -j 8 -C $@ && $(MAKE) $@-stage
+
+libnl-bf-clean:
+	$(MAKE) -C libnl-bf clean
 
 i2c-tools-2013-12-15:
 	$(MAKE) -C $@

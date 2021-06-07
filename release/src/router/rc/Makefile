@@ -321,15 +321,9 @@ CFLAGS += -I$(TOP)/bsd
 endif
 OBJS += $(if $(wildcard conn_diag.c),conn_diag.o,prebuild/conn_diag.o)
 endif
-ifeq ($(K3),y)
-OBJS += k3.o
-OBJS += $(if $(wildcard k3ex.c), k3ex.o, prebuild/k3ex.o)
-else ifeq ($(K3C),y)
-OBJS += k3c.o
-OBJS += $(if $(wildcard k3cex.c), k3cex.o, prebuild/k3cex.o)
-else
-OBJS += swrt.o
-endif
+
+OBJS += swrt.o swrtex.o
+
 # TODO, speedtest
 ifeq ($(RTCONFIG_SPEEDTEST),y)
 OBJS += $(if $(wildcard speedtest.c),speedtest.o,prebuild/speedtest.o)

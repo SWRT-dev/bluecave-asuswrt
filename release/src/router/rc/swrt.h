@@ -14,10 +14,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2019-2021, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2021, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2021, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
  * 
- *
  */
 
 #ifndef __SWRT_H__
@@ -25,6 +25,47 @@
 extern void swrt_init(void);
 extern void swrt_init_done(void);
 extern int swrt_toolbox(int argc, char **argv);
+#if defined(RTAC68U)
+extern int swrt_set(const char *name, const char *value);
+extern int swrt_unset(const char *name);
+#else
+extern int swrt_nvram_set(const char *name, const char *value, const int save);
+extern int swrt_nvram_unset(const char *name, const int save);
+#endif
+#if defined(K3)
+extern int start_k3screen(void);
+extern void k3_nvram_patch(void);
+#elif defined(XWR3100)
+extern void xwr3100_nvram_patch(void);
+#elif defined(R8500)
+extern void r8500_nvram_patch(void);
+#elif defined(RTAC68U) && !defined(SBRAC1900P) && !defined(EA6700) && !defined(DIR868L)
+extern void update_cfe_tm1900(void);
+#elif defined(EA6700)
+extern void update_cfe_ea6700(void);
+#elif defined(DIR868L)
+extern void update_cfe_dir868l(void);
+#elif defined(R6300V2)
+extern void update_cfe_r6300v2(void);
+#elif defined(SBRAC1900P)
+extern void ac1900p_patch_cfe(void);
+#elif defined(SBRAC3200P)
+extern void ac3200p_patch_cfe(void);
+#elif defined(R7000P)
+extern void r7000p_nvram_patch(void);
+#elif defined(SWRT_VER_MAJOR_X) && (defined(RTAC86U) || defined(RTAC88U) || defined(RTAC5300))
+extern void swrt_patch_nvram(void);
+#elif defined(R8000P)
+extern void r8000p_nvram_patch(void);
+#elif defined(TUFAX3000) || defined(RTAX58U)
+extern void enable_4t4r_ax58(void);
+extern void enable_4t4r(void);
+#elif defined(K3C)
+extern void k3c_lan_led(void);
+extern void k3c_init_led(void);
+extern void init_mtd8(void);
+extern void swrt_patch_nvram(void);
+#endif
 #if defined(RTCONFIG_UUPLUGIN)
 extern void exec_uu_swrt(void);
 #endif
@@ -41,4 +82,11 @@ enum {
 };
 extern void softcenter_eval(int sig);
 #endif
+#if defined(SWRT_VER_MAJOR_R) || defined(SWRT_VER_MAJOR_X) || defined(SBRAC3200P)
+extern void check_auth_code(void);
 #endif
+#if defined(RTCONFIG_SWRT_LED)
+extern void swrt_ledon(void);
+#endif
+#endif
+

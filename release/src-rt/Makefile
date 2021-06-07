@@ -73,7 +73,7 @@ export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 export SWRT_NAME := BLUECAVE
 #aimesh:R(384 and 385 and 386),non-aimesh:B(382 and 384)
 export SWRT_VER_MAJOR :=R
-export SWRT_VER_MINOR :=5.1.5b1
+export SWRT_VER_MINOR :=5.1.5b2
 export SWRT_VER := $(SWRT_VER_MAJOR)$(SWRT_VER_MINOR)
 export SWRTVER := $(SWRT_NAME)_$(SWRT_VER)
 

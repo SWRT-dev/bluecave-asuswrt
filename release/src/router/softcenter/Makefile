@@ -121,19 +121,6 @@ ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), SBRAC1900P SBRAC3200P))
 	install -m 0755 key.asp $(INSTALLDIR)/www
 endif
 endif
-ifeq ($(or $(RTCONFIG_LANTIQ),$(RTCONFIG_QCA),$(RTCONFIG_RALINK)),y)
-	install -m 0755 sysinfo/lantiq/Tools_Sysinfo.asp $(INSTALLDIR)/www/
-else ifeq ($(K3),y)
-	install -m 0755 sysinfo/k3/Tools_Sysinfo.asp $(INSTALLDIR)/www
-else ifeq ($(R7000P),y)
-	install -m 0755 sysinfo/r7000p/Tools_Sysinfo.asp $(INSTALLDIR)/www
-else ifeq ($(or $(EA6700),$(DIR868L)),y)
-	install -m 0755 sysinfo/ea6700/Tools_Sysinfo.asp $(INSTALLDIR)/www
-else ifeq ($(HND_ROUTER), y)
-	install -m 0755 sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www/www
-else
-	install -m 0755 sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www
-endif
 ifeq ($(or $(SWRT_VER_MAJOR_R),$(SWRT_VER_MAJOR_X)),y)
 ifeq ($(or $(K3),$(R8500),$(XWR3100),$(TY6201_RTK),$(TY6201_BCM)),y)
 ifeq ($(HND_ROUTER), y)
