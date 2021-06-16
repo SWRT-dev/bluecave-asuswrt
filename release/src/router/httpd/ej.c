@@ -38,13 +38,29 @@
 #include <shutils.h>
 #include <shared.h>
 
-
-struct REPLACE_PRODUCTID_S {
-	char *org_name;
-	char *replace_name;
-} replace_productid_t[] = {
+struct REPLACE_PRODUCTID_S replace_productid_t[] =
+{
 	{"LYRA_VOICE", "LYRA VOICE"},
 	{NULL, NULL}
+};
+
+struct REPLACE_MODELNAME_S replace_modelname_t[] = {
+	{ "K3C" },//Must be before k3
+	{ "K3" },
+	{ "XWR3100" },
+	{ "R7000P" },
+	{ "EA6700" },
+	{ "SBRAC1900P" },
+	{ "F9K1118" },
+	{ "SBRAC3200P" },
+	{ "R8500" },
+	{ "R8000P" },
+	{ "TY6201_RTK" },
+	{ "TY6201_BCM" },
+	{ "RAX120" },
+	{ "DIR868L" },
+	//{ "RMAC2100" },move to model_list
+	{ NULL },
 };
 
 static char * get_arg(char *args, char **next);
@@ -57,7 +73,7 @@ unqstrstr(const char *haystack, const char *needle)
 	char *cur;
 	int q;
 
-	for (cur = haystack, q = 0;
+	for (cur = (char*) haystack, q = 0;
 	     cur < (haystack + strlen(haystack)) && !(!q && !strncmp(needle, cur, strlen(needle)));
 	     cur++) {
 		if (*cur == '"')
@@ -165,6 +181,19 @@ extern void replace_productid(char *GET_PID_STR, char *RP_PID_STR, int len){
 	}
 }
 
+extern int replace_modelname(char *GET_PID_STR, char *RP_PID_STR, int len){
+
+	struct REPLACE_MODELNAME_S *p;
+
+	for(p = &replace_modelname_t[0]; p->modelname; p++){
+		if(!strcmp(GET_PID_STR, p->modelname)){
+			strlcpy(RP_PID_STR, p->modelname, len);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 // Call this function if and only if we can read whole <#....#> pattern.
 static char *
 translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
@@ -189,10 +218,7 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 			char GET_PID_STR[32]={0};
 			char *p_PID_STR = NULL;
 			char *PID_STR = nvram_safe_get("productid");
-#if defined(R7000P) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3) || defined(K3C) || defined(R8000P) || defined(RAX20)
 			char *modelname = nvram_safe_get("modelname");
-			int merlinr_len;
-#endif
 			char *pSrc, *pDest;
 			int pid_len, get_pid_len;
 
@@ -200,14 +226,10 @@ translate_lang (char *s, char *e, FILE *f, kw_t *pkw)
 			pid_len = strlen(PID_STR);
 			get_pid_len = strlen(GET_PID_STR);
 
-#if defined(R7000P) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3) || defined(K3C) || defined(R8000P) || defined(RAX20)
-			merlinr_len = strlen(modelname);
-			if (merlinr_len && strcmp(RP_PID_STR, modelname) != 0)
-				strlcpy(RP_PID_STR, modelname, merlinr_len+1);
-#else 
 			memset(RP_PID_STR, 0, sizeof(RP_PID_STR));
-			replace_productid(GET_PID_STR, RP_PID_STR, sizeof(RP_PID_STR));
-#endif
+			if(replace_modelname(modelname, RP_PID_STR, sizeof(RP_PID_STR)) != 1)
+				replace_productid(GET_PID_STR, RP_PID_STR, sizeof(RP_PID_STR));
+			
 			if(strcmp(PID_STR, RP_PID_STR) != 0){
 				get_pid_len = strlen(RP_PID_STR);
 				pSrc  = desc;

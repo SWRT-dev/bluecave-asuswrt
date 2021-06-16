@@ -83,20 +83,7 @@
 #include <sysdeps/amas/amas_ob.h>
 #endif
 
-#include <auth_common.h>
-#if defined(K3)
-#include "k3.h"
-#elif defined(R7900P) || defined(R8000P)
-#include "r7900p.h"
-#elif defined(K3C)
-#include "k3c.h"
-#elif defined(SBRAC1900P)
-#include "ac1900p.h"
-#elif defined(SBRAC3200P)
-#include "ac3200p.h"
-#else
 #include "swrt.h"
-#endif
 
 #define BCM47XX_SOFTWARE_RESET	0x40		/* GPIO 6 */
 #define RESET_WAIT		2		/* seconds */

@@ -134,6 +134,15 @@ struct iptv_profile {
         char *ttl_inc_enable;
 };
 
+struct REPLACE_PRODUCTID_S {
+        char *org_name;
+        char *replace_name;
+};
+
+struct REPLACE_MODELNAME_S {
+        char *modelname;
+};
+
 #define MIME_EXCEPTION_NOAUTH_ALL 	1<<0
 #define MIME_EXCEPTION_NOAUTH_FIRST	1<<1
 #define MIME_EXCEPTION_NORESETTIME	1<<2

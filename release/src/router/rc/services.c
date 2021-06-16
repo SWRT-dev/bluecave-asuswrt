@@ -16429,7 +16429,7 @@ void PS_pod_main(void)
 	sfd = un_tcpsock_bind(PS_SOCK, BACK_LOG_SIZE, 1);
 	if (sfd == -1) {
 		_dprintf("%s: tcpsock_bind!\n", __func__);
-		return 0;
+		return;
 	}
 
 	signal(SIGCHLD, ps_clearchild);
@@ -16437,7 +16437,7 @@ void PS_pod_main(void)
 		cfd = accept_sock(sfd, 1);
 		if (cfd == -1) {
 			_dprintf("%s: accept_sock!\n", __func__);
-			return 0;
+			return;
 		}
 		if ((pid = fork()) > 0) { //parent
 			close(cfd);
@@ -16453,7 +16453,7 @@ void PS_pod_main(void)
 		else
 			_dprintf("%s: fork err!\n", __func__);
 	}
-	return 0;
+	return;
 }
 #endif
 

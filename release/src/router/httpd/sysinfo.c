@@ -155,6 +155,25 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					    && !strcmp(part, "0xc07")
 					    && !strcmp(arch, "7"))
 						sprintf(model, "IPQ401x - Cortex A7 ARMv7 revision %s", revision);
+					else if (!strcmp(impl, "0x41")//kernel:32/64
+					    && !strcmp(variant, "0x0")
+					    && !strcmp(part, "0xd03")
+					    && (!strcmp(arch, "7") || !strcmp(arch, "8")))
+						sprintf(model, "IPQ807x - Cortex A53 ARMv8 revision %s", revision);
+					else if (!strcmp(impl, "0x51")//kernel:32/64
+					    && !strcmp(variant, "0x0")
+					    && !strcmp(part, "0x801")
+					    && (!strcmp(arch, "7") || !strcmp(arch, "8")))
+						sprintf(model, "IPQ50xx - Cortex A53 ARMv8 revision %s", revision);
+					else if (!strcmp(impl, "0x51")//kernel:32/64
+					    && !strcmp(variant, "0xa")
+					    && !strcmp(part, "0x801")
+					    && (!strcmp(arch, "7") || !strcmp(arch, "8")))
+						sprintf(model, "IPQ60xx - Cortex A53 ARMv8 revision %s", revision);
+					else if (!strcmp(variant, "0x2")
+					    && !strcmp(part, "0xd03")
+					    && !strcmp(arch, "7"))
+						sprintf(model, "IPQ806x - Cortex A15 ARMv7 revision %s", revision);
 #else
 					if (!strcmp(impl, "0x42")
 					    && !strcmp(variant, "0x0")
@@ -218,17 +237,14 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					get_model() == MODEL_RTAX55
 #elif defined(RTAX56U)
 					get_model() == MODEL_RTAX56U
-#elif defined(RTAX58U) || defined(TUFAX3000)
+#elif defined(RTAX58U) || defined(TUFAX3000) || defined(RTAX82U)
 					get_model() == MODEL_RTAX58U
-#elif defined(RTAX82U)
-					get_model() == MODEL_RTAX82U
 #endif
 					)
 				strcpy(result, "1500");
 #endif
 			else
 #endif
-
 			{
 				tmp = nvram_safe_get("clkfreq");
 				if (*tmp)
@@ -426,7 +442,12 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			}
 			unlink("/rom/opt/lantiq/etc/wave_components.ver");
 #elif defined(RTCONFIG_QCA)
-			strcpy(result,"Unknow");
+			char *buffer = read_whole_file("/proc/athversion");
+
+			if (buffer) {
+				strlcpy(result, buffer, sizeof(result));
+				free(buffer);
+			}
 #elif defined(RTCONFIG_RALINK)
 			char buffer[16];
 			if(get_mtk_wifi_driver_version(buffer, strlen(buffer))>0){

@@ -76,21 +76,7 @@
 #define SHELL "/bin/sh"
 #define LOGIN "/bin/login"
 
-#if defined(K3)
-#include "k3.h"
-#elif defined(XWR3100)
-#include "xwr3100.h"
-#elif defined(K3C)
-#include "k3c.h"
-#elif defined(SBRAC1900P)
-#include "ac1900p.h"
-#elif defined(SBRAC3200P)
-#include "ac3200p.h"
-#elif defined(R8000P)
-#include "r7900p.h"
-#else
 #include "swrt.h"
-#endif
 
 static int fatalsigs[] = {
 	SIGILL,
@@ -8378,7 +8364,7 @@ int init_nvram(void)
 		nvram_set_int("led_idr_sig1_gpio", 34);	// RED
 		nvram_set_int("led_idr_sig2_gpio", 35|GPIO_ACTIVE_LOW);	// BLUE
 		nvram_set_int("btn_wps_gpio", 30);
-		k3c_init();//Detect partition integrity, log and alert when corruption is found
+		swrt_init();
 		k3c_init_led();
 		led_control(LED_INDICATOR_SIG3, LED_ON);//yellow
 #else
@@ -10307,6 +10293,7 @@ static void sysinit(void)
 #if defined(MAPAC1750)
 	nvram_set("success_start_service", "0");
 #endif
+
 	init_nvram();  // for system indepent part after getting model
 	restore_defaults(); // restore default if necessary
 	init_nvram2();
@@ -11153,13 +11140,9 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			nvram_set("success_start_service", "1");
 			force_free_caches();
 #endif
-#if defined(BLUECAVE)
-#if defined(K3C)
-			k3c_init_done();
-#else
+
 			swrt_init_done();
-#endif
-#endif
+
 #ifdef RTCONFIG_AMAS
 			nvram_set("start_service_ready", "1");
 #endif

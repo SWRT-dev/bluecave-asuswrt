@@ -12060,7 +12060,7 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 	int count, cnt;
 	long filelen;
 	int offset;
-#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(R8000P) || defined(R7900P) || defined(RAX20)
+#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(R8000P) || defined(R8500) || defined(RAX20) || defined(XWR3100) || defined(R7000P) || defined(EA6700) || defined(F9K1118) || defined(TY6201_RTK) || defined(TY6201_BCM) || defined(DIR868L) || defined(R6300V2)
 	int checkname=0;
 #endif
 #ifndef RTCONFIG_SMALL_FW_UPDATE
@@ -12101,6 +12101,9 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 #if defined(K3)
 		if (strstr(buf, "K3"))
 			checkname=1;
+#elif defined(XWR3100)
+		if (strstr(buf, "XWR3100"))
+			checkname=1;
 #elif defined(K3C)
 		if (strstr(buf, "K3C"))
 			checkname=1;
@@ -12110,9 +12113,33 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 #elif defined(SBRAC3200P)
 		if (strstr(buf, "SBRAC3200P"))
 			checkname=1;
-#elif defined(R8000P) || defined(R7900P)
-		if (strstr(buf, "R7900P")||strstr(buf, "R8000P"))
+#elif defined(R8000P)
+		if (strstr(buf, "R8000P"))
 			checkname=1;
+#elif defined(R7000P)
+		if (strstr(buf, "R7000P"))
+			checkname=1;
+#elif defined(EA6700)
+		if (strstr(buf, "EA6700"))
+			checkname=1;
+#elif defined(DIR868L)
+		if (strstr(buf, "DIR868L"))
+			checkname=1;
+#elif defined(R6300V2)
+		if (strstr(buf, "R6300V2"))
+			checkname=1;
+#elif defined(F9K1118)
+		if (strstr(buf, "F9K1118"))
+			checkname=1;
+#elif defined(TY6201_RTK)
+		if (strstr(buf, "TY6201_RTK"))
+			checkname=1;
+#elif defined(TY6201_BCM)
+		if (strstr(buf, "TY6201_BCM"))
+			checkname=1;
+#elif defined(R8500)
+		if (strstr(buf, "R8500"))
+			checkname=1;		
 #elif  defined(RAX20)
 		if (strstr(buf, "RAX20"))
 			checkname=1;
@@ -12120,7 +12147,7 @@ do_upgrade_post(char *url, FILE *stream, int len, char *boundary)
 		if (!strncasecmp(buf, "Content-Disposition:", 20) && strstr(buf, "name=\"file\""))
 			break;
 	}
-#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(R8000P) || defined(R7900P) || defined(RAX20)
+#if defined(K3) || defined(K3C) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(R8000P) || defined(R8500) || defined(RAX20) || defined(XWR3100) || defined(R7000P) || defined(EA6700) || defined(F9K1118) || defined(TY6201_RTK) || defined(TY6201_BCM) || defined(DIR868L) || defined(R6300V2)
 	if(checkname==0)
 		goto err;
 #endif
@@ -24940,11 +24967,7 @@ ej_get_wan_lan_status(int eid, webs_t wp, int argc, char **argv)
 	struct json_object *wanLanLinkSpeed = NULL;
 	struct json_object *wanLanCount = NULL;
 
-#if defined(K3) || defined(R8000P) || defined(R7900P)
-	fp = popen("rc Get_PhyStatus", "r");
-#else
 	fp = popen("ATE Get_WanLanStatus", "r");
-#endif
 
 	if (fp == NULL)
 		goto error;

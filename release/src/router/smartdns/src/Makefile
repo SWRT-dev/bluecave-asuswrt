@@ -14,14 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+include $(TOP)/.config
 BIN=smartdns 
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-AC88U RT-AC3100 RT-AC3200 RT-AC68U RT-AC5300))
+OBJS_LIB=lib/rbtree.o lib/art.o lib/bitops.o lib/radix.o lib/conf.o lib/ifaddrs.o
+else
 OBJS_LIB=lib/rbtree.o lib/art.o lib/bitops.o lib/radix.o lib/conf.o
+endif
 OBJS=smartdns.o fast_ping.o dns_client.o dns_server.o dns.o util.o tlog.o dns_conf.o dns_cache.o http_parse.o $(OBJS_LIB)
+ifeq ($(RTCONFIG_HND_ROUTER),y)
+CFLAGS +=-O1 -g -Wall -Wstrict-prototypes -fno-omit-frame-pointer -Wstrict-aliasing 
+else
 CFLAGS +=-O2 -g -Wall -Wstrict-prototypes -fno-omit-frame-pointer -Wstrict-aliasing 
+endif
 CFLAGS +=-I./include -I$(TOP)/openssl/include
+ifeq ($(RTCONFIG_QCA),y)
+LDFLAGS +=-ldl
+endif
+
 CFLAGS += -DBASE_FILE_NAME=\"$(notdir $<)\"
 LDFLAGS +=-L$(TOP)/openssl -lssl -lcrypto
-CFLAGS += -DSMARTDNS_VERION=\"$(MERLINR_VER_MINOR)\"
+CFLAGS += -DSMARTDNS_VERION=\"$(SWRT_VER_MINOR)\"
 CXXFLAGS=-O2 -g -Wall -std=c++11 
 CXXFLAGS +=-Iinclude
 #ifeq ($(STATIC), yes)
@@ -30,12 +43,19 @@ CXXFLAGS +=-Iinclude
 LDFLAGS += -lssl -lcrypto -lpthread 
 #endif
 
+ifneq ($(RTCONFIG_RALINK),y)
 .PHONY: all clean
 
 all: $(BIN)
  
 $(BIN) : $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+else
+.PHONY: all clean
+all:
+	cp ./smartdns_mipsle ./smartdns
+endif
 
 clean:
 	$(RM) $(OBJS) $(BIN)
+

@@ -115,6 +115,8 @@ void swrt_init_done(){
 		nvram_set("modelname", "EA6700");
 #elif defined(DIR868L)
 		nvram_set("modelname", "DIR868L");
+#elif defined(R6300V2)
+		nvram_set("modelname", "R6300V2");
 #elif defined(SBRAC3200P)
 		nvram_set("modelname", "SBRAC3200P");
 #elif defined(K3)
@@ -135,6 +137,10 @@ void swrt_init_done(){
 		nvram_set("modelname", "RAX120");
 #elif defined(RAX200)
 		nvram_set("modelname", "RAX200");
+#elif defined(TY6201_BCM)
+		nvram_set("modelname", "TY6201_BCM");
+#elif defined(TY6201_RTK)
+		nvram_set("modelname", "TY6201_RTK");
 #elif defined(K3C)
 		nvram_set("modelname", "K3C");
 //asus
