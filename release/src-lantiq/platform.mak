@@ -1,9 +1,17 @@
+ifneq ($(AMAS),y)
 export LINUXDIR := $(SRCBASE)/linux/linux-3.10.104
+else
+export LINUXDIR := $(SRCBASE)/linux/linux-3.10.104
+endif
 
 ifeq ($(EXTRACFLAGS),)
 EXTRACFLAGS := -DCONFIG_LANTIQ -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -funit-at-a-time -Wno-pointer-sign -DLINUX30 -mips32r2 -mno-branch-likely -mtune=1004kc
 endif
+ifneq ($(AMAS),y)
 export LINUXDIR := $(SRCBASE)/linux/linux-3.10.104
+else
+export LINUXDIR := $(SRCBASE)/linux/linux-3.10.104
+endif
 export KERNEL_BINARY=$(LINUXDIR)/vmlinux
 export PLATFORM := mips-uclibc
 export MODEL_EXT := _lantiq
@@ -352,3 +360,4 @@ define platformKernelConfig
 	fi; \
 	)
 endef
+export PARALLEL_BUILD := -j$(shell grep -c '^processor' /proc/cpuinfo)

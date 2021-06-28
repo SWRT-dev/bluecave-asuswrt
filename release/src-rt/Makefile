@@ -2753,8 +2753,8 @@ define RouterOptions
 	echo "RTCONFIG_SWRT=y" >>$(1); \
 	fi; \
 	if [ "$(SWRT_LED)" = "y" ]; then \
-	sed -i "/RTCONFIG_SWRT/d" $(1); \
-	echo "RTCONFIG_SWRT=y" >>$(1); \
+	sed -i "/RTCONFIG_SWRT_LED/d" $(1); \
+	echo "RTCONFIG_SWRT_LED=y" >>$(1); \
 	fi; \
 	if [ "$(SWRT_UU)" = "y" ]; then \
 	sed -i "/RTCONFIG_SWRT_UU/d" $(1); \
