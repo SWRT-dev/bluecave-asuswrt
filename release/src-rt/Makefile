@@ -2749,7 +2749,7 @@ define RouterOptions
 	echo "RTCONFIG_SMARTDNS=y" >>$(1); \
 	fi; \
 	if [ "$(SWRT)" = "y" ]; then \
-	sed -i "/RTCONFIG_SWRT/d" $(1); \
+	sed -i "/RTCONFIG_SWRT\>/d" $(1); \
 	echo "RTCONFIG_SWRT=y" >>$(1); \
 	fi; \
 	if [ "$(SWRT_LED)" = "y" ]; then \
