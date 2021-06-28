@@ -1849,3 +1849,15 @@ config RTCONFIG_SMARTDNS
 config RTCONFIG_SWRT
 	bool "RTCONFIG_SWRT"
 	default n
+
+config RTCONFIG_SWRT_LED
+	bool "RTCONFIG_SWRT_LED"
+	default n
+
+config RTCONFIG_SWRT_UU
+	bool "RTCONFIG_SWRT_UU"
+	default n
+
+config RTCONFIG_SWRT_FULLCONE
+	bool "RTCONFIG_SWRT_FULLCONE"
+	default n

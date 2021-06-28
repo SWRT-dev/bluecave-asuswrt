@@ -398,8 +398,15 @@ var wl_info = {
 };
 //wireless end
 
+var rc_support = '<% nvram_get("rc_support"); %>';
 function isSupport(_ptn){
 	var ui_support = [<% get_ui_support(); %>][0];
+	if(_ptn == "uu_accel")
+		if(rc_support.search("uu_accel") != -1)
+			return true;
+	else if(_ptn == "swrt_fullcone")
+		if(rc_support.search("swrt_fullcone") != -1)
+			return true;
 	return (ui_support[_ptn]) ? ui_support[_ptn] : false;
 }
 

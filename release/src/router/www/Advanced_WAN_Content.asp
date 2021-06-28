@@ -96,7 +96,9 @@ function initial(){
 		document.form.wan_pppoe_username.value = pppoe_username;
 		document.form.wan_pppoe_passwd.value = pppoe_password;
 	}
-
+	if (isSupport("bcm_kf_netfilter") ||isSupport("swrt_fullcone")) {
+		document.getElementById("nat_type_tr").style.display = "";
+	}
 	if(yadns_support){
 		if(yadns_enable != 0 && yadns_mode != -1){
 			document.getElementById("yadns_hint").style.display = "";

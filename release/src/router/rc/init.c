@@ -8366,6 +8366,7 @@ int init_nvram(void)
 		nvram_set_int("btn_wps_gpio", 30);
 		swrt_init();
 		k3c_init_led();
+		swrt_patch_nvram();
 		led_control(LED_INDICATOR_SIG3, LED_ON);//yellow
 #else
 		nvram_set_int("led_ctl_sig1_gpio", 42);	// Level 1
@@ -9183,7 +9184,9 @@ NO_USB_CAP:
 	add_rc_support("amazon_wss"); // depends on gn_wbl
 #endif
 #endif
-
+#if defined(RTCONFIG_SWRT_FULLCONE)
+	add_rc_support("swrt_fullcone");
+#endif
 	return 0;
 }
 

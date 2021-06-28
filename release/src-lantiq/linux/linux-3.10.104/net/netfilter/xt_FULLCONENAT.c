@@ -1,14 +1,13 @@
 /*
  * Copyright (c) 2018 Chion Tang <tech@chionlab.moe>
  * Copyright (c) 2019 lean <coolsnowwolf@gmail.com>
- * Copyright (c) 2020 paldier <paldier@hotmail.com>
+ * Copyright (c) 2021 paldier <paldier@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  * 
- * QCA ported by lean
- * LANTIQ and MTK ported by paldier
+ * qca/lantiq/mtk/bcm ported by lean and paldier
  */
 
 #include <linux/kernel.h>
@@ -595,9 +594,14 @@ static unsigned int fullconenat_tg(struct sk_buff *skb, const struct xt_action_p
       }
     }
 
-    new_ip = get_device_ip(skb->dev);
-    newrange.min_addr.ip = new_ip;
-    newrange.max_addr.ip = new_ip;
+    if(mr->range[0].flags & NF_NAT_RANGE_MAP_IPS) {
+      newrange.min_addr.ip = mr->range[0].min_ip;
+      newrange.max_addr.ip = mr->range[0].max_ip;
+    } else {
+      new_ip = get_device_ip(skb->dev);
+      newrange.min_addr.ip = new_ip;
+      newrange.max_addr.ip = new_ip;
+    }
 
     /* do SNAT now */
     ret = nf_nat_setup_info(ct, &newrange, HOOK2MANIP(xt_hooknum(par)));
