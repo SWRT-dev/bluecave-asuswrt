@@ -168,7 +168,7 @@ char *psname(int pid, char *buffer, int maxlen)
 
 	if (maxlen <= 0) return NULL;
 	*buffer = 0;
-	sprintf(path, "/proc/%d/stat", pid);
+	snprintf(path, sizeof(path), "/proc/%d/stat", pid);
 	if ((f_read_string(path, buf, sizeof(buf)) > 4) && ((p = strrchr(buf, ')')) != NULL)) {
 		*p = 0;
 		if (((p = strchr(buf, '(')) != NULL) && (atoi(buf) == pid)) {
@@ -226,8 +226,8 @@ int killall(const char *name, int sig)
 
 void do_f(char *path, webs_t wp)
 {
-	FILE *f;
-	char buf[1024];
+	FILE *f = NULL;
+	char buf[1024] = {0};
 	int ret=0;
 
 //printf("do_f: %s\n", path);
@@ -235,7 +235,7 @@ void do_f(char *path, webs_t wp)
 //		while ((nr = fread(buf, 1, sizeof(buf), f)) > 0){
 		while (fgets(buf, sizeof(buf), f) != NULL){
 //printf("%s\n", buf);
-			ret += websWrite(wp, buf);
+			ret += websWrite(wp, "%s", buf);
 		}
 		fclose(f);	
 	}

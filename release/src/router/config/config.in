@@ -186,6 +186,11 @@ config RTCONFIG_DDNS
 	bool "Dynamic DNS"
 	default y
 
+config RTCONFIG_INADYN
+	bool "Dynamic DNS"
+	depends on RTCONFIG_DDNS
+	default n
+
 config RTCONFIG_L7
 	bool "Layer 7 Netfilter"
 	default y

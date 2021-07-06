@@ -2996,8 +2996,11 @@ int init_nvram(void)
 	nvram_set("dsllog_vdslcurrentprofile", "");//VDSL current profile
 #endif
 
-#ifdef RTCONFIG_PUSH_EMAIL
+#ifdef RTCONFIG_FRS_FEEDBACK
 	nvram_set("fb_state", "");
+#endif
+#ifdef RTCONFIG_PUSH_EMAIL
+	nvram_set("PM_state", "");
 #endif
 	nvram_unset("usb_buildin");
 
@@ -9129,9 +9132,9 @@ NO_USB_CAP:
 #ifdef RTCONFIG_AMAS
 #if !defined(SWRT_VER_MAJOR_B)
 	add_rc_support("amas");
+#endif
 	if (nvram_get_int("amas_bdl"))
 	add_rc_support("amas_bdl");
-#endif
 #endif
 
 #ifdef RTCONFIG_WIFI_PROXY
@@ -9976,6 +9979,10 @@ static void sysinit(void)
 		"/tmp/share", "/var/webmon", // !!TB
 		"/var/log", "/var/run", "/var/tmp", "/var/lib", "/var/lib/misc",
 		"/var/spool", "/var/spool/cron", "/var/spool/cron/crontabs",
+		"/var/cache",
+#ifdef RTCONFIG_INADYN
+		"/var/cache/inadyn",
+#endif
 		"/tmp/var/wwwext", "/tmp/var/wwwext/cgi-bin",	// !!TB - CGI support
 #ifdef BLUECAVE
 		"/tmp/etc/rc.d",
@@ -10296,7 +10303,6 @@ static void sysinit(void)
 #if defined(MAPAC1750)
 	nvram_set("success_start_service", "0");
 #endif
-
 	init_nvram();  // for system indepent part after getting model
 	restore_defaults(); // restore default if necessary
 	init_nvram2();
@@ -10424,6 +10430,9 @@ static void sysinit(void)
 #endif
 #ifdef HND_ROUTER
 	reset_stacksize(ASUSRT_STACKSIZE);
+#endif
+#ifdef RTCONFIG_ASD
+	nvram_set("3rd-party", "");
 #endif
 }
 
@@ -11205,11 +11214,14 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			check_services();
 		}
 
+#ifdef RTCONFIG_ASD
+		monitor_asd();
+#endif
 		do {
 		ret = sigwaitinfo(&sigset, &info);
 		} while (ret == -1);
 		state = info.si_signo;
-#if !(defined(HND_ROUTER) && defined(RTCONFIG_HNDMFG))
+#ifndef RTCONFIG_BCM_MFG
 		TRACE_PT("recv signal %d from pid [%u%s%s] (from %s)\n", info.si_signo, info.si_pid, ((info.si_code <= 0) ? ":" : ""), ((info.si_code <= 0) ? get_process_name_by_pid(info.si_pid) : ""), (info.si_code <= 0) ? "user" : "kernel");
 #endif
 #if defined(RTCONFIG_BCMARM) && !defined(HND_ROUTER)

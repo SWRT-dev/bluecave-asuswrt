@@ -4090,11 +4090,8 @@ void fake_etlan_led(void)
 	}
 	allstatus = 1;
 #endif
-#if defined(K3)
-	if (!GetPhyStatusk3(0)) {
-#else
+
 	if (!GetPhyStatus(0)) {
-#endif
 		if (lstatus)
 #ifdef GTAC5300
 			aggled_control(AGGLED_ACT_ALLOFF);
@@ -5104,7 +5101,7 @@ void regular_ddns_check(void)
 #else
 	int r, wan_unit = wan_primary_ifunit(), last_unit = nvram_get_int("ddns_last_wan_unit");
 #endif
-	char prefix[sizeof("wanX_YYY")];
+	char prefix[sizeof("wanXXXXXXXXXX_")];
 	struct in_addr ip_addr;
 	struct hostent *hostinfo;
 
@@ -5145,8 +5142,13 @@ void regular_ddns_check(void)
 
 	//_dprintf("WAN IP change!\n");
 	nvram_set("ddns_update_by_wdog", "1");
-	if (wan_unit != last_unit)
+	if (wan_unit != last_unit) {
+#ifndef RTCONFIG_INADYN
 		unlink("/tmp/ddns.cache");
+#else
+		eval("rm", "-f", "/var/cache/inadyn/*.cache");
+#endif
+	}
 	logmessage("watchdog", "Hostname/IP mapping error! Restart ddns.");
 	if (last_unit != wan_unit)
 		r = notify_rc("restart_ddns");
@@ -5170,7 +5172,7 @@ void ddns_check(void)
 #endif
 
 	//_dprintf("ddns_check... %d\n", ddns_check_count);
-	if (!nvram_match("ddns_enable_x", "1"))
+	if (!nvram_get_int("ddns_enable_x"))
 		return;
 
 #if defined(RTCONFIG_DUALWAN)
@@ -5195,12 +5197,17 @@ void ddns_check(void)
 	if (!nvram_match("wans_mode", "lb") && !is_wan_connect(wan_unit))
 		return;
 
-	/* Check existence of ez-ipupdate/phddns
+	/* Check existence of ddns daemon
 	 * if and only if last WAN unit is equal to new WAN unit.
 	 */
 	if (last_unit == wan_unit) {
+#ifndef RTCONFIG_INADYN
 		if (pids("ez-ipupdate"))	//ez-ipupdate is running!
 			return;
+#else
+		if (pids("inadyn"))		//inadyn is running!
+			return;
+#endif
 		if (pids("phddns"))		//phddns is running!
 			return;
 	}
@@ -5236,8 +5243,13 @@ void ddns_check(void)
 		return;
 
 	nvram_set("ddns_update_by_wdog", "1");
-	if (wan_unit != last_unit)
+	if (wan_unit != last_unit) {
+#ifndef RTCONFIG_INADYN
 		unlink("/tmp/ddns.cache");
+#else
+		eval("rm", "-f", "/var/cache/inadyn/*.cache");
+#endif
+	}
 	logmessage("watchdog", "start ddns.");
 	if (last_unit != wan_unit)
 		r = notify_rc("restart_ddns");
@@ -5448,14 +5460,7 @@ void k3screen_check()
 #if defined(RTCONFIG_SOFTCENTER)
 static void softcenter_sig_check()
 {
-	//1=wan,2=nat,3=mount
 	if(nvram_match("sc_installed", "1")){
-		//if(!pids("perpd")){
-			//char *perp_argv[] = { "/jffs/softcenter/perp/perp.sh", "start",NULL };
-			//pid_t pid;
-			//_eval(perp_argv, NULL, 0, &pid);
-			//doSystem("sh /jffs/softcenter/perp/perp.sh start &");
-		//}
 		if(nvram_match("sc_wan_sig", "1")) {
 			if(nvram_match("sc_mount", "1")) {
 				if(f_exists("/jffs/softcenter/bin/softcenter.sh")) {
@@ -5904,7 +5909,6 @@ static void ntevent_disk_usage_check(){
 }
 #endif
 
-#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
 /* DEBUG DEFINE */
 #define FAUPGRADE_DEBUG             "/tmp/FAUPGRADE_DEBUG"
 
@@ -6000,7 +6004,7 @@ static void auto_firmware_check()
 #ifdef RTCONFIG_DSL
 		eval("/usr/sbin/notif_update.sh");
 #endif
-
+#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
 		if (nvram_get_int("webs_state_update")
 				&& !nvram_get_int("webs_state_error")
 				&& !nvram_get_int("webs_state_dl_error")
@@ -6043,10 +6047,14 @@ static void auto_firmware_check()
 		else{
 			FAUPGRADE_DBG("could not retrieve firmware information: webs_state_update = %d, webs_state_error = %d, webs_state_dl_error = %d, webs_state_info.len = %d", nvram_get_int("webs_state_update"), nvram_get_int("webs_state_error"), nvram_get_int("webs_state_dl_error"), strlen(nvram_safe_get("webs_state_info")));
 		}
+#else
+		period_retry = 0; //stop retry
+#endif
 		return;
 	}
+
 }
-#endif
+
 
 #if defined(RTCONFIG_LP5523) || defined(RTCONFIG_LYRA_HIDE)
 #define FILE_LP5523 "/tmp/lp5523_log"
@@ -7528,9 +7536,7 @@ wdp:
 		modem_flow_check(modem_unit);
 #endif
 #endif
-#ifdef RTCONFIG_FORCE_AUTO_UPGRADE
 	auto_firmware_check();
-#endif
 #ifdef RTCONFIG_BWDPI
 	auto_sig_check();		// libbwdpi.so
 	web_history_save();		// libbwdpi.so
@@ -7586,7 +7592,7 @@ wdp:
 	if (!pids("lbd") && !repeater_mode()) start_qca_lbd();
 #endif
 #endif
-#if defined(K3) || defined(K3C) || defined(R8000P) || defined(R7900P) || defined(SBRAC1900P)
+#if defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3C) || defined(K3) || defined(XWR3100) || defined(R8000P) || defined(EA6700) || defined(DIR868L) || defined(R6300V2) || defined(TY6201_BCM) || defined(TY6201_RTK) || defined(R8500) || defined(F9K1118)
 #if defined(SWRT_VER_MAJOR_R) || defined(SWRT_VER_MAJOR_X)
 	check_auth_code();
 #endif

@@ -1,3 +1,16 @@
+/*
+ * Copyright (c) 2018 Chion Tang <tech@chionlab.moe>
+ * Copyright (c) 2019 lean <coolsnowwolf@gmail.com>
+ * Copyright (c) 2021 paldier <paldier@hotmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ * 
+ * qca/lantiq/mtk/bcm ported by lean and paldier
+ */
+
+
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>

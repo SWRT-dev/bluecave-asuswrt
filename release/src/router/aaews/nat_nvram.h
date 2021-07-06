@@ -24,6 +24,9 @@
 
 #define NVARM_LYRA_MASTER_MODE "cfg_master"
 #define NVARM_AIMESH_RE_MODE "re_mode"
+
+#define NVRAM_RETRY_COUNT "aae_retry_cnt"
+
 /*#define HTTP_WAN_PORT "misc_httpport_x"
 #define HTTP_ENABLE "http_enable"*/
 //#define AAE_SEM_NAME "AAE_ENABLE_SEM"

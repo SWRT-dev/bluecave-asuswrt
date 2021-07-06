@@ -1843,7 +1843,7 @@ void nat_setting(char *wan_if, char *wan_ip, char *wanx_if, char *wanx_ip, char 
 	symlink(name, NAT_RULES);
 
 	wan_unit = wan_ifunit(wan_if);
-	if(is_phy_connect2(wan_unit)){
+	if(is_phy_connect(wan_unit)){
 		/* force nat update */
 		nvram_set_int("nat_state", NAT_STATE_UPDATE);
 _dprintf("nat_rule: start_nat_rules 1.\n");
@@ -2241,7 +2241,7 @@ void nat_setting2(char *lan_if, char *lan_ip, char *logaccept, char *logdrop)	//
 	symlink(name, NAT_RULES);
 
 	for (unit = WAN_UNIT_FIRST; unit < wan_max_unit; ++unit) {
-		if(is_phy_connect2(unit)){
+		if(is_phy_connect(unit)){
 			/* force nat update */
 			nvram_set_int("nat_state", NAT_STATE_UPDATE);
 _dprintf("nat_rule: start_nat_rules 2.\n");
@@ -6061,11 +6061,7 @@ int start_firewall(int wanunit, int lanunit)
 
 	if ((fp=fopen("/proc/sys/net/ipv4/tcp_tw_recycle", "w+")))
 	{
-#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_DUALWAN) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_REALTEK)
 		fputs("0", fp);
-#else
-		fputs("1", fp);
-#endif
 		fclose(fp);
 	}
 
@@ -6133,7 +6129,6 @@ leave:
 	run_custom_script("firewall-start", 0, wan_if, NULL);
 	return 0;
 }
-
 
 void enable_ip_forward(void)
 {

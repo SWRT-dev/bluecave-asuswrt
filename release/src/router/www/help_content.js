@@ -226,7 +226,6 @@ helpcontent[19] = new Array("",
 							);
 // QoS
 helpcontent[20] = new Array("",
-							"",
 							'<#EzQoS_bandwidth_note1#>',
 							"<#min_bound_desc#>",
 							"<#max_bound_desc#>",

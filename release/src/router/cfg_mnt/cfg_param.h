@@ -509,11 +509,11 @@ struct param_mapping_s param_mapping_list[] = {
 	{ "oauth_google_user_email", FT_FEEDBACK, SUBFT_FEEDBACK },
 	{ "fb_email_provider", FT_FEEDBACK, SUBFT_FEEDBACK },
 	/* diagnostic */
-	{ "dblog_enable", 		FT_DIAGNOSTIC,		SUBFT_DIAGNOSTIC},
-	{ "dblog_tousb", 		FT_DIAGNOSTIC,		SUBFT_DIAGNOSTIC},
-	{ "dblog_service", 		FT_DIAGNOSTIC,		SUBFT_DIAGNOSTIC},
-	{ "dblog_duration", 	FT_DIAGNOSTIC,		SUBFT_DIAGNOSTIC},
-	{ "dblog_transid", 		FT_DIAGNOSTIC,		SUBFT_DIAGNOSTIC},
+	{ "dblog_enable", 		FT_FEEDBACK,		SUBFT_FEEDBACK},
+	{ "dblog_tousb", 		FT_FEEDBACK,		SUBFT_FEEDBACK},
+	{ "dblog_service", 		FT_FEEDBACK,		SUBFT_FEEDBACK},
+	{ "dblog_duration", 	FT_FEEDBACK,		SUBFT_FEEDBACK},
+	{ "dblog_transid", 		FT_FEEDBACK,		SUBFT_FEEDBACK},
 	/* backhaul ctrl */
 	{ "amas_ethernet", 	FT_BACKHAULCTRL,	SUBFT_BACKHAULCTRL},
 	{ "smart_connect_x", 	FT_WIRELESS,	SUBFT_SMART_CONNECT},

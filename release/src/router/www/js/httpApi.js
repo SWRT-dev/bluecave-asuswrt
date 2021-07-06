@@ -372,6 +372,11 @@ var httpApi ={
 		){
 			retData.wanType = (iCanUsePPPoE && wanInfo.x_Setting  == "0") ? wanTypeList.pppdhcp : wanTypeList.connected;
 		}
+		else if( (wanInfo.wan0_state_t    == "2" && wanInfo.wan0_sbstate_t  == "0" && wanInfo.wan0_auxstate_t == "2") ||
+				 (wanInfo.wan0_state_t    == "2" && wanInfo.wan0_sbstate_t  == "0" && wanInfo.wan0_auxstate_t == "0")
+		){
+				retData.wanType = wanTypeList.dhcp;
+		}
 		else if(wanInfo.autodet_state == ""){
 			retData.wanType = wanTypeList.check;			
 		}
@@ -398,6 +403,10 @@ var httpApi ={
 			else{
 				retData.wanType = wanTypeList.noWan;
 			}
+		}
+		else if(wanInfo.wan0_state_t == "4" && wanInfo.wan0_sbstate_t == "4"){
+			retData.wanType = wanTypeList.dhcp;
+			retData.isIPConflict = true;
 		}
 		else{
 			retData.wanType = wanTypeList.check;

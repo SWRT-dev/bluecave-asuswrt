@@ -3786,3 +3786,22 @@ function setRadioValue(obj,val) {
 	}
 }
 
+function check_ddns_status(){
+	var ddns_flag = true;
+	if('<% nvram_get("ddns_enable_x");%>' == "1" && '<% nvram_get("ddns_hostname_x");%>' != ""){
+		if('<% nvram_get("ddns_server_x");%>' == 'WWW.ASUS.COM') { //ASUS DDNS
+			if((ddns_return_code.indexOf('200')==-1) && (ddns_return_code.indexOf('220')==-1) && (ddns_return_code.indexOf('230')==-1))
+				ddns_flag = false;
+
+		}
+		else{ //Other ddns service
+			if(ddns_updated != '1' || ddns_return_code=='unknown_error' || ddns_return_code=="auth_fail")
+				ddns_flag = false;
+		}
+	}
+	else
+		ddns_flag = false;
+
+	return ddns_flag;
+}
+

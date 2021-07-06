@@ -777,17 +777,40 @@ enum {
 	MODEL_GTAX11000,
 	MODEL_RTAX92U,
 	MODEL_RTAX95Q,
+	MODEL_RTAX56_XD4,
 	MODEL_RTAX58U,
 	MODEL_RTAX56U,
 	MODEL_SHAC1300,
 	MODEL_RPAC92,
-	MODEL_ZENWIFICD6R,
-	MODEL_ZENWIFICD6N,
+	MODEL_RTAC59CD6R,
+	MODEL_RTAC59CD6N,
 	MODEL_RTAX86U,
 	MODEL_RTAX68U,
+	MODEL_RT4GAC56,
+	MODEL_DSLAX82U,
+	MODEL_RTAX55,
+	MODEL_GTAXE11000,
 	MODEL_MAX
 };
 
+enum {
+	MODEL_SWRTMIN = 0,
+	MODEL_K3,
+	MODEL_XWR3100,
+	MODEL_R7000P,
+	MODEL_EA6700,
+	MODEL_SBRAC1900P,
+	MODEL_F9K1118,
+	MODEL_SBRAC3200P,
+	MODEL_R8500,
+	MODEL_R8000P,
+	MODEL_K3C,
+	MODEL_TY6201_RTK,
+	MODEL_TY6201_BCM,
+	MODEL_RAX120,
+	//MODEL_RMAC2100,move to model_list
+	MODEL_SWRTMAX
+};
 /* NOTE: Do not insert new entries in the middle of this enum,
  * always add them to the end! */
 enum {
@@ -852,6 +875,8 @@ extern int check_hw_type(void);
 //	extern int get_hardware(void) __attribute__ ((weak, alias ("check_hw_type")));
 extern int get_model(void);
 extern char *get_modelid(int model);
+extern int get_modelname(void);
+extern char *get_modelnameid(int model);
 extern int get_switch(void);
 extern int supports(unsigned long attr);
 

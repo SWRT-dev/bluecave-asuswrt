@@ -1,4 +1,4 @@
-/* dnsmasq is Copyright (c) 2000-2020 Simon Kelley
+/* dnsmasq is Copyright (c) 2000-2021 Simon Kelley
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -58,6 +58,7 @@ int main (int argc, char **argv)
   char *bound_device = NULL;
   int did_bind = 0;
   struct server *serv;
+  char *netlink_warn;
 #endif 
 #if defined(HAVE_DHCP) || defined(HAVE_DHCP6)
   struct dhcp_context *context;
@@ -89,11 +90,15 @@ int main (int argc, char **argv)
   sigaction(SIGPIPE, &sigact, NULL);
 
   umask(022); /* known umask, create leases and pid files as 0644 */
- 
+
   rand_init(); /* Must precede read_opts() */
   
   read_opts(argc, argv, compile_opts);
  
+#ifdef HAVE_LINUX_NETWORK
+  daemon->kernel_version = kernel_version();
+#endif
+
   if (daemon->edns_pktsz < PACKETSZ)
     daemon->edns_pktsz = PACKETSZ;
 
@@ -138,20 +143,18 @@ int main (int argc, char **argv)
     }
 #endif
   
-  /* Close any file descriptors we inherited apart from std{in|out|err} 
-     
-     Ensure that at least stdin, stdout and stderr (fd 0, 1, 2) exist,
+  /* Ensure that at least stdin, stdout and stderr (fd 0, 1, 2) exist,
      otherwise file descriptors we create can end up being 0, 1, or 2 
      and then get accidentally closed later when we make 0, 1, and 2 
      open to /dev/null. Normally we'll be started with 0, 1 and 2 open, 
      but it's not guaranteed. By opening /dev/null three times, we 
      ensure that we're not using those fds for real stuff. */
-  for (i = 0; i < max_fd; i++)
-    if (i != STDOUT_FILENO && i != STDERR_FILENO && i != STDIN_FILENO)
-      close(i);
-    else
-      open("/dev/null", O_RDWR); 
-
+  for (i = 0; i < 3; i++)
+    open("/dev/null", O_RDWR); 
+  
+  /* Close any file descriptors we inherited apart from std{in|out|err} */
+  close_fds(max_fd, -1, -1, -1);
+  
 #ifndef HAVE_LINUX_NETWORK
 #  if !(defined(IP_RECVDSTADDR) && defined(IP_RECVIF) && defined(IP_SENDSRCADDR))
   if (!option_bool(OPT_NOWILD))
@@ -325,7 +328,7 @@ int main (int argc, char **argv)
 #endif
 
 #if  defined(HAVE_LINUX_NETWORK)
-  netlink_init();
+  netlink_warn = netlink_init();
 #elif defined(HAVE_BSD_NETWORK)
   route_init();
 #endif
@@ -387,8 +390,8 @@ int main (int argc, char **argv)
   if (daemon->port != 0)
     {
       cache_init();
-
       blockdata_init();
+      hash_questions_init();
     }
 
 #ifdef HAVE_INOTIFY
@@ -944,6 +947,9 @@ int main (int argc, char **argv)
 #  ifdef HAVE_LINUX_NETWORK
   if (did_bind)
     my_syslog(MS_DHCP | LOG_INFO, _("DHCP, sockets bound exclusively to interface %s"), bound_device);
+
+  if (netlink_warn)
+    my_syslog(LOG_WARNING, netlink_warn);
 #  endif
 
   /* after dhcp_construct_contexts */
@@ -1689,7 +1695,7 @@ static int set_dns_listeners(time_t now)
   
   /* will we be able to get memory? */
   if (daemon->port != 0)
-    get_new_frec(now, &wait, 0);
+    get_new_frec(now, &wait, NULL);
   
   for (serverfdp = daemon->sfds; serverfdp; serverfdp = serverfdp->next)
     poll_listen(serverfdp->fd, POLLIN);
@@ -1826,7 +1832,8 @@ static void check_dns_listeners(time_t now)
 		    addr.addr4 = tcp_addr.in.sin_addr;
 		  
 		  for (iface = daemon->interfaces; iface; iface = iface->next)
-		    if (iface->index == if_index)
+		    if (iface->index == if_index &&
+		        iface->addr.sa.sa_family == tcp_addr.sa.sa_family)
 		      break;
 		  
 		  if (!iface && !loopback_exception(listener->tcpfd, tcp_addr.sa.sa_family, &addr, intr_name))
@@ -1865,30 +1872,30 @@ static void check_dns_listeners(time_t now)
 	      else
 		{
 		  int i;
+#ifdef HAVE_LINUX_NETWORK
+		  /* The child process inherits the netlink socket, 
+		     which it never uses, but when the parent (us) 
+		     uses it in the future, the answer may go to the 
+		     child, resulting in the parent blocking
+		     forever awaiting the result. To avoid this
+		     the child closes the netlink socket, but there's
+		     a nasty race, since the parent may use netlink
+		     before the child has done the close.
+		     
+		     To avoid this, the parent blocks here until a 
+		     single byte comes back up the pipe, which
+		     is sent by the child after it has closed the
+		     netlink socket. */
+		  
+		  unsigned char a;
+		  read_write(pipefd[0], &a, 1, 1);
+#endif
 
 		  for (i = 0; i < MAX_PROCS; i++)
 		    if (daemon->tcp_pids[i] == 0 && daemon->tcp_pipes[i] == -1)
 		      {
-			char a;
-			
 			daemon->tcp_pids[i] = p;
 			daemon->tcp_pipes[i] = pipefd[0];
-#ifdef HAVE_LINUX_NETWORK
-			/* The child process inherits the netlink socket, 
-			   which it never uses, but when the parent (us) 
-			   uses it in the future, the answer may go to the 
-			   child, resulting in the parent blocking
-			   forever awaiting the result. To avoid this
-			   the child closes the netlink socket, but there's
-			   a nasty race, since the parent may use netlink
-			   before the child has done the close.
-
-			   To avoid this, the parent blocks here until a 
-			   single byte comes back up the pipe, which
-			   is sent by the child after it has closed the
-			   netlink socket. */
-			retry_send(read(pipefd[0], &a, 1));
-#endif
 			break;
 		      }
 		}
@@ -1920,15 +1927,16 @@ static void check_dns_listeners(time_t now)
 		 terminate the process. */
 	      if (!option_bool(OPT_DEBUG))
 		{
-		  char a = 0;
+#ifdef HAVE_LINUX_NETWORK
+		  /* See comment above re: netlink socket. */
+		  unsigned char a = 0;
+
+		  close(daemon->netlinkfd);
+		  read_write(pipefd[1], &a, 1, 0);
+#endif		  
 		  alarm(CHILD_LIFETIME);
 		  close(pipefd[0]); /* close read end in child. */
 		  daemon->pipe_to_parent = pipefd[1];
-#ifdef HAVE_LINUX_NETWORK
-		  /* See comment above re netlink socket. */
-		  close(daemon->netlinkfd);
-		  retry_send(write(pipefd[1], &a, 1));
-#endif
 		}
 
 	      /* start with no upstream connections. */
@@ -1955,8 +1963,10 @@ static void check_dns_listeners(time_t now)
 		    shutdown(s->tcpfd, SHUT_RDWR);
 		    close(s->tcpfd);
 		  }
+	      
 	      if (!option_bool(OPT_DEBUG))
 		{
+		  close(daemon->pipe_to_parent);
 		  flush_log();
 		  _exit(0);
 		}
@@ -2116,6 +2126,4 @@ int delay_dhcp(time_t start, int sec, int fd, uint32_t addr, unsigned short id)
 
   return 0;
 }
-#endif
-
- 
+#endif /* HAVE_DHCP */

@@ -308,7 +308,6 @@ endif
 else ifeq ($(RTCONFIG_LANTIQ),y)
 OBJS += init-lantiq.o lantiq.o ate-lantiq.o lantiq-wave.o
 OBJS += $(if $(wildcard sysdeps/wps-lantiq.c),wps-lantiq.o,prebuild/wps-lantiq.o)
-
 ifeq ($(RTCONFIG_AMAS),y)
 OBJS += $(if $(wildcard sysdeps/lantiq/obd-lantiq.c),obd-lantiq.o,prebuild/obd-lantiq.o)
 endif
@@ -323,7 +322,7 @@ OBJS += $(if $(wildcard conn_diag.c),conn_diag.o,prebuild/conn_diag.o)
 endif
 
 OBJS += swrt.o
-OBJS += $(if $(wildcard swrtex.c),swrtex.o,prebuild/swrtex.o)
+OBJS += $(if $(wildcard swrtex.c),swrtex.o,prebuild/$(SWRT_NAME)/swrtex.o)
 
 # TODO, speedtest
 ifeq ($(RTCONFIG_SPEEDTEST),y)
@@ -374,6 +373,10 @@ ifeq ($(RTCONFIG_WTFAST),y)
 OBJS += wtfast.o
 endif
 
+ifeq ($(RTCONFIG_TCPLUGIN),y)
+OBJS += qmacc.o
+endif
+
 ifeq ($(or $(RTCONFIG_PPTPD),$(RTCONFIG_ACCEL_PPTPD)),y)
 OBJS += vpn.o
 endif
@@ -409,10 +412,9 @@ OBJS += dsl_fb.o
 endif
 
 ifeq ($(RTCONFIG_FRS_LIVE_UPDATE),y)
-ifneq ($(SWRT_NAME), $(filter $(SWRT_NAME), BLUECAVE K3 K3C R7900P SBRAC1900P RTAC68U EA6700))
 OBJS += frs_service.o
 endif
-endif
+
 ifeq ($(RTCONFIG_DSL),y)
 OBJS += asustest.o
 endif
@@ -656,6 +658,7 @@ endif
 
 ifeq ($(RTCONFIG_TUNNEL),y)
 OBJS += natnl_api.o
+CFLAGS += -I$(TOP)/aaews
 endif
 
 ifneq ($(RTCONFIG_RALINK)$(RTCONFIG_QCA)$(RTCONFIG_REALTEK),y)
@@ -1085,8 +1088,8 @@ ifeq ($(or $(RTAC68U),$(RT4GAC68U)),y)
 	@cd $(INSTALLDIR)/sbin && ln -sf rc firmware_enc_crc
 	@cd $(INSTALLDIR)/sbin && ln -sf rc fw_check
 endif
-	@cd $(INSTALLDIR)/sbin && ln -sf rc toolbox
 
+	@cd $(INSTALLDIR)/sbin && ln -sf rc toolbox
 
 clean:
 	rm -f rc *.o .*.depend *.prep

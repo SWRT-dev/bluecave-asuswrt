@@ -108,7 +108,7 @@ function eula_confirm(){
 function cancel(){
 	refreshpage();
 }
-var siteInfo = ['https://www.asus.com/Motherboards/ROG-Republic-of-Gamers-Products',
+var siteInfo = ['https://www.asus.com/support/FAQ/1042778/',
 	     		'Advanced_WTFast_Content.asp',
 				'QoS_EZQoS.asp'];
 function redirectSite(url){

@@ -67,8 +67,6 @@ export SRCBASEDIR := $(shell pwd | sed 's/.*release\///g')
 RELEASEDIR := $(shell (cd $(SRC_ROOT)/.. && pwd -P))
 export PATH := $(RELEASEDIR)/tools:$(SRCBASE)/ctools:$(PATH)
 
-#K3C/K3/SBRAC1900P/SBRAC3200P/R7000/R8000/R7900P/R8000P/RTACRH17/RTAC85P/GTAC2900/GTAC5300/RTAC86U/RTAC68U/RTAC3100/RTAC3200/RTAC68P/BLUECAVE
-#RTAX58U/TUFAX3000/RTAX56U/RTAX88U
 #export LANTIQ_OVERCLOCK=y
 export SWRT_VER := $(SWRT_VER_MAJOR)$(SWRT_VER_MINOR)
 export SWRTVER := $(SWRT_NAME)_$(SWRT_VER)
@@ -143,6 +141,7 @@ export CONFIG_BCMWL5=y
 export CONFIG_LINUX26=y
 	# its multi-arch in 94908, specify ARCH in kbuild result bad
 endif
+
 -include .config
 #
 # include platform.mak after include .config
@@ -180,12 +179,13 @@ MODEL = $(subst -,,$(subst +,P,$(BUILD_NAME)))
 endif
 export MODEL
 export CFLAGS += -D$(MODEL)
-#bluecave bug: export bluecave in target.mak and export bluecave=y here
 export $(MODEL):=y
+ifneq ($(SWRT_NAME),)
 export CFLAGS += -D$(SWRT_NAME)
-export $(SWRT_NAME)=y
+export $(SWRT_NAME):=y
 export CFLAGS += -DSWRT_VER_MAJOR_$(SWRT_VER_MAJOR)
-export SWRT_VER_MAJOR_$(SWRT_VER_MAJOR)=y
+export SWRT_VER_MAJOR_$(SWRT_VER_MAJOR):=y
+endif
 endif
 
 EXTRA_KERNEL_YES_CONFIGS_1 := $(filter %=y %=Y,$(EXTRA_KERNEL_CONFIGS))
@@ -267,7 +267,6 @@ $(if $(CONFIG_UBOOT_CONFIG_LTQ_IMAGE_EXTRA_CHECKS), \
 endef
 
 LANTIQ_LINUX_DIR=linux/linux-3.10.104
-#k3c only,bluecave will be supported after i successfully built the new uboot
 ifeq ($(LANTIQ_OVERCLOCK),y)
 DTSFILE=easy350_anywan_router_800m_p.dts
 UBOOTFILE=u-boot-nand-k3c-p.bin
@@ -4284,7 +4283,7 @@ endif
 	$(call save_src_config, $@)
 	$(MAKE) bin
 
-BLUE% blue%:
+Bluecave bluecave:
 	$(call save_src_config, $@)
 	$(MAKE) bin
 

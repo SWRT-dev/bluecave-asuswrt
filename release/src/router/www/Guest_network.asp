@@ -384,14 +384,7 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 						htmlcode += '<tfoot><tr rowspan="3"><td align="center"><span style="color:#FFCC00;">Used by ' + captive_portal_used_wl_array["wl" + unit_subunit] + '</span></td></tr></tfoot>';
 					}
 				}else{
-					if(amazon_wss_if_support){
-						htmlcode += '<tfoot>';
-						htmlcode += '<tr rowspan="3"><td align="center"><input type="button" class="button_gen" value="<#WLANConfig11b_WirelessCtrl_button1name#>" onclick="create_guest_unit('+ unit +','+ subunit +');"></td></tr>';
-						htmlcode += '<tr rowspan="3"><td align="center"><input type="button" class="button_gen" value="Amazon Wi-Fi Simple Setup" onclick="enable_amazon_wss('+ unit +','+ subunit +');"></td></tr>';/* untranslated */
-						htmlcode += '</tfoot>';
-					}
-					else
-						htmlcode += '<tfoot><tr rowspan="3"><td align="center"><input type="button" class="button_gen" value="<#WLANConfig11b_WirelessCtrl_button1name#>" onclick="create_guest_unit('+ unit +','+ subunit +');"></td></tr></tfoot>';
+					htmlcode += '<tfoot><tr rowspan="3"><td align="center"><input type="button" class="button_gen" value="<#WLANConfig11b_WirelessCtrl_button1name#>" onclick="create_guest_unit('+ unit +','+ subunit +');"></td></tr></tfoot>';
 				}
 
 				if(sw_mode != "3"){
@@ -413,8 +406,11 @@ function gen_gntable_tr(unit, gn_array, slicesb){
 				}
 			}
 			htmlcode += '</table>';
-			if(amazon_wss_if_support && amazon_wss_status){
-				htmlcode += '<div style="font-size:12px;font-weight:bolder;color:#FC0;position:absolute;text-align:center;width:100%;">Used by <br>Amazon Wi-Fi Simple Setup</div>';/* untranslated */
+			if(amazon_wss_if_support){
+				if(amazon_wss_status)
+					htmlcode += '<div style="font-size:12px;font-weight:bolder;color:#FC0;position:absolute;text-align:center;width:100%;">Used by <br>Amazon Wi-Fi Simple Setup</div>';/* untranslated */
+				else
+					htmlcode += '<div style="position:absolute;margin-top:10px;text-align:center;""><input type="button" class="button_gen" style="word-break:break-word;"value="<#WSS_setup#>" onclick="enable_amazon_wss('+ unit +','+ subunit +');"></div>';
 			}
 			if(lyra_hide_support){
 				if(i == "0")
@@ -1345,6 +1341,25 @@ function remove_amazon_wss(unit, subunit){
 	append_hidden_item("wl_bw_enabled", "0");
 	append_hidden_item("wl_bw_dl", "0");
 	append_hidden_item("wl_bw_ul", "0");
+	append_hidden_item("wl_closed", "0");
+	append_hidden_item("wl_ssid", "ASUS_Guest2");
+	append_hidden_item("wl_auth_mode_x", "open");
+	append_hidden_item("wl_wep_x", "0");
+	append_hidden_item("wl_expire", "0");
+	append_hidden_item("qos_enable", "0");
+	append_hidden_item("qos_type", "1");
+	append_hidden_item("wl_lanaccess", "off");
+	append_hidden_item("wl_macmode", "disabled");
+	append_hidden_item("wl_wpa_psk", "");
+	append_hidden_item("wl_crypto", "aes");
+	append_hidden_item("wl_phrase_x", "");
+	append_hidden_item("wl_key", "");
+	append_hidden_item("wl_key1", "");
+	append_hidden_item("wl_key2", "");
+	append_hidden_item("wl_key3", "");
+	append_hidden_item("wl_key4", "");
+	append_hidden_item("wl_mbss", "");
+
 	if (lantiq_support)
 		document.unitform.action_wait.value = "60"; // for extend the time to let Amazon WSS ebtable rule ready, or it will block all clients
 	close_guest_unit(unit, subunit);
