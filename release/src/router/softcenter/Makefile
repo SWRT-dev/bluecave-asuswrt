@@ -53,6 +53,7 @@ endif
 	install -m 0755 resolveip $(INSTALLDIR)/usr/sbin
 	install -m 0755 softcenter/automount.sh $(INSTALLDIR)/rom/etc/softcenter
 	install -m 0755 softcenter/bin/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter-mount.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter-net.sh $(INSTALLDIR)/rom/etc/softcenter/bin
@@ -63,7 +64,7 @@ endif
 	install -m 0755 softcenter/res/sc1EN.json $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/sc1TW.json $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/icon-default.png $(INSTALLDIR)/rom/etc/softcenter/res
-	install -m 0755 softcenter/res/merlinr.png $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/swrt.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/upgrade.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/softcenter.js $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/res
@@ -79,7 +80,6 @@ endif
 	install -m 0755 softcenter/res/layer/theme/default/loading-2.gif $(INSTALLDIR)/rom/etc/softcenter/res/layer/theme/default
 	install -m 0755 softcenter/webs/Main_Soft_center.asp $(INSTALLDIR)/rom/etc/softcenter/webs
 	install -m 0755 softcenter/webs/Main_Soft_setting.asp $(INSTALLDIR)/rom/etc/softcenter/webs
-	install -m 0755 softcenter/perp/perp.sh $(INSTALLDIR)/rom/etc/softcenter/perp
 	install -m 0755 softcenter/scripts/base.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/dummy_script.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
@@ -117,17 +117,12 @@ else
 	install -m 0755 scEN.json $(INSTALLDIR)/www/res
 	install -m 0755 scTW.json $(INSTALLDIR)/www/res
 	install -m 0755 Softcenter.asp $(INSTALLDIR)/www
-ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), SBRAC1900P SBRAC3200P))
-	install -m 0755 key.asp $(INSTALLDIR)/www
 endif
-endif
-ifeq ($(or $(SWRT_VER_MAJOR_R),$(SWRT_VER_MAJOR_X)),y)
-ifeq ($(or $(K3),$(R8500),$(XWR3100),$(TY6201_RTK),$(TY6201_BCM)),y)
+ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), SBRAC1900P SBRAC3200P K3 R8500 XWR3100 TY6201_RTK TY6201_BCM))
 ifeq ($(HND_ROUTER), y)
 	install -m 0755 key.asp $(INSTALLDIR)/www/www
 else
 	install -m 0755 key.asp $(INSTALLDIR)/www
-endif
 endif
 endif
 clean:

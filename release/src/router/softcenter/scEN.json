@@ -26,5 +26,14 @@
   "Refresh": "Refresh",
   "Free": "Free",
   "Unsupportfat": "Unsupport fat",
+  "Install": "Install",
+  "Update": "Update",
+  "Uninstall": "Uninstall",
+  "Installed": "Installed",
+  "Online": "Online",
+  "Current version:": "Current version:",
+  "Latest version:": "Latest version:",
+  "loading...": "loading...",
   "Softcenter - Offline installation": "Software Center - Offline installation"
 }
+

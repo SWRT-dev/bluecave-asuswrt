@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Copyright (C) 2021 SWRTdev
+
 export PATH=$PATH:/jffs/softcenter/bin:/jffs/softcenter/scripts
 export LD_LIBRARY_PATH=/jffs/softcenter/lib:${LD_LIBRARY_PATH}
 

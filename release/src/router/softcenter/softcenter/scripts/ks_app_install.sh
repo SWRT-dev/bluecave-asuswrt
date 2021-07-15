@@ -1,6 +1,7 @@
 #!/bin/sh
 
-#From dbus to local variable
+# Copyright (C) 2021 SWRTdev
+
 eval $(dbus export softcenter_installing_)
 source /jffs/softcenter/scripts/base.sh
 
@@ -66,9 +67,9 @@ else
 fi
 
 MODEL=$(nvram get productid)
-if [ "${MODEL:0:3}" == "GT-" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
+if [ "${MODEL:0:3}" == "GT-" ] || [ "$(nvram get swrt_rog)" == "1" ];then
 	ROG=1
-elif [ "${MODEL:0:3}" == "TUF" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
+elif [ "${MODEL:0:3}" == "TUF" ] || [ "$(nvram get swrt_tuf)" == "1" ];then
 	TUF=1
 fi
 
@@ -109,19 +110,10 @@ install_module() {
 	#OLD_MD5=$(dbus get softcenter_module_${softcenter_installing_module_md5})
 	OLD_VERSION=$(dbus get softcenter_module_${softcenter_installing_module}_version)
 	if [ -z "$(dbus get softcenter_server_tcode)" ]; then
-		modelname=$(nvram get modelname)
-		if [ "$modelname" == "K3" ] || [ "$modelname" == "XWR3100" ]; then
-			dbus set softcenter_server_tcode=CN
-		elif [ "$modelname" == "SBRAC1900P"  ] || [ "$modelname" == "SBR-AC1900P" ] || [ "$modelname" == "SBRAC3200P" ] || [ "$modelname" == "SBR-AC3200P" ] || [ "$modelname" == "R7900P" ] || [ "$modelname" == "R8000P" ] || [ "$modelname" == "R7000P" ]; then
-			dbus set softcenter_server_tcode=ALI
-		else
-			dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
-			#get null? anonymous firmware just set GB
-			[ -z "$(dbus get softcenter_server_tcode)" ] && dbus set softcenter_server_tcode=GB
-		fi
+		/jffs/softcenter/bin/sc_auth tcode
 	fi
 	eval $(dbus export softcenter_server_tcode)
-	if [ "$softcenter_server_tcode" == "CN" ] || [ "$softcenter_server_tcode" == "CN1" ]; then
+	if [ "$softcenter_server_tcode" == "CN" ]; then
 		HOME_URL="https://sc.softcenter.site/$ARCH_SUFFIX"
 	elif [ "$softcenter_server_tcode" == "ALI" ]; then
 		HOME_URL="https://wufan.softcenter.site/$ARCH_SUFFIX"

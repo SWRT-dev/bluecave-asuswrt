@@ -26,5 +26,14 @@
   "Refresh": "刷新状态",
   "Free": "空闲",
   "Unsupportfat": "不支持FAT",
+  "Install": "安装",
+  "Update": "更新",
+  "Uninstall": "卸载",
+  "Installed": "已安装",
+  "Online": "未安装",
+  "Current version:": "当前版本:",
+  "Latest version:": "在线版本:",
+  "loading...": "更新中...",
   "Softcenter - Offline installation": "软件中心 - 离线安装"
 }
+

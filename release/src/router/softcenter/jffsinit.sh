@@ -3,13 +3,13 @@
 
 SPACE_AVAL=$(df|grep jffs | awk '{print $2}')
 MODEL=$(nvram get productid)
-if [ "${MODEL:0:3}" == "GT-" ] || [ "$(nvram get merlinr_rog)" == "1" ];then
+if [ "${MODEL:0:3}" == "GT-" ] || [ "$(nvram get swrt_rog)" == "1" ];then
 	ROG=1
-elif [ "${MODEL:0:3}" == "TUF" ] || [ "$(nvram get merlinr_tuf)" == "1" ];then
+elif [ "${MODEL:0:3}" == "TUF" ] || [ "$(nvram get swrt_tuf)" == "1" ];then
 	TUF=1
 fi
 
-if [ $SPACE_AVAL -gt 40960 -a "$(nvram get sc_mount)" == 0 ];then
+if [ $SPACE_AVAL -gt 30720 -a "$(nvram get sc_mount)" == 0 ];then
 mkdir -p /jffs/softcenter/init.d
 mkdir -p /jffs/softcenter/bin
 mkdir -p /jffs/softcenter/etc
@@ -78,10 +78,9 @@ chmod 755 /jffs/softcenter/configs/*.sh
 chmod 755 /jffs/softcenter/bin/*
 chmod 755 /jffs/softcenter/init.d/*
 chmod 755 /jffs/softcenter/automount.sh
-echo 1.3.2 > /jffs/softcenter/.soft_ver
+echo 1.3.7 > /jffs/softcenter/.soft_ver
 dbus set softcenter_api="1.5"
 dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
-#dbus set softcenter_firmware_version=`nvram get extendno|cut -d "_" -f2|cut -d "-" -f1|cut -c2-6`
 nvram set sc_installed=1
 nvram commit
 ARCH=`uname -m`
@@ -103,15 +102,7 @@ else
 fi
 
 if [ -z "$(dbus get softcenter_server_tcode)" ]; then
-	modelname=`nvram get modelname`
-	if [ "$modelname" == "K3" -o "$modelname" == "XWR3100" ]; then
-		dbus set softcenter_server_tcode=CN
-	elif [ "$modelname" == "SBRAC1900P" -o "$modelname" == "SBR-AC1900P" -o "$modelname" == "SBRAC3200P" -o "$modelname" == "SBR-AC3200P" -o "$modelname" == "R7900P" -o "$modelname" == "R8000P" -o "$modelname" == "R7000P" ]; then
-		dbus set softcenter_server_tcode=ALI
-	else
-		dbus set softcenter_server_tcode=`nvram get territory_code |cut -c 1-2`
-		[ -z "$(dbus get softcenter_server_tcode)" ] && dbus set softcenter_server_tcode=GB
-	fi
+	/jffs/softcenter/bin/sc_auth tcode
 fi
 mkdir -p /jffs/scripts
 
@@ -122,7 +113,6 @@ alias ls='ls -Fp --color=auto'
 alias ll='ls -lFp --color=auto'
 alias l='ls -AlFp --color=auto'
 source /jffs/softcenter/scripts/base.sh
-export PERP_BASE=/softcenter/perp
 
 EOF
 fi

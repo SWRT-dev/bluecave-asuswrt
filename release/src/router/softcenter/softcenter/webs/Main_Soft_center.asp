@@ -582,7 +582,7 @@ $(function() {
 				db_softcenter_["softcenter_version"] = "0.0";
 			}
 			$("#spnCurrVersion").html("<em>" + db_softcenter_["softcenter_version"] + "</em>");
-			$('#github').html('论坛技术支持： <a href="https://www.right.com.cn" target="_blank"> <i><u>right.com.cn</u></i> </a><br/>Github项目： <a href ="https://github.com/paldier/' + giturl +'" target="_blank"> <i><u>https://github.com/paldier</u></i> </a><br/>Shell & Web by： <i>sadoneli</i>, <i>Xiaobao</i>, <i>paldier</i>')
+			$('#github').html('论坛技术支持： <a href="https://www.right.com.cn" target="_blank"> <i><u>right.com.cn</u></i> </a><br/>Github项目： <a href ="https://github.com/SWRT-dev/' + giturl +'" target="_blank"> <i><u>https://github.com/SWRT-dev</u></i> </a><br/>Copyright： <a href="https://github.com/SWRT-dev" target="_blank"><i>SWRTdev</i></a>')
 			var jff2_scripts="<% nvram_get("jffs2_scripts"); %>";
 			if(jff2_scripts != 1){
 				$('#software_center_message').html('<h1><font color="#FF9900">错误！</font></h1><h2>软件中心不可用！因为你没有开启Enable JFFS custom scripts and configs选项！</h2><h2>请前往【系统管理】-<a href="Advanced_System_Content.asp"><u><em>【系统设置】</em></u></a>开启此选项再使用软件中心！！</h2>')
@@ -699,9 +699,9 @@ function notice_show(){
 																		<tr>
 																			<td>
 																				<ul style="padding-left:25px;">
-																					<h2 id="push_titile"><em>软件中心&nbsp;-&nbsp;by&nbsp;MerlinR</em></h2>
+																					<h2 id="push_titile"><em>软件中心&nbsp;-&nbsp;by&nbsp;SWRTdev</em></h2>
 																					<li>
-																						<h4 id="push_content1" ><font color='#1E90FF'>交流反馈:&nbsp;&nbsp;</font><a href='https://github.com/paldier/softcenter' target='_blank'><em>1.软件中心GitHub项目</em></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href='https://t.me/merlinchat' target='_blank'><em>2.加入telegram群</em></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href='https://www.right.com.cn/forum/forum-173-1.html' target='_blank'><em>3.恩山论坛插件版块</em></a></h4>
+																						<h4 id="push_content1" ><font color='#1E90FF'>交流反馈:&nbsp;&nbsp;</font><a href='https://github.com/SWRT-dev/softcenter' target='_blank'><em>1.软件中心GitHub项目</em></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href='https://t.me/merlinchat' target='_blank'><em>2.加入telegram群</em></a>&nbsp;&nbsp;&nbsp;&nbsp;<a href='https://www.right.com.cn/forum/forum-173-1.html' target='_blank'><em>3.恩山论坛插件版块</em></a></h4>
 																					</li>
 																					<li id="push_content2_li">
                                                                                     <h4 id="push_content2">如果你看到这个页面说明主服务器连接不上,如果获取不到在线版本说明节点服务器连接不上！</h4>
