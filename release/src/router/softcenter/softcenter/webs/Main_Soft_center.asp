@@ -211,7 +211,7 @@ input[type=button]:focus {
 var db_softcenter_ = {};
 var scarch = "arm";
 var giturl;
-var model = '<% nvram_get("model"); %>';
+var odmpid = '<% nvram_get("odmpid");%>';
 var modelname = '<% nvram_get("modelname"); %>';
 var TIMEOUT_SECONDS = 18;
 var softInfo = null;
@@ -392,7 +392,7 @@ function renderView(apps) {
 		'<dl class="icon install-status-#{install}" data-name="#{name}">',
 		'<dd class="icon-pic">',
 		//当图标娶不到的时候，使用默认图标，如果已经是默认图标且娶不到，就狗带了，不管
-		'<img src="#{icon}" onerror="this.src.indexOf(\'icon-default.png\')===-1 && (this.src=\'/res/icon-default.png\');" alt="图标出走了～"/>',
+		'<img src="#{icon}" onerror="this.src.indexOf(\'icon-default.png\')===-1 && (this.src=\'/res/icon-default.png\');" alt="missing~"/>',
 		'<img class="update-btn" style="position: absolute;width:20px;height:20px;margin-top:-66px;margin-left:44px;" src="/res/upgrade.png"',
 		'</dd>',
 		'<dt class="icon-title">#{title}</dt>',
@@ -506,10 +506,9 @@ function init(cb) {
 					new_version: false
 				});
 				// icon 规则:
-				// 如果已安装的插件,那图标必定在 /koolshare/res 目录, 通过 /res/icon-{name}.png 请求路径得到图标
-                		// 如果是未安装的插件,则必定在 https://sc.paldier.com/{name}/{name}/icon-{name}.png
-				// TODO 如果因为一些错误导致没有图标, 有可能显示一张默认图标吗?
-		                item.icon = parseInt(item.install, 10) !== 0 ? ('/res/icon-' + item.name + '.png') : ('https://sc.paldier.com' + new Array(3).join('/softcenter') + '/res/icon-' + item.name + '.png');
+				// 如果已安装的插件,那图标必定在 /jffs/softcenter/res 目录, 通过 /res/icon-{name}.png 请求路径得到图标
+                // 如果是未安装的插件,则必定在 https://sc.paldier.com/softcenter/softcenter/icon-{name}.png
+		        item.icon = parseInt(item.install, 10) !== 0 ? ('/res/icon-' + item.name + '.png') : ('https://sc.paldier.com' + new Array(3).join('/softcenter') + '/res/icon-' + item.name + '.png');
 			});
 			return result;
 		};
@@ -539,7 +538,6 @@ function init(cb) {
 	//当初始化过程获取软件列表失败时候，用本地的模块进行渲染
 	//只要一次获取成功，以后不在重新获取，知道页面刷新重入
 $(function() {
-	//梅林要求用这个函数来显示左测菜单
 	show_menu(menu_hook);
 	sc_load_lang("sc1");
 	$.ajax({
@@ -549,23 +547,20 @@ $(function() {
 		success: function(response) {
 			db_softcenter_ = db_softcenter;
 			if(db_softcenter_["softcenter_server_tcode"] == "CN") {
-			        db_softcenter_["softcenter_home_url"] = "https://sc.softcenter.site";
-			}
-			else if(db_softcenter_["softcenter_server_tcode"] == "CN1") {
-			        db_softcenter_["softcenter_home_url"] = "https://sc.softcenter.site";
+				db_softcenter_["softcenter_home_url"] = "https://sc.softcenter.site";
 			}
 			else if(db_softcenter_["softcenter_server_tcode"] == "ALI") {
-			        db_softcenter_["softcenter_home_url"] = "https://wufan.softcenter.site";
+				db_softcenter_["softcenter_home_url"] = "https://wufan.softcenter.site";
 			}
 			else
-			        db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
+				db_softcenter_["softcenter_home_url"] = "https://sc.paldier.com";
 			if(db_softcenter_["softcenter_arch"] == "mips"){//for grx500
 				scarch="mips";
 				giturl="softcenter";
-			} else if (db_softcenter_["softcenter_arch"] == "armv7l"){//for bcm4709
+			} else if (db_softcenter_["softcenter_arch"] == "armv7l"){//for bcm470x
 				scarch="arm";
 				giturl="softcenterarm";
-			} else if (db_softcenter_["softcenter_arch"] == "armng"){//for bcm6750/ipq4/5/6/80xx/mt7622
+			} else if (db_softcenter_["softcenter_arch"] == "armng"){//for bcm675x ipq4/5/6/80xx mt7622/3/9
 				scarch="armng";
 				giturl="softcenterarmng";
 			} else if (db_softcenter_["softcenter_arch"] == "aarch64"){//for bcm490x
@@ -574,7 +569,7 @@ $(function() {
 			} else if (db_softcenter_["softcenter_arch"] == "mipsle"){//for mtk7621
 				scarch="mipsle";
 				giturl="softcentermipsle";
-			} else {
+			} else {//bug?
 				scarch="arm";
 				giturl="softcenterarm";
 			}
@@ -628,12 +623,16 @@ function menu_hook(title, tab) {
 	tablink[tablink.length -1] = new Array("", "Main_Soft_center.asp", "Main_Soft_setting.asp");
 }
 function notice_show(){
-	if (typeof modelname != "undefined"){
-	$("#modelid").html("Software Center " + modelname );
-	}
-	else {
-	$("#modelid").html("Software Center " + model );
-	}
+	if(odmpid != ""){
+        if(modelname == productid)
+			document.getElementById("modelid").innerHTML ="Software Center " + modelname ;
+		else
+			document.getElementById("modelid").innerHTML ="Software Center " + odmpid ;
+		if(odmpid != based_modelid)
+			document.getElementById("modelid").innerHTML += " (base model: " + based_modelid + ")";
+	}else
+		document.getElementById("modelid").innerHTML ="Software Center " + productid ;
+
 	var pushlog;
 	switch ("<% nvram_get("preferred_lang"); %>") {
 	case "EN":

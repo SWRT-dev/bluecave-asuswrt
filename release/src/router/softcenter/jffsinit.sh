@@ -78,7 +78,7 @@ chmod 755 /jffs/softcenter/configs/*.sh
 chmod 755 /jffs/softcenter/bin/*
 chmod 755 /jffs/softcenter/init.d/*
 chmod 755 /jffs/softcenter/automount.sh
-echo 1.3.7 > /jffs/softcenter/.soft_ver
+echo 1.3.8 > /jffs/softcenter/.soft_ver
 dbus set softcenter_api="1.5"
 dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
 nvram set sc_installed=1
@@ -101,9 +101,8 @@ else
 	dbus set softcenter_arch="$ARCH"
 fi
 
-if [ -z "$(dbus get softcenter_server_tcode)" ]; then
-	/jffs/softcenter/bin/sc_auth tcode
-fi
+/jffs/softcenter/bin/sc_auth tcode
+
 mkdir -p /jffs/scripts
 
 # creat profile file

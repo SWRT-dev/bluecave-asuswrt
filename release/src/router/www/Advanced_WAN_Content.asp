@@ -96,9 +96,9 @@ function initial(){
 		document.form.wan_pppoe_username.value = pppoe_username;
 		document.form.wan_pppoe_passwd.value = pppoe_password;
 	}
-	if (isSupport("bcm_kf_netfilter") ||isSupport("swrt_fullcone")) {
-		document.getElementById("nat_type_tr").style.display = "";
-	}
+
+	change_nat(<% nvram_get("wan_nat_x"); %>);
+
 	if(yadns_support){
 		if(yadns_enable != 0 && yadns_mode != -1){
 			document.getElementById("yadns_hint").style.display = "";
@@ -896,6 +896,12 @@ function pullDNSList(_this) {
 		$element.hide();
 	}
 }
+
+function change_nat(state) {
+	if (isSupport("bcm_kf_netfilter") || isSupport("swrt_fullcone")) {
+		document.getElementById("nat_type_tr").style.display = (state ? "" : "none");
+	}
+}
 </script>
 </head>
 
@@ -1006,15 +1012,18 @@ function pullDNSList(_this) {
 							<tr>
 								<th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(7,22);"><#Enable_NAT#></a></th>                 
 								<td>
-									<input type="radio" name="wan_nat_x" class="input" value="1" <% nvram_match("wan_nat_x", "1", "checked"); %>><#checkbox_Yes#>
-									<input type="radio" name="wan_nat_x" class="input" value="0" <% nvram_match("wan_nat_x", "0", "checked"); %>><#checkbox_No#>
+									<input type="radio" name="wan_nat_x" class="input" value="1" onclick="change_nat(1);" <% nvram_match("wan_nat_x", "1", "checked"); %>><#checkbox_Yes#>
+									<input type="radio" name="wan_nat_x" class="input" value="0" onclick="change_nat(0);" <% nvram_match("wan_nat_x", "0", "checked"); %>><#checkbox_No#>
 								</td>
-							</tr>				
-							<tr id="nat_type_tr" style="display:none">
+							</tr>
+
+							<tr id="nat_type_tr" style="display:none;">
 								<th>NAT Type</th>
 								<td>
-									<input type="radio" name="nat_type" class="input" value="0" <% nvram_match("nat_type", "0", "checked"); %>>Symmetric
-									<input type="radio" name="nat_type" class="input" value="1" <% nvram_match("nat_type", "1", "checked"); %>>Fullcone
+									<select name="nat_type" class="input_option">
+										<option value="0" <% nvram_match("nat_type", "0", "selected"); %>>Symmetric</option>
+										<option value="1" <% nvram_match("nat_type", "1", "selected"); %>>Fullcone</option>
+									</select>
 								</td>
 							</tr>
 							<tr>
