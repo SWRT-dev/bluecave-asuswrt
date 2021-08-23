@@ -404,9 +404,6 @@ function isSupport(_ptn){
 	if(_ptn == "uu_accel")
 		if(rc_support.search("uu_accel") != -1)
 			return true;
-	else if(_ptn == "swrt_fullcone")
-		if(rc_support.search("swrt_fullcone") != -1)
-			return true;
 	return (ui_support[_ptn]) ? ui_support[_ptn] : false;
 }
 
@@ -557,6 +554,9 @@ var meoVoda_support = isSupport("meoVoda");
 var movistarTriple_support = isSupport("movistarTriple");
 var utf8_ssid_support = isSupport("utf8_ssid");
 
+var softcenter_support = isSupport('softcenter');
+var entware_support = isSupport('entware');
+var swrt_fullcone_support = isSupport('swrt_fullcone');
 var QISWIZARD = "QIS_wizard.htm";
 
 var wl_version = "<% nvram_get("wl_version"); %>";

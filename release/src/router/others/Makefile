@@ -12,7 +12,17 @@ ifeq ($(TCONFIG_USB),y)
 	install -d $(INSTALLDIR)/usr/bin
 	ln -sf /opt/bin/perl $(INSTALLDIR)/usr/bin/perl
 endif
-
+ifeq ($(RTCONFIG_BCMARM),y)
+ifneq ($(RTCONFIG_HND_ROUTER),y)
+	install -m 0700 wlk $(INSTALLDIR)/usr/sbin
+endif
+endif
+ifeq ($(RTCONFIG_ENTWARE),y)
+	install -m 0755 entware.sh $(INSTALLDIR)/usr/sbin
+endif
+ifeq ($(K3),y)
+	ln -sf /tmp/k3screenctrl $(INSTALLDIR)/lib/k3screenctrl
+endif
 # cron helper
 	install -m 0700 cru $(INSTALLDIR)/usr/sbin
 

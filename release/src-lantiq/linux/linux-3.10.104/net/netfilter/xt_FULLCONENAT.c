@@ -19,6 +19,9 @@
 #include <linux/netdevice.h>
 #include <linux/inetdevice.h>
 #include <linux/workqueue.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
+#include <linux/random.h>
+#endif
 #ifdef CONFIG_NF_CONNTRACK_CHAIN_EVENTS
 #include <linux/notifier.h>
 #endif
@@ -124,6 +127,7 @@ static struct nat_mapping* allocate_mapping(const __be32 int_addr, const uint16_
   u32 hash_src;
 
   p_new = kmalloc(sizeof(struct nat_mapping), GFP_ATOMIC);
+
   if (p_new == NULL) {
     pr_debug("xt_FULLCONENAT: ERROR: kmalloc() for new nat_mapping failed.\n");
     return NULL;
@@ -149,6 +153,7 @@ static struct nat_mapping* allocate_mapping(const __be32 int_addr, const uint16_
 
 static void add_original_tuple_to_mapping(struct nat_mapping *mapping, const struct nf_conntrack_tuple* original_tuple) {
   struct nat_mapping_original_tuple *item = kmalloc(sizeof(struct nat_mapping_original_tuple), GFP_ATOMIC);
+
   if (item == NULL) {
     pr_debug("xt_FULLCONENAT: ERROR: kmalloc() for nat_mapping_original_tuple failed.\n");
     return;
@@ -219,7 +224,11 @@ static void destroy_mappings(void) {
 /* check if a mapping is valid.
  * possibly delete and free an invalid mapping.
  * the mapping should not be used anymore after check_mapping() returns 0. */
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 18, 0)
 static int check_mapping(struct nat_mapping* mapping, struct net *net, const struct nf_conntrack_zone *zone) {
+#else
+static int check_mapping(struct nat_mapping* mapping, struct net *net, const u16 zone) {
+#endif
   struct list_head *iter, *tmp;
   struct nat_mapping_original_tuple *original_tuple_item;
   struct nf_conntrack_tuple_hash *tuple_hash;
@@ -410,11 +419,21 @@ static __be32 get_device_ip(const struct net_device* dev) {
   }
 }
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 18, 0)
 static uint16_t find_appropriate_port(struct net *net, const struct nf_conntrack_zone *zone, const uint16_t original_port, const int ifindex, const struct nf_nat_ipv4_range *range) {
+#elif LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
+static uint16_t find_appropriate_port(struct net *net, u16 zone, const uint16_t original_port, const int ifindex, const struct nf_nat_ipv4_range *range) {
+#else
+static uint16_t find_appropriate_port(struct net *net, u16 zone, const uint16_t original_port, const int ifindex, const struct nf_nat_range *range) {
+#endif
   uint16_t min, start, selected, range_size, i;
   struct nat_mapping* mapping = NULL;
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
   if (range->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
+#else
+  if (range->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
+#endif
     min = be16_to_cpu((range->min).udp.port);
     range_size = be16_to_cpu((range->max).udp.port) - min + 1;
   } else {
@@ -422,17 +441,28 @@ static uint16_t find_appropriate_port(struct net *net, const struct nf_conntrack
     min = 1024;
     range_size = 65535 - min + 1;
   }
-
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
   if ((range->flags & NF_NAT_RANGE_PROTO_RANDOM)
+#else
+  if ((range->flags & IP_NAT_RANGE_PROTO_RANDOM)
+#endif
     || (range->flags & NF_NAT_RANGE_PROTO_RANDOM_FULLY)) {
     /* for now we do the same thing for both --random and --random-fully */
 
     /* select a random starting point */
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
     start = (uint16_t)(prandom_u32() % (u32)range_size);
+#else
+    start = (uint16_t)(random32() % (u32)range_size);
+#endif
   } else {
 
     if ((original_port >= min && original_port <= min + range_size - 1)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
       || !(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) {
+#else
+      || !(range->flags & IP_NAT_RANGE_PROTO_SPECIFIED)) {
+#endif
       /* 1. try to preserve the port if it's available */
       mapping = get_mapping_by_ext_port(original_port, ifindex);
       if (mapping == NULL || !(check_mapping(mapping, net, zone))) {
@@ -463,10 +493,18 @@ static uint16_t find_appropriate_port(struct net *net, const struct nf_conntrack
 
 static unsigned int fullconenat_tg(struct sk_buff *skb, const struct xt_action_param *par)
 {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
   const struct nf_nat_ipv4_multi_range_compat *mr;
   const struct nf_nat_ipv4_range *range;
-
+#else
+  const struct nf_nat_multi_range_compat *mr;
+  const struct nf_nat_range *range;
+#endif
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 18, 0)
   const struct nf_conntrack_zone *zone;
+#else
+  u16 zone;
+#endif
   struct net *net;
   struct nf_conn *ct;
   enum ip_conntrack_info ctinfo;
@@ -501,11 +539,20 @@ static unsigned int fullconenat_tg(struct sk_buff *skb, const struct xt_action_p
   net = nf_ct_net(ct);
   zone = nf_ct_zone(ct);
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
   memset(&newrange.min_addr, 0, sizeof(newrange.min_addr));
   memset(&newrange.max_addr, 0, sizeof(newrange.max_addr));
   newrange.flags       = mr->range[0].flags | NF_NAT_RANGE_MAP_IPS;
   newrange.min_proto   = mr->range[0].min;
   newrange.max_proto   = mr->range[0].max;
+#else
+  newrange.min_ip = 0;
+  newrange.max_ip = 0;
+  newrange.flags       = mr->range[0].flags | IP_NAT_RANGE_MAP_IPS;
+  newrange.min   = mr->range[0].min;
+  newrange.max   = mr->range[0].max;
+#endif
+
 
   if (xt_hooknum(par) == NF_INET_PRE_ROUTING) {
     /* inbound packets */
@@ -537,11 +584,19 @@ static unsigned int fullconenat_tg(struct sk_buff *skb, const struct xt_action_p
       return ret;
     }
     if (check_mapping(mapping, net, zone)) {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
       newrange.flags = NF_NAT_RANGE_MAP_IPS | NF_NAT_RANGE_PROTO_SPECIFIED;
       newrange.min_addr.ip = mapping->int_addr;
       newrange.max_addr.ip = mapping->int_addr;
       newrange.min_proto.udp.port = cpu_to_be16(mapping->int_port);
       newrange.max_proto = newrange.min_proto;
+#else
+      newrange.flags = IP_NAT_RANGE_MAP_IPS | IP_NAT_RANGE_PROTO_SPECIFIED;
+      newrange.min_ip = mapping->int_addr;
+      newrange.max_ip = mapping->int_addr;
+      newrange.min.udp.port = cpu_to_be16(mapping->int_port);
+      newrange.max = newrange.min;
+#endif
 
       pr_debug("xt_FULLCONENAT: <INBOUND DNAT> %s ==> %pI4:%d\n", nf_ct_stringify_tuple(ct_tuple_origin), &mapping->int_addr, mapping->int_port);
 
@@ -574,33 +629,53 @@ static unsigned int fullconenat_tg(struct sk_buff *skb, const struct xt_action_p
 
         /* outbound nat: if a previously established mapping is active,
          * we will reuse that mapping. */
-
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
         newrange.flags = NF_NAT_RANGE_MAP_IPS | NF_NAT_RANGE_PROTO_SPECIFIED;
         newrange.min_proto.udp.port = cpu_to_be16(src_mapping->port);
         newrange.max_proto = newrange.min_proto;
+#else
+        newrange.flags = IP_NAT_RANGE_MAP_IPS | IP_NAT_RANGE_PROTO_SPECIFIED;
+        newrange.min.udp.port = cpu_to_be16(src_mapping->port);
+        newrange.max = newrange.min;
+#endif
 
       } else {
 
         /* if not, we find a new external port to map to.
          * the SNAT may fail so we should re-check the mapped port later. */
         want_port = find_appropriate_port(net, zone, original_port, ifindex, range);
-
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
         newrange.flags = NF_NAT_RANGE_MAP_IPS | NF_NAT_RANGE_PROTO_SPECIFIED;
         newrange.min_proto.udp.port = cpu_to_be16(want_port);
         newrange.max_proto = newrange.min_proto;
+#else
+        newrange.flags = IP_NAT_RANGE_MAP_IPS | IP_NAT_RANGE_PROTO_SPECIFIED;
+        newrange.min.udp.port = cpu_to_be16(want_port);
+        newrange.max = newrange.min;
+#endif
 
         src_mapping = NULL;
 
       }
     }
-
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
     if(mr->range[0].flags & NF_NAT_RANGE_MAP_IPS) {
       newrange.min_addr.ip = mr->range[0].min_ip;
       newrange.max_addr.ip = mr->range[0].max_ip;
+#else
+    if(mr->range[0].flags & IP_NAT_RANGE_MAP_IPS) {
+      newrange.min_ip = mr->range[0].min_ip;
+      newrange.max_ip = mr->range[0].max_ip;
+#endif
     } else {
       new_ip = get_device_ip(skb->dev);
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
       newrange.min_addr.ip = new_ip;
       newrange.max_addr.ip = new_ip;
+#else
+      newrange.min_ip = new_ip;
+      newrange.max_ip = new_ip;
+#endif
     }
 
     /* do SNAT now */
@@ -651,8 +726,11 @@ static int fullconenat_tg_check(const struct xt_tgchk_param *par)
 #else
     ct_event_notifier.fcn = ct_event_cb;
 #endif
-
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
     if (nf_conntrack_register_notifier(par->net, &ct_event_notifier) == 0) {
+#else
+    if (nf_conntrack_register_notifier_fullcone(&ct_event_notifier) == 0) {
+#endif
       ct_event_notifier_registered = 1;
       pr_debug("xt_FULLCONENAT: fullconenat_tg_check(): ct_event_notifier registered\n");
     } else {
@@ -676,7 +754,11 @@ static void fullconenat_tg_destroy(const struct xt_tgdtor_param *par)
 
   if (tg_refer_count == 0) {
     if (ct_event_notifier_registered) {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
       nf_conntrack_unregister_notifier(par->net, &ct_event_notifier);
+#else
+      nf_conntrack_unregister_notifier_fullcone(&ct_event_notifier);
+#endif
       ct_event_notifier_registered = 0;
 
       pr_debug("xt_FULLCONENAT: fullconenat_tg_destroy(): ct_event_notifier unregistered\n");
@@ -694,7 +776,11 @@ static struct xt_target tg_reg[] __read_mostly = {
   .family     = NFPROTO_IPV4,
   .revision   = 0,
   .target     = fullconenat_tg,
+#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
   .targetsize = sizeof(struct nf_nat_ipv4_multi_range_compat),
+#else
+  .targetsize = sizeof(struct nf_nat_multi_range_compat),
+#endif
   .table      = "nat",
   .hooks      = (1 << NF_INET_PRE_ROUTING) |
                 (1 << NF_INET_POST_ROUTING),

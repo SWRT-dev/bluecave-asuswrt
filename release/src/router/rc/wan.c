@@ -629,6 +629,7 @@ void update_wan_state(char *prefix, int state, int reason)
 		sprintf(tmp,"%c",prefix[3]);
 		run_custom_script("wan-start", 0, tmp, NULL);
 		nvram_set_int("sc_wan_sig", 1);
+		nvram_set_int("entware_wan_sig", 1);
 	}
 
 #if defined(RTCONFIG_WANRED_LED)

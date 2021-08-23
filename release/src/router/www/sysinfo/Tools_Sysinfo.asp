@@ -57,7 +57,7 @@ p{
 var ctf_dis = "<% nvram_get("ctf_disable"); %>";
 var ctf_dis_force = "<% nvram_get("ctf_disable_force"); %>";
 var etherstate = "<% sysinfo("ethernet"); %>";
-var rtkswitch = "<% sysinfo("ethernet.rtk"); %>";
+var rtkswitch = <% sysinfo("ethernet.rtk"); %>;
 var odmpid = "<% nvram_get("odmpid");%>";
 var ctf_fa = "<% nvram_get("ctf_fa_mode"); %>";
 var modelname = "<% nvram_get("modelname"); %>";

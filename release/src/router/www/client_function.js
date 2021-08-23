@@ -60,28 +60,6 @@ var isJsonChanged = function(objNew, objOld){
     return false;
 };
 
-/* ouiDB lookup code */
-var ouiClientListArray = new Array();
-ouiClientListArray = Session.get("ouiDB");
-if(ouiClientListArray == undefined) {
-	ouiClientListArray = [];
-	//Download OUI DB
-	setTimeout(function() {
-		var ouiBDjs = document.createElement("script");
-		ouiBDjs.type = "application/javascript";
-		ouiBDjs.src = "/js/ouiDB.js";
-		window.document.body.appendChild(ouiBDjs);
-	}, 1000);
-}
-
-function updateManufacturer(_ouiDBArray) {
-	ouiClientListArray = [];
-	ouiClientListArray = _ouiDBArray;
-	Session.set("ouiDB", _ouiDBArray);
-}
-
-/* End ouiDB lookup code */
-
 var ipState = new Array();
 ipState["Static"] = "<#BOP_ctype_title5#>";
 ipState["DHCP"] = "<#BOP_ctype_title1#>";

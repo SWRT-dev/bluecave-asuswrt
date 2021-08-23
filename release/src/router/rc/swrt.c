@@ -73,10 +73,155 @@ void swrt_init()
 	nvram_set("sc_nat_sig", "0");
 	nvram_set("sc_mount_sig", "0");
 	nvram_set("sc_unmount_sig", "0");
-	nvram_set("sc_services_sig", "0");	
+	nvram_set("sc_services_start_sig", "0");
+	nvram_set("sc_services_stop_sig", "0");	
+#endif
+#if defined(RTCONFIG_ENTWARE)
+	nvram_set("entware_wan_sig", "0");
+	nvram_set("entware_stop_sig", "0");
 #endif
 	swrt_insmod();
+	swrt_init_model();
 }
+
+#if defined(K3)
+static int k3screena(void){
+	_dprintf("....k3screen start a....\n");
+	char fwver[32];
+	FILE *fpu;
+	if (!nvram_get("hd_version"))
+		nvram_set("hd_version", "A1/A2");
+
+	if (!nvram_get("product"))
+		nvram_set("product", "K3");
+	if(nvram_get_int("sw_mode") == 1){
+		sprintf(fwver, "%s_%s", nvram_get("buildno"), nvram_get("extendno"));
+		nvram_set("fw_version", fwver);
+		nvram_set("sw_version", fwver);
+		nvram_set("wan_ifname", "vlan2");
+	} else {
+		sprintf(fwver, "AP:%s", nvram_safe_get("lan_ipaddr"));
+		nvram_set("fw_version", fwver);
+		nvram_set("sw_version", fwver);
+		nvram_set("wan_ifname", "vlan1");
+	}
+	if (!nvram_get("wan_pppoe_ifname"))
+		nvram_set("wan_pppoe_ifname", "ppp0");
+	if (nvram_get_int("bsd_role") != 0)
+		nvram_set_int("bsd_role", 0);
+	if (!nvram_get("pingcheck"))
+		nvram_set("pingcheck", "1");
+	if (nvram_get_int("get_wan_port_status") != 1)
+		nvram_set_int("get_wan_port_status", 1);
+	if (!nvram_get("screen_time"))
+		nvram_set("screen_time", "20");
+	if (!nvram_get("screen_2G5G_pwd_en"))
+		nvram_set("screen_2G5G_pwd_en", "1");
+	if (!nvram_get("city_ch"))
+		nvram_set("city_ch", "北京");
+	if (!nvram_get("county_ch"))
+		nvram_set("county_ch", "北京");
+	if (!nvram_get("city_id"))
+		nvram_set("city_id", "WX4FBXXFKE4F");
+	if (!nvram_get("vis_ssid_enable"))
+		nvram_set("vis_ssid_enable", "1");
+	if (!nvram_get("screen_guest_pwd_en"))
+		nvram_set("screen_guest_pwd_en", "1");
+	if (!nvram_get("vis_ssid"))
+		nvram_set("vis_ssid", "ASUS_GUEST");
+	if (!nvram_get("vis_ssid_pwd"))
+		nvram_set("vis_ssid_pwd", "1234567890");
+	nvram_commit();
+	doSystem("killall -q -9 phi_speed wl_cr uhmi k3screenctrl update_weather 2>/dev/null");
+	if ((fpu = fopen("/tmp/uhmi.sh", "w"))){
+		fprintf(fpu, "#!/bin/sh\n");
+		fprintf(fpu, "mkdir -p /jffs/softcenter/lib\n");
+		fprintf(fpu, "ln -sf /usr/share/libwlcr.so /jffs/softcenter/lib/libwlcr.so\n");
+		fprintf(fpu, "devmem 0x1800c1c1 32 0x00001f0f\n");
+		fprintf(fpu, "[ -n \"$(echo $LD_LIBRARY_PATH |grep \"jffs\")\" ] || export LD_LIBRARY_PATH=/jffs/softcenter/lib:/lib:/usr/lib\n");
+		fprintf(fpu, "phi_speed &\n");
+		fprintf(fpu, "wl_cr &\n");
+		fprintf(fpu, "uhmi &\n");
+		fclose(fpu);
+	}
+	doSystem("chmod +x /tmp/uhmi.sh");
+	doSystem("/tmp/uhmi.sh &");
+	doSystem("echo '#!/bin/sh' > /tmp/update_weather");
+	doSystem("echo 'while [ 1 ]' >> /tmp/update_weather");
+	doSystem("echo 'do' >> /tmp/update_weather");
+	doSystem("echo 'weather update_weather' >> /tmp/update_weather");
+	doSystem("echo 'sleep 3600' >> /tmp/update_weather");
+	doSystem("echo 'done' >> /tmp/update_weather");
+	doSystem("chmod +x /tmp/update_weather");
+	doSystem("/tmp/update_weather &");
+	_dprintf("....k3screen ok....\n");
+	return 0;
+}
+
+static int k3screenb(void){
+	_dprintf("....k3screen start b....\n");
+	char *timeout;
+	doSystem("mkdir -p /tmp/k3screenctrl");
+	doSystem("killall -q -9 phi_speed wl_cr uhmi k3screenctrl update_weather k3screend 2>/dev/null");
+	//doSystem("/usr/sbin/k3screend &");
+	//doSystem("chmod +x /tmp/k3screenctrl/*.sh");
+	if (nvram_get_int("k3screen_timeout")==1)
+		timeout = "-m0";
+	else
+		timeout = "-m30";
+	char *k3screenctrl_argv[] = { "k3screenctrl", timeout,NULL };
+	char *k3screend_argv[] = { "k3screend",NULL };
+	pid_t pid;
+	_eval(k3screend_argv, NULL, 0, &pid);
+	_eval(k3screenctrl_argv, NULL, 0, &pid);
+	_dprintf("....k3screen ok....\n");
+	return 0;
+}
+int start_k3screen(void){
+	logmessage("K3", "屏幕支援程序开始启动");
+	if (!nvram_get("k3screen")){
+		nvram_set("k3screen", "b");
+		nvram_commit();
+	}
+	_dprintf("....k3screen start....\n");
+	if ((strcmp(nvram_get("k3screen"), "A")==0) || (strcmp(nvram_get("k3screen"), "a")==0))
+		return k3screena();
+	else if ((strcmp(nvram_get("k3screen"), "B")==0) || (strcmp(nvram_get("k3screen"), "b")==0))
+		return k3screenb();
+	else {
+		nvram_set("k3screen", "b");
+		nvram_commit();
+		return k3screenb();
+		}
+	return 0;
+}
+#endif
+
+#if defined(TUFAX3000) || defined(RTAX58U)
+void enable_4t4r_ax58(void)
+{
+//ensure that the hardware support 4t4r
+	if(!strcmp(nvram_get("1:sw_rxchain_mask"), "0xf") ){
+//4t4r
+		nvram_set("1:sw_txchain_mask", "0xf");
+		nvram_commit();
+	} else {
+//2t2r
+		nvram_set("1:sw_txchain_mask", "0x9");
+		nvram_commit();
+	}
+}
+void enable_4t4r(void)
+{
+//hack asus watchdog and modify this to enable 4t4r
+//ensure that the hardware support 4t4r
+	if(!strcmp(cfe_nvram_get("1:sw_rxchain_mask"), "0xf") && strcmp(cfe_nvram_get("1:sw_txchain_mask"), "0xf")){
+		doSystem("envrams");
+		doSystem("envram set 1:sw_txchain_mask=0xf");
+		doSystem("envram commit");
+	}
+}
+#endif
 
 void swrt_init_done(){
 	_dprintf("############################ SWRT init done #################################\n");
@@ -194,17 +339,36 @@ void swrt_init_done(){
 		nvram_set("modelname", "RTAC85P");
 #elif defined(RMAC2100)
 		nvram_set("modelname", "RMAC2100");
+#elif defined(R6800)
+		nvram_set("modelname", "R6800");
 #elif defined(TUFAC1750)
 		nvram_set("modelname", "TUFAC1750");
 #endif
 #if defined(R8000P)
-	nvram_set("ping_target","www.taobao.com");
+	nvram_set("ping_target", "www.taobao.com");
 #endif
 	nvram_commit();
-
+#if defined(K3)
+	start_k3screen();
+#endif
 #if defined(SWRT_VER_MAJOR_B)
 	del_rc_support("amasRouter");
 	del_rc_support("amas");
+#endif
+	gen_swrtid();
+#if defined(K3) || defined(XWR3100) || defined(R7000P)
+	if(!cfe_nvram_get("territory_code") || strcmp(cfe_nvram_get("territory_code"), "US/01")){
+		swrt_nvram_set("territory_code", "US/01", 1);
+		nvram_set("location_code", "US");
+	}
+#elif defined(R8500)
+	if(!cfe_nvram_get("territory_code") || strcmp(cfe_nvram_get("territory_code"), "CN/06")){
+		swrt_nvram_set("territory_code", "CN/06", 1);
+		nvram_set("location_code", "CN");
+	}
+#endif
+#if defined(R8000P)
+    add_rc_support("uu_accel");
 #endif
 }
 
@@ -427,7 +591,7 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 					//_dprintf("%s#%s\n",fwver,cur_fwver);
 					if(versioncmp((cur_fwver+1),(fwver+1))==1){
 						nvram_set("webs_state_url", "");
-#if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100)
+#if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100) || defined(R6800)
 						snprintf(info,sizeof(info),"3004_382_%s_%s-%s",modelname,fwver,tag);
 #elif defined(BLUECAVE)
 						snprintf(info,sizeof(info),"3004_384_%s_%s-%s",modelname,fwver,tag);
@@ -482,7 +646,7 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 	curl_global_cleanup();
 
 GODONE:
-#if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100)
+#if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100) || defined(R6800)
 	snprintf(info,sizeof(info),"3004_382_%s",nvram_get("extendno"));
 #elif defined(BLUECAVE)
 	snprintf(info,sizeof(info),"3004_384_%s",nvram_get("extendno"));
@@ -504,13 +668,39 @@ GODONE:
 	FWUPDATE_DBG("---- firmware check update finish ----");
 	return 0;
 }
-#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_RALINK)
+
+#ifdef RTCONFIG_UUPLUGIN
+void start_uu(void)
+{
+	stop_uu();
+
+	if(getpid()!=1) {
+		notify_rc("start_uu");
+		return;
+	}
+
+	if(nvram_get_int("uu_enable"))
+#if defined(RTCONFIG_SWRT_UU)
+		exec_uu_swrt();
+#else
+		exec_uu();
+#endif
+}
+
+void stop_uu(void)
+{
+	doSystem("killall uuplugin_monitor.sh");
+	if (pidof("uuplugin") > 0)
+		doSystem("killall uuplugin");
+}
+#endif
+#if defined(RTCONFIG_SWRT_UU)
 void exec_uu_swrt()
 {
 	FILE *fp;
 	char buf[128];
 	int download,i;
-	char *dup_pattern, *g, *gg;
+	char *g, *gg;
 	char p[2][100];
 	if(nvram_get_int("sw_mode") == 1){
 		add_rc_support("uu_accel");
@@ -523,20 +713,15 @@ void exec_uu_swrt()
 				fclose(fp);
 				unlink("/tmp/uu/script_url");
 				i=0;
-				g = dup_pattern = strdup(buf);
-				gg = strtok( g, "," );
-				while (gg != NULL)
-				{
-					if (gg!=NULL){
+				g = strdup(buf);
+				gg = strtok(g, ",");
+				while(gg != NULL){
 						strcpy(p[i], gg);
 						i++;
 						++download;
-						gg = strtok( NULL, "," );
-					}
+						gg = strtok(NULL, ",");
 				}
-				if ( download > 0 )
-				//if ( download == 2 )
-				{
+				if (download > 0){
 					_dprintf("URL: %s\n",p[0]);
 					_dprintf("MD5: %s\n",p[1]);
 					if ( !doSystem("wget -t 2 -T 30 --dns-timeout=120 --header=Accept:text/plain -q --no-check-certificate %s -O /tmp/uu/uuplugin_monitor.sh", p[0]))
@@ -568,7 +753,7 @@ void exec_uu_swrt()
 					}
 				}
 			}
-			free(dup_pattern);
+			free(g);
 		}
 	}
 }
@@ -577,7 +762,6 @@ void exec_uu_swrt()
 #if defined(RTCONFIG_SOFTCENTER)
 void softcenter_eval(int sig)
 {
-	//1=wan,2=nat,3=mount
 	pid_t pid;
 	char path[100], action[10], sc[]="/jffs/softcenter/bin";
 	if(SOFTCENTER_WAN == sig){
@@ -589,10 +773,17 @@ void softcenter_eval(int sig)
 	} else if (SOFTCENTER_MOUNT == sig){
 		snprintf(path, sizeof(path), "%s/softcenter-mount.sh", sc);
 		snprintf(action, sizeof(action), "start");
-	} else if (SOFTCENTER_SERVICES == sig){
+	} else if (SOFTCENTER_SERVICES_START == sig){
 		snprintf(path, sizeof(path), "%s/softcenter-services.sh", sc);
 		snprintf(action, sizeof(action), "start");
-	//enable it after 1.3.0
+	} else if (SOFTCENTER_SERVICES_STOP == sig){//only reboot
+		char *eval_argv[] = { "/jffs/softcenter/bin/softcenter-mount.sh", "stop", NULL };
+		_eval(eval_argv, NULL, 0, &pid);
+		eval_argv[0] = "/jffs/softcenter/bin/softcenter-services.sh";
+		_eval(eval_argv, NULL, 0, &pid);
+		eval_argv[0] = "/jffs/softcenter/bin/softcenter-wan.sh";
+		_eval(eval_argv, NULL, 0, &pid);
+		return;
 	//} else if (SOFTCENTER_UNMOUNT == sig){
 	//	snprintf(path, sizeof(path), "%s/softcenter-unmount.sh", sc);
 	//	snprintf(action, sizeof(action), "unmount");
@@ -605,3 +796,122 @@ void softcenter_eval(int sig)
 }
 #endif
 
+#if defined(RTCONFIG_ENTWARE)
+void stop_entware(void)
+{
+	nvram_set_int("entware_busy", 0);
+	nvram_unset("entware_app");
+	nvram_unset("entware_action");
+	nvram_unset("entware_arg");
+}
+
+void init_entware(void)
+{
+	if(strlen(nvram_get("apps_mounted_path"))){
+		logmessage("[Entware]", "Downloadmaster/Aicloud is installed already! Entware can't install!\n");
+		return;
+	}
+	if(nvram_get_int("entware_mount") == 0)
+		return;
+	/* /opt->/tmp/opt->/jffs/opt->/tmp/mnt/sda/opt */
+	unlink("/tmp/opt");
+	symlink("/jffs/opt", "/tmp/opt");
+	stop_entware();
+}
+
+#define ENTWARE_ACT_INSTALL		1
+#define ENTWARE_ACT_UPDATE		2
+#define ENTWARE_ACT_REMOVE		4
+#define ENTWARE_ACT_START		8
+#define ENTWARE_ACT_STOP		16
+#define	ENTWARE_ACT_MASK (ENTWARE_ACT_INSTALL | ENTWARE_ACT_UPDATE | ENTWARE_ACT_REMOVE)
+#define	ENTWARE_ACT_MASK2 (ENTWARE_ACT_START | ENTWARE_ACT_STOP)
+
+void start_entware(void)
+{
+	char *ent_app, *ent_arg;
+	int ent_action;
+	char cmd[128], app[32];
+	
+	if (nvram_get_int("entware_busy") != 1)
+		return;
+	
+	nvram_set_int("entware_busy", 2);
+	ent_action = nvram_get_int("entware_action");
+	ent_app = nvram_safe_get("entware_app");
+	ent_arg = nvram_safe_get("entware_arg");
+	
+	if (strcmp(ent_app, "entware") == 0)
+	{
+		if (ent_action & ENTWARE_ACT_INSTALL)
+		{
+			snprintf(cmd, sizeof(cmd), "wget http://bin.entware.net/%s/installer/%s.sh -O /tmp/doentware.sh", nvram_get("entware_arch"), ent_arg);
+			system(cmd);
+			system("chmod +x /tmp/doentware.sh");
+			system("/tmp/doentware.sh");
+			nvram_set("entware_installed", "1");
+		}
+		else if (ent_action & ENTWARE_ACT_UPDATE)
+		{
+			system("/opt/bin/opkg update");
+			system("/opt/bin/opkg upgrade");
+		}
+		else
+		{
+			logmessage("[Entware]", "Unregistered action\n");
+		}
+	}
+	else if (ent_action & ENTWARE_ACT_MASK2)
+	{
+		snprintf(app, sizeof(app), "/opt/etc/init.d/%s", ent_app);
+		if (f_exists(app))
+		{
+			if (ent_action & ENTWARE_ACT_STOP)
+			{
+				snprintf(cmd, sizeof(cmd), "%s stop", app);
+				system(cmd);
+			}
+			if (ent_action & ENTWARE_ACT_START)
+			{
+				snprintf(cmd, sizeof(cmd), "%s start", app);
+				system(cmd);
+			}
+		}
+		else
+		{
+			logmessage("[Entware]", "Nonexistent service\n");
+		}
+	}
+	else if (ent_action & ENTWARE_ACT_MASK)
+	{
+		if (ent_app)
+		{
+			if (ent_action & ENTWARE_ACT_REMOVE)
+			{
+				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s remove %s", ent_arg, ent_app);
+				system(cmd);
+			}
+			if (ent_action & ENTWARE_ACT_UPDATE)
+			{
+				system("/opt/bin/opkg update");
+				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s upgrade %s", ent_arg, ent_app);
+				system(cmd);
+			}
+			if (ent_action & ENTWARE_ACT_INSTALL)
+			{
+				system("/opt/bin/opkg update");
+				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s install %s", ent_arg, ent_app);
+				system(cmd);
+			}
+		}
+	}
+	else
+	{
+		logmessage("[Entware]", "Nonexistent app and Unregistered action\n");
+	}
+	nvram_set_int("entware_busy", 0);
+	nvram_unset("entware_app");
+	nvram_unset("entware_action");
+	nvram_unset("entware_arg");
+}
+#endif

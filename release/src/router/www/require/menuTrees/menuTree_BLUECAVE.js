@@ -282,6 +282,23 @@ define(function(){
 				]
 			},
 			{
+				menuName: "Entware",
+				index: "menu_Split",
+				tab: [
+					{url: "NULL", tabName: "__HIDE__"}
+				]
+			},
+			{
+				menuName: "Entware",
+				index: "menu_Entware",
+				tab: [
+					{url: "Entware_start.asp", tabName: "<#Entware_home#>"},
+					{url: "Entware_installed.asp", tabName: "<#Entware_installed#>"},
+					{url: "Entware_list.asp", tabName: "<#Entware_list#>"},
+					{url: "NULL", tabName: "__INHERIT__"}
+				] 
+			},
+			{
 				menuName: "<#Softcenter#>",
 				index: "menu_Split",
 				tab: [
@@ -409,8 +426,11 @@ define(function(){
 						retArray.push("menu_Alexa_IFTTT");
 					}
 				}
-				else if (<% nvram_get("sc_mount"); %> == "0"){
+				if (!softcenter_support || <% nvram_get("sc_installed"); %> == "0"){
 					retArray.push("menu_Softcenter");
+				}
+				if (!entware_support){
+					retArray.push("menu_Entware");
 				}
 
 				return retArray;

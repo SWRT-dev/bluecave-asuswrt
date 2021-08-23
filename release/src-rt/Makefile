@@ -214,7 +214,7 @@ uppercase_B = $(shell echo $(BUILD_NAME) | tr a-z  A-Z)
 lowercase_B = $(shell echo $(BUILD_NAME) | tr A-Z a-z)
 BUILD_TIME := $(shell LC_ALL=C date -u)
 BUILD_USER ?= $(shell whoami)
-ifeq ($(BUILD_USER),paldier)
+ifneq ($(findstring $(BUILD_USER), paldier iss),)
 BUILD_INFO := SWRTdev
 else
 BUILD_INFO := $(shell git log --pretty="%h" -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")
@@ -459,7 +459,7 @@ ifeq ($(HND_ROUTER),y)
 
 	$(MAKE) buildimage
 else
-	@-mkdir image
+	@-mkdir -p image
 
 	$(MAKE) -C router all
 ifneq ($(PLATFORM_ROUTER),)
@@ -878,7 +878,7 @@ cleanimage: rtk_clean_img
 	@rm -f router/.config
 	@touch router/.config
 ifneq ($(HND_ROUTER),y)
-	@-mkdir image
+	@-mkdir -p image
 endif
 
 cleantools:
@@ -2763,6 +2763,14 @@ define RouterOptions
 	sed -i "/RTCONFIG_SWRT_FULLCONE/d" $(1); \
 	echo "RTCONFIG_SWRT_FULLCONE=y" >>$(1); \
 	fi; \
+	if [ "$(SWRT_I2CLED)" = "y" ]; then \
+	sed -i "/RTCONFIG_SWRT_I2CLED/d" $(1); \
+	echo "RTCONFIG_SWRT_I2CLED=y" >>$(1); \
+	fi; \
+	if [ "$(ENTWARE)" = "y" ]; then \
+	sed -i "/RTCONFIG_ENTWARE/d" $(1); \
+	echo "RTCONFIG_ENTWARE=y" >>$(1); \
+	fi; \
 	)
 	$(call platformRouterOptions, $(1))
 endef
@@ -4091,7 +4099,7 @@ fi; \
 		echo "CONFIG_NETFILTER_XT_TARGET_TPROXY=m" >>$(1); \
 	fi;\
 	if [ "$(OPENVPN)" = "y" ]; then \
-		sed -i "/CONFIG_TUN/d" $(1); \
+		sed -i "/CONFIG_TUN\>/d" $(1); \
 		echo "CONFIG_TUN=m" >>$(1); \
 	fi;\
 	if [ "$(VPN_FUSION)" = "y" ]; then \

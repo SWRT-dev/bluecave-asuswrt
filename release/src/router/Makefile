@@ -743,8 +743,8 @@ obj-y += skipdbv2 libev-4.22 softcenter libiconv-1.14
 #obj-y += httpdb mbedtls-2.6.0
 obj-y += ipset libmnl-1.0.4 libnfnetlink-1.0.1
 endif
-obj-y += dbus-1.8.8 libpcap
 obj-y += readline-6.2
+obj-$(RTCONFIG_ENTWARE) += libiconv-1.14
 obj-y += libpasswd
 obj-y += httpd json-c
 obj-$(RTCONFIG_VISUALIZATION) += sqlite3 json-c libxml2 visdcoll visdcon
