@@ -17915,6 +17915,9 @@ struct mime_handler mime_handlers[] = {
 	{ "_resp/*", "text/html", no_cache_IE7, do_html_post_and_get, do_dbresp_cgi, do_auth },
 	{ "_result/*", "text/html", no_cache_IE7, do_html_post_and_get, do_result_cgi, do_auth },
 #endif
+#if defined(RTCONFIG_ENTWARE)
+	{ "entware.cgi*", "text/html", no_cache_IE7, do_html_post_and_get, do_entware_cgi, do_auth },
+#endif
 	{ "appGet_image_path.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_appGet_image_path_cgi, NULL },
 	{ "login.cgi", "text/html", no_cache_IE7, do_html_post_and_get, do_login_cgi, NULL },
 	{ "update_clients.asp", "text/html", no_cache_IE7, do_html_post_and_get, do_ej, do_auth },
@@ -26481,9 +26484,8 @@ struct AiMesh_whitelist AiMesh_whitelists[] = {
 	{"ajax_sysinfo.asp", NULL},
 	{"update_clients.asp", NULL},
 	{"ajax_status.xml", NULL },
-#if defined(K3) || defined(R8500) || defined(XWR3100) || defined(TY6201_RTK) || defined(TY6201_BCM)
+	{"ajax_ethernet_ports.asp", NULL },
 	{"key.asp", NULL},
-#endif
 	{ NULL, NULL }
 };
 #endif

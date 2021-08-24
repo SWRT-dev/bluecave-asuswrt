@@ -224,7 +224,7 @@ static void destroy_mappings(void) {
 /* check if a mapping is valid.
  * possibly delete and free an invalid mapping.
  * the mapping should not be used anymore after check_mapping() returns 0. */
-#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 18, 0)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)
 static int check_mapping(struct nat_mapping* mapping, struct net *net, const struct nf_conntrack_zone *zone) {
 #else
 static int check_mapping(struct nat_mapping* mapping, struct net *net, const u16 zone) {
@@ -247,7 +247,6 @@ static int check_mapping(struct nat_mapping* mapping, struct net *net, const u16
 
   list_for_each_safe(iter, tmp, &mapping->original_tuple_list) {
     original_tuple_item = list_entry(iter, struct nat_mapping_original_tuple, node);
-
     tuple_hash = nf_conntrack_find_get(net, zone, &original_tuple_item->tuple);
 
     if (tuple_hash == NULL) {
@@ -419,12 +418,12 @@ static __be32 get_device_ip(const struct net_device* dev) {
   }
 }
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 18, 0)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)
 static uint16_t find_appropriate_port(struct net *net, const struct nf_conntrack_zone *zone, const uint16_t original_port, const int ifindex, const struct nf_nat_ipv4_range *range) {
 #elif LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0)
-static uint16_t find_appropriate_port(struct net *net, u16 zone, const uint16_t original_port, const int ifindex, const struct nf_nat_ipv4_range *range) {
+static uint16_t find_appropriate_port(struct net *net, const u16 zone, const uint16_t original_port, const int ifindex, const struct nf_nat_ipv4_range *range) {
 #else
-static uint16_t find_appropriate_port(struct net *net, u16 zone, const uint16_t original_port, const int ifindex, const struct nf_nat_range *range) {
+static uint16_t find_appropriate_port(struct net *net, const u16 zone, const uint16_t original_port, const int ifindex, const struct nf_nat_range *range) {
 #endif
   uint16_t min, start, selected, range_size, i;
   struct nat_mapping* mapping = NULL;
@@ -500,7 +499,7 @@ static unsigned int fullconenat_tg(struct sk_buff *skb, const struct xt_action_p
   const struct nf_nat_multi_range_compat *mr;
   const struct nf_nat_range *range;
 #endif
-#if LINUX_VERSION_CODE > KERNEL_VERSION(3, 18, 0)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)
   const struct nf_conntrack_zone *zone;
 #else
   u16 zone;
