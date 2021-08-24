@@ -816,6 +816,9 @@ void init_entware(void)
 	/* /opt->/tmp/opt->/jffs/opt->/tmp/mnt/sda/opt */
 	unlink("/tmp/opt");
 	symlink("/jffs/opt", "/tmp/opt");
+#if defined(RTCONFIG_LANTIQ)
+	doSystem("mount --bind /tmp/opt /opt");
+#endif
 	stop_entware();
 }
 

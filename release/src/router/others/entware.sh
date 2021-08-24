@@ -22,6 +22,10 @@ if [ "$(nvram get entware_mount)" == 1 ];then
 			ln -sf $usb_disk/opt/$f /jffs/opt/$f
 		done
 		ln -sf /jffs/opt /tmp/opt
+		if [ "$(nvram get productid)" == "BLUECAVE" ]; then
+			mount --bind /tmp/opt /opt
+			ln -sf /tmp/wireless/lantiq /opt/lantiq
+		fi
 	fi
 else
 	rm -f /jffs/opt
