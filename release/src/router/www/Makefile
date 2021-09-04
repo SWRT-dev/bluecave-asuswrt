@@ -60,7 +60,7 @@ else ifeq ($(K3),y)
 	cp ../www/sysinfo/k3/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
 else ifeq ($(R7000P),y)
 	cp ../www/sysinfo/r7000p/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
-else ifeq ($(or $(EA6700),$(DIR868L)),y)
+else ifeq ($(or $(EA6700),$(DIR868L),$(R6300V2)),y)
 	cp ../www/sysinfo/ea6700/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
 else
 	cp ../www/sysinfo/Tools_Sysinfo.asp $(INSTALLDIR)/www/. -rfL || true
@@ -748,3 +748,10 @@ ifeq ($(and $(RTCONFIG_AMAS),$(RTCONFIG_WIFI_SON)),y)
 	mv $(INSTALLDIR)/www/www-sys $(INSTALLDIR)/www-sys
 endif
 	mkdir -p $(INSTALLDIR)/www
+
+ifneq ($(RTCONFIG_ENTWARE), y)
+	rm -rf $(INSTALLDIR)/www/Entware_start.asp
+	rm -rf $(INSTALLDIR)/www/Entware_installed.asp
+	rm -rf $(INSTALLDIR)/www/Entware_list.asp
+endif
+

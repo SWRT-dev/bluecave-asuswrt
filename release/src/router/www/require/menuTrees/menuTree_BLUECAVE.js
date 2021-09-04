@@ -431,6 +431,10 @@ define(function(){
 				}
 				if (!entware_support){
 					retArray.push("menu_Entware");
+					for(i=0; i<menuTree.list.length; i++){
+						if(menuTree.list[i].menuName == 'Entware')
+							menuTree.list.splice(i,1);
+					}
 				}
 
 				return retArray;
