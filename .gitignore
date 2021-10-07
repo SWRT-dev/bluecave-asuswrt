@@ -2,4 +2,5 @@
 swrtex.c
 tcode.c
 *.log
+release/src-lantiq/linux/linux-3.10.104/net/swrt_fastpath/*.c
 

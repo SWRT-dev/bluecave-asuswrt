@@ -18,7 +18,7 @@
 <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/js/httpApi.js"></script>
 <script>
-var asusopt = '<%nvram_get("apps_mounted_path");%>';
+var asusopt = '<%nvram_get("apps_state_install");%>' || '<%nvram_get("webdav_aidisk");%>';
 var entware_mount = '<% nvram_get("entware_mount"); %>';
 var entware_disk = '<% nvram_get("entware_disk"); %>';
 function get_disks(){

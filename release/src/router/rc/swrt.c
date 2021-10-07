@@ -82,6 +82,9 @@ void swrt_init()
 #endif
 	swrt_insmod();
 	swrt_init_model();
+#if defined(RTCONFIG_ROG_UI)
+	nvram_set("swrt_rog", "1");
+#endif
 }
 
 #if defined(K3)
@@ -369,6 +372,9 @@ void swrt_init_done(){
 #endif
 #if defined(R8000P)
     add_rc_support("uu_accel");
+#endif
+#if defined(RAX120)
+	rax120_lanled();
 #endif
 }
 
@@ -918,3 +924,4 @@ void start_entware(void)
 	nvram_unset("entware_arg");
 }
 #endif
+

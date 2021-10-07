@@ -88,6 +88,10 @@
 #include <net/mptcp.h>
 #endif
 
+#ifdef PGB_QUICK_PATH
+#include <linux/swrt_fastpath/fast_path.h>
+#endif
+
 int sysctl_ip_default_ttl __read_mostly = IPDEFTTL;
 EXPORT_SYMBOL(sysctl_ip_default_ttl);
 
@@ -111,6 +115,11 @@ int __ip_local_out(struct sk_buff *skb)
 
 	iph->tot_len = htons(skb->len);
 	ip_send_check(iph);
+#ifdef PGB_QUICK_PATH
+	if (SWRT_FASTPATH(skb))
+		return dst_output(skb);
+	else 
+#endif 
 	return nf_hook(NFPROTO_IPV4, NF_INET_LOCAL_OUT, skb, NULL,
 		       skb_dst(skb)->dev, dst_output);
 }
@@ -361,7 +370,11 @@ int __ipt_optimized ip_mc_output(struct sk_buff *skb)
 			NF_HOOK(NFPROTO_IPV4, NF_INET_POST_ROUTING, newskb,
 				NULL, newskb->dev, dev_loopback_xmit);
 	}
-
+#ifdef PGB_QUICK_PATH
+	if (SWRT_FASTPATH(skb))
+		return ip_finish_output(skb);
+	else 
+#endif 
 	return NF_HOOK_COND(NFPROTO_IPV4, NF_INET_POST_ROUTING, skb, NULL,
 			    skb->dev, ip_finish_output,
 			    !(IPCB(skb)->flags & IPSKB_REROUTED));
@@ -375,7 +388,11 @@ int __ipt_optimized ip_output(struct sk_buff *skb)
 
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_IP);
-
+#ifdef PGB_QUICK_PATH
+	if (SWRT_FASTPATH(skb))
+		return ip_finish_output(skb);
+	else 
+#endif 
 	return NF_HOOK_COND(NFPROTO_IPV4, NF_INET_POST_ROUTING, skb, NULL, dev,
 			    ip_finish_output,
 			    !(IPCB(skb)->flags & IPSKB_REROUTED));

@@ -2767,6 +2767,14 @@ define RouterOptions
 	sed -i "/RTCONFIG_SWRT_I2CLED/d" $(1); \
 	echo "RTCONFIG_SWRT_I2CLED=y" >>$(1); \
 	fi; \
+	if [ "$(SWRT_FASTPATH)" = "y" ]; then \
+	sed -i "/RTCONFIG_SWRT_FASTPATH/d" $(1); \
+	echo "RTCONFIG_SWRT_FASTPATH=y" >>$(1); \
+	fi; \
+	if [ "$(SWRT_KVR)" = "y" ]; then \
+	sed -i "/RTCONFIG_SWRT_KVR/d" $(1); \
+	echo "RTCONFIG_SWRT_KVR=y" >>$(1); \
+	fi; \
 	if [ "$(ENTWARE)" = "y" ]; then \
 	sed -i "/RTCONFIG_ENTWARE/d" $(1); \
 	echo "RTCONFIG_ENTWARE=y" >>$(1); \

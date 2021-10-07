@@ -14,7 +14,6 @@ resolveip:
 	$(STRIP) resolveip
 
 install:
-	install -d $(INSTALLDIR)/sbin
 	install -d $(INSTALLDIR)/usr/sbin
 	install -d $(INSTALLDIR)/lib
 	install -d $(INSTALLDIR)/usr/bin
@@ -44,9 +43,7 @@ endif
 	install -d $(INSTALLDIR)/rom/etc/softcenter/webs
 	install -d $(INSTALLDIR)/rom/etc/softcenter/perp
 	install -d $(INSTALLDIR)/rom/etc/softcenter/scripts
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300 TUF-AX3000))
 	install -d $(INSTALLDIR)/rom/etc/softcenter/ROG/res
-endif
 # softcenter
 	install -m 0755 versioncmp $(INSTALLDIR)/usr/sbin
 	install -m 0755 base64_encode $(INSTALLDIR)/usr/sbin
@@ -85,12 +82,7 @@ endif
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_tar_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	#install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
-ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), K3C))	
-	install -m 0755 mtd $(INSTALLDIR)/sbin
-endif
-ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), GT-AC2900 GT-AC5300 TUF-AX3000))
 	install -m 0755 softcenter/ROG/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/ROG/res
-endif
 	install -m 0755 jffsinit.sh $(INSTALLDIR)/usr/sbin
 ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), K3))
 	install -m 0755 uhmiMsg $(INSTALLDIR)/usr/sbin
@@ -125,5 +117,6 @@ else
 	install -m 0755 key.asp $(INSTALLDIR)/www
 endif
 endif
+
 clean:
 

@@ -677,6 +677,14 @@ KBUILD_CPPFLAGS += $(KCPPFLAGS)
 KBUILD_AFLAGS += $(KAFLAGS)
 KBUILD_CFLAGS += $(KCFLAGS)
 
+ifneq ($(wildcard ./net/swrt_fastpath/*.c),)
+KBUILD_CFLAGS += -DPGB_QUICK_PATH
+export PGB_QUICK_PATH=y
+else ifneq ($(wildcard ./net/swrt_fastpath/*.obj),)
+KBUILD_CFLAGS += -DPGB_QUICK_PATH
+export PGB_QUICK_PATH=y
+endif
+
 # Use --build-id when available.
 LDFLAGS_BUILD_ID = $(patsubst -Wl$(comma)%,%,\
 			      $(call cc-ldoption, -Wl$(comma)--build-id,))

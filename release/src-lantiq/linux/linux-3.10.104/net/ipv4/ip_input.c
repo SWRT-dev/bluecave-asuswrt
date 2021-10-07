@@ -148,6 +148,10 @@
 #if defined(CONFIG_LTQ_PPA_API) || defined(CONFIG_LTQ_PPA_API_MODULE)
   #include <net/ppa_api.h>
 #endif
+#ifdef PGB_QUICK_PATH
+#include <linux/swrt_fastpath/fast_path.h>
+#endif
+
 /*
  *	Process Router Attention IP option (RFC 2113)
  */
@@ -274,7 +278,11 @@ int ip_local_deliver(struct sk_buff *skb)
 		if (ip_defrag(skb, IP_DEFRAG_LOCAL_DELIVER))
 			return 0;
 	}
-
+#ifdef PGB_QUICK_PATH
+	if (SWRT_FASTPATH(skb))
+		return ip_local_deliver_finish(skb);
+	else 
+#endif
 	return NF_HOOK(NFPROTO_IPV4, NF_INET_LOCAL_IN, skb, skb->dev, NULL,
 		       ip_local_deliver_finish);
 }
@@ -471,7 +479,11 @@ int __ipt_optimized ip_rcv(struct sk_buff *skb, struct net_device *dev, struct p
 
 	/* Must drop socket now because of tproxy. */
 	skb_orphan(skb);
-
+#ifdef PGB_QUICK_PATH
+	if (SWRT_FASTPATH(skb))
+		return ip_rcv_finish(skb);
+	else 
+#endif
 	return NF_HOOK(NFPROTO_IPV4, NF_INET_PRE_ROUTING, skb, dev, NULL,
 		       ip_rcv_finish);
 

@@ -1130,6 +1130,10 @@ _dprintf("%s: IFUP.\n", __FUNCTION__);
 
 	lan_up(lan_ifname);
 
+#if defined(RTCONFIG_SWRT_KVR) && defined(RTCONFIG_RALINK)
+	system("/usr/bin/iappd.sh restart");
+#endif
+
 	_dprintf("done\n");
 	return 0;
 }

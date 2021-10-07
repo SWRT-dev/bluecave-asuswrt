@@ -315,6 +315,13 @@ int main(int argc, char *argv[])
 		fprintf(fp, "max connections = %s\n", nvram_safe_get("st_max_user"));
 
 	if(!nvram_get_int("stop_samba_speedup")){
+#if defined(RTCONFIG_SWRT_FASTPATH)
+		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE\n");
+		fprintf(fp, "strict locking = no\n");
+		fprintf(fp, "deadtime = 10\n");
+		fprintf(fp, "follow symlinks = no\n");
+		fprintf(fp, "unix extensions = no\n");
+#else
 #if defined(RTCONFIG_SOC_IPQ8064)
 		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE\n");
 #elif defined(RTCONFIG_ALPINE)
@@ -325,6 +332,7 @@ int main(int argc, char *argv[])
 #endif
 #else
 		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE SO_RCVBUF=65536 SO_SNDBUF=65536\n");
+#endif
 #endif
 	}
 	fprintf(fp, "obey pam restrictions = no\n");

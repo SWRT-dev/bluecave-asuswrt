@@ -8384,7 +8384,9 @@ start_services(void)
 #endif
 	run_custom_script("services-start", 0, NULL, NULL);
 	nvram_set_int("sc_services_start_sig", 1);
-
+#if defined(RTCONFIG_SWRT_KVR) && defined(RTCONFIG_RALINK)
+	system("/usr/bin/iappd.sh restart");
+#endif
 	return 0;
 }
 
@@ -16467,10 +16469,14 @@ void reset_led(void)
 		led_control(LED_INDICATOR_SIG2, LED_OFF);
 	}
 	else if(nvram_get_int("link_internet") == 2){
+		led_control(LED_INDICATOR_SIG1, LED_OFF); 
+		led_control(LED_INDICATOR_SIG3, LED_OFF);
 		led_control(LED_INDICATOR_SIG2, LED_ON);
 	}
 	else {
+		led_control(LED_INDICATOR_SIG1, LED_OFF);
 		led_control(LED_INDICATOR_SIG3, LED_ON);
+		led_control(LED_INDICATOR_SIG2, LED_OFF);
 	}
 #endif
 }
