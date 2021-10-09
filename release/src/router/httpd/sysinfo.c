@@ -111,6 +111,28 @@ void GetPhyStatus_rtk(int *states);
 #define SI_WL_QUERY_AUTHE 2
 #define SI_WL_QUERY_AUTHO 3
 
+#if defined(RTCONFIG_RALINK_MT7621)
+static int nprocessors_conf(void)
+{
+	int ret = 0;
+	DIR *dir = opendir("/sys/devices/system/cpu");
+
+	if (dir) {
+		struct dirent *dp;
+
+		while ((dp = readdir(dir))) {
+			if (dp->d_type == DT_DIR
+				&& dp->d_name[0] == 'c'
+				&& dp->d_name[1] == 'p'
+				&& dp->d_name[2] == 'u'
+				&& isdigit(dp->d_name[3]))
+				++ret;
+		}
+		closedir(dir);
+	}
+	return ret;
+}
+#endif
 
 int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 {
@@ -134,7 +156,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			if (buffer) {
 				int count = 0;
 				char model[64];
-#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA)
+#if defined(RTCONFIG_BCMARM) || defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK_MT7622)
 					char impl[8], arch[8], variant[8], part[10], revision[4];
 					impl[0]='\0'; arch[0]='\0'; variant[0]='\0'; part[0]='\0';
 					strcpy(revision,"0");
@@ -174,6 +196,12 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					    && !strcmp(part, "0xd03")
 					    && !strcmp(arch, "7"))
 						sprintf(model, "IPQ806x - Cortex A15 ARMv7 revision %s", revision);
+#elif defined(RTCONFIG_RALINK_MT7622)
+					if (!strcmp(impl, "0x41")//kernel:32/64
+					    && !strcmp(variant, "0x0")
+					    && !strcmp(part, "0xd03")
+					    && (!strcmp(arch, "7") || !strcmp(arch, "8")))
+						sprintf(model, "MT7622 - Cortex A53 ARMv8 revision %s", revision);
 #else
 					if (!strcmp(impl, "0x42")
 					    && !strcmp(variant, "0x0")
@@ -204,7 +232,11 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					strcpy(model, "mt7621a");
 #endif
 #endif
+#if defined(RTCONFIG_RALINK_MT7621)
+				count = nprocessors_conf();
+#else
 				count = sysconf(_SC_NPROCESSORS_CONF);
+#endif
 				if (count > 1) {
 					tmp = nvram_safe_get("cpurev");
 					if (*tmp)
@@ -250,7 +282,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				if (*tmp)
 					sscanf(tmp,"%[^,]s", result);
 			}
-#elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA)
+#elif defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK_MT7622)
 			int freq = 0;
 			char *buffer;
 
@@ -264,7 +296,14 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			else
 				strcpy(result, "0");//bug?
 #elif defined(RTCONFIG_RALINK)
-			strcpy(result, "880");
+			char freq[5];
+			strcpy(freq, "0");
+			char *buffer = read_whole_file("/proc/cpuinfo");
+			if (buffer) {
+				tmp = strstr(buffer, "cpu MHz");
+				if (tmp) sscanf(tmp, "cpu MHz			: %4[^\n]s", freq);
+			}
+			strcpy(result, freq);
 #endif
 		} else if(strcmp(type,"memory.total") == 0) {
 			sysinfo(&sys);

@@ -1232,7 +1232,10 @@ obj-$(RTCONFIG_TRACEROUTE) += traceroute-2.1.0
 
 obj-$(RTCONFIG_BLINK_LED) += bled
 obj-$(RTCONFIG_SWRT_I2CLED) += i2cled i2c-tools-3.1.2
-obj-$(RTCONFIG_SWRT_KVR) += ralinkiappd
+ifeq ($(RTCONFIG_SWRT_KVR),y)
+obj-$(RTCONFIG_RALINK) += ralinkiappd
+obj-$(RTCONFIG_LANTIQ) += lantiq_cmd
+endif
 obj-$(RTCONFIG_BONDING) += ifenslave
 
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
