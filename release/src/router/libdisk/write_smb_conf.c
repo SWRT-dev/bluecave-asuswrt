@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 
 	if(!nvram_get_int("stop_samba_speedup")){
 #if defined(RTCONFIG_SWRT_FASTPATH)
-		fprintf(fp, "socket options = TCP_NODELAY SO_KEEPALIVE\n");
+		fprintf(fp, "socket options = IPTOS_LOWDELAY TCP_NODELAY SO_KEEPALIVE\n");
 		fprintf(fp, "strict locking = no\n");
 		fprintf(fp, "deadtime = 10\n");
 		fprintf(fp, "follow symlinks = no\n");
@@ -891,8 +891,15 @@ int main(int argc, char *argv[])
 	}
 
 confpage:
-	if(fp != NULL)
+	if(fp != NULL) {
+
+		append_custom_config("smb.conf", fp);
 		fclose(fp);
+
+		use_custom_config("smb.conf", SAMBA_CONF);
+		run_postconf("smb", SAMBA_CONF);
+		chmod(SAMBA_CONF, 0644);
+	}
 	free_disk_data(&disks_info);
 	return 0;
 }

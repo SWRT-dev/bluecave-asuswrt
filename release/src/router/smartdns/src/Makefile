@@ -21,15 +21,12 @@ else
 OBJS_LIB=lib/rbtree.o lib/art.o lib/bitops.o lib/radix.o lib/conf.o
 endif
 OBJS=smartdns.o fast_ping.o dns_client.o dns_server.o dns.o util.o tlog.o dns_conf.o dns_cache.o http_parse.o $(OBJS_LIB)
-ifeq ($(HND_ROUTER),y)
-CFLAGS +=-O1 -g -Wall -Wstrict-prototypes -fno-omit-frame-pointer -Wstrict-aliasing 
+ifeq ($(RTCONFIG_HND_ROUTER),y)
+CFLAGS +=-O1 -g -Wall -Wstrict-prototypes -fno-omit-frame-pointer -Wstrict-aliasing -funwind-tables
 else
-CFLAGS +=-O2 -g -Wall -Wstrict-prototypes -fno-omit-frame-pointer -Wstrict-aliasing 
+CFLAGS =-O2 -g -Wall -Wstrict-prototypes -fno-omit-frame-pointer -Wstrict-aliasing -funwind-tables
 endif
 CFLAGS +=-I./include -I$(TOP)/openssl/include
-ifeq ($(QCA),y)
-LDFLAGS +=-ldl
-endif
 
 CFLAGS += -DBASE_FILE_NAME=\"$(notdir $<)\"
 LDFLAGS +=-L$(TOP)/openssl -lssl -lcrypto
@@ -39,10 +36,10 @@ CXXFLAGS +=-Iinclude
 #ifeq ($(STATIC), yes)
 #LDFLAGS += -lssl -lcrypto -Wl,--whole-archive -lpthread -Wl,--no-whole-archive -ldl -static
 #else
-LDFLAGS += -lssl -lcrypto -lpthread 
+LDFLAGS += -lssl -lcrypto -lpthread -ldl
 #endif
 
-ifneq ($(RALINK),y)
+ifneq ($(RTCONFIG_RALINK),y)
 .PHONY: all clean
 
 all: $(BIN)
@@ -50,6 +47,7 @@ all: $(BIN)
 $(BIN) : $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 else
+#toolchain is too old
 .PHONY: all clean
 all:
 	cp ./smartdns_mipsle ./smartdns

@@ -1236,6 +1236,10 @@ ifeq ($(RTCONFIG_SWRT_KVR),y)
 obj-$(RTCONFIG_RALINK) += ralinkiappd
 obj-$(RTCONFIG_LANTIQ) += lantiq_cmd
 endif
+ifeq ($(or $(RTCONFIG_HND_ROUTER),$(RTCONFIG_QCA),$(RTCONFIG_LANTIQ),$(RTCONFIG_RALINK)),y)
+obj-y += cryptodev-linux
+endif
+
 obj-$(RTCONFIG_BONDING) += ifenslave
 
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2

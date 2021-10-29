@@ -1,5 +1,4 @@
-ifneq ($(wildcard ./*.c),)
 obj-y += fast_path.o
-else ifneq ($(wildcard ./*.obj),)
-obj-y += fast_path.obj
+ifeq ($(wildcard net/swrt_fastpath/fast_path.c),)
+fast_path-objs = fast_path.obj
 endif

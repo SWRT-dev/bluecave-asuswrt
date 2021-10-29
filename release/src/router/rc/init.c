@@ -9196,6 +9196,9 @@ NO_USB_CAP:
 #if defined(RTCONFIG_SOFTCENTER)
 	add_rc_support("softcenter");
 #endif
+#if defined(RTCONFIG_SMARTDNS)
+	add_rc_support("smartdns");
+#endif
 	return 0;
 }
 
@@ -10062,6 +10065,19 @@ static void sysinit(void)
 #if defined(RTCONFIG_BLINK_LED)
 	modprobe("bled");
 #endif
+#endif
+#if defined(RTCONFIG_SWRT_I2CLED)
+#if defined(R6800)
+	modprobe("sx150x-leds");
+#else
+	modprobe("i2cleds");
+#endif
+#endif
+#if defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK) || defined(RTCONFIG_HND_ROUTER)
+#if defined(RTCONFIG_SOC_IPQ40XX)
+	modprobe("qcrypto");
+#endif
+	modprobe("cryptodev");
 #endif
 #ifdef LINUX26
 	do {

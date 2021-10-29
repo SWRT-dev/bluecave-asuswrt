@@ -897,19 +897,19 @@ void start_entware(void)
 		{
 			if (ent_action & ENTWARE_ACT_REMOVE)
 			{
-				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s remove %s", ent_arg, ent_app);
+				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s remove %s --force-space", ent_arg, ent_app);
 				system(cmd);
 			}
 			if (ent_action & ENTWARE_ACT_UPDATE)
 			{
 				system("/opt/bin/opkg update");
-				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s upgrade %s", ent_arg, ent_app);
+				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s upgrade %s --force-space", ent_arg, ent_app);
 				system(cmd);
 			}
 			if (ent_action & ENTWARE_ACT_INSTALL)
 			{
 				system("/opt/bin/opkg update");
-				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s install %s", ent_arg, ent_app);
+				snprintf(cmd, sizeof(cmd), "/opt/bin/opkg %s install %s --force-space", ent_arg, ent_app);
 				system(cmd);
 			}
 		}

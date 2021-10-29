@@ -21,7 +21,9 @@
 #endif
 #include "util.h"
 #include "dns_conf.h"
+#include "tlog.h"
 #include <arpa/inet.h>
+#include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -35,9 +37,11 @@
 #include <string.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <unwind.h>
 
 #define TMP_BUFF_LEN_32 32
 
@@ -731,8 +735,11 @@ void SSL_CRYPTO_thread_setup(void)
 		lock_count[i] = 0;
 		pthread_mutex_init(&(lock_cs[i]), NULL);
 	}
-
+#if OPENSSL_API_COMPAT < 0x10000000
 	CRYPTO_set_id_callback(_pthreads_thread_id);
+#else
+	CRYPTO_THREADID_set_callback(_pthreads_thread_id);
+#endif
 	CRYPTO_set_locking_callback(_pthreads_locking_callback);
 }
 
@@ -935,7 +942,7 @@ void get_compiled_time(struct tm *tm)
 	int hour, min, sec;
 	static const char *month_names = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
-	sscanf(__DATE__, "%5s %d %d", s_month, &day, &year);
+	sscanf(__DATE__, "%4s %d %d", s_month, &day, &year);
 	month = (strstr(month_names, s_month) - month_names) / 3;
 	sscanf(__TIME__, "%d:%d:%d", &hour, &min, &sec);
 	tm->tm_year = year - 1900;
@@ -945,6 +952,16 @@ void get_compiled_time(struct tm *tm)
 	tm->tm_hour = hour;
 	tm->tm_min = min;
 	tm->tm_sec = sec;
+}
+
+int is_numeric(const char *str)
+{
+	while (*str != '\0') {
+		if (*str < '0' || *str > '9')
+			return -1;
+		str++;
+	}
+	return 0;
 }
 
 int has_network_raw_cap(void)
@@ -984,4 +1001,65 @@ int set_sock_lingertime(int fd, int time)
 	}
 
 	return 0;
+}
+
+uint64_t get_free_space(const char *path)
+{
+	uint64_t size = 0;
+	struct statvfs buf;
+	if (statvfs(path, &buf) != 0) {
+		return 0;
+	}
+
+	size = (uint64_t)buf.f_frsize * buf.f_bavail;
+
+	return size;
+}
+
+struct backtrace_state {
+	void **current;
+	void **end;
+};
+
+static _Unwind_Reason_Code unwind_callback(struct _Unwind_Context *context, void *arg)
+{
+	struct backtrace_state *state = (struct backtrace_state *)(arg);
+	uintptr_t pc = _Unwind_GetIP(context);
+	if (pc) {
+		if (state->current == state->end) {
+			return _URC_END_OF_STACK;
+		} else {
+			*state->current++ = (void *)(pc);
+		}
+	}
+	return _URC_NO_REASON;
+}
+
+void print_stack(void)
+{
+	int idx;
+	const size_t max_buffer = 30;
+	void *buffer[max_buffer];
+
+	struct backtrace_state state = {buffer, buffer + max_buffer};
+	_Unwind_Backtrace(unwind_callback, &state);
+	int frame_num = state.current - buffer;
+	if (frame_num == 0) {
+		return;
+	}
+	
+	tlog(TLOG_FATAL, "Stack:");
+	for (idx = 0; idx < frame_num; ++idx) {
+		const void *addr = buffer[idx];
+		const char *symbol = "";
+
+		Dl_info info;
+		memset(&info, 0, sizeof(info));
+		if (dladdr(addr, &info) && info.dli_sname) {
+			symbol = info.dli_sname;
+		}
+
+		void *offset = (void *)((char *)(addr) - (char *)(info.dli_fbase));
+		tlog(TLOG_FATAL, "#%.2d: %p %s from %s+%p", idx + 1, addr, symbol, info.dli_fname, offset);
+	}
 }

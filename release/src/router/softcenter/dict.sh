@@ -46,6 +46,11 @@ do
 	sed -i '/Entware_appname/d' $i
 	sed -i '/Entware_appver/d' $i
 	sed -i '/Entware_newapp/d' $i
+	sed -i '/SmartDNS_desc/d' $i
+	sed -i '/SmartDNS_dis_ipv6/d' $i
+	sed -i '/SmartDNS_prefetch/d' $i
+	sed -i '/SmartDNS_dualstackip/d' $i
+	sed -i '/SmartDNS_serverdesc/d' $i
 	if [ "$i" = "CN.dict" ];then
 		echo "Softcenter=软件中心" >> $i
 		echo "Softcenter_tool=工具箱" >> $i
@@ -90,6 +95,11 @@ do
 		echo "Entware_appver=版本" >> $i
 		echo "Entware_mount=选择要挂载的分区" >> $i
 		echo "Entware_newapp=安装新软件" >> $i
+		echo "SmartDNS_desc=SmartDNS是一个本地高性能DNS服务器，支持避免域名污染，支持返回最快IP，支持广告过滤。" >> $i
+		echo "SmartDNS_dis_ipv6=禁用ipv6解析" >> $i
+		echo "SmartDNS_prefetch=域名预加载" >> $i
+		echo "SmartDNS_dualstackip=双栈IP优选" >> $i
+		echo "SmartDNS_serverdesc=上游服务器列表" >> $i
 	elif [ "$i" = "TW.dict" ];then
 		echo "Softcenter=軟體中心" >> $i
 		echo "Softcenter_tool=工具箱" >> $i
@@ -134,6 +144,11 @@ do
 		echo "Entware_appver=版本" >> $i
 		echo "Entware_mount=選擇要掛載的分區" >> $i
 		echo "Entware_newapp=安裝新軟體" >> $i
+		echo "SmartDNS_desc=SmartDNS是一个本地高性能DNS服务器，支持避免域名污染，支持返回最快IP，支持广告过滤。" >> $i
+		echo "SmartDNS_dis_ipv6=禁用ipv6解析" >> $i
+		echo "SmartDNS_prefetch=域名预加载" >> $i
+		echo "SmartDNS_dualstackip=双栈IP优选" >> $i
+		echo "SmartDNS_serverdesc=上游服务器列表" >> $i
 	else
 		echo "Softcenter=Softcenter" >> $i
 		echo "Softcenter_tool=Tools" >> $i
@@ -178,6 +193,11 @@ do
 		echo "Entware_appver=Program version" >> $i
 		echo "Entware_mount=Select a partition to mount" >> $i
 		echo "Entware_newapp=Install new program" >> $i
+		echo "SmartDNS_desc=SmartDNS is a local DNS server. SmartDNS accepts DNS query requests from local clients, obtains DNS query results from multiple upstream DNS servers, and returns the fastest access results to clients." >> $i
+		echo "SmartDNS_dis_ipv6=Disable ipv6 query results" >> $i
+		echo "SmartDNS_prefetch=Domain prefetch" >> $i
+		echo "SmartDNS_dualstackip=Dualstack ip selection" >> $i
+		echo "SmartDNS_serverdesc=Upstream DNS server list" >> $i
 	fi
 done
 

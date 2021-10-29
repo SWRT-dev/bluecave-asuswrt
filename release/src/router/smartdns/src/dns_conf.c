@@ -50,6 +50,7 @@ int dns_conf_cachesize = DEFAULT_DNS_CACHE_SIZE;
 int dns_conf_prefetch = 0;
 int dns_conf_serve_expired = 0;
 int dns_conf_serve_expired_ttl = 0;
+int dns_conf_serve_expired_reply_ttl = 5;
 
 /* upstream servers */
 struct dns_servers dns_conf_servers[DNS_MAX_SERVERS];
@@ -71,6 +72,9 @@ int dns_conf_log_num = 8;
 /* CA file */
 char dns_conf_ca_file[DNS_MAX_PATH];
 char dns_conf_ca_path[DNS_MAX_PATH];
+
+char dns_conf_cache_file[DNS_MAX_PATH];
+int dns_conf_cache_persist = 2;
 
 /* auditing */
 int dns_conf_audit_enable = 0;
@@ -106,6 +110,10 @@ static int _get_domain(char *value, char *domain, int max_dmain_size, char **ptr
 	char *begin = NULL;
 	char *end = NULL;
 	int len = 0;
+
+	if (value == NULL || domain == NULL) {
+		goto errout;
+	}
 
 	/* first field */
 	begin = strstr(value, "/");
@@ -262,6 +270,7 @@ static int _config_server(int argc, char *argv[], dns_server_type_t type, int de
 		return -1;
 	}
 
+	ip = argv[1];
 	if (index >= DNS_MAX_SERVERS) {
 		tlog(TLOG_WARN, "exceeds max server number, %s", ip);
 		return 0;
@@ -273,8 +282,6 @@ static int _config_server(int argc, char *argv[], dns_server_type_t type, int de
 	server->hostname[0] = '\0';
 	server->httphost[0] = '\0';
 	server->tls_host_verify[0] = '\0';
-
-	ip = argv[1];
 
 	if (type == DNS_SERVER_HTTPS) {
 		if (parse_uri(ip, NULL, server->server, &port, server->path) != 0) {
@@ -475,7 +482,7 @@ errout:
 	return -1;
 }
 
-static int _config_domain_rule_flag_set(char *domain, unsigned int flag)
+static int _config_domain_rule_flag_set(char *domain, unsigned int flag, unsigned int is_clear)
 {
 	struct dns_domain_rule *domain_rule = NULL;
 	struct dns_domain_rule *old_domain_rule = NULL;
@@ -509,12 +516,18 @@ static int _config_domain_rule_flag_set(char *domain, unsigned int flag)
 	/* add new rule to domain */
 	if (domain_rule->rules[DOMAIN_RULE_FLAGS] == NULL) {
 		rule_flags = malloc(sizeof(*rule_flags));
+		memset(rule_flags, 0, sizeof(*rule_flags));
 		rule_flags->flags = 0;
 		domain_rule->rules[DOMAIN_RULE_FLAGS] = rule_flags;
 	}
 
 	rule_flags = domain_rule->rules[DOMAIN_RULE_FLAGS];
-	rule_flags->flags |= flag;
+	if (is_clear == false) {
+		rule_flags->flags |= flag;
+	} else {
+		rule_flags->flags &= ~flag;
+	}
+	rule_flags->is_flag_set |= flag;
 
 	/* update domain rule */
 	if (add_domain_rule) {
@@ -582,11 +595,41 @@ static int _conf_domain_rule_ipset(char *domain, const char *ipsetname)
 {
 	struct dns_ipset_rule *ipset_rule = NULL;
 	const char *ipset = NULL;
+	char *copied_name = NULL;
+	char *tok = NULL;
+	enum domain_rule type;
+	int ignore_flag;
 
-	/* Process domain option */
-	if (strncmp(ipsetname, "-", sizeof("-")) != 0) {
+	copied_name = strdup(ipsetname);
+
+	if (copied_name == NULL) {
+		goto errout;
+	}
+
+	for (tok = strtok(copied_name, ","); tok; tok = strtok(NULL, ",")) {
+		if (tok[0] == '#') {
+			if (strncmp(tok, "#6:", 3u) == 0) {
+				type = DOMAIN_RULE_IPSET_IPV6;
+				ignore_flag = DOMAIN_FLAG_IPSET_IPV6_IGN;
+			} else if (strncmp(tok, "#4:", 3u) == 0) {
+				type = DOMAIN_RULE_IPSET_IPV4;
+				ignore_flag = DOMAIN_FLAG_IPSET_IPV4_IGN;
+			} else {
+				goto errout;
+			}
+			tok += 3;
+		} else {
+			type = DOMAIN_RULE_IPSET;
+			ignore_flag = DOMAIN_FLAG_IPSET_IGN;
+		}
+
+		if (strncmp(tok, "-", 1) == 0) {
+			_config_domain_rule_flag_set(domain, ignore_flag, 0);
+			continue;
+		}
+
 		/* new ipset domain */
-		ipset = _dns_conf_get_ipset(ipsetname);
+		ipset = _dns_conf_get_ipset(tok);
 		if (ipset == NULL) {
 			goto errout;
 		}
@@ -597,26 +640,26 @@ static int _conf_domain_rule_ipset(char *domain, const char *ipsetname)
 		}
 
 		ipset_rule->ipsetname = ipset;
-	} else {
-		/* ignore this domain */
-		if (_config_domain_rule_flag_set(domain, DOMAIN_FLAG_IPSET_IGNORE) != 0) {
+
+		if (_config_domain_rule_add(domain, type, ipset_rule) != 0) {
 			goto errout;
 		}
-
-		return 0;
 	}
 
-	if (_config_domain_rule_add(domain, DOMAIN_RULE_IPSET, ipset_rule) != 0) {
-		goto errout;
-	}
+	goto clear;
 
-	return 0;
 errout:
+	tlog(TLOG_ERROR, "add ipset %s failed", ipsetname);
+
 	if (ipset_rule) {
 		free(ipset_rule);
 	}
 
-	tlog(TLOG_ERROR, "add ipset %s failed", ipsetname);
+clear:
+	if (copied_name) {
+		free(copied_name);
+	}
+
 	return 0;
 }
 
@@ -663,7 +706,7 @@ static int _conf_domain_rule_address(char *domain, const char *domain_address)
 		}
 
 		/* add SOA rule */
-		if (_config_domain_rule_flag_set(domain, flag) != 0) {
+		if (_config_domain_rule_flag_set(domain, flag, 0) != 0) {
 			goto errout;
 		}
 
@@ -680,7 +723,7 @@ static int _conf_domain_rule_address(char *domain, const char *domain_address)
 		}
 
 		/* ignore rule */
-		if (_config_domain_rule_flag_set(domain, flag) != 0) {
+		if (_config_domain_rule_flag_set(domain, flag, 0) != 0) {
 			goto errout;
 		}
 
@@ -871,6 +914,7 @@ static int _config_bind_ip(int argc, char *argv[], DNS_BIND_TYPE type)
 		goto errout;
 	}
 
+	ip = argv[1];
 	if (index >= DNS_MAX_SERVERS) {
 		tlog(TLOG_WARN, "exceeds max server number, %s", ip);
 		return 0;
@@ -879,7 +923,6 @@ static int _config_bind_ip(int argc, char *argv[], DNS_BIND_TYPE type)
 	bind_ip = &dns_conf_bind_ip[index];
 	bind_ip->type = type;
 	bind_ip->flags = 0;
-	ip = argv[1];
 	safe_strncpy(bind_ip->ip, ip, DNS_MAX_IPLEN);
 
 	/* process extra options */
@@ -1001,7 +1044,7 @@ static int _conf_domain_rule_nameserver(char *domain, const char *group_name)
 		nameserver_rule->group_name = group;
 	} else {
 		/* ignore this domain */
-		if (_config_domain_rule_flag_set(domain, DOMAIN_FLAG_NAMESERVER_IGNORE) != 0) {
+		if (_config_domain_rule_flag_set(domain, DOMAIN_FLAG_NAMESERVER_IGNORE, 0) != 0) {
 			goto errout;
 		}
 
@@ -1020,6 +1063,26 @@ errout:
 
 	tlog(TLOG_ERROR, "add nameserver %s, %s failed", domain, group_name);
 	return 0;
+}
+
+static int _conf_domain_rule_dualstack_selection(char *domain, const char *yesno)
+{
+	if (strncmp(yesno, "yes", sizeof("yes")) == 0 || strncmp(yesno, "Yes", sizeof("Yes")) == 0) {
+		if (_config_domain_rule_flag_set(domain, DOMAIN_FLAG_DUALSTACK_SELECT, 0) != 0) {
+			goto errout;
+		}
+	} else {
+		/* ignore this domain */
+		if (_config_domain_rule_flag_set(domain, DOMAIN_FLAG_DUALSTACK_SELECT, 1) != 0) {
+			goto errout;
+		}
+	}
+
+	return 0;
+
+errout:
+	tlog(TLOG_ERROR, "set dualstack for %s failed. ", domain);
+	return 1;
 }
 
 static int _config_nameserver(void *data, int argc, char *argv[])
@@ -1232,6 +1295,7 @@ static int _conf_domain_rules(void *data, int argc, char *argv[])
 		{"address", required_argument, NULL, 'a'},
 		{"ipset", required_argument, NULL, 'p'},
 		{"nameserver", required_argument, NULL, 'n'},
+		{"dualstack-ip-selection", required_argument, NULL, 'd'},
 		{NULL, no_argument, NULL, 0}
 	};
 	/* clang-format on */
@@ -1248,7 +1312,7 @@ static int _conf_domain_rules(void *data, int argc, char *argv[])
 	/* process extra options */
 	optind = 1;
 	while (1) {
-		opt = getopt_long_only(argc, argv, "", long_options, NULL);
+		opt = getopt_long_only(argc, argv, "c:a:p:n:d:", long_options, NULL);
 		if (opt == -1) {
 			break;
 		}
@@ -1306,6 +1370,15 @@ static int _conf_domain_rules(void *data, int argc, char *argv[])
 
 			break;
 		}
+		case 'd': {
+			const char *yesno = optarg;
+			if (_conf_domain_rule_dualstack_selection(domain, yesno) != 0) {
+				tlog(TLOG_ERROR, "set dualstack selection rule failed.");
+				goto errout;
+			}
+
+			break;
+		}
 		default:
 			break;
 		}
@@ -1355,9 +1428,12 @@ static struct config_item _config_item[] = {
 	CONF_CUSTOM("speed-check-mode", _config_speed_check_mode, NULL),
 	CONF_INT("tcp-idle-time", &dns_conf_tcp_idle_time, 0, 3600),
 	CONF_INT("cache-size", &dns_conf_cachesize, 0, CONF_INT_MAX),
+	CONF_STRING("cache-file", (char *)&dns_conf_cache_file, DNS_MAX_PATH),
+	CONF_YESNO("cache-persist", &dns_conf_cache_persist),
 	CONF_YESNO("prefetch-domain", &dns_conf_prefetch),
 	CONF_YESNO("serve-expired", &dns_conf_serve_expired),
 	CONF_INT("serve-expired-ttl", &dns_conf_serve_expired_ttl, 0, CONF_INT_MAX),
+	CONF_INT("serve-expired-reply-ttl", &dns_conf_serve_expired_reply_ttl, 0, CONF_INT_MAX),
 	CONF_YESNO("dualstack-ip-selection", &dns_conf_dualstack_ip_selection),
 	CONF_INT("dualstack-ip-selection-threshold", &dns_conf_dualstack_ip_selection_threshold, 0, 1000),
 	CONF_CUSTOM("log-level", _config_log_level, NULL),
@@ -1409,8 +1485,14 @@ int config_addtional_file(void *data, int argc, char *argv[])
 	if (conf_file[0] != '/') {
 		safe_strncpy(file_path_dir, conf_get_conf_file(), DNS_MAX_PATH);
 		dirname(file_path_dir);
-		if (snprintf(file_path, DNS_MAX_PATH, "%s/%s", file_path_dir, conf_file) < 0) {
-			return -1;
+		if (strncmp(file_path_dir, conf_get_conf_file(), sizeof(file_path_dir)) == 0) {
+			if (snprintf(file_path, DNS_MAX_PATH, "%s", conf_file) < 0) {
+				return -1;
+			}
+		} else {
+			if (snprintf(file_path, DNS_MAX_PATH, "%s/%s", file_path_dir, conf_file) < 0) {
+				return -1;
+			}
 		}
 	} else {
 		safe_strncpy(file_path, conf_file, DNS_MAX_PATH);
