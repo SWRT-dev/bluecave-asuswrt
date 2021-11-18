@@ -26,8 +26,8 @@ function translate(lang,path) {
 				$(this).text(__tr($(this).attr("sclang")));
 		}
 	});
-	$("[lang-input]").each(function () {
-		$(this).attr("placeholder", __tr($(this).attr("lang-input")));
+	$("[sclang-input]").each(function () {
+		$(this).attr("placeholder", __tr($(this).attr("sclang-input")));
 	});
 }
 
@@ -50,7 +50,6 @@ function loadDict(lang,path) {
 	});
 }
 
-// 遍历所有lang属性的标签赋值
 function registerWords() {
 	$("[sclang]").each(function () {
 		if ($(this).attr("sclang") === "") {
@@ -63,9 +62,9 @@ function registerWords() {
 			}
 		}
 	});
-	$("[lang-input]").each(function () {
-		if ($(this).attr("lang-input") === "") {
-			$(this).attr("lang-input", $(this).attr("placeholder"));
+	$("[sclang-input]").each(function () {
+		if ($(this).attr("sclang-input") === "") {
+			$(this).attr("sclang-input", $(this).attr("placeholder"));
 		}
 	});
 }

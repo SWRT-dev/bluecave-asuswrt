@@ -31,8 +31,20 @@
 #include <json.h>
 #include "swrt.h"
 #include <curl/curl.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
+#ifndef MNT_DETACH
+#define MNT_DETACH	0x00000002
+#endif
 
 #if defined(RTCONFIG_SOFTCENTER)
+int sc_wan_sig = 0;
+int sc_nat_sig = 0;
+int sc_mount_sig = 0;
+int sc_services_start_sig = 0;
+int sc_services_stop_sig = 0;
+int sc_unmount_sig = 0;
+
 static void firmware_ver(void)
 {
     char tmp[6] = {0};
@@ -63,18 +75,19 @@ void swrt_insmod(){
 	eval("insmod", "nf_tproxy_core");
 	eval("insmod", "xt_TPROXY");
 	eval("insmod", "xt_set");
+	modprobe("cifs");
 }
 
 void swrt_init()
 {
 	_dprintf("############################ SWRT init #################################\n");
 #if defined(RTCONFIG_SOFTCENTER)
-	nvram_set("sc_wan_sig", "0");
-	nvram_set("sc_nat_sig", "0");
-	nvram_set("sc_mount_sig", "0");
-	nvram_set("sc_unmount_sig", "0");
-	nvram_set("sc_services_start_sig", "0");
-	nvram_set("sc_services_stop_sig", "0");	
+	sc_wan_sig = 0;
+	sc_nat_sig = 0;
+	sc_mount_sig = 0;
+	sc_services_start_sig = 0;
+	sc_services_stop_sig = 0;
+	sc_unmount_sig = 0;
 #endif
 #if defined(RTCONFIG_ENTWARE)
 	nvram_set("entware_wan_sig", "0");
@@ -229,13 +242,23 @@ void enable_4t4r(void)
 void swrt_init_done(){
 	_dprintf("############################ SWRT init done #################################\n");
 #if defined(RTCONFIG_SOFTCENTER)
-	if (!f_exists("/jffs/softcenter/scripts/ks_tar_install.sh") && nvram_match("sc_mount","0")){
+//cifs
+	if(nvram_match("sc_mount","2")){
+		char *path = nvram_get("sc_cifs_url");
+		char *user = nvram_safe_get("sc_cifs_user");
+		char *pw = nvram_safe_get("sc_cifs_pw");
+		char opt[410] = {0};
+		snprintf(opt, sizeof(opt), "username=%s%s%s", *user ? user : "guest", *pw ? ",password=" : "", pw);
+		mount(path, "/jffs/softcenter", "cifs", MS_NOATIME|MS_NODIRATIME, opt);
+//jffs > 30MB
+	}else if(!f_exists("/jffs/softcenter/scripts/ks_tar_install.sh") && nvram_match("sc_mount","0")){
 		doSystem("/usr/sbin/jffsinit.sh &");
 		logmessage("Softcenter/软件中心", "Installing/开始安装......");
 		logmessage("Softcenter/软件中心", "Wait a minute/1分钟后完成安装");
 		_dprintf("....softcenter ok....\n");
-	} else if (f_exists("/jffs/softcenter/scripts/ks_tar_install.sh") && nvram_match("sc_mount","0"))
+	}else if(f_exists("/jffs/softcenter/scripts/ks_tar_install.sh") && nvram_match("sc_mount","0"))
 		nvram_set("sc_installed","1");
+//usb
 	//else if (!f_exists("/jffs/softcenter/scripts/ks_tar_intall.sh") && nvram_match("sc_mount","1"))
 		//nvram_set("sc_installed","0");
 	if(f_exists("/jffs/.asusrouter")){
@@ -256,7 +279,7 @@ void swrt_init_done(){
 #endif
 #endif
 	if(!nvram_get("modelname"))
-//non asus must be in front of asus
+//non asus
 #if defined(SBRAC1900P)
 		nvram_set("modelname", "SBRAC1900P");
 #elif defined(EA6700)
@@ -279,6 +302,8 @@ void swrt_init_done(){
 		nvram_set("modelname", "R8000P");
 #elif defined(RAX20)
 		nvram_set("modelname", "RAX20");
+#elif defined(RAX70)
+		nvram_set("modelname", "RAX70");
 #elif defined(RAX80)
 		nvram_set("modelname", "RAX80");
 #elif defined(RAX120)
@@ -291,6 +316,12 @@ void swrt_init_done(){
 		nvram_set("modelname", "TY6201_RTK");
 #elif defined(K3C)
 		nvram_set("modelname", "K3C");
+#elif defined(MR62)
+		nvram_set("modelname", "MR62");
+#elif defined(SWRT360V6)
+		nvram_set("modelname", "360V6");
+#elif defined(GLAX1800)
+		nvram_set("modelname", "GLAX1800");
 //asus
 #elif defined(RTAC68U)
 		nvram_set("modelname", "RTAC68U");
@@ -314,10 +345,18 @@ void swrt_init_done(){
 		nvram_set("modelname", "RTAX56U");
 #elif defined(RTAX58U) || defined(RTAX3000)
 		nvram_set("modelname", "RTAX58U");
+#elif defined(RTAX58U_V2)
+		nvram_set("modelname", "RTAX58UV2");
 #elif defined(TUFAX3000)
 		nvram_set("modelname", "TUFAX3000");
+#elif defined(TUFAX3000_V2)
+		nvram_set("modelname", "TUFAX3000V2");
 #elif defined(TUFAX5400)
 		nvram_set("modelname", "TUFAX5400");
+#elif defined(GSAX3000)
+		nvram_set("modelname", "GSAX3000");
+#elif defined(GSAX5400)
+		nvram_set("modelname", "GSAX5400");
 #elif defined(RTAX68U)
 		nvram_set("modelname", "RTAX68U");
 #elif defined(RTAX82U)
@@ -326,16 +365,20 @@ void swrt_init_done(){
 		nvram_set("modelname", "RTAX86U");
 #elif defined(RTAX88U)
 		nvram_set("modelname", "RTAX88U");
+#elif defined(GTAX6000)
+		nvram_set("modelname", "GTAX6000");
 #elif defined(GTAX11000)
 		nvram_set("modelname", "GTAX11000");
+#elif defined(GTAX11000_PRO)
+		nvram_set("modelname", "GTAX11000PRO");
 #elif defined(GTAXE11000)
-		nvram_set("modelname", "GTAX11000");
+		nvram_set("modelname", "GTAXE11000");
+#elif defined(GTAXE16000)
+		nvram_set("modelname", "GTAXE16000");
 #elif defined(BLUECAVE)
 		nvram_set("modelname", "BLUECAVE");
 #elif defined(RTAC82U)
 		nvram_set("modelname", "RTACRH17");
-#elif defined(RTAC95U)
-		nvram_set("modelname", "ZENWIFICT8");
 #elif defined(RTAX89U)
 		nvram_set("modelname", "RTAX89X");
 #elif defined(RTAC85P)
@@ -346,6 +389,30 @@ void swrt_init_done(){
 		nvram_set("modelname", "R6800");
 #elif defined(TUFAC1750)
 		nvram_set("modelname", "TUFAC1750");
+#elif defined(RTAC95U)
+		nvram_set("modelname", "ZENWIFICT8");
+#elif defined(RTAX56XD4)
+		nvram_set("modelname", "ZENWIFIXD4");
+#elif defined(RTAX82_XD6)
+		nvram_set("modelname", "ZENWIFIXD6");
+#elif defined(RTAX95Q)
+		nvram_set("modelname", "ZENWIFIXT8");
+#elif defined(RTAXE95Q)
+		nvram_set("modelname", "ZENWIFIET8");
+#elif defined(XT12)
+		nvram_set("modelname", "ZENWIFIXT12");
+#elif defined(ET12)
+		nvram_set("modelname", "ZENWIFIET12");
+#elif defined(XD4PRO)
+		nvram_set("modelname", "ZENWIFIXD4PRO");
+#elif defined(XT8PRO)
+		nvram_set("modelname", "ZENWIFIXT8PRO");
+#elif defined(ET8PRO)
+		nvram_set("modelname", "ZENWIFIET8PRO");
+#elif defined(PLAX56_XP4)
+		nvram_set("modelname", "ZENWIFIXP4");
+#elif defined(ETJ)
+		nvram_set("modelname", "ZENWIFIET10");
 #endif
 #if defined(R8000P)
 	nvram_set("ping_target", "www.taobao.com");
@@ -359,17 +426,6 @@ void swrt_init_done(){
 	del_rc_support("amas");
 #endif
 	gen_swrtid();
-#if defined(K3) || defined(XWR3100) || defined(R7000P)
-	if(!cfe_nvram_get("territory_code") || strcmp(cfe_nvram_get("territory_code"), "US/01")){
-		swrt_nvram_set("territory_code", "US/01", 1);
-		nvram_set("location_code", "US");
-	}
-#elif defined(R8500)
-	if(!cfe_nvram_get("territory_code") || strcmp(cfe_nvram_get("territory_code"), "CN/06")){
-		swrt_nvram_set("territory_code", "CN/06", 1);
-		nvram_set("location_code", "CN");
-	}
-#endif
 #if defined(R8000P)
     add_rc_support("uu_accel");
 #endif
@@ -766,7 +822,7 @@ void exec_uu_swrt()
 #endif
 
 #if defined(RTCONFIG_SOFTCENTER)
-void softcenter_eval(int sig)
+void softcenter_trigger(int sig)
 {
 	pid_t pid;
 	char path[100], action[10], sc[]="/jffs/softcenter/bin";
@@ -790,9 +846,17 @@ void softcenter_eval(int sig)
 		eval_argv[0] = "/jffs/softcenter/bin/softcenter-wan.sh";
 		_eval(eval_argv, NULL, 0, &pid);
 		return;
-	//} else if (SOFTCENTER_UNMOUNT == sig){
-	//	snprintf(path, sizeof(path), "%s/softcenter-unmount.sh", sc);
-	//	snprintf(action, sizeof(action), "unmount");
+	} else if (SOFTCENTER_UNMOUNT == sig){
+		snprintf(path, sizeof(path), "%s/softcenter-unmount.sh", sc);
+		snprintf(action, sizeof(action), "unmount");
+	} else if (SOFTCENTER_CIFS_MOUNT == sig){
+		char *path = nvram_get("sc_cifs_url");
+		char *user = nvram_safe_get("sc_cifs_user");
+		char *pw = nvram_safe_get("sc_cifs_pw");
+		char opt[999] = {0};
+		snprintf(opt, sizeof(opt), "username=%s%s%s", *user ? user : "guest", *pw ? ",password=" : "", pw);
+		mount(path, "/jffs/softcenter", "cifs", MS_NOATIME|MS_NODIRATIME, opt);
+		return;
 	} else {
 		logmessage("Softcenter", "sig=%d, bug?",sig);
 		return;

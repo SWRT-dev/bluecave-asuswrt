@@ -94,7 +94,7 @@ function initial(){
 		document.getElementById("fwver").innerHTML = buildno;
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
-	if(sc_mount == "1")
+	if(sc_mount != "0")
 		document.getElementById("sc_mount").innerHTML = '<span>Enabled</span>';
 	else
 		document.getElementById("sc_mount").innerHTML = '<span>Disabled</span>';
@@ -246,7 +246,7 @@ function show_etherstate(){
 					port = "4";	// This is LAN 4 (RTL) from QTN
 					devicename = '<span class="ClientName">&lt;unknown&gt;</span>';
 				}
-			} else if (modelname == "EA6700" || modelname == "DIR868L") {
+			} else if (modelname == "EA6700" || modelname == "DIR868L" || modelname == "R6300V2") {
 				port++;		// Port starts at 0
 				if (port == "5") port = 0;	// Last port is WAN
 			}

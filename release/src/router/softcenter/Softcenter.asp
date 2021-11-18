@@ -25,12 +25,14 @@
 <script type="text/javascript" src="/switcherplugin/jquery.iphone-switch.js"></script>
 <script type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/calendar/jquery-ui.js"></script>
+<script type="text/javascript" src="/js/httpApi.js"></script>
 <script type="text/javascript" src="/js/i18n.js"></script>
 <style>
 
 </style>
 <script>
 var sc_disk='<% nvram_get("sc_disk"); %>';
+var sc_mount='<% nvram_get("sc_mount"); %>';
 var sctype;
 var partitions_array = [];
 function show_partition(){
@@ -63,34 +65,70 @@ code +='<option value="0" sclang>No Disk</option>';
 document.getElementById("usb_disk_id").innerHTML = code;
 });
 }
+function update_ui(){
+	if(sc_mount=="1")
+		document.getElementById('usb_disk_tr').style.display = "";
+	else if(sc_mount=="2"){
+		document.getElementById("sc_cifs_url_id").value=httpApi.nvramGet(["sc_cifs_url"]).sc_cifs_url;
+		document.getElementById("sc_cifs_user_id").value=httpApi.nvramGet(["sc_cifs_user"]).sc_cifs_user;
+		document.getElementById("sc_cifs_pw_id").value=httpApi.nvramGet(["sc_cifs_pw"]).sc_cifs_pw;
+		document.getElementById('sc_cifs_url_tr').style.display = "";
+		document.getElementById('sc_cifs_user_tr').style.display = "";
+		document.getElementById('sc_cifs_pw_tr').style.display = "";
+	}
+	else{
+		document.getElementById('usb_disk_tr').style.display = "none";
+		document.getElementById('sc_cifs_url_tr').style.display = "none";
+		document.getElementById('sc_cifs_user_tr').style.display = "none";
+		document.getElementById('sc_cifs_pw_tr').style.display = "none";
+	}
+}
+function change_ui(value){
+	if(value == "1"){
+		document.getElementById('usb_disk_tr').style.display = "";
+		document.getElementById('sc_cifs_url_tr').style.display = "none";
+		document.getElementById('sc_cifs_user_tr').style.display = "none";
+		document.getElementById('sc_cifs_pw_tr').style.display = "none";
+	}
+	else if(value=="2"){
+		document.getElementById("sc_cifs_url_id").value=httpApi.nvramGet(["sc_cifs_url"]).sc_cifs_url;
+		document.getElementById("sc_cifs_user_id").value=httpApi.nvramGet(["sc_cifs_user"]).sc_cifs_user;
+		document.getElementById("sc_cifs_pw_id").value=httpApi.nvramGet(["sc_cifs_pw"]).sc_cifs_pw;
+		document.getElementById('sc_cifs_url_tr').style.display = "";
+		document.getElementById('sc_cifs_user_tr').style.display = "";
+		document.getElementById('sc_cifs_pw_tr').style.display = "";
+		document.getElementById('usb_disk_tr').style.display = "none";
+	}
+	else{
+		document.getElementById('usb_disk_tr').style.display = "none";
+		document.getElementById('sc_cifs_url_tr').style.display = "none";
+		document.getElementById('sc_cifs_user_tr').style.display = "none";
+		document.getElementById('sc_cifs_pw_tr').style.display = "none";
+	}
+}
 function init() {
 	show_menu();
 	sc_load_lang("sc");
 	show_partition();
+	update_ui();
 }
 function applyRule() {
-if(document.getElementById("usb_disk_id").value==0)
+if(document.getElementById("usb_disk_id").value == 0 && document.getElementById("sc_mount_id").value == 1)
+{
+alert(dict['No Disk']);
+return;
+}
+if(document.getElementById("sc_cifs_url_id").value == "" && document.getElementById("sc_mount_id").value == 2)
 {
 alert(dict['No Disk']);
 return;
 }
 document.form.submit();
+showLoading();
 }
 function reload_Soft_Center(){
 location.href = "/Softcenter.asp";
 }
-
-
-$(document).ready(function () {
-$('#radio_sc_mount').iphoneSwitch(document.form.sc_mount.value,
-function(){
-document.form.sc_mount.value = "1";
-},
-function(){
-document.form.sc_mount.value = "0";
-}
-);
-});
 </script>
 </head>
 <body onload="init();">
@@ -108,7 +146,6 @@ document.form.sc_mount.value = "0";
 	<input type="hidden" name="first_time" value=""/>
 	<input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>"/>
 	<input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>"/>
-	<input type="hidden" name="sc_mount" value="<% nvram_get("sc_mount"); %>">
 	<input type="hidden" name="sc_disk" value="<% nvram_get("sc_disk"); %>">
 	<table class="content" align="center" cellpadding="0" cellspacing="0">
 		<tr>
@@ -130,7 +167,7 @@ document.form.sc_mount.value = "0";
 										<div style="margin:30px 0 10px 5px;" class="splitLine"></div>
 										<div class="formfontdesc" style="padding-top:5px;margin-top:0px;float: left;" id="cmdDesc" sclang>jffs extended settings</div>
 										<div style="color:#FC0;padding-top:5px;margin-top:25px;margin-left:0px;float: left;" id="NoteBox" >
-                                                                                        <li style="margin-top:5px;" sclang>This function must be enabled when JFFS is less than 50MB.</li>
+                                                                                        <li style="margin-top:5px;" sclang>This function must be enabled when JFFS is less than 30MB.</li>
                                                                                         <li style="margin-top:5px;" sclang>Support EXT/NTFS partitions.</li>
                                                                                         <li style="margin-top:5px;" sclang>No less than 1GB of free space.</li>
                                                                                         <li style="margin-top:5px;" sclang>Must unmount the current partition before mounting other partitions.</li>
@@ -142,21 +179,42 @@ document.form.sc_mount.value = "0";
 											</tr>
 											</thead>
 											<tr >
-											<th width="30%" style="border-top: 0 none;" sclang>Enable</th>
-											<td style="border-top: 0 none;">
-											<div align="center" class="left" style="width:94px; float:left; cursor:pointer;" id="radio_sc_mount"></div>
-											</td>
+												<th width="30%" style="border-top: 0 none;" sclang>Enable</th>
+												<td>
+													<select id="sc_mount_id" name="sc_mount" class="input_option" onchange="change_ui(this.value);">
+														<option value="0" <% nvram_match("sc_mount", "0", "selected"); %> sclang>Disable</option>
+														<option value="1" <% nvram_match("sc_mount", "1", "selected"); %>>USB</option>
+														<option value="2" <% nvram_match("sc_mount", "2", "selected"); %>>CIFS</option>
+													</select>
+												</td>
 											</tr>
-<tr>
-<th sclang>Select a partition to mount</th>
-<td>
-<select id="usb_disk_id" name="sc_disk" class="input_option input_25_table">
-<option value="0" sclang>No Disk</option>
-</select>
-</td>
-</tr>
-
-                                    	</table>
+											<tr style="display:none;" id="usb_disk_tr">
+												<th sclang>Select a partition to mount</th>
+												<td>
+													<select id="usb_disk_id" name="sc_disk" class="input_option">
+														<option value="0" sclang>No Disk</option>
+													</select>
+												</td>
+											</tr>
+											<tr style="display:none;" id="sc_cifs_url_tr">
+												<th sclang>Server path</th>
+												<td>
+													<input id="sc_cifs_url_id" type="text" class="input_32_table" maxlength="200" name="sc_cifs_url" autocorrect="off" autocapitalize="off"  placeholder="//192.168.1.1/test" sclang-input>
+												</td>
+											</tr>
+											<tr style="display:none;" id="sc_cifs_user_tr">
+												<th sclang>Username</th>
+												<td>
+													<input id="sc_cifs_user_id" type="text" class="input_32_table" maxlength="200" name="sc_cifs_user" autocorrect="off" autocapitalize="off" placeholder="default username is guest" sclang-input>
+												</td>
+											</tr>
+											<tr style="display:none;" id="sc_cifs_pw_tr">
+												<th sclang>Password</th>
+												<td>
+													<input id="sc_cifs_pw_id" type="text" class="input_32_table" maxlength="200" name="sc_cifs_pw" autocorrect="off" autocapitalize="off" placeholder="default password is empty" sclang-input>
+												</td>
+											</tr>
+										</table>
 										<div class="apply_gen">
 											<input class="button_gen" onclick="applyRule()" type="button" value="Apply"/ sclang>
 											<input type="button" onClick="location.href=location.href" value="Refresh" class="button_gen" sclang>

@@ -89,9 +89,17 @@ enum {
 	SOFTCENTER_MOUNT,
 	SOFTCENTER_SERVICES_START,
 	SOFTCENTER_SERVICES_STOP,
+	SOFTCENTER_CIFS_MOUNT,
 	SOFTCENTER_UNMOUNT
 };
-extern void softcenter_eval(int sig);
+
+extern int sc_wan_sig;
+extern int sc_nat_sig;
+extern int sc_mount_sig;
+extern int sc_services_start_sig;
+extern int sc_services_stop_sig;
+extern int sc_unmount_sig;
+extern void softcenter_trigger(int sig);
 #endif
 #if defined(SWRT_VER_MAJOR_R) || defined(SWRT_VER_MAJOR_X) || defined(SBRAC3200P)
 extern void check_auth_code(void);

@@ -83,6 +83,8 @@
 #ifdef RTCONFIG_BWDPI
 #include <bwdpi_common.h>
 #endif
+#include<swrt.h>
+
 #define	MAX_MAC_NUM	16
 static int mac_num;
 static char mac_clone[MAX_MAC_NUM][18];
@@ -628,8 +630,14 @@ void update_wan_state(char *prefix, int state, int reason)
 	else if (state == WAN_STATE_CONNECTED) {
 		sprintf(tmp,"%c",prefix[3]);
 		run_custom_script("wan-start", 0, tmp, NULL);
-		nvram_set_int("sc_wan_sig", 1);
+#if defined(RTCONFIG_SOFTCENTER)
+		if(nvram_match("sc_mount", "2") && !f_exists("/jffs/softcenter/.sc_cifs"))
+			softcenter_trigger(SOFTCENTER_CIFS_MOUNT);
+		sc_wan_sig = 1;
+#endif
+#if defined(RTCONFIG_ENTWARE)
 		nvram_set_int("entware_wan_sig", 1);
+#endif
 	}
 
 #if defined(RTCONFIG_WANRED_LED)

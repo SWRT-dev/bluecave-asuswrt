@@ -783,29 +783,34 @@ unsigned int get_phy_temperature(int radio)
 	}
 	return retval;
 #elif defined(RTCONFIG_QCA)
-	int temp = 0, retval = 0;
-	if (radio == 2) {
-		system("thermaltool -i wifi0 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
-	} else if (radio == 5) {
-		system("thermaltool -i wifi1 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
-#if defined(RTAC95U)
-	} else if (radio == 52) {
-		system("thermaltool -i wifi2 -get |grep temperature | awk '{print $3}' >/tmp/output.txt");
-#endif
-	} else {
-		return retval;
-	}
+	char thermal_path[64];
+	char value[16];
+	char *wifi_if = NULL;
+	int len, band;
 
-	char *buffer = read_whole_file("/tmp/output.txt");
-	if (buffer) {
-		if (radio != 7) {
-			sscanf(buffer, " %d,", &temp);
-			free(buffer);			
-			retval = temp;
-		}
-	} else { retval = 0; }
-	unlink("/tmp/output.txt");
-	return retval;
+    switch(radio){
+        case 2:
+            band = 0;
+            break;
+        case 5:
+            band = 1;
+            break;
+        case 52:
+            band = 2;
+            break;
+        default:
+            band = 0;
+            break;
+    }
+
+	if((wifi_if = get_vphyifname(band)) == NULL)
+		return 0;
+
+	snprintf(thermal_path, sizeof(thermal_path), "/sys/class/net/%s/thermal/temp", wifi_if);
+	if((len = f_read_string(thermal_path, value, sizeof(value))) <= 0)
+		return 0;
+
+	return atoi(value);
 #elif defined(RTCONFIG_RALINK)
 	struct iwreq wrq;
 	char temp[18];

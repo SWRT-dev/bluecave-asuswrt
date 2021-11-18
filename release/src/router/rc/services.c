@@ -8422,7 +8422,9 @@ start_services(void)
 	init_entware();
 #endif
 	run_custom_script("services-start", 0, NULL, NULL);
-	nvram_set_int("sc_services_start_sig", 1);
+#if defined(RTCONFIG_SOFTCENTER)
+	sc_services_start_sig = 1;
+#endif
 #if defined(RTCONFIG_SWRT_KVR) && defined(RTCONFIG_RALINK)
 	system("/usr/bin/iappd.sh restart");
 #endif
@@ -8442,8 +8444,12 @@ void
 stop_services(void)
 {
 	run_custom_script("services-stop", 0, NULL, NULL);
-	nvram_set_int("sc_services_stop_sig", 1);
+#if defined(RTCONFIG_SOFTCENTER)
+	sc_services_stop_sig = 1;
+#endif
+#if defined(RTCONFIG_ENTWARE)
 	nvram_set_int("entware_stop_sig", 1);
+#endif
 #if defined(RTCONFIG_AMAS)
 	stop_amas_lib();
 #endif
@@ -14239,7 +14245,9 @@ _dprintf("nat_rule: the nat rule file was not ready. wait %d seconds...\n", retr
 	setup_udp_timeout(TRUE);
 
 	run_custom_script("nat-start", 0, NULL, NULL);
-	nvram_set_int("sc_nat_sig", 1);
+#if defined(RTCONFIG_SOFTCENTER)
+	sc_nat_sig = 1;
+#endif
 	return NAT_STATE_NORMAL;
 }
 

@@ -49,8 +49,25 @@ endif
 	install -m 0755 base64_encode $(INSTALLDIR)/usr/sbin
 	install -m 0755 resolveip $(INSTALLDIR)/usr/sbin
 	install -m 0755 softcenter/automount.sh $(INSTALLDIR)/rom/etc/softcenter
-	install -m 0755 softcenter/bin/jq $(INSTALLDIR)/rom/etc/softcenter/bin
-	install -m 0755 softcenter/bin/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
+ifeq ($(RTCONFIG_LANTIQ),y)
+	install -m 0755 softcenter/bin_arch/mips/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin_arch/mips/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
+else ifeq ($(RTCONFIG_RALINK_MT7621),y)
+	install -m 0755 softcenter/bin_arch/mipsle/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin_arch/mipsle/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
+else ifeq ($(RTCONFIG_SOC_IPQ50XX),y)
+	install -m 0755 softcenter/bin_arch/arm64/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin_arch/arm64/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
+else ifeq ($(or $(RTCONFIG_HND_ROUTER_AX_6756),$(RTCONFIG_HND_ROUTER_AX_675X),$(RTCONFIG_QCA),$(RTCONFIG_RALINK_MT7622)),y)
+	install -m 0755 softcenter/bin_arch/armng/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin_arch/armng/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
+else ifeq ($(HND_ROUTER),y)
+	install -m 0755 softcenter/bin_arch/arm64/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin_arch/arm64/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
+else
+	install -m 0755 softcenter/bin_arch/arm/jq $(INSTALLDIR)/rom/etc/softcenter/bin
+	install -m 0755 softcenter/bin_arch/arm/sc_auth $(INSTALLDIR)/rom/etc/softcenter/bin
+endif
 	install -m 0755 softcenter/bin/softcenter.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter-mount.sh $(INSTALLDIR)/rom/etc/softcenter/bin
 	install -m 0755 softcenter/bin/softcenter-net.sh $(INSTALLDIR)/rom/etc/softcenter/bin

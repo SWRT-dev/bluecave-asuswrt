@@ -34,6 +34,8 @@
 #include <disk_share.h>
 #include <disk_initial.h>
 
+#include<swrt.h>
+
 char *usb_dev_file = "/proc/bus/usb/devices";
 
 #define ERR_DISK_FS_RDONLY "1"
@@ -1601,7 +1603,9 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 {
 	int ret = 1, count;
 	char flagfn[128];
-	nvram_set_int("sc_unmount_sig", 1);
+#if defined(RTCONFIG_SOFTCENTER)
+	sc_unmount_sig = 1;
+#endif
 	snprintf(flagfn, sizeof(flagfn), "%s/.autocreated-dir", mnt->mnt_dir);
 
 	/* Run user pre-unmount scripts if any. It might be too late if
@@ -2073,7 +2077,9 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 			run_nvscript("script_usbmount", mountpoint, 3);
 
 		run_custom_script("post-mount", 120, mountpoint, NULL);
-		nvram_set_int("sc_mount_sig", 1);
+#if defined(RTCONFIG_SOFTCENTER)
+		sc_mount_sig = 1;
+#endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)
 		char word[PATH_MAX], *next_word;

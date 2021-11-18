@@ -84,7 +84,7 @@ function initial(){
 		document.getElementById("fwver").innerHTML = buildno;
 	else
 		document.getElementById("fwver").innerHTML = buildno + '_' + extendno;
-	if(sc_mount == "1")
+	if(sc_mount != "0")
 		document.getElementById("sc_mount").innerHTML = '<span>Enabled</span>';
 	else
 		document.getElementById("sc_mount").innerHTML = '<span>Disabled</span>';
