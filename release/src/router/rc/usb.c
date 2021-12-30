@@ -1604,7 +1604,7 @@ int umount_mountpoint(struct mntent *mnt, uint flags)
 	int ret = 1, count;
 	char flagfn[128];
 #if defined(RTCONFIG_SOFTCENTER)
-	sc_unmount_sig = 1;
+	nvram_set("sc_unmount_sig", "1");
 #endif
 	snprintf(flagfn, sizeof(flagfn), "%s/.autocreated-dir", mnt->mnt_dir);
 
@@ -2078,7 +2078,7 @@ _dprintf("usb_path: 4. don't set %s.\n", tmp);
 
 		run_custom_script("post-mount", 120, mountpoint, NULL);
 #if defined(RTCONFIG_SOFTCENTER)
-		sc_mount_sig = 1;
+		nvram_set("sc_mount_sig", "1");
 #endif
 
 #if defined(RTCONFIG_APP_PREINSTALLED) && defined(RTCONFIG_CLOUDSYNC)

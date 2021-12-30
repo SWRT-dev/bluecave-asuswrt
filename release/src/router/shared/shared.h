@@ -669,171 +669,8 @@ extern int exec_for_host(int host, int obsolete, uint flags, host_exec func);
 extern int is_no_partition(const char *discname);
 #endif //RTCONFIG_USB
 
-#define MODEL_UNUSED(x)	__MDL_UNUSED(x)
-#define __MDL_UNUSED(s)	MODEL_unused ## s
-
-/* NOTE: Do not insert new entries in the middle of this enum,
- * always add them to the end! */
-enum {
-	MODEL_GENERIC = -1,
-	MODEL_UNKNOWN = 0,
-	MODEL_DSLN55U,
-	MODEL_DSLAC68U,
-	MODEL_EAN66,
-	MODEL_RTN11P,
-	MODEL_RTN300,
-	MODEL_RTN13U,
-	MODEL_RTN14U,
-	MODEL_RTAC52U,
-	MODEL_RTAC51U,
-	MODEL_RTN54U,
-	MODEL_RTAC54U,
-	MODEL_RTN56UB1,
-	MODEL_RTN56UB2,
-	MODEL_RTAC1200HP,
-	MODEL_RTAC55U,
-	MODEL_RTAC55UHP,
-	MODEL_RT4GAC55U,
-	MODEL_RTAC59U,
-	MODEL_PLN12,
-	MODEL_PLAC56,
-	MODEL_PLAC66U,
-	MODEL_RTAC58U,
-	MODEL_RT4GAC53U,
-	MODEL_RTAC82U,
-	MODEL_MAPAC1300,
-	MODEL_MAPAC2200,
-	MODEL_VZWAC1300,
-	MODEL_MAPAC1750,
-	MODEL_RTAC92U,
-	MODEL_MAPAC2200V,
-	MODEL_RTN36U3,
-	MODEL_RTN56U,
-	MODEL_RTN65U,
-	MODEL_RTN67U,
-	MODEL_RTN12,
-	MODEL_RTN12B1,
-	MODEL_RTN12C1,
-	MODEL_RTN12D1,
-	MODEL_RTN12VP,
-	MODEL_RTN12HP,
-	MODEL_RTN12HP_B1,
-	MODEL_APN12,
-	MODEL_APN12HP,
-	MODEL_RTN16,
-	MODEL_RTN18U,
-	MODEL_RTN15U,
-	MODEL_RTN53,
-	MODEL_RTN66U,
-	MODEL_RTAC66U,
-	MODEL_RTAC68U,
-	MODEL_UNUSED(__LINE__),
-	MODEL_RTAC87U,
-	MODEL_RTAC56S,
-	MODEL_RTAC56U,
-	MODEL_RTAC53U,
-	MODEL_RTAC3200,
-	MODEL_RTAC88U,
-	MODEL_RTAC3100,
-	MODEL_RTAC5300,
-	MODEL_GTAC5300,
-	MODEL_RTN14UHP,
-	MODEL_RTN10U,
-	MODEL_RTN10P,
-	MODEL_RTN10D1,
-	MODEL_RTN10PV2,
-	MODEL_RTAC1200,
-	MODEL_RTAC1200G,
-	MODEL_RTAC1200GP,
-	MODEL_RTAC1200GA1,
-	MODEL_RTAC1200GU,
-	MODEL_RPAC66,
-	MODEL_RPAC51,
-	MODEL_RTAC51UP,
-	MODEL_RTAC53,
-	MODEL_RTN11P_B1,
-	MODEL_RPAC87,
-	MODEL_RTAC85U,
-	MODEL_RTAC85P,
-	MODEL_RTACRH26,
-	MODEL_RTN800HP,
-	MODEL_RTAC88N,
-	MODEL_BRTAC828,
-	MODEL_RTAC88S,
-	MODEL_RPAC53,
-	MODEL_RPAC68U,
-	MODEL_RPAC55,
-	MODEL_RTAC86U,
-	MODEL_GTAC9600,
-	MODEL_BLUECAVE,
-	MODEL_RTAD7200,
-	MODEL_GTAX6000,
-	MODEL_GTAX6000N,
-	MODEL_GTAX6000S,
-	MODEL_RTAC1200V2,
-	MODEL_RTN19,
-	MODEL_TUFAC1750,
-	MODEL_RTAX88U,
-	MODEL_GTAX11000,
-	MODEL_RTAX92U,
-	MODEL_RTAX95Q,
-	MODEL_RTAX56_XD4,
-	MODEL_RTAX58U,
-	MODEL_RTAX56U,
-	MODEL_SHAC1300,
-	MODEL_RPAC92,
-	MODEL_RTAC59CD6R,
-	MODEL_RTAC59CD6N,
-	MODEL_RTAX86U,
-	MODEL_RTAX68U,
-	MODEL_RT4GAC56,
-	MODEL_DSLAX82U,
-	MODEL_RTAX55,
-	MODEL_GTAXE11000,
-	MODEL_MAX
-};
-
-enum {
-	MODEL_SWRTMIN = 0,
-	MODEL_K3,
-	MODEL_XWR3100,
-	MODEL_R7000P,
-	MODEL_EA6700,
-	MODEL_SBRAC1900P,
-	MODEL_F9K1118,
-	MODEL_SBRAC3200P,
-	MODEL_R8500,
-	MODEL_R8000P,
-	MODEL_K3C,
-	MODEL_TY6201_RTK,
-	MODEL_TY6201_BCM,
-	MODEL_RAX120,
-	//MODEL_RMAC2100,move to model_list
-	MODEL_SWRTMAX
-};
-/* NOTE: Do not insert new entries in the middle of this enum,
- * always add them to the end! */
-enum {
-	SWITCH_GENERIC = -1,
-	SWITCH_UNKNOWN = 0,
-	SWITCH_BCM5325,
-	SWITCH_BCM53115,
-	SWITCH_BCM53125,
-	SWITCH_BCM5301x,
-	SWITCH_BCM5301x_EX,
-	SWITCH_BCM53134,
-	SWITCH_RT305x,
-	SWITCH_RT3350,
-	SWITCH_RT3352,
-	SWITCH_RT5350,
-	SWITCH_MT7620,
-	SWITCH_MT7621,
-	SWITCH_MT7628,
-	SWITCH_RTL8365MB,
-	SWITCH_RTL8367MB,
-	SWITCH_RTL8367RB,
-	SWITCH_RTL8370M,
-};
+/* MODEL_*, SWITCH_* and model.c */
+#include "model.h"
 
 #define RTCONFIG_NVRAM_VER "1"
 
@@ -873,11 +710,6 @@ enum {
 
 extern int check_hw_type(void);
 //	extern int get_hardware(void) __attribute__ ((weak, alias ("check_hw_type")));
-extern int get_model(void);
-extern char *get_modelid(int model);
-extern int get_modelname(void);
-extern char *get_modelnameid(int model);
-extern int get_switch(void);
 extern int supports(unsigned long attr);
 
 // pids.c
@@ -1231,6 +1063,20 @@ static inline int absent_band(enum wl_band_id band)
 #define SKIP_ABSENT_BAND(u)			if (!nvram_get(wl_nvname("nband", u, 0))) { continue; }
 #define SKIP_ABSENT_BAND_AND_INC_UNIT(u)	if (!nvram_get(wl_nvname("nband", u, 0))) { ++u; continue; }
 
+#if defined(RTCONFIG_AMAS)
+static inline int __aimesh_re_node(int sw_mode)
+{
+	return (sw_mode == SW_MODE_AP && nvram_get_int("re_mode") == 1);
+}
+
+static inline int aimesh_re_node(void)
+{
+	return __aimesh_re_node(sw_mode());
+}
+#else
+static inline int __aimesh_re_node(int __attribute__((__unused__)) sw_mode) { return 0; }
+static inline int aimesh_re_node(void) { return 0; }
+#endif
 #if defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ)
 static inline int __access_point_mode(int sw_mode)
 {

@@ -427,19 +427,13 @@ define(function(){
 						retArray.push("menu_Alexa_IFTTT");
 					}
 				}
-				if (!softcenter_support || <% nvram_get("sc_installed"); %> == "0"){
+				if (!softcenter_support || '<% nvram_get("sc_installed"); %>' != '1'){
 					retArray.push("menu_Softcenter");
 				}
 				if (!entware_support){
 					retArray.push("menu_Entware");
 					for(i=0; i<menuTree.list.length; i++){
 						if(menuTree.list[i].menuName == 'Entware')
-							menuTree.list.splice(i,1);
-					}
-				}
-				if (!smartdns_support){
-					for(i=0; i<menuTree.list.length; i++){
-						if(menuTree.list[i].menuName == 'SmartDNS')
 							menuTree.list.splice(i,1);
 					}
 				}
@@ -451,6 +445,9 @@ define(function(){
 				var retArray = [];
 
 				/* By RC Support */
+				if (!smartdns_support){
+					retArray.push("Advanced_SmartDNS_Content.asp");
+				}
 				if(!bwdpi_support){
 					retArray.push("AdaptiveQoS_Bandwidth_Monitor.asp");
 					retArray.push("AdaptiveQoS_WebHistory.asp");

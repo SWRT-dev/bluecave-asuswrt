@@ -5464,63 +5464,63 @@ static void softcenter_sig_check()
 		int sc_mount = nvram_get_int("sc_mount");
 		int mounted = f_exists("/jffs/softcenter/bin/softcenter.sh");//jffs > 30MB or usb or cifs
 		int cifs_mounted = f_exists("/jffs/softcenter/.sc_cifs");//cifs
-		if(sc_wan_sig) {
+		if(nvram_match("sc_wan_sig", "1")) {
 			if(sc_mount & 1) {
 				if(mounted) {
 					softcenter_trigger(SOFTCENTER_WAN);
-					sc_wan_sig = 0;
+					nvram_set("sc_wan_sig", "0");
 				}
 			} else if(sc_mount & 2) {
 				if(cifs_mounted) {
 					softcenter_trigger(SOFTCENTER_WAN);
-					sc_wan_sig = 0;
+					nvram_set("sc_wan_sig", "0");
 				}
 			} else {
 				softcenter_trigger(SOFTCENTER_WAN);
-				sc_wan_sig = 0;
+				nvram_set("sc_wan_sig", "0");
 			}
 		}
-		if(sc_nat_sig) {
+		if(nvram_match("sc_nat_sig", "1")) {
 			if(sc_mount & 1) {
 				if(mounted) {
 					softcenter_trigger(SOFTCENTER_NAT);
-					sc_nat_sig = 0;
+					nvram_set("sc_nat_sig", "0");
 				}
 			} else if(sc_mount & 2) {
 				if(cifs_mounted) {
 					softcenter_trigger(SOFTCENTER_NAT);
-					sc_nat_sig = 0;
+					nvram_set("sc_nat_sig", "0");
 				}
 			} else {
 				softcenter_trigger(SOFTCENTER_NAT);
-				sc_nat_sig = 0;
+				nvram_set("sc_nat_sig", "0");
 			}
 		}
-		if(sc_mount_sig) {
+		if(nvram_match("sc_mount_sig", "1")) {
 			if(mounted) {
 				softcenter_trigger(SOFTCENTER_MOUNT);
-				sc_mount_sig = 0;
+				nvram_set("sc_mount_sig", "0");
 			} else if(!mounted && (sc_mount & 1)) {
 				//remount to sdb sdc not sda
 				doSystem("sh /jffs/softcenter/automount.sh &");
 			}
 		}
-		if(sc_services_start_sig) {
+		if(nvram_match("sc_services_start_sig", "1")) {
 			if(mounted) {
 				softcenter_trigger(SOFTCENTER_SERVICES_START);
-				sc_services_start_sig = 0;
+				nvram_set("sc_services_start_sig", "0");
 			}
 		}
-		if(sc_services_stop_sig) {
+		if(nvram_match("sc_services_stop_sig", "1")) {
 			if(mounted) {
 				softcenter_trigger(SOFTCENTER_SERVICES_STOP);
-				sc_services_stop_sig = 0;
+				nvram_set("sc_services_stop_sig", "0");
 			}
 		}
-		if(sc_unmount_sig) {
+		if(nvram_match("sc_unmount_sig", "1")) {
 			if(mounted) {
 				softcenter_trigger(SOFTCENTER_UNMOUNT);
-				sc_unmount_sig = 0;
+				nvram_set("sc_unmount_sig", "0");
 			}
 		}
 	}

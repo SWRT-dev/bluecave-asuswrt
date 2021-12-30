@@ -633,7 +633,7 @@ void update_wan_state(char *prefix, int state, int reason)
 #if defined(RTCONFIG_SOFTCENTER)
 		if(nvram_match("sc_mount", "2") && !f_exists("/jffs/softcenter/.sc_cifs"))
 			softcenter_trigger(SOFTCENTER_CIFS_MOUNT);
-		sc_wan_sig = 1;
+		nvram_set("sc_wan_sig", "1");
 #endif
 #if defined(RTCONFIG_ENTWARE)
 		nvram_set_int("entware_wan_sig", 1);

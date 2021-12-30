@@ -2742,6 +2742,10 @@ gmac3_no_swbr:
 	if(nvram_match("lan_proto", "static"))
 #endif
 		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_safe_get("lan_ipaddr"), nvram_safe_get("lan_netmask"));
+#if defined(RTCONFIG_SWRT) && defined(RTCONFIG_AMAS)
+	else if(aimesh_re_node())
+		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, "192.168.111.111", nvram_default_get("lan_netmask"));
+#endif
 	else
 		ifconfig(lan_ifname, IFUP | IFF_ALLMULTI, nvram_default_get("lan_ipaddr"), nvram_default_get("lan_netmask"));
 

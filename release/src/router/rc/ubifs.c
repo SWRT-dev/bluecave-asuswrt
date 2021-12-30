@@ -115,6 +115,7 @@ static int ubifs_unlock(int dev, int part)
 				__func__, r, errno, strerror(errno));
 	}
 
+#if !defined(RTCONFIG_ISP_CUSTOMIZE) && !defined(RTCONFIG_ISP_CUSTOMIZE_TOOL)
 	for (i = 0; i < nr_ebs; ++i) {
 		lnum = i;
 		if (!(r = ioctl(fd, UBI_IOCEBER, &lnum)))
@@ -122,6 +123,7 @@ static int ubifs_unlock(int dev, int part)
 		_dprintf("%s: erase leb %d of ubi%d_%d fail. (ret %d errno %d %s)\n",
 			__func__, lnum, dev, part, r, errno, strerror(errno));
 	}
+#endif
 
 	close(fd);
 
@@ -278,6 +280,7 @@ void start_ubifs(void)
 
 	sprintf(s, "%d", size);
 	p = nvram_get("ubifs_size");
+
 	if ((p == NULL) || (strcmp(p, s) != 0)) {
 		if (format) {
 			nvram_set("ubifs_size", s);
@@ -292,6 +295,9 @@ void start_ubifs(void)
 	    && (sf.f_type != 0x73717368 /* squashfs */ )) {
 		// already mounted
 		notice_set("ubifs", format ? "Formatted" : "Loaded");
+#if defined(RTCONFIG_HND_ROUTER_AX_6756)
+		goto skip_mnt;
+#endif
 		return;
 	}
 	if (nvram_get_int("ubifs_clean_fs")) {
@@ -321,6 +327,11 @@ void start_ubifs(void)
 		}
 	}
 
+
+#if defined(RTCONFIG_HND_ROUTER_AX_6756)
+skip_mnt:
+#endif
+
 #if defined(RTCONFIG_ISP_CUSTOMIZE)
 	load_customize_package();
 #endif
@@ -331,12 +342,27 @@ BRCM_UBI:
 #endif
 
 	if (nvram_get_int("ubifs_clean_fs")) {
+		// This refer to jffs2.c. 
+		// Because ubifs_unlock (erase) doesn't be called if ISP_CUSTOMIZE=y.
+		// We use rm command (remove file includes hidden files.) instead.
+		//if((0 == nvram_get_int("x_Setting")) && (check_if_file_exist("/jffs/remove_hidden_flag")))
+		//{
+#if defined(RTCONFIG_ISP_CUSTOMIZE_TOOL) || defined(RTCONFIG_ISP_CUSTOMIZE)
+			// Remove hidden folder but excluding /jffs/.ac and /jffs/.package.
+			system("find /jffs/ -name '.*' -a ! -name '.ict' -a ! -name '.package' -a ! -name '.package.tar.gz' -a ! -name 'package.tar.gz' -exec rm -rf {} \\;");
+			_dprintf("Clean /jffs/.*\n");
+#else
+			//system("rm -rf /jffs/.*");
+#endif
+		//}
 		_dprintf("Clean /jffs/*\n");
 		system("rm -fr /jffs/*");
 		nvram_unset("ubifs_clean_fs");
 		nvram_commit_x();
 	}
+
 	userfs_prepare(UBIFS_MNT_DIR);
+
 	notice_set("ubifs", format ? "Formatted" : "Loaded");
 
 	if (((p = nvram_get("ubifs_exec")) != NULL) && (*p != 0)) {
@@ -344,15 +370,6 @@ BRCM_UBI:
 		system(p);
 		chdir("/");
 	}
-
-#if defined(HND_ROUTER) || defined(DSL_AC68U)
-#ifdef RTCONFIG_JFFS_NVRAM
-	system("rm -rf /jffs/nvram_war");
-	jffs_nvram_init();
-	system("touch /jffs/nvram_war");
-#endif
-#endif
-
 	run_userfile(UBIFS_MNT_DIR, ".asusrouter", UBIFS_MNT_DIR, 3);
 
 #if defined(RTCONFIG_TEST_BOARDDATA_FILE)
@@ -366,6 +383,12 @@ BRCM_UBI:
 	}
 	if ((r = mount(UBIFS_MNT_DIR "/firmware", "/lib/firmware", NULL, MS_BIND, NULL)) != 0)
 		_dprintf("%s: bind mount " UBIFS_MNT_DIR "/firmware fail! (r = %d)\n", __func__, r);
+#endif
+
+#ifdef RTCONFIG_JFFS_NVRAM
+	system("rm -rf /jffs/nvram_war");
+	jffs_nvram_init();
+	system("touch /jffs/nvram_war");
 #endif
 	if (!check_if_dir_exist("/jffs/scripts/")) mkdir("/jffs/scripts/", 0755);
 	if (!check_if_dir_exist("/jffs/configs/")) mkdir("/jffs/configs/", 0755);

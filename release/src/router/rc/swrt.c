@@ -38,13 +38,6 @@
 #endif
 
 #if defined(RTCONFIG_SOFTCENTER)
-int sc_wan_sig = 0;
-int sc_nat_sig = 0;
-int sc_mount_sig = 0;
-int sc_services_start_sig = 0;
-int sc_services_stop_sig = 0;
-int sc_unmount_sig = 0;
-
 static void firmware_ver(void)
 {
     char tmp[6] = {0};
@@ -82,12 +75,12 @@ void swrt_init()
 {
 	_dprintf("############################ SWRT init #################################\n");
 #if defined(RTCONFIG_SOFTCENTER)
-	sc_wan_sig = 0;
-	sc_nat_sig = 0;
-	sc_mount_sig = 0;
-	sc_services_start_sig = 0;
-	sc_services_stop_sig = 0;
-	sc_unmount_sig = 0;
+	nvram_set("sc_wan_sig", "0");
+	nvram_set("sc_nat_sig", "0");
+	nvram_set("sc_mount_sig", "0");
+	nvram_set("sc_services_start_sig", "0");
+	nvram_set("sc_services_stop_sig", "0");
+	nvram_set("sc_unmount_sig", "0");
 #endif
 #if defined(RTCONFIG_ENTWARE)
 	nvram_set("entware_wan_sig", "0");
@@ -339,6 +332,10 @@ void swrt_init_done(){
 		nvram_set("modelname", "GTAC2900");
 #elif defined(GTAC5300)
 		nvram_set("modelname", "GTAC5300");
+#elif defined(RTAX53U)
+		nvram_set("modelname", "RTAX53U");
+#elif defined(RTAX54)
+		nvram_set("modelname", "RTAX54");
 #elif defined(RTAX55) || defined(RTAX1800)
 		nvram_set("modelname", "RTAX55");
 #elif defined(RTAX56U)
@@ -349,8 +346,6 @@ void swrt_init_done(){
 		nvram_set("modelname", "RTAX58UV2");
 #elif defined(TUFAX3000)
 		nvram_set("modelname", "TUFAX3000");
-#elif defined(TUFAX3000_V2)
-		nvram_set("modelname", "TUFAX3000V2");
 #elif defined(TUFAX5400)
 		nvram_set("modelname", "TUFAX5400");
 #elif defined(GSAX3000)
@@ -431,6 +426,9 @@ void swrt_init_done(){
 #endif
 #if defined(RAX120)
 	rax120_lanled();
+#endif
+#if defined(RTCONFIG_SWRT_LED)
+	swrt_ledon();//to fix LED state
 #endif
 }
 
@@ -513,87 +511,48 @@ int versioncmp(char *cur_fwver, char *fwver) {
 	return rlt;
 }
 
-size_t getcontentlengthfunc(void *ptr, size_t size, size_t nmemb, void *stream) {
-	int r;
-	long len = 0;
-
-	/* _snscanf() is Win32 specific */
-	// r = _snscanf(ptr, size * nmemb, "Content-Length: %ld\n", &len);
-	r = sscanf(ptr, "Content-Length: %ld\n", &len);
-	if (r) /* Microsoft: we don't read the specs */
-		*((long *) stream) = len;
-
-	return size * nmemb;
-}
-
-size_t wirtefunc(void *ptr, size_t size, size_t nmemb, void *stream)
+size_t wirtefunc(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
 	return fwrite(ptr, size, nmemb, stream);
 }
-#if 0
-size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
+
+int curl_download_swrt(const char *url, const char *file_path, long timeout)
 {
-	FILE *f = stream;
-	size_t n;
+	FILE *fp;
+	CURL *curl = NULL;
+	CURLcode ret;
 
-	if (ferror(f))
-		return CURL_READFUNC_ABORT;
+	if(url == NULL || file_path == NULL)
+		return -1;
 
-	n = fread(ptr, size, nmemb, f) * size;
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl = curl_easy_init();
 
-	return n;
-}
-#endif
-int curl_download_file(CURL *curlhandle, const char * remotepath, const char * localpath, long timeout, long tries)
-{
-	FILE *f;
-	curl_off_t local_file_len = -1 ;
-	long filesize =0 ;
+	if(!curl)
+		return -3;
 
-	CURLcode r = CURLE_GOT_NOTHING;
-	//int c;
-	struct stat file_info;
-	int use_resume = 0;
-	//if(access(localpath,F_OK) ==0)
+	unlink(file_path);
+	if ((fp = fopen(file_path, "wb")) == NULL)
+		return -2;
 
-	if(stat(localpath, &file_info) == 0) 
-	{
-		local_file_len =  file_info.st_size;
-		use_resume  = 1;
-	}
-	f = fopen(localpath, "ab+"); 
-	if (f == NULL) {
-		perror(NULL);
-		return 0;
-	}
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, wirtefunc);
 
-	//curl_easy_setopt(curlhandle, CURLOPT_UPLOAD, 1L);
+	//curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 
-	curl_easy_setopt(curlhandle, CURLOPT_URL, remotepath);
-	curl_easy_setopt(curlhandle, CURLOPT_CONNECTTIMEOUT, timeout);
-	curl_easy_setopt(curlhandle, CURLOPT_HEADERFUNCTION, getcontentlengthfunc);
-	curl_easy_setopt(curlhandle, CURLOPT_HEADERDATA, &filesize);
-	curl_easy_setopt(curlhandle, CURLOPT_RESUME_FROM_LARGE, use_resume?local_file_len:0);
-	curl_easy_setopt(curlhandle, CURLOPT_SSL_VERIFYPEER, 0);
-	curl_easy_setopt(curlhandle, CURLOPT_SSL_VERIFYHOST, 0);
-	curl_easy_setopt(curlhandle, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1); 
-	curl_easy_setopt(curlhandle, CURLOPT_WRITEDATA, f);
-	curl_easy_setopt(curlhandle, CURLOPT_WRITEFUNCTION, wirtefunc);
+	ret = curl_easy_perform(curl);
+	fclose(fp);
+	curl_easy_cleanup(curl);
 
-	//curl_easy_setopt(curlhandle, CURLOPT_READFUNCTION, readfunc);
-	//curl_easy_setopt(curlhandle, CURLOPT_READDATA, f);
-	curl_easy_setopt(curlhandle, CURLOPT_NOPROGRESS, 1);
-	curl_easy_setopt(curlhandle, CURLOPT_VERBOSE, 1);
-
-	r = curl_easy_perform(curlhandle);
-	fclose(f);
-
-	if (r == CURLE_OK)
-		return 1;
-	else {
-		fprintf(stderr, "%s\n", curl_easy_strerror(r));
-		return 0;
-	}
+	if (ret != CURLE_OK)
+		return -4;
+	return 0;
 }
 
 int swrt_firmware_check_update_main(int argc, char *argv[])
@@ -628,17 +587,12 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 	unlink("/tmp/wlan_update.txt");
 	unlink("/tmp/release_note0.txt");
 	sscanf(tmp_fwver, "%*[A-Z0-9]_%[A-Z0-9.]-%*[a-z0-9]", cur_fwver);
-	CURL *curlhandle = NULL;
 
-	curl_global_init(CURL_GLOBAL_ALL);
-	curlhandle = curl_easy_init();
 	snprintf(url, sizeof(url), "%s/%s", serverurl, serverupdate);
-	//snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- update dl_path_info for general %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, serverupdate);
+
 	FWUPDATE_DBG("---- update dl_path_info for general %s/%s ----", serverurl, serverupdate);
-	download=curl_download_file(curlhandle , url,localupdate,8,3);
-	//system(log);
-	//_dprintf("%d\n",download);
-	if(download)
+	download=curl_download_swrt(url, localupdate, 8);
+	if(!download)
 	{
 		fpupdate = fopen(localupdate, "r");
 		if (!fpupdate)
@@ -678,7 +632,7 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 						//snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- download real release note %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, releasenote_file);
 						//system(log);
 						FWUPDATE_DBG("---- download real release note %s/%s ----", serverurl, releasenote_file);
-						download=curl_download_file(curlhandle , url,releasenote,8,3);
+						download=curl_download_swrt(url, releasenote, 8);
 						if(download ==0 ){
 							memset(url,'\0',sizeof(url));
 							snprintf(releasenote_file, sizeof(releasenote_file), "%s_%s_US_note.zip", nvram_get("productid"), nvram_get("webs_state_info"));
@@ -686,7 +640,7 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 							//snprintf(log, sizeof(log), "echo \"[FWUPDATE]---- download real release note %s/%s ----\" >> /tmp/webs_upgrade.log", serverurl, releasenote_file);
 							//system(log);
 							FWUPDATE_DBG("---- download real release note %s/%s ----", serverurl, releasenote_file);
-							curl_download_file(curlhandle , url,releasenote,8,3);
+							curl_download_swrt(url, releasenote, 8);
 						}
 						FWUPDATE_DBG("---- firmware check update finish ----");
 						return 0;
@@ -703,9 +657,6 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 			}
 		}
 	}
-
-	curl_easy_cleanup(curlhandle);
-	curl_global_cleanup();
 
 GODONE:
 #if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100) || defined(R6800)

@@ -867,7 +867,7 @@ width:122px;
 	background: url(images/New_ui/icon_menues.png);
 	background-position: 0px -288px;
 }
-.menu_Tools{
+.menu_Tools, .menu_Entware, .menu_Softcenter{
 	background: url(images/New_ui/icon_menues.png);
 	background-position: 0px -288px;
 }
