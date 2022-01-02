@@ -110,6 +110,9 @@ function show_list(){
 function applyRule(){
 	var i = 0;
 	var postdata = {};
+	postdata["smartdns_dis_ipv6"] = document.form.smartdns_dis_ipv6.value;
+	postdata["smartdns_prefetch"] = document.form.smartdns_prefetch.value;
+	postdata["smartdns_dualstackip"] = document.form.smartdns_dualstackip.value;
 	for(i = 1; document.getElementById('smartdns_list_table').rows[i - 1]; i += 1){
 		postdata["smartdns_server_" + i] = document.getElementById('smartdns_list_table').rows[i -1].cells[0].innerHTML;
 		postdata["smartdns_port_" + i] = document.getElementById('smartdns_list_table').rows[i -1].cells[1].innerHTML;
@@ -119,6 +122,7 @@ function applyRule(){
 		i -= 1;
 	postdata["smartdns_num"] = i;
 	postdata["action_mode"] = "apply";
+	postdata["rc_service"] = "restart_smartdns";
 	httpApi.nvramSet(postdata);
 }
 </script>
@@ -196,7 +200,7 @@ function applyRule(){
 													</select>
 												</td>
 											</tr>
-											<tr id="smartdns_prefetch _tr">
+											<tr id="smartdns_prefetch_tr">
 												<th width="40%"><#SmartDNS_prefetch#></th>
 												<td>
 													<select name="smartdns_prefetch" class="input_option">
@@ -205,7 +209,7 @@ function applyRule(){
 													</select>
 												</td>
 											</tr>
-											<tr id="smartdns_dualstackip _tr">
+											<tr id="smartdns_dualstackip_tr">
 												<th width="40%"><#SmartDNS_dualstackip#></th>
 												<td>
 													<select name="smartdns_dualstackip" class="input_option">
