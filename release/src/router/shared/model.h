@@ -170,28 +170,32 @@ enum {
 };
 
 enum {
-	MODEL_SWRTMIN = 0,
-	MODEL_K3,
-	MODEL_XWR3100,
-	MODEL_R7000P,
-	MODEL_EA6700,
-	MODEL_SBRAC1900P,
-	MODEL_F9K1118,
-	MODEL_SBRAC3200P,
-	MODEL_R8500,
-	MODEL_R8000P,
-	MODEL_K3C,
-	MODEL_TY6201_RTK,
-	MODEL_TY6201_BCM,
-	MODEL_RAX120,
-	MODEL_DIR868L,
-	MODEL_R6300V2,
-	MODEL_MR62,
-	MODEL_RAX70,
-	MODEL_360V6,
-	MODEL_GLAX1800,
-	//MODEL_RMAC2100,move to model_list
-	MODEL_SWRTMAX
+	SWRT_MODEL_SWRTMIN = 0,
+	SWRT_MODEL_K3,
+	SWRT_MODEL_XWR3100,
+	SWRT_MODEL_R7000P,
+	SWRT_MODEL_EA6700,
+	SWRT_MODEL_SBRAC1900P,
+	SWRT_MODEL_F9K1118,
+	SWRT_MODEL_SBRAC3200P,
+	SWRT_MODEL_R8500,
+	SWRT_MODEL_R8000P,
+	SWRT_MODEL_K3C,
+	SWRT_MODEL_TY6201_RTK,
+	SWRT_MODEL_TY6201_BCM,
+	SWRT_MODEL_RAX120,
+	SWRT_MODEL_DIR868L,
+	SWRT_MODEL_R6300V2,
+	SWRT_MODEL_MR60,
+	SWRT_MODEL_MS60,
+	SWRT_MODEL_RAX70,
+	SWRT_MODEL_TY6202,
+	SWRT_MODEL_360V6,
+	SWRT_MODEL_GLAX1800,
+	SWRT_MODEL_RMAC2100,
+	SWRT_MODEL_R6800,
+	SWRT_MODEL_PGBM1,
+	SWRT_MODEL_SWRTMAX
 };
 
 extern int get_blver(char *bls);
@@ -203,11 +207,7 @@ extern char *get_modelnameid(int model);
 extern int get_switch(void);
 static inline int is_swrt_mod(void)
 {
-#if defined(K3) || defined(K3C) || defined(XWR3100) || defined(RAX70) || defined(RAX120) || defined(R8500) || defined(R7000P) || defined(R8000P) || defined(R6300V2) || defined(EA6700) || defined(DIR868L) || defined(SBRAC1900P) || defined(SBRAC3200P) || defined(TY6201_RTK) || defined(TY6201_BCM) || defined(F9K1118)
-	return 1;
-#else
-	return 0; 
-#endif
+	return get_modelname() != SWRT_MODEL_SWRTMIN;
 }
 
 /* define external PHY */

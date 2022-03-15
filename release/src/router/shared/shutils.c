@@ -619,6 +619,81 @@ char *ether_etoa2(const unsigned char *e, char *a)
 	return a;
 }
 
+/*
+ * Increase Ethernet address e with n
+ */
+int ether_inc(unsigned char *e, const unsigned char n)
+{
+	int c = 0;
+	int ret = 0;
+
+	c = (e[5] >= (0xff - n + 1)) ? 1 : 0;
+	e[5] += n;
+
+	if (c) {
+		c = (e[4] >= 0xff) ? 1 : 0;
+		e[4] += 1;
+
+		if (c) {
+			ret = (e[3] >= 0xff) ? -1 : 0;
+			e[3] += 1;
+		}
+	}
+
+	return (ret);
+}
+
+/* 
+ * Calculate Ethernet address
+ * @param	e	string in xx:xx:xx:xx:xx:xx notation
+ * @param	a	string in xx:xx:xx:xx:xx:xx notation
+ * @return	a
+ */
+char *
+ether_cal(const char *e, char *a, int i)
+{
+	unsigned char binary[6];
+	unsigned long long macvalue;
+	char buf[13];
+	memset(binary, 0, sizeof(binary));
+	memset(buf, 0, sizeof(buf));
+	ether_atoe(e, binary);
+	snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X",
+		binary[0], binary[1], binary[2], binary[3], binary[4],	binary[5]);
+	macvalue = strtoll(buf, (char **) NULL, 16) + i;
+	for(i=0; i<sizeof(binary); i++)
+	{
+		binary[i] = (macvalue >> ((5-i)*8)) & 0xff;
+	}
+	ether_etoa(binary, a);
+	return a;
+}
+
+/*
+ * Calculate Ethernet address
+ * @param	e	binary data
+ * @param	a	string in xx:xx:xx:xx:xx:xx notation
+ * @return	a
+ */
+char *
+ether_cal_b(const unsigned char *e, char *a, int i)
+{
+	unsigned char binary[6];
+	unsigned long long macvalue;
+	char buf[13];
+	memset(buf, 0, sizeof(buf));
+	memcpy(binary, e, sizeof(binary));
+	snprintf(buf, sizeof(buf), "%02X%02X%02X%02X%02X%02X",
+		binary[0], binary[1], binary[2], binary[3], binary[4],	binary[5]);
+	macvalue = strtoll(buf, (char **) NULL, 16) + i;
+	for(i=0; i<sizeof(binary); i++)
+	{
+		binary[i] = (macvalue >> ((5-i)*8)) & 0xff;
+	}
+	ether_etoa(binary, a);
+	return a;
+}
+
 #ifdef GTAC5300
 static int dbg_noisy = -1;
 #endif

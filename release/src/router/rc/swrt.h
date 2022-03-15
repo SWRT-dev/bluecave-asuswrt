@@ -14,8 +14,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2018-2021, paldier <paldier@hotmail.com>.
- * Copyright 2018-2021, lostlonger<lostlonger.g@gmail.com>.
+ * Copyright 2018-2022, SWRT.
+ * Copyright 2018-2022, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2022, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
  * 
  */
@@ -77,6 +78,9 @@ extern void r8000p_nvram_patch(void);
 #elif defined(RAX70)
 extern void rax70_sys_hack(void);
 extern void rax70_nvram_patch(void);
+#elif defined(MR60) || defined(MS60)
+extern void ntgr_sys_hack(void);
+extern void ntgr_nvram_patch(void);
 #elif defined(TUFAX3000) || defined(RTAX58U)
 extern void enable_4t4r_ax58(void);
 extern void enable_4t4r(void);
@@ -85,9 +89,9 @@ extern void k3c_lan_led(void);
 extern void k3c_init_led(void);
 extern void init_mtd8(void);
 extern void swrt_patch_nvram(void);
-#elif defined(RMAC2100) || defined(R6800)
+#elif defined(RMAC2100) || defined(R6800) || defined(RAX120) || defined(SWRT360V6)
 extern void patch_Factory(void);
-#elif defined(RTAX82U) || defined(RTAX86U)
+#elif defined(RTAX82U) || defined(RTAX86U) || defined(RTAX88U) || defined(GTAX11000) || defined(GTAXE11000)
 extern void swrt_patch_nvram(void);
 #endif
 #ifdef RTCONFIG_UUPLUGIN
@@ -110,6 +114,10 @@ extern void swrt_ledon(void);
 extern void start_entware(void);
 extern void stop_entware(void);
 extern void init_entware(void);
+#endif
+#if defined(R6800)
+extern void show_boraddata(void);
+extern void fix_boraddata(char *key, char *value);
 #endif
 #endif
 

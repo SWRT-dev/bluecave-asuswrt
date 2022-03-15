@@ -127,7 +127,7 @@ else
 	install -m 0755 scTW.json $(INSTALLDIR)/www/res
 	install -m 0755 Softcenter.asp $(INSTALLDIR)/www
 endif
-ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), SBRAC1900P SBRAC3200P K3 R8500 XWR3100 TY6201_RTK TY6201_BCM))
+ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), SBRAC1900P SBRAC3200P K3 R8500 XWR3100 TY6201_RTK TY6201_BCM TY6202 SWRT360V6))
 ifeq ($(HND_ROUTER), y)
 	install -m 0755 key.asp $(INSTALLDIR)/www/www
 else

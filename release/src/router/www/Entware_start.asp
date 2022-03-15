@@ -44,7 +44,7 @@ function get_disks(){
 		for (var i = 0; i < usbDevicesList.length; ++i){
 			for (var j = 0; j < usbDevicesList[i].partition.length; ++j){
 				//append options
-				if((usbDevicesList[i].partition[j].status != "unmounted")&&((usbDevicesList[i].partition[j].format.indexOf("ext") != -1)||(usbDevicesList[i].partition[j].format.indexOf("ntfs") != -1))){
+				if((usbDevicesList[i].partition[j].status != "unmounted")&&((usbDevicesList[i].partition[j].format.indexOf("ext") != -1)||((usbDevicesList[i].partition[j].format.indexOf("ntfs") != -1) && (usbDevicesList[i].partition[j].format.indexOf("ntfs3") == -1)))){
 					if(usbDevicesList[i].partition[j].partName==entware_disk)
 						$("#entware_disk").append("<option value='" + usbDevicesList[i].partition[j].partName + "' selected='selected'>" + usbDevicesList[i].partition[j].partName + "</option>");
 else
@@ -70,7 +70,7 @@ else
 	});
 }
 function show_list(ent_state, ent_list){
-	if (asusopt.length){
+	if (asusopt.length && asusopt != "0"){
 		$("#isbusy").hide();
 		$("#updateEntware").parent().parent().hide();
 		$("#initEntware").parent().parent().show();
@@ -118,7 +118,7 @@ function show_list(ent_state, ent_list){
 };
 $(document).ready(function(){
 $("#initEntware").click(function(){
-	if (asusopt.length){
+	if (asusopt.length && asusopt != "0"){
 		alert("<#Entware_desc4#>");
 		return;
 	}
@@ -143,7 +143,7 @@ $("#updateEntware").click(function(){
 	});
 });
 $("#startEntware").click(function(){
-	if (asusopt.length){
+	if (asusopt.length && asusopt != "0"){
 		alert("<#Entware_desc4#>");
 		return;
 	}

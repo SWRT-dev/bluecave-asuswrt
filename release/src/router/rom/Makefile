@@ -162,6 +162,7 @@ endif
 ifeq ($(RTCONFIG_HTTPS),y)
 	cp -f webs_scripts/public.pem $(INSTALLDIR)/usr/sbin/public.pem
 endif
+	cp -f webs_scripts/swrt.pem $(INSTALLDIR)/usr/sbin/swrt.pem
 ifeq ($(RTAC68U),y)
 ifneq ("$(wildcard $(SRCBASE)/../../buildtools/tmks.bin)","")
 	cp -f $(SRCBASE)/../../buildtools/tmks.bin $(INSTALLDIR)/usr/sbin/tmks
@@ -201,6 +202,7 @@ endif
 ifeq ($(RTCONFIG_HTTPS),y)
 	cp -f webs_scripts/public.pem $(INSTALLDIR)/usr/sbin/public.pem
 endif
+	cp -f webs_scripts/swrt.pem $(INSTALLDIR)/usr/sbin/swrt.pem
 ifeq ($(RTAC68U),y)
 ifneq ("$(wildcard $(SRCBASE)/../../buildtools/tmks.bin)","")
 	cp -f $(SRCBASE)/../../buildtools/tmks.bin $(INSTALLDIR)/usr/sbin/tmks

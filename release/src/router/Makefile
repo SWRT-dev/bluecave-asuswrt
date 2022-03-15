@@ -1239,12 +1239,17 @@ endif
 ifeq ($(or $(RTCONFIG_HND_ROUTER),$(RTCONFIG_QCA),$(RTCONFIG_LANTIQ),$(RTCONFIG_RALINK)),y)
 obj-y += cryptodev-linux
 endif
-
 obj-$(RTCONFIG_BONDING) += ifenslave
 
 obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
 
 obj-$(RTCONFIG_TRANSMISSION) += Transmission curl libevent-2.0.21
+
+# Begin merlin add-ons
+ifeq ($(or $(RTCONFIG_HND_ROUTER),$(RTCONFIG_QCA),$(RTCONFIG_LANTIQ),$(RTCONFIG_RALINK)),y)
+obj-y += jitterentropy-rngd
+endif
+# End merlin add-ons
 
 ifeq ($(RTCONFIG_TOR),y)
 obj-y += openssl
@@ -7248,6 +7253,28 @@ ncurses-6.0-install: ncurses-6.0
 		ln -sf libmenu.so.6.0 libmenu.so &&\
 		ln -sf libpanel.so.6.0 libpanel.so.6 &&\
 		ln -sf libpanel.so.6.0 libpanel.so
+
+# Start merlin components
+jitterentropy-rngd:
+	@$(SEP)
+	$(MAKE) CFLAGS+="-fPIC -O0" -C $@
+
+jitterentropy-rngd-install:
+	install -D jitterentropy-rngd/jitterentropy-rngd $(INSTALLDIR)/jitterentropy-rngd/usr/sbin/jitterentropy-rngd
+	$(STRIP) $(INSTALLDIR)/jitterentropy-rngd/usr/sbin/jitterentropy-rngd
+
+wsdd2:
+	@$(SEP)
+	$(MAKE) CFLAGS+="-DASUSWRT -Os" -C $@
+
+wsdd2-install:
+	install -D wsdd2/wsdd2 $(INSTALLDIR)/wsdd2/usr/sbin/wsdd2
+	$(STRIP) $(INSTALLDIR)/wsdd2/usr/sbin/wsdd2
+
+wsdd2-clean:
+	$(MAKE) -C wsdd2 clean
+
+# End merlin components
 
 readline-6.2/Makefile: readline-6.2/configure
 	cd readline-6.2 && $(CONFIGURE)\

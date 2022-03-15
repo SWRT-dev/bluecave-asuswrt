@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2018 Chion Tang <tech@chionlab.moe>
- * Copyright (c) 2019-2022 lean <coolsnowwolf@gmail.com>
- * Copyright (c) 2021-2022 paldier <paldier@hotmail.com>
+ * Copyright (c) 2022 llccd
+ * Copyright (c) 2022 paldier <paldier@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -18,7 +17,7 @@
 #include <getopt.h>
 #include <xtables.h>
 #include <limits.h> /* INT_MAX in ip_tables.h */
-#include <linux/netfilter_ipv4/ip_tables.h>
+#include <linux/netfilter_ipv6/ip6_tables.h>
 #if !defined(CONFIG_LANTIQ)
 #include <net/netfilter/nf_conntrack_tuple.h>
 #endif
@@ -29,7 +28,7 @@
 #endif
 
 #ifndef NF_NAT_RANGE_PROTO_RANDOM_FULLY
-#define NF_NAT_RANGE_PROTO_RANDOM_FULLY 16
+#define NF_NAT_RANGE_PROTO_RANDOM_FULLY (1 << 4)
 #endif
 
 enum {
@@ -63,72 +62,52 @@ static const struct xt_option_entry FULLCONENAT_opts[] = {
 	XTOPT_TABLEEND,
 };
 
-#if defined(BCMARM) && !defined(HND_ROUTER)
-static void parse_to(const char *orig_arg, struct nf_nat_multi_range_compat *mr)
-#else
-static void parse_to(const char *orig_arg, struct nf_nat_ipv4_multi_range_compat *mr)
-#endif
+static void parse_to(const char *orig_arg, struct nf_nat_range *r)
 {
 	char *arg, *dash, *error;
-	const struct in_addr *ip;
+	const struct in6_addr *ip;
 
 	arg = strdup(orig_arg);
 	if (arg == NULL)
 		xtables_error(RESOURCE_PROBLEM, "strdup");
 
 #if defined(BCMARM) && !defined(HND_ROUTER)
-	mr->range[0].flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+	r->flags |= IP_NAT_RANGE_MAP_IPS;
 #else
-	mr->range[0].flags |= NF_NAT_RANGE_MAP_IPS;
+	r->flags |= NF_NAT_RANGE_MAP_IPS;
 #endif
 	dash = strchr(arg, '-');
 
 	if (dash)
 		*dash = '\0';
 
-	ip = xtables_numeric_to_ipaddr(arg);
+	ip = xtables_numeric_to_ip6addr(arg);
 	if (!ip)
 		xtables_error(PARAMETER_PROBLEM, "Bad IP address \"%s\"\n",
 			   arg);
-	mr->range[0].min_ip = ip->s_addr;
+	r->min_addr.in6 = *ip;
 	if (dash) {
-		ip = xtables_numeric_to_ipaddr(dash+1);
+		ip = xtables_numeric_to_ip6addr(dash+1);
 		if (!ip)
 			xtables_error(PARAMETER_PROBLEM, "Bad IP address \"%s\"\n",
 				   dash+1);
-		mr->range[0].max_ip = ip->s_addr;
+		r->max_addr.in6 = *ip;
 	} else
-		mr->range[0].max_ip = mr->range[0].min_ip;
+		r->max_addr = r->min_addr;
 
 	free(arg);
 }
 
-static void FULLCONENAT_init(struct xt_entry_target *t)
-{
-#if defined(BCMARM) && !defined(HND_ROUTER)
-	struct nf_nat_multi_range_compat *mr = (struct nf_nat_multi_range_compat *)t->data;
-#else
-	struct nf_nat_ipv4_multi_range_compat *mr = (struct nf_nat_ipv4_multi_range_compat *)t->data;
-#endif
-
-	/* Actually, it's 0, but it's ignored at the moment. */
-	mr->rangesize = 1;
-}
-
 /* Parses ports */
 static void
-#if defined(BCMARM) && !defined(HND_ROUTER)
-parse_ports(const char *arg, struct nf_nat_multi_range_compat *mr)
-#else
-parse_ports(const char *arg, struct nf_nat_ipv4_multi_range_compat *mr)
-#endif
+parse_ports(const char *arg, struct nf_nat_range *r)
 {
 	char *end;
 	unsigned int port, maxport;
 #if defined(BCMARM) && !defined(HND_ROUTER)
-	mr->range[0].flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+	r->flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
 #else
-	mr->range[0].flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
+	r->flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
 #endif
 	if (!xtables_strtoui(arg, &end, &port, 0, UINT16_MAX))
 		xtables_param_act(XTF_BAD_VALUE, "FULLCONENAT", "--to-ports", arg);
@@ -136,12 +115,12 @@ parse_ports(const char *arg, struct nf_nat_ipv4_multi_range_compat *mr)
 	switch (*end) {
 	case '\0':
 #if defined(BCMARM) && !defined(HND_ROUTER)
-		mr->range[0].min.tcp.port
-			= mr->range[0].max.tcp.port
+		r->min.tcp.port
+			= r->max.tcp.port
 			= htons(port);
 #else
-		mr->range[0].min.tcp.port
-			= mr->range[0].max.tcp.port
+		r->min_proto.tcp.port
+			= r->max_proto.tcp.port
 			= htons(port);
 #endif
 		return;
@@ -151,9 +130,13 @@ parse_ports(const char *arg, struct nf_nat_ipv4_multi_range_compat *mr)
 
 		if (maxport < port)
 			break;
-
-		mr->range[0].min.tcp.port = htons(port);
-		mr->range[0].max.tcp.port = htons(maxport);
+#if defined(BCMARM) && !defined(HND_ROUTER)
+		r->min.tcp.port = htons(port);
+		r->max.tcp.port = htons(maxport);
+#else
+		r->min_proto.tcp.port = htons(port);
+		r->max_proto.tcp.port = htons(maxport);
+#endif
 		return;
 	default:
 		break;
@@ -163,18 +146,15 @@ parse_ports(const char *arg, struct nf_nat_ipv4_multi_range_compat *mr)
 
 static void FULLCONENAT_parse(struct xt_option_call *cb)
 {
-	const struct ipt_entry *entry = cb->xt_entry;
+	const struct ip6t_entry *entry = cb->xt_entry;
+	struct nf_nat_range *r = cb->data;
 	int portok;
-#if defined(BCMARM) && !defined(HND_ROUTER)
-	struct nf_nat_multi_range_compat *mr = cb->data;
-#else
-	struct nf_nat_ipv4_multi_range_compat *mr = cb->data;
-#endif
-	if (entry->ip.proto == IPPROTO_TCP
-	    || entry->ip.proto == IPPROTO_UDP
-	    || entry->ip.proto == IPPROTO_SCTP
-	    || entry->ip.proto == IPPROTO_DCCP
-	    || entry->ip.proto == IPPROTO_ICMP)
+
+	if (entry->ipv6.proto == IPPROTO_TCP
+	    || entry->ipv6.proto == IPPROTO_UDP
+	    || entry->ipv6.proto == IPPROTO_SCTP
+	    || entry->ipv6.proto == IPPROTO_DCCP
+	    || entry->ipv6.proto == IPPROTO_ICMP)
 		portok = 1;
 	else
 		portok = 0;
@@ -185,26 +165,26 @@ static void FULLCONENAT_parse(struct xt_option_call *cb)
 		if (!portok)
 			xtables_error(PARAMETER_PROBLEM,
 				   "Need TCP, UDP, SCTP or DCCP with port specification");
-		parse_ports(cb->arg, mr);
+		parse_ports(cb->arg, r);
 		break;
 	case O_TO_SRC:
-		parse_to(cb->arg, mr);
+		parse_to(cb->arg, r);
+		break;
+	case O_RANDOM_FULLY:
+		r->flags |=  NF_NAT_RANGE_PROTO_RANDOM_FULLY;
 		break;
 	case O_RANDOM:
 #if defined(BCMARM) && !defined(HND_ROUTER)
-		mr->range[0].flags |=  IP_NAT_RANGE_PROTO_RANDOM;
+		r->flags |=  IP_NAT_RANGE_PROTO_RANDOM;
 #else
-		mr->range[0].flags |=  NF_NAT_RANGE_PROTO_RANDOM;
+		r->flags |=  NF_NAT_RANGE_PROTO_RANDOM;
 #endif
-		break;
-	case O_RANDOM_FULLY:
-		mr->range[0].flags |=  NF_NAT_RANGE_PROTO_RANDOM_FULLY;
 		break;
 	case O_PERSISTENT:
 #if defined(BCMARM) && !defined(HND_ROUTER)
-		mr->range[0].flags |=  IP_NAT_RANGE_PERSISTENT;
+		r->flags |=  IP_NAT_RANGE_PERSISTENT;
 #else
-		mr->range[0].flags |=  NF_NAT_RANGE_PERSISTENT;
+		r->flags |=  NF_NAT_RANGE_PERSISTENT;
 #endif
 		break;
 	}
@@ -214,44 +194,44 @@ static void
 FULLCONENAT_print(const void *ip, const struct xt_entry_target *target,
                  int numeric)
 {
-#if defined(BCMARM) && !defined(HND_ROUTER)
-	const struct nf_nat_multi_range_compat *mr = (const void *)target->data;
-	const struct nf_nat_range *r = &mr->range[0];
-#else
-	const struct nf_nat_ipv4_multi_range_compat *mr = (const void *)target->data;
-	const struct nf_nat_ipv4_range *r = &mr->range[0];
-#endif
+	const struct nf_nat_range *r = (const void *)target->data;
 
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	if (r->flags & IP_NAT_RANGE_MAP_IPS) {
-#else
-	if (r->flags & NF_NAT_RANGE_MAP_IPS) {
-#endif
 		struct in_addr a;
 
 		a.s_addr = r->min_ip;
-		printf(" to:%s", xtables_ipaddr_to_numeric(&a));
+
+		printf(" to:%s", xtables_ip6addr_to_numeric(&a));
 		if (r->max_ip != r->min_ip) {
 			a.s_addr = r->max_ip;
-			printf("-%s", xtables_ipaddr_to_numeric(&a));
+			printf("-%s", xtables_ip6addr_to_numeric(&a));
 		}
-#if defined(BCMARM) && !defined(HND_ROUTER)
-		if (r->flags & IP_NAT_RANGE_PERSISTENT)
 #else
-		if (r->flags & NF_NAT_RANGE_PERSISTENT)
+	if (r->flags & NF_NAT_RANGE_MAP_IPS) {
+		printf(" to:%s", xtables_ip6addr_to_numeric(&r->min_addr.in6));
+		if (memcmp(&r->min_addr, &r->max_addr, sizeof(r->min_addr)))
+			printf("-%s", xtables_ip6addr_to_numeric(&r->max_addr.in6));
 #endif
-			printf(" persistent");
 	}
 
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	if (r->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
-#else
-	if (r->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
-#endif
 		printf(" masq ports: ");
 		printf("%hu", ntohs(r->min.tcp.port));
 		if (r->max.tcp.port != r->min.tcp.port)
 			printf("-%hu", ntohs(r->max.tcp.port));
+		if (r->flags & IP_NAT_RANGE_PERSISTENT)
+			printf(" persistent");
+#else
+	if (r->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
+		printf(" masq ports: ");
+		printf("%hu", ntohs(r->min_proto.tcp.port));
+		if (r->max_proto.tcp.port != r->min_proto.tcp.port)
+			printf("-%hu", ntohs(r->max_proto.tcp.port));
+		if (r->flags & NF_NAT_RANGE_PERSISTENT)
+			printf(" persistent");
+#endif
 	}
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	if (r->flags & IP_NAT_RANGE_PROTO_RANDOM)
@@ -267,43 +247,41 @@ FULLCONENAT_print(const void *ip, const struct xt_entry_target *target,
 static void
 FULLCONENAT_save(const void *ip, const struct xt_entry_target *target)
 {
-#if defined(BCMARM) && !defined(HND_ROUTER)
-	const struct nf_nat_multi_range_compat *mr = (const void *)target->data;
-	const struct nf_nat_range *r = &mr->range[0];
-#else
-	const struct nf_nat_ipv4_multi_range_compat *mr = (const void *)target->data;
-	const struct nf_nat_ipv4_range *r = &mr->range[0];
-#endif
+	const struct nf_nat_range *r = (const void *)target->data;
 
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	if (r->flags & IP_NAT_RANGE_MAP_IPS) {
-#else
-	if (r->flags & NF_NAT_RANGE_MAP_IPS) {
-#endif
 		struct in_addr a;
 
 		a.s_addr = r->min_ip;
-		printf(" --to-source %s", xtables_ipaddr_to_numeric(&a));
+
+		printf(" --to-source %s", xtables_ip6addr_to_numeric(&a));
 		if (r->max_ip != r->min_ip) {
 			a.s_addr = r->max_ip;
-			printf("-%s", xtables_ipaddr_to_numeric(&a));
+			printf("-%s", xtables_ip6addr_to_numeric(&a));
 		}
-#if defined(BCMARM) && !defined(HND_ROUTER)
-	if (r->flags & IP_NAT_RANGE_PROTO_RANDOM)
+		if (r->flags & IP_NAT_RANGE_PERSISTENT)
 #else
-	if (r->flags & NF_NAT_RANGE_PROTO_RANDOM)
+	if (r->flags & NF_NAT_RANGE_MAP_IPS) {
+		printf(" --to-source %s", xtables_ip6addr_to_numeric(&r->min_addr.in6));
+		if (memcmp(&r->min_addr, &r->max_addr, sizeof(r->min_addr)))
+			printf("-%s", xtables_ip6addr_to_numeric(&r->max_addr.in6));
+		if (r->flags & NF_NAT_RANGE_PERSISTENT)
 #endif
 			printf(" --persistent");
 	}
 
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	if (r->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
-#else
-	if (r->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
-#endif
 		printf(" --to-ports %hu", ntohs(r->min.tcp.port));
 		if (r->max.tcp.port != r->min.tcp.port)
 			printf("-%hu", ntohs(r->max.tcp.port));
+#else
+	if (r->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
+		printf(" --to-ports %hu", ntohs(r->min_proto.tcp.port));
+		if (r->max_proto.tcp.port != r->min_proto.tcp.port)
+			printf("-%hu", ntohs(r->max_proto.tcp.port));
+#endif
 	}
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	if (r->flags & IP_NAT_RANGE_PROTO_RANDOM)
@@ -319,16 +297,10 @@ FULLCONENAT_save(const void *ip, const struct xt_entry_target *target)
 static struct xtables_target fullconenat_tg_reg = {
 	.name		= "FULLCONENAT",
 	.version	= XTABLES_VERSION,
-	.family		= NFPROTO_IPV4,
-#if defined(BCMARM) && !defined(HND_ROUTER)
-	.size		= XT_ALIGN(sizeof(struct nf_nat_multi_range_compat)),
-	.userspacesize	= XT_ALIGN(sizeof(struct nf_nat_multi_range_compat)),
-#else
-	.size		= XT_ALIGN(sizeof(struct nf_nat_ipv4_multi_range_compat)),
-	.userspacesize	= XT_ALIGN(sizeof(struct nf_nat_ipv4_multi_range_compat)),
-#endif
+	.family		= NFPROTO_IPV6,
+	.size		= XT_ALIGN(sizeof(struct nf_nat_range)),
+	.userspacesize	= XT_ALIGN(sizeof(struct nf_nat_range)),
 	.help		= FULLCONENAT_help,
-	.init		= FULLCONENAT_init,
 	.x6_parse	= FULLCONENAT_parse,
 	.print		= FULLCONENAT_print,
 	.save		= FULLCONENAT_save,

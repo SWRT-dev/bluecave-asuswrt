@@ -168,6 +168,11 @@ static void start_toads(void);
 static void stop_toads(void);
 #endif
 
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+void start_jitterentropy(void);
+void stop_jitterentropy(void);
+#endif
+
 #ifndef MS_MOVE
 #define MS_MOVE		8192
 #endif
@@ -4176,7 +4181,6 @@ void stop_asd(void)
 
 void start_asd(void)
 {
-	return;
 	stop_asd();
 	xstart("asd");
 }
@@ -4187,6 +4191,9 @@ stop_misc(void)
 {
 	fprintf(stderr, "stop_misc()\n");
 
+#ifdef RTCONFIG_ASD
+	stop_asd();
+#endif
 	if (pids("infosvr"))
 		killall_tk("infosvr");
 
@@ -8098,6 +8105,9 @@ stop_netool(void)
 int
 start_services(void)
 {
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+	start_jitterentropy();
+#endif
 #ifdef RTCONFIG_SOFTCENTER
 	start_skipd();
 #endif
@@ -8680,7 +8690,28 @@ stop_services(void)
 #if defined(RTCONFIG_QCA_LBD)
 	stop_qca_lbd();
 #endif
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+	stop_jitterentropy();
+#endif
 }
+
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+void start_jitterentropy()
+{
+	pid_t pid;
+	char *cmd_argv[] = { "/usr/sbin/jitterentropy-rngd",
+								"-p", "/var/run/jitterentropy-rngd.pid",
+								NULL};
+	_eval(cmd_argv, NULL, 0, &pid);
+}
+
+void stop_jitterentropy()
+{
+	pid_t pid;
+	char *cmd_argv[] = { "killall", "jitterentropy-rngd", NULL};
+	_eval(cmd_argv, NULL, 0, &pid);
+}
+#endif
 
 #ifdef RTCONFIG_QCA
 int stop_wifi_service(void)
@@ -9824,6 +9855,19 @@ again:
 	{
 		factory_reset();
 	}
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+	else if(strcmp(script, "jitterentropy") == 0)
+	{
+		if(action & RC_SERVICE_STOP)
+		{
+			stop_jitterentropy();
+		}
+		else if(action & RC_SERVICE_START)
+		{
+			start_jitterentropy();
+		}
+	}
+#endif
 	else if (strcmp(script, "all") == 0) {
 #ifdef RTCONFIG_WIFI_SON
 		if(sw_mode() != SW_MODE_REPEATER && nvram_match("wifison_ready", "1")) {
@@ -10217,6 +10261,9 @@ again:
 			stop_jffs2(1);
 #ifdef RTCONFIG_QCA_PLC_UTILS
 			reset_plc();
+#endif
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+			stop_jitterentropy();
 #endif
 			// TODO free necessary memory here
 		}

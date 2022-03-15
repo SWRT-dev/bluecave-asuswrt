@@ -16116,7 +16116,7 @@ applydb_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	}
 	if ( !strcmp("", post_db_buf)){
 		//get
-		snprintf(post_db_buf, sizeof(post_db_buf), "%s", post_buf_backup+1);
+		snprintf(post_db_buf, sizeof(post_json_buf), "%s", post_buf_backup + 1);
 		unescape(post_db_buf);
 		//logmessage("HTTPD", "url: %s,%s", post_db_buf, name);
 		strlcpy(post_json_buf, post_db_buf, sizeof(post_json_buf));
@@ -16298,21 +16298,8 @@ do_logread_cgi(char *url, FILE *stream)
     do_logread(stream, NULL, NULL, 0, url, NULL, NULL);
 }
 //1.5
-struct msg_list_s {
-int id;
-char buf[2048];
-};
-struct msg_list_s msglist;
-struct msg_list_s msglist2;
-struct msg_list_s msglist3;
-struct msg_list_s msglist4;
-static int list_count=0;
-
-static int db_print2(dbclient* client, webs_t wp, char* prefix, char* key, char* value) {
-	if(list_count!=0)
-		websWrite(wp,",");
-	websWrite(wp,"\"%s\":\"%s\"\n", key, value);
-	list_count++;
+static int db_print2(dbclient* client,  json_object *result, char* prefix, char* key, char* value) {
+	json_object_object_add(result, key, json_object_new_string(value));
 	return 0;
 }
 static int
@@ -16329,23 +16316,26 @@ dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
 	dbclient_start(&client);
 
 	if ( !strcmp("", post_db_buf)){//get
+		json_object *root = NULL;
+		json_object *result = NULL;
+		json_object *db = NULL;
 		char dbname[100];
 		sscanf(url, "_api/%s", dbname);
 		char * delim = ",";
 		char *dup_pattern = strdup(dbname);
 		char *sepstr = dup_pattern;
-		websWrite(wp,"{\"result\":[{");
-		i=0;
+		root = json_object_new_object();
+		result = json_object_new_array();
+
 		for(name = strsep(&sepstr, delim); name != NULL; name = strsep(&sepstr, delim)) {
-			if(i!=0)
-				websWrite(wp,",{");
-			dbclient_list(&client, name, wp, db_print2);
-			list_count=0;
-			websWrite(wp,"}\n" );
-			i++;
+			db = json_object_new_object();
+			dbclient_list_json(&client, name, db, db_print2);
+			json_object_array_add(result, db);
 		}
-		websWrite(wp,"]}\n" );
+		json_object_object_add(root, "result", result);
+		websWrite(wp, "%s\n", json_object_to_json_string(root));
 		free(dup_pattern);
+		json_object_put(root);
 		dbclient_end(&client);
 	}else{//post
 		json_object *root = NULL;
@@ -16447,40 +16437,19 @@ do_dbroot_cgi(char *url, FILE *stream)
 		do_file(logpath, stream);
 }
 
-static int
-dbresp_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg,
-		char_t *url, char_t *path, char_t *query)
-{
-	int i;
-	sscanf(url, "_resp/%d", &i);
-	if(msglist.id==0){
-		msglist.id=i;
-		snprintf(msglist.buf, sizeof(msglist.buf), "%s", post_json_buf);
-	} else if(msglist.id>0 && msglist2.id==0){
-		msglist2.id=i;
-		snprintf(msglist2.buf, sizeof(msglist2.buf), "%s", post_json_buf);
-		msglist3.id=0;
-		msglist4.id=0;
-		memset(msglist3.buf, 0, sizeof(msglist3.buf));
-		memset(msglist4.buf, 0, sizeof(msglist4.buf));
-	} else if(msglist.id>0 && msglist2.id>0 && msglist3.id==0){
-		msglist3.id=i;
-		snprintf(msglist3.buf, sizeof(msglist3.buf), "%s", post_json_buf);
-	} else {
-		msglist.id=0;
-		msglist2.id=0;
-		memset(msglist.buf, 0, sizeof(msglist.buf));
-		memset(msglist2.buf, 0, sizeof(msglist2.buf));
-		msglist4.id=i;
-		snprintf(msglist4.buf, sizeof(msglist4.buf), "%s", post_json_buf);
-	}
-	return 0;
-}
-
 static void
 do_dbresp_cgi(char *url, FILE *stream)
 {
-	dbresp_cgi(stream, NULL, NULL, 0, url, NULL, NULL);
+	int resultid;
+	char path[50];
+	FILE *fp = NULL;
+	sscanf(url, "_resp/%d", &resultid);
+	snprintf(path, sizeof(path), "/tmp/upload/%d", resultid);
+
+	if((fp = fopen(path, "w")) != NULL){
+		fprintf(fp, "%s", post_json_buf);
+      	fclose(fp);
+	}
 }
 
 static void
@@ -16502,14 +16471,6 @@ do_result_cgi(char *url, FILE *stream)
 		}
 	}
 	websWrite(stream,"{\"result\":%d}\n",resultid);
-	//if(resultid==msglist.id)
-	//	websWrite(stream,"%s\n",msglist.buf);
-	//else if(resultid==msglist2.id)
-	//	websWrite(stream,"%s\n",msglist2.buf);
-	//else if(resultid==msglist3.id)
-	//	websWrite(stream,"%s\n",msglist3.buf);
-	//else if(resultid==msglist4.id)
-	//	websWrite(stream,"%s\n",msglist4.buf);
 }
 #endif
 
@@ -16520,7 +16481,7 @@ do_result_cgi(char *url, FILE *stream)
 #define ENTWARE_ACT_REMOVE		4
 #define ENTWARE_ACT_START		8
 #define ENTWARE_ACT_STOP		16
-#define ENTWARE_ACT_ALL			ENTWARE_ACT_INSTALL | ENTWARE_ACT_UPDATE | ENTWARE_ACT_REMOVE | ENTWARE_ACT_START | ENTWARE_ACT_STOP
+#define ENTWARE_ACT_ALL			(ENTWARE_ACT_INSTALL | ENTWARE_ACT_UPDATE | ENTWARE_ACT_REMOVE | ENTWARE_ACT_START | ENTWARE_ACT_STOP)
 void do_entware_cgi(char *url, FILE *stream){
 	struct json_object *root = NULL;
 	char *app = NULL, *action = NULL, *type = NULL, *mount = NULL, *disk = NULL;
@@ -16593,7 +16554,7 @@ void do_entware_cgi(char *url, FILE *stream){
 			websWrite(stream, "{\"entware_is_install\":0,");//0 Not installed
 		websWrite(stream, "\"entware_app_list\":[");
 		system("opkg list-installed > /tmp/entwarelist");
-		if (fp = fopen("/tmp/entwarelist", "r"))
+		if ((fp = fopen("/tmp/entwarelist", "r")))
 		{
 			memset(buf, 0, 128);
 			while (fgets(buf, 128, fp))
@@ -16605,7 +16566,7 @@ void do_entware_cgi(char *url, FILE *stream){
 		}
 		websWrite(stream, "\"\"],\"entware_update_list\":[");
 		system("opkg list-upgradable > /tmp/entware.upgradable");
-		if (fp = fopen("/tmp/entware.upgradable", "r"))
+		if ((fp = fopen("/tmp/entware.upgradable", "r")))
 		{
 			memset(buf, 0, 128);
 			while (fgets(buf, 128, fp))
@@ -26467,6 +26428,7 @@ struct AiMesh_whitelist AiMesh_whitelists[] = {
 	{"appGet.cgi", NULL},
 	{"start_apply.htm", NULL},
 	{"APP_Installation.asp", NULL},
+	{"Advanced_SwitchCtrl_Content.asp", NULL},
 	{"update_appstate.asp", NULL},
 	{"update_applist.asp", NULL},
 	{"Advanced_TimeMachine.asp", NULL},
@@ -26479,13 +26441,13 @@ struct AiMesh_whitelist AiMesh_whitelists[] = {
 	{"set_iperf3_cli.cgi", NULL},
 	{"get_iperf3_state.cgi", NULL},
 #endif
+	{"key.asp", NULL},
 	{"Tools_Sysinfo.asp", NULL},
 	{"ajax_coretmp.asp", NULL},
 	{"ajax_sysinfo.asp", NULL},
 	{"update_clients.asp", NULL},
 	{"ajax_status.xml", NULL },
 	{"ajax_ethernet_ports.asp", NULL },
-	{"key.asp", NULL},
 	{ NULL, NULL }
 };
 #endif

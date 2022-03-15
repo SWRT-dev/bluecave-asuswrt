@@ -14,8 +14,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2019-2021, paldier <paldier@hotmail.com>.
- * Copyright 2019-2021, lostlonger<lostlonger.g@gmail.com>.
+ * Copyright 2018-2022, SWRT.
+ * Copyright 2018-2022, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2022, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
  *
  */
@@ -307,10 +308,14 @@ void swrt_init_done(){
 		nvram_set("modelname", "TY6201_BCM");
 #elif defined(TY6201_RTK)
 		nvram_set("modelname", "TY6201_RTK");
+#elif defined(TY6202)
+		nvram_set("modelname", "TY6202");
 #elif defined(K3C)
 		nvram_set("modelname", "K3C");
-#elif defined(MR62)
-		nvram_set("modelname", "MR62");
+#elif defined(MR60)
+		nvram_set("modelname", "MR60");
+#elif defined(MS60)
+		nvram_set("modelname", "MS60");
 #elif defined(SWRT360V6)
 		nvram_set("modelname", "360V6");
 #elif defined(GLAX1800)
@@ -572,7 +577,6 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 	char releasenote[]="/tmp/release_note0.txt";
 	char model[20], modelname[20], fsver[10], fwver[10], tag[10];
 	char cur_fwver[10];
-	char *tmp_fwver=nvram_get("extendno");
 	char info[100];
 	nvram_set("webs_state_update", "0");
 	nvram_set("webs_state_flag", "0");
@@ -586,7 +590,8 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 	unlink("/tmp/webs_upgrade.log");
 	unlink("/tmp/wlan_update.txt");
 	unlink("/tmp/release_note0.txt");
-	sscanf(tmp_fwver, "%*[A-Z0-9]_%[A-Z0-9.]-%*[a-z0-9]", cur_fwver);
+	memset(cur_fwver, 0, sizeof(cur_fwver));
+    strncpy(cur_fwver, RT_FWVER, 5);//5.x.x[beta]
 
 	snprintf(url, sizeof(url), "%s/%s", serverurl, serverupdate);
 
@@ -599,21 +604,20 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 			goto GODONE;
 		//BLUECAVE#K3C#3004384#R7.0#g13e704e
 		char buffer[1024];
-		while(NULL!=fgets(buffer,sizeof(buffer),fpupdate)){
-			sscanf(buffer,"%[A-Z0-9-]#%[A-Z0-9]#%[0-9]#%[A-Z0-9.]#%[a-z0-9]",model,modelname,fsver,fwver,tag);
-			_dprintf("%s#%s#%s#%s\n",model,modelname,fsver,fwver);
+		while(NULL != fgets(buffer, sizeof(buffer), fpupdate)){
+			sscanf(buffer, "%[A-Z0-9-]#%[A-Z0-9]#%[0-9]#%[A-Z0-9.]#%[a-z0-9]", model, modelname, fsver, fwver, tag);
+			_dprintf("%s#%s#%s#%s\n", model, modelname, fsver, fwver);
 			if(!strcmp(model, nvram_get("productid")) && !strcmp(modelname, nvram_safe_get("modelname"))){
-				if((strstr(cur_fwver, "B") && strstr(fwver, "B"))||(strstr(cur_fwver, "R") && strstr(fwver, "R"))||(strstr(cur_fwver, "X") && strstr(fwver, "X"))){
-					//_dprintf("%s#%s\n",fwver,cur_fwver);
-					if(versioncmp((cur_fwver+1),(fwver+1))==1){
+				if(strstr(fwver, "B") || strstr(fwver, "R") || strstr(fwver, "X")){
+					_dprintf("%s#%s\n",fwver,cur_fwver);
+					if(versioncmp((cur_fwver),(fwver+1)) == 1){
 						nvram_set("webs_state_url", "");
-#if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100) || defined(R6800)
-						snprintf(info,sizeof(info),"3004_382_%s_%s-%s",modelname,fwver,tag);
-#elif defined(BLUECAVE)
-						snprintf(info,sizeof(info),"3004_384_%s_%s-%s",modelname,fwver,tag);
-#else
-						snprintf(info,sizeof(info),"3004_386_%s_%s-%s",modelname,fwver,tag);
-#endif
+						if(!strcmp(nvram_get("firmver"), "3.0.0.4"))
+							snprintf(info, sizeof(info), "3004_%s_%s_%s-%s", nvram_get("buildno"), modelname, fwver, tag);
+						else if(!strcmp(nvram_get("firmver"), "4.0.0.4"))
+							snprintf(info, sizeof(info), "4004_%s_%s_%s-%s", nvram_get("buildno"), modelname, fwver, tag);
+						else
+							snprintf(info, sizeof(info), "5004_%s_%s_%s-%s", nvram_get("buildno"), modelname, fwver, tag);
 						FWUPDATE_DBG("---- current version : %s ----", nvram_get("extendno"));
 						FWUPDATE_DBG("---- productid : %s_%s-%s ----", modelname, fwver, tag);
 						nvram_set("webs_state_info", info);
@@ -659,13 +663,12 @@ int swrt_firmware_check_update_main(int argc, char *argv[])
 	}
 
 GODONE:
-#if (defined(RTAC82U) && !defined(RTCONFIG_AMAS)) || defined(RTAC3200) || defined(RTAC85P) || defined(RMAC2100) || defined(R6800)
-	snprintf(info,sizeof(info),"3004_382_%s",nvram_get("extendno"));
-#elif defined(BLUECAVE)
-	snprintf(info,sizeof(info),"3004_384_%s",nvram_get("extendno"));
-#else
-	snprintf(info,sizeof(info),"3004_386_%s",nvram_get("extendno"));
-#endif
+	if(!strcmp(nvram_get("firmver"), "3.0.0.4"))
+		snprintf(info, sizeof(info), "3004_%s_%s_%s-%s", nvram_get("buildno"), modelname, fwver, tag);
+	else if(!strcmp(nvram_get("firmver"), "4.0.0.4"))
+		snprintf(info, sizeof(info), "4004_%s_%s_%s-%s", nvram_get("buildno"), modelname, fwver, tag);
+	else
+		snprintf(info, sizeof(info), "5004_%s_%s_%s-%s", nvram_get("buildno"), modelname, fwver, tag);
 	nvram_set("webs_state_url", "");
 	nvram_set("webs_state_flag", "0");
 	nvram_set("webs_state_error", "1");
@@ -940,3 +943,233 @@ void start_entware(void)
 }
 #endif
 
+#if defined(R6800)
+#define NETGEAR_BOARD_MAC 0xB0		//6
+#define NETGEAR_BOARD_SN 0xB7		//42
+#define NETGEAR_BOARD_PIN 0xE1		//12
+#define NETGEAR_BOARD_DOMAIN 0xF2	//2
+#define NETGEAR_BOARD_PCBA_SN 0xF6	//12
+#define NETGEAR_BOARD_SSID 0x106	//20
+#define NETGEAR_BOARD_PASSWD 0x120	//64
+#define NETGEAR_BOARD_MODULE 0x200	//2
+void show_boraddata(void)
+{
+	FILE *fp = NULL;
+	int mtd_part = 0, mtd_size = 0, i;
+	char dev_mtd[] = "/dev/mtdblockXXX";
+	unsigned char factory_var_buf[256];
+
+	mtd_getinfo("boarddata", &mtd_part, &mtd_size);
+	snprintf(dev_mtd, sizeof(dev_mtd), "/dev/mtdblock%d", mtd_part);
+	if((fp = fopen(dev_mtd, "rb")) != NULL){
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_MAC, SEEK_SET);
+		fread(factory_var_buf, 1, 6, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("mac is invalid, type 'toolbox fix MAC AA1122334455' to fix it, 17 bytes\n");
+		else
+			printf("mac:%s\n", factory_var_buf);
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_SN, SEEK_SET);
+		fread(factory_var_buf, 1, 42, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("sn is invalid, type 'toolbox fix SN 123456789' to fix it\n");
+		else{
+			for(i = 0; i < 42; i++){
+				if(factory_var_buf[i] == 0xff)
+					factory_var_buf[i] = 0x0;
+			}
+			printf("sn:%s\n", factory_var_buf);
+		}
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_PIN, SEEK_SET);
+		fread(factory_var_buf, 1, 12, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("pin is invalid, type 'toolbox fix PIN 12345678' to fix it, 8 bytes\n");
+		else{
+			for(i = 0; i < 12; i++){
+				if(factory_var_buf[i] == 0xff)
+					factory_var_buf[i] = 0x0;
+			}
+			printf("pin:%s\n", factory_var_buf);
+		}
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_DOMAIN, SEEK_SET);
+		fread(factory_var_buf, 1, 2, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("domain is invalid, type 'toolbox fix DOMAIN 11' to fix it, 2 bytes\n");
+		else{
+			for(i = 0; i < 2; i++){
+				if(factory_var_buf[i] == 0xff)
+					factory_var_buf[i] = 0x0;
+			}
+			printf("domain:%d%d\n", factory_var_buf[0], factory_var_buf[1]);
+		}
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_PCBA_SN, SEEK_SET);
+		fread(factory_var_buf, 1, 12, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("PCBA_SN is invalid, type 'toolbox fix PCBA_SN R.BZV8AE0A4D' to fix it, 12 bytes\n");
+		else{
+			for(i = 0; i < 12; i++){
+				if(factory_var_buf[i] == 0xff)
+					factory_var_buf[i] = 0x0;
+			}
+			printf("PCBA_SN:%s\n", factory_var_buf);
+		}
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_SSID, SEEK_SET);
+		fread(factory_var_buf, 1, 20, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("ssid is invalid, type 'toolbox fix SSID NETGEAR28' to fix it\n");
+		else{
+			for(i = 0; i < 20; i++){
+				if(factory_var_buf[i] == 0xff)
+					factory_var_buf[i] = 0x0;
+			}
+			printf("ssid:%s\n", factory_var_buf);
+		}
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_PASSWD, SEEK_SET);
+		fread(factory_var_buf, 1, 64, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("password is invalid, type 'toolbox fix PSWD slowjungle499' to fix it\n");
+		else{
+			for(i = 0; i < 64; i++){
+				if(factory_var_buf[i] == 0xff)
+					factory_var_buf[i] = 0x0;
+			}
+			printf("password:%s\n", factory_var_buf);
+		}
+		memset(factory_var_buf, 0, sizeof(factory_var_buf));
+		fseek(fp, NETGEAR_BOARD_MODULE, SEEK_SET);
+		fread(factory_var_buf, 1, 2, fp);
+		if(factory_var_buf[0] == 0x0 || factory_var_buf[0] == 0xff)
+			printf("MODULE is invalid, type 'toolbox fix MODULE 09' to fix it, 2 bytes\n");
+		else{
+			for(i = 0; i < 2; i++){
+				if(factory_var_buf[i] == 0xff)
+					factory_var_buf[i] = 0x0;
+			}
+			printf("MODULE:%s\n", factory_var_buf);
+		}
+		fclose(fp);
+	}else
+		printf("can't open boarddata\n");
+}
+
+void fix_boraddata(char *key, char *value)
+{
+	FILE *fp = NULL;
+	int mtd_part = 0, mtd_size = 0, i;
+	char dev_mtd[] = "/dev/mtdblockXXX";
+	unsigned char factory_var_buf[256];
+
+	if(key == NULL || value == NULL){
+		printf("key or value is null\n");
+		printf("for example:toolbox fix MODULE 09\n");
+		return;
+	}
+	memset(factory_var_buf, 0, sizeof(factory_var_buf));
+	mtd_getinfo("boarddata", &mtd_part, &mtd_size);
+	snprintf(dev_mtd, sizeof(dev_mtd), "/dev/mtdblock%d", mtd_part);
+	if(!strcmp(key, "MAC")){
+		int l;
+		unsigned char mac_binary[6];
+		l = strlen(value);
+		if(l != 17 && l != 12){
+			printf("The mac is wrong:%s\ntoolbox fix MAC AABB22334455\n", value);
+			return -1;
+		}
+		for(i=0; i < l; i++){
+			if(!isxdigit(value[i]) && value[i] != ':' && value[i] != '-'){
+				printf("The mac is wrong:%s\ntoolbox fix MAC AABB22334455\n", value);
+				return -1;
+			}
+		}
+		ether_atoe(value, mac_binary);
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_MAC, SEEK_SET);
+			fwrite(mac_binary, 1, 6, fp);
+			fclose(fp);
+			
+		}
+	}else if(!strcmp(key, "SN")){
+		snprintf(factory_var_buf, sizeof(factory_var_buf), "%s", value);
+		for(i = 0; i < 42; i++){
+			if(factory_var_buf[i] == 0x0)
+				factory_var_buf[i] = 0xff;
+		}
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_SN, SEEK_SET);
+			fwrite(factory_var_buf, 1, 42, fp);
+			fclose(fp);
+		}
+	}else if(!strcmp(key, "PIN")){
+		snprintf(factory_var_buf, sizeof(factory_var_buf), "%s", value);
+		for(i = 0; i < 12; i++){
+			if(factory_var_buf[i] == 0x0 || i > 7)
+				factory_var_buf[i] = 0xff;
+		}
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_PIN, SEEK_SET);
+			fwrite(factory_var_buf, 1, 12, fp);
+			fclose(fp);
+		}
+	}else if(!strcmp(key, "DOMAIN")){
+		i = atoi(value);
+		if(i > 254)
+			i = 254;
+		factory_var_buf[1] = i;
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_DOMAIN, SEEK_SET);
+			fwrite(factory_var_buf, 1, 2, fp);
+			fclose(fp);
+		}
+	}else if(!strcmp(key, "PCBA_SN")){
+		snprintf(factory_var_buf, sizeof(factory_var_buf), "%s", value);
+		for(i = 0; i < 12; i++){
+			if(factory_var_buf[i] == 0x0)
+				factory_var_buf[i] = 0xff;
+		}
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_PCBA_SN, SEEK_SET);
+			fwrite(factory_var_buf, 1, 12, fp);
+			fclose(fp);
+		}
+	}else if(!strcmp(key, "SSID")){
+		snprintf(factory_var_buf, sizeof(factory_var_buf), "%s", value);
+		for(i = 0; i < 20; i++){
+			if(factory_var_buf[i] == 0x0)
+				factory_var_buf[i] = 0xff;
+		}
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_SSID, SEEK_SET);
+			fwrite(factory_var_buf, 1, 20, fp);
+			fclose(fp);
+		}
+	}else if(!strcmp(key, "PSWD")){
+		snprintf(factory_var_buf, sizeof(factory_var_buf), "%s", value);
+		for(i = 0; i < 64; i++){
+			if(factory_var_buf[i] == 0x0)
+				factory_var_buf[i] = 0xff;
+		}
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_PASSWD, SEEK_SET);
+			fwrite(factory_var_buf, 1, 64, fp);
+			fclose(fp);
+		}
+	}else if(!strcmp(key, "MODULE")){
+		snprintf(factory_var_buf, sizeof(factory_var_buf), "%s", value);
+		for(i = 0; i < 2; i++){
+			if(factory_var_buf[i] == 0x0)
+				factory_var_buf[i] = 0xff;
+		}
+		if((fp = fopen(dev_mtd, "rb")) != NULL){
+			fseek(fp, NETGEAR_BOARD_MODULE, SEEK_SET);
+			fwrite(factory_var_buf, 1, 2, fp);
+			fclose(fp);
+		}
+	}
+}
+#endif

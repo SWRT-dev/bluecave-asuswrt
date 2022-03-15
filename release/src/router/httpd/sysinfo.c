@@ -111,28 +111,6 @@ void GetPhyStatus_rtk(int *states);
 #define SI_WL_QUERY_AUTHE 2
 #define SI_WL_QUERY_AUTHO 3
 
-#if defined(RTCONFIG_RALINK_MT7621)
-static int nprocessors_conf(void)
-{
-	int ret = 0;
-	DIR *dir = opendir("/sys/devices/system/cpu");
-
-	if (dir) {
-		struct dirent *dp;
-
-		while ((dp = readdir(dir))) {
-			if (dp->d_type == DT_DIR
-				&& dp->d_name[0] == 'c'
-				&& dp->d_name[1] == 'p'
-				&& dp->d_name[2] == 'u'
-				&& isdigit(dp->d_name[3]))
-				++ret;
-		}
-		closedir(dir);
-	}
-	return ret;
-}
-#endif
 
 int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 {
@@ -232,11 +210,7 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 					strcpy(model, "mt7621a");
 #endif
 #endif
-#if defined(RTCONFIG_RALINK_MT7621)
-				count = nprocessors_conf();
-#else
 				count = sysconf(_SC_NPROCESSORS_CONF);
-#endif
 				if (count > 1) {
 					tmp = nvram_safe_get("cpurev");
 					if (*tmp)
@@ -263,16 +237,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				free(buffer);
 				sprintf(result, "%d", freq);
 			}
-#if defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710)
-			else if (
-#if defined(RTAX55) || defined(RTAX1800)
-					get_model() == MODEL_RTAX55
-#elif defined(RTAX56U)
-					get_model() == MODEL_RTAX56U
-#elif defined(RTAX58U) || defined(TUFAX3000) || defined(RTAX82U)
-					get_model() == MODEL_RTAX58U
-#endif
-					)
+#if (defined(RTCONFIG_HND_ROUTER_AX_675X) && !defined(RTCONFIG_HND_ROUTER_AX_6710)) || defined(RTCONFIG_HND_ROUTER_AX_6756)
+			else if (1)
 				strcpy(result, "1500");
 #endif
 			else
@@ -296,14 +262,15 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 			else
 				strcpy(result, "0");//bug?
 #elif defined(RTCONFIG_RALINK)
-			char freq[5];
-			strcpy(freq, "0");
-			char *buffer = read_whole_file("/proc/cpuinfo");
+			int freq = 0;
+			char *buffer = read_whole_file("/sys/kernel/debug/clk/cpuclock/clk_rate");
 			if (buffer) {
-				tmp = strstr(buffer, "cpu MHz");
-				if (tmp) sscanf(tmp, "cpu MHz			: %4[^\n]s", freq);
+				sscanf(buffer, "%d", &freq);
+				free(buffer);
+				sprintf(result, "%d", (freq/1000000));
 			}
-			strcpy(result, freq);
+			else
+				strcpy(result, "0");//bug?
 #endif
 		} else if(strcmp(type,"memory.total") == 0) {
 			sysinfo(&sys);
@@ -488,8 +455,8 @@ int ej_show_sysinfo(int eid, webs_t wp, int argc, char_t ** argv)
 				free(buffer);
 			}
 #elif defined(RTCONFIG_RALINK)
-			char buffer[16];
-			if(get_mtk_wifi_driver_version(buffer, strlen(buffer))>0){
+			char buffer[16] = {0};
+			if(get_mtk_wifi_driver_version(buffer, sizeof(buffer))>0){
 				if(*buffer)
 					strcpy(result,buffer);
 			} else
@@ -738,7 +705,7 @@ unsigned int get_phy_temperature(int radio)
 		interface = nvram_safe_get("wl0_ifname");
 	} else if (radio == 5) {
 		interface = nvram_safe_get("wl1_ifname");
-#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAC5300) || defined(GTAX11000) || defined(RTAX92U)
+#if defined(RTAC3200) || defined(RTAC5300) || defined(GTAC5300) || defined(GTAX11000) || defined(RTAX92U) || defined(RTAX95Q)
 	} else if (radio == 52) {
 		interface = nvram_safe_get("wl2_ifname");
 #endif
