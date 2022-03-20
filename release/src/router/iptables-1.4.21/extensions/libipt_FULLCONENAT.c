@@ -19,13 +19,13 @@
 #include <xtables.h>
 #include <limits.h> /* INT_MAX in ip_tables.h */
 #include <linux/netfilter_ipv4/ip_tables.h>
-#if (defined(BCMARM) && !defined(HND_ROUTER)) || defined(RALINK)
+#if !defined(CONFIG_LANTIQ)
 #include <net/netfilter/nf_conntrack_tuple.h>
 #endif
-#if defined(HND_ROUTER) || defined(QCA) || defined(LANTIQ)
-#include <linux/netfilter/nf_nat.h>
-#else
+#if defined(BCMARM) && !defined(HND_ROUTER)
 #include <net/netfilter/nf_nat.h>
+#else
+#include <linux/netfilter/nf_nat.h>
 #endif
 
 #ifndef NF_NAT_RANGE_PROTO_RANDOM_FULLY
@@ -89,9 +89,15 @@ parse_ports(const char *arg, struct nf_nat_ipv4_multi_range_compat *mr)
 
 	switch (*end) {
 	case '\0':
+#if defined(BCMARM) && !defined(HND_ROUTER)
 		mr->range[0].min.tcp.port
 			= mr->range[0].max.tcp.port
 			= htons(port);
+#else
+		mr->range[0].min.tcp.port
+			= mr->range[0].max.tcp.port
+			= htons(port);
+#endif
 		return;
 	case '-':
 		if (!xtables_strtoui(end + 1, NULL, &maxport, 0, UINT16_MAX))
@@ -155,12 +161,14 @@ FULLCONENAT_print(const void *ip, const struct xt_entry_target *target,
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	const struct nf_nat_multi_range_compat *mr = (const void *)target->data;
 	const struct nf_nat_range *r = &mr->range[0];
-
-	if (r->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
 #else
 	const struct nf_nat_ipv4_multi_range_compat *mr = (const void *)target->data;
 	const struct nf_nat_ipv4_range *r = &mr->range[0];
+#endif
 
+#if defined(BCMARM) && !defined(HND_ROUTER)
+	if (r->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
+#else
 	if (r->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
 #endif
 		printf(" masq ports: ");
@@ -185,12 +193,14 @@ FULLCONENAT_save(const void *ip, const struct xt_entry_target *target)
 #if defined(BCMARM) && !defined(HND_ROUTER)
 	const struct nf_nat_multi_range_compat *mr = (const void *)target->data;
 	const struct nf_nat_range *r = &mr->range[0];
-
-	if (r->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
 #else
 	const struct nf_nat_ipv4_multi_range_compat *mr = (const void *)target->data;
 	const struct nf_nat_ipv4_range *r = &mr->range[0];
+#endif
 
+#if defined(BCMARM) && !defined(HND_ROUTER)
+	if (r->flags & IP_NAT_RANGE_PROTO_SPECIFIED) {
+#else
 	if (r->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
 #endif
 		printf(" --to-ports %hu", ntohs(r->min.tcp.port));
