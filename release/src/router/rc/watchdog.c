@@ -5418,6 +5418,8 @@ void dnsmasq_check()
 extern void start_smartdns();
 void smartdns_check()
 {
+	if(!nvram_match("smartdns", "1"))
+		return;
 	if (!pids("smartdns")) {
 		start_smartdns();
 		logmessage("watchdog", "restart smartdns");
@@ -7633,10 +7635,8 @@ wdp:
 	if (!pids("lbd") && !repeater_mode()) start_qca_lbd();
 #endif
 #endif
-#if defined(SBRAC1900P) || defined(SBRAC3200P) || defined(K3C) || defined(K3) || defined(XWR3100) || defined(R8000P) || defined(EA6700) || defined(DIR868L) || defined(R6300V2) || defined(TY6201_BCM) || defined(TY6201_RTK) || defined(R8500) || defined(F9K1118)
-#if defined(SWRT_VER_MAJOR_R) || defined(SWRT_VER_MAJOR_X)
+#if defined(SWRT_VER_MAJOR_R) || defined(SWRT_VER_MAJOR_X) || defined(SBRAC3200P)
 	check_auth_code();
-#endif
 #endif
 }
 

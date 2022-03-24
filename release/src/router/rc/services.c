@@ -158,7 +158,8 @@ static const struct itimerval zombie_tv = { {0,0}, {307, 0} };
 static const char dmhosts[] = "/etc/hosts.dnsmasq";
 static const char dmresolv[] = "/tmp/resolv.conf";
 #if defined(RTCONFIG_SMARTDNS)
-static const char dmservers[] = "/tmp/resolv.smartdns";
+static const char dmservers[] = "/tmp/resolv.dnsmasq";
+static const char sdservers[] = "/tmp/resolv.smartdns";
 #else
 static const char dmservers[] = "/tmp/resolv.dnsmasq";
 #endif
@@ -1382,7 +1383,11 @@ void start_dnsmasq(void)
 		    "no-negcache\n"		// don't cace nxdomain
 		    "cache-size=%u\n"		// dns cache size
 		    "min-port=%u\n",		// min port used for random src port
+#if defined(RTCONFIG_SMARTDNS)
+		nvram_match("smartdns", "1") ? sdservers : dmservers, 1500, nvram_get_int("dns_minport") ? : 4096);
+#else
 		dmservers, 1500, nvram_get_int("dns_minport") ? : 4096);
+#endif
 
 	/* limit number of outstanding requests */
 	{
@@ -1712,13 +1717,11 @@ void start_dnsmasq(void)
 	chmod("/etc/dnsmasq.conf", 0644);
 	/* Create resolv.conf with empty nameserver list */
 	f_write(dmresolv, NULL, 0, FW_APPEND, 0666);
+
+	/* Create resolv.dnsmasq with empty server list */
+	f_write(dmservers, NULL, 0, FW_APPEND, 0666);
 #if defined(RTCONFIG_SMARTDNS)
-	/* Create resolv.dnsmasq with empty server list */
-	f_write(dmservers, NULL, 0, FW_APPEND, 0666);
-	f_write("/tmp/resolv.dnsmasq", NULL, 0, FW_APPEND, 0666);
-#else
-	/* Create resolv.dnsmasq with empty server list */
-	f_write(dmservers, NULL, 0, FW_APPEND, 0666);
+	f_write(sdservers, NULL, 0, FW_APPEND, 0666);
 #endif
 
 	eval("dnsmasq", "--log-async");
@@ -4472,6 +4475,8 @@ void start_smartdns(void)
 #ifdef RTCONFIG_DUALWAN
 	int primary_unit = wan_primary_ifunit();
 #endif
+	if(!nvram_match("smartdns_enable", "1"))
+		return;
 	if (pids("smartdns"))
 		killall_tk("smartdns");
 	if (f_exists("/etc/smartdns.conf"))

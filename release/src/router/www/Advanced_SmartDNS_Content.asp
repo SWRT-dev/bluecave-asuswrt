@@ -110,6 +110,7 @@ function show_list(){
 function applyRule(){
 	var i = 0;
 	var postdata = {};
+	postdata["smartdns_enable"] = document.form.smartdns_enable.value;
 	postdata["smartdns_dis_ipv6"] = document.form.smartdns_dis_ipv6.value;
 	postdata["smartdns_prefetch"] = document.form.smartdns_prefetch.value;
 	postdata["smartdns_dualstackip"] = document.form.smartdns_dualstackip.value;
@@ -191,6 +192,15 @@ function applyRule(){
 													<td colspan="4" id="setting"><#t2BC#></td>
 												</tr>
 											</thead>
+											<tr id="smartdns_enable_tr">
+												<th width="40%"><#CTL_Enabled#></th>
+												<td>
+													<select name="smartdns_enable" class="input_option">
+														<option value="1" <% nvram_match("smartdns_enable", "1","selected"); %>><#checkbox_Yes#></option>
+														<option value="0" <% nvram_match("smartdns_enable", "0","selected"); %>><#checkbox_No#></option>
+													</select>
+												</td>
+											</tr>
 											<tr id="smartdns_dis_ipv6_tr">
 												<th width="40%"><#SmartDNS_dis_ipv6#></th>
 												<td>
