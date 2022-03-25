@@ -1384,7 +1384,7 @@ void start_dnsmasq(void)
 		    "cache-size=%u\n"		// dns cache size
 		    "min-port=%u\n",		// min port used for random src port
 #if defined(RTCONFIG_SMARTDNS)
-		nvram_match("smartdns", "1") ? sdservers : dmservers, 1500, nvram_get_int("dns_minport") ? : 4096);
+		nvram_match("smartdns_enable", "1") ? sdservers : dmservers, 1500, nvram_get_int("dns_minport") ? : 4096);
 #else
 		dmservers, 1500, nvram_get_int("dns_minport") ? : 4096);
 #endif

@@ -5418,7 +5418,7 @@ void dnsmasq_check()
 extern void start_smartdns();
 void smartdns_check()
 {
-	if(!nvram_match("smartdns", "1"))
+	if(!nvram_match("smartdns_enable", "1"))
 		return;
 	if (!pids("smartdns")) {
 		start_smartdns();

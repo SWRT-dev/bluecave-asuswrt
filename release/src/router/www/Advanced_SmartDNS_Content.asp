@@ -123,7 +123,7 @@ function applyRule(){
 		i -= 1;
 	postdata["smartdns_num"] = i;
 	postdata["action_mode"] = "apply";
-	postdata["rc_service"] = "restart_smartdns";
+	postdata["rc_service"] = "restart_smartdns;restart_dnsmasq";
 	httpApi.nvramSet(postdata);
 }
 </script>
