@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2021 SWRTdev
+# Copyright (C) 2021-2022 SWRTdev
 
 eval $(dbus export softcenter_installing_)
 source /jffs/softcenter/scripts/base.sh
@@ -33,37 +33,27 @@ source /jffs/softcenter/scripts/base.sh
 #softcenter_installing_status=17	#卸载失败！请关闭插件后重试！
 
 softcenter_home_url=$(dbus get softcenter_home_url)
+softcenter_arch=$(dbus get softcenter_arch)
+softcenter_server_tcode=$(dbus get softcenter_server_tcode)
 CURR_TICK=$(date +%s)
 BIN_NAME=$(basename "$0")
 BIN_NAME="${BIN_NAME%.*}"
 if [ "$ACTION" != "" ]; then
 	BIN_NAME=$ACTION
 fi
-ARCH=$(uname -m)
-KVER=$(uname -r)
-if [ "$ARCH" == "armv7l" ]; then
-	if [ "$KVER" != "2.6.36.4brcmarm" ];then
-#bcm675x/ipq4/5/6/80xx/mt7622
-		ARCH_SUFFIX="armng"
-	else
-#bcm470x
-		ARCH_SUFFIX="arm"
-	fi
-elif [ "$ARCH" == "aarch64" ]; then
-#bcm490x
-	ARCH_SUFFIX="arm64"
-elif [ "$ARCH" == "mips" ]; then
-	if [ "$KVER" == "3.10.14" ];then
-#mtk6721
-		ARCH_SUFFIX="mipsle"
-	else
-#grx500
-		ARCH_SUFFIX="mips"
-	fi
-elif [ "$ARCH" == "mipsle" ]; then
-	ARCH_SUFFIX="mipsle"
-else
+if [ "$softcenter_arch" == "" ]; then
+	/jffs/softcenter/bin/sc_auth arch
+	eval $(dbus export softcenter_arch)
+fi
+if [ "$softcenter_server_tcode" == "" ]; then
+	/jffs/softcenter/bin/sc_auth tcode
+	eval $(dbus export softcenter_server_tcode)
+fi
+ARCH_SUFFIX=$softcenter_arch
+if [ "$ARCH_SUFFIX" == "armv7l" ]; then
 	ARCH_SUFFIX="arm"
+elif [ "$ARCH_SUFFIX" == "aarch64" ]; then
+	ARCH_SUFFIX="arm64"
 fi
 
 MODEL=$(nvram get productid)
@@ -109,10 +99,7 @@ install_module() {
 	URL_SPLIT="/"
 	#OLD_MD5=$(dbus get softcenter_module_${softcenter_installing_module_md5})
 	OLD_VERSION=$(dbus get softcenter_module_${softcenter_installing_module}_version)
-	if [ -z "$(dbus get softcenter_server_tcode)" ]; then
-		/jffs/softcenter/bin/sc_auth tcode
-	fi
-	eval $(dbus export softcenter_server_tcode)
+
 	if [ "$softcenter_server_tcode" == "CN" ]; then
 		HOME_URL="https://sc.softcenter.site/$ARCH_SUFFIX"
 	elif [ "$softcenter_server_tcode" == "ALI" ]; then
@@ -129,7 +116,7 @@ install_module() {
 	fi
 
 	CMP=$(versioncmp ${softcenter_installing_version} ${OLD_VERSION})
-	if [ -f "/jffs/softcenter/webs/Module_${softcenter_installing_module}.sh" -o "${softcenter_installing_todo}" = "softcenter" ]; then
+	if [ "${softcenter_installing_todo}" = "softcenter" ]; then
 		CMP="-1"
 	fi
 	if [ "$CMP" = "-1" ]; then

@@ -19,6 +19,7 @@
  * Web Page Configuration Support Routines
  *
  * Copyright 2004, ASUSTeK Inc.
+ * Copyright 2022, SWRTdev.
  * All Rights Reserved.
  * 
  * THIS SOFTWARE IS OFFERED "AS IS", AND BROADCOM GRANTS NO WARRANTIES OF ANY
@@ -108,6 +109,31 @@ int isnumber(const char*s, float *fRate) {
 	*fRate = strtof(s, &e);
 	*fRate *= 10;
 	return e != NULL && *e == (char)0;
+}
+
+int is_if_up(char *ifname)
+{
+    int s;
+    struct ifreq ifr;
+
+    /* Open a raw socket to the kernel */
+    if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) return -1;
+
+    /* Set interface name */
+    strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
+
+    /* Get interface flags */
+    if (ioctl(s, SIOCGIFFLAGS, &ifr) < 0) {
+        fprintf(stderr, "SIOCGIFFLAGS error\n");
+    } else {
+        if (ifr.ifr_flags & IFF_UP) {
+            fprintf(stderr, "%s is up\n", ifname);
+            close(s);
+            return 1;
+        }
+    }
+    close(s);
+    return 0;
 }
 
 /**
@@ -249,46 +275,26 @@ unsigned int getAPChannel(int unit)
  * Return SSID of a interface.
  * @return:	Don't return NULL even interface name is invalid or interface absent.
  */
-char* getSSIDbyIFace(const char *ifname)
+char* getSSIDbyIFace(const char *iface)
 {
 	static char ssid[33] = "";
-	char buf[8192] = "";
-	FILE *fp;
-	int len;
-	char *pt1, *pt2, *pt3;
-
-	if (!ifname || *ifname == '\0') {
-		dbg("%S: got invalid ifname %p\n", __func__, ifname);
-		return ssid;
+	char ifname[16]
+	int skfd;
+	struct iwreq wrq;
+	/* Create a channel to the NET kernel. */
+	if((skfd = iw_sockets_open()) < 0){
+		perror("socket");
+	}else{
+		memset(ssid, 0, sizeof(ssid));
+		strncpy(ifname, iface, sizeof(ifname));
+		/* Get ESSID */
+		wrq.u.essid.pointer = (caddr_t) ssid;
+		wrq.u.essid.length = sizeof(ssid);
+		wrq.u.essid.flags = 0;
+		iw_get_ext(skfd, ifname, SIOCGIWESSID, &wrq);
+		/* Close the socket. */
+		iw_sockets_close(skfd)
 	}
-
-	sprintf(buf, "iwconfig %s", ifname);
-	if (!(fp = popen(buf, "r")))
-		return ssid;
-
-	len = fread(buf, 1, sizeof(buf), fp);
-	pclose(fp);
-	if (len <= 0)
-		return ssid;
-
-	buf[len] = '\0';
-	pt1 = strstr(buf, "ESSID:");
-	if (!pt1)
-		return ssid;
-
-	pt2 = pt1 + strlen("ESSID:") + 1;	/* skip leading " */
-	pt1 = strchr(pt2, '\n');
-	if (!pt1 || (pt1 - pt2) <= 1)
-		return ssid;
-
-	/* Remove trailing " */
-	*pt1 = '\0';
-	pt3 = strrchr(pt2, '"');
-	if (pt3)
-		*pt3 = '\0';
-
-	strlcpy(ssid, pt2, sizeof(ssid));
-
 	return ssid;
 }
 
@@ -469,10 +475,8 @@ char* GetBW(int BW)
 		case BW_40:
 			return "40M";
 
-#if defined(RTAC52U) || defined(RTAC51U)
 		case BW_80:
 			return "80M";
-#endif
 
 		default:
 			return "N/A";
@@ -603,8 +607,8 @@ show_wliface_info(webs_t wp, int unit, char *ifname, char *op_mode)
 	memset(&mac_addr, 0, sizeof(mac_addr));
 	get_iface_hwaddr(ifname, mac_addr);
 	ret += websWrite(wp, "=======================================================================================\n"); // separator
-	ret += websWrite(wp, "OP Mode		: %s\n", op_mode);
-	ret += websWrite(wp, "SSID		: %s\n", getSSIDbyIFace(ifname));
+	ret += websWrite(wp, "OP Mode\t\t: %s\n", op_mode);
+	ret += websWrite(wp, "SSID\t\t: %s\n", getSSIDbyIFace(ifname));
 	sprintf(cmd, "iwconfig %s", ifname);
 	if ((fp = popen(cmd, "r")) != NULL && fread(tmpstr, 1, sizeof(tmpstr), fp) > 1) {
 		pclose(fp);
@@ -614,9 +618,9 @@ show_wliface_info(webs_t wp, int unit, char *ifname, char *op_mode)
 			strncpy(ap_bssid, p + 14, 17);
 			ap_bssid[17] = '\0';
 		}
-		ret += websWrite(wp, "BSSID		: %s\n", ap_bssid);
+		ret += websWrite(wp, "BSSID\t\t: %s\n", ap_bssid);
 	}
-	ret += websWrite(wp, "MAC address	: %02X:%02X:%02X:%02X:%02X:%02X\n",
+	ret += websWrite(wp, "MAC address\t: %02X:%02X:%02X:%02X:%02X:%02X\n",
 			mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 
 	/* Get list of frequencies / channels */
@@ -639,7 +643,7 @@ show_wliface_info(webs_t wp, int unit, char *ifname, char *op_mode)
 	/* Close the socket. */
 	iw_sockets_close(skfd);
 	/* current channel */
-	ret += websWrite(wp, "Channel		: %s\n", vbuf);
+	ret += websWrite(wp, "Channel\t\t: %s\n", vbuf);
 	return ret;
 }
 
@@ -673,6 +677,11 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += websWrite(wp, "\n");
 		}
 #endif
+		if (nvram_get_int("wave_action") == 1) {
+			ret += websWrite(wp, "%s radio is initializing\n",
+				nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
+			return ret;
+		}
 		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
 		ifname = nvram_safe_get(strcat_r(prefix, "ifname", tmp));
 		if (!get_radio_status(ifname)) {
@@ -689,13 +698,16 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 				nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 			return ret;
 		}
-		if( strcmp(getSSIDbyIFace("wlan0"), "test_ssid") == 0 ||
-			strlen(getSSIDbyIFace("wlan0")) == 0 ||
-			strcmp(getSSIDbyIFace("wlan2"), "LSDK_5G") == 0 ||
-			strlen(getSSIDbyIFace("wlan2")) == 0){
-			ret += websWrite(wp, "%s radio is not ready\n",
-				nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
-			return ret;
+		if (nvram_match(strcat_r(prefix, "nband", tmp), "1")) {
+			if ( is_if_up("wlan2") != 1 ){
+				ret += websWrite(wp, "5 GHz radio is not ready\n");
+				return ret;
+			}
+		} else {
+			if ( is_if_up("wlan0") != 1 ){
+				ret += websWrite(wp, "2.4 GHz radio is not ready\n");
+				return ret;
+			}
 		}
 
 		wl_mode_x = nvram_get_int(strcat_r(prefix, "mode_x", tmp));
@@ -1755,14 +1767,29 @@ int
 ej_wl_auth_psta(int eid, webs_t wp, int argc, char_t **argv)
 {
 	int retval = 0;
+	int psta = 0, psta_auth = 0;
 
-	if(nvram_match("wlc_state", "2"))	//connected
-		retval += websWrite(wp, "wlc_state=1;wlc_state_auth=0;");
+	if(nvram_match("wlc_state", "2")){	//connected
+		psta = 1;
+		psta_auth = 0;
 	//else if(?)				//authorization failed
 	//	retval += websWrite(wp, "wlc_state=2;wlc_state_auth=1;");
-	else					//disconnected
-		retval += websWrite(wp, "wlc_state=0;wlc_state_auth=0;");
+	}else{					//disconnected
+		psta = 0;
+		psta_auth = 0;
+	}
+
+	if(json_support){
+		retval += websWrite(wp, "{");
+		retval += websWrite(wp, "\"wlc_state\":\"%d\"", psta);
+		retval += websWrite(wp, ",\"wlc_state_auth\":\"%d\"", psta_auth);
+		retval += websWrite(wp, "}");
+	}else{
+		retval += websWrite(wp, "wlc_state=%d;", psta);
+		retval += websWrite(wp, "wlc_state_auth=%d;", psta_auth);
+	}
 
 	return retval;
 }
 #endif
+

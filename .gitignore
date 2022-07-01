@@ -4,4 +4,8 @@ swrtex.h
 tcode.c
 *.log
 release/src-lantiq/linux/linux-3.10.104/net/swrt_fastpath/*.c
+release/src/router/httpd/pwenc.c
+release/src/router/httpd/web_hook.c
+release/src/router/httpd/sysdeps/*_private.c
+
 

@@ -86,7 +86,7 @@ elif [ "$SC_MOUNT" == "1" ];then
 elif [ "$SC_MOUNT" == "0" -a "$IS_MOUNTED" == "1" ];then
 #uninstall
 	rm -rf $usb_disk/bin $usb_disk/res $usb_disk/webs $usb_disk/scripts $usb_disk/lib
-	rm -rf jffs/softcenter/bin /jffs/softcenter/res /jffs/softcenter/webs /jffs/softcenter/scripts /jffs/softcenter/lib
+	rm -rf jffs/softcenter/*
 	rm -rf /tmp/mnt/*/.sc_installed
 	rm -rf /jffs/softcenter/.sc_mounted
 	nvram set sc_installed=0
@@ -125,7 +125,7 @@ chmod 755 /jffs/softcenter/configs/*.sh
 chmod 755 /jffs/softcenter/bin/*
 chmod 755 /jffs/softcenter/init.d/*
 chmod 755 /jffs/softcenter/automount.sh
-echo 1.4.1 > /jffs/softcenter/.soft_ver
+echo 1.4.5 > /jffs/softcenter/.soft_ver
 dbus set softcenter_api="1.5"
 dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
 nvram set sc_installed=1
