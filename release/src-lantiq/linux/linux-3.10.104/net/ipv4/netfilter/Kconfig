@@ -168,6 +168,13 @@ config IP_NF_TARGET_MASQUERADE
 
 	  To compile it as a module, choose M here.  If unsure, say N.
 
+
+config SWRT_FULLCONE
+	tristate "IPv4 fullcone support"
+	depends on IP_NF_TARGET_MASQUERADE
+	help
+	  Porting from broadcom.
+
 config IP_NF_TARGET_NETMAP
 	tristate "NETMAP target support"
 	depends on NETFILTER_ADVANCED
