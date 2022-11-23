@@ -774,6 +774,30 @@ void setup_conntrack(void)
 		if (atoi(buf) > 0) nvram_set("ct_max", buf);
 	}
 #endif
+#ifdef LINUX26
+	if (f_exists("/proc/sys/net/netfilter/nf_conntrack_expect_max")) {
+		snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_expect_max"));
+		i = atoi(p);
+		if (i >= 1) {
+			f_write_string("/proc/sys/net/netfilter/nf_conntrack_expect_max", p, 0, 0);
+		}
+		else if (f_read_string("/proc/sys/net/netfilter/nf_conntrack_expect_max", buf, sizeof(buf)) > 0) {
+			if (atoi(buf) > 0) nvram_set("ct_expect_max", buf);
+		}
+	}
+#endif
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+	snprintf(p, sizeof(p), "30");
+	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_fin_wait", p, 0, 0);
+	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait", p, 0, 0);
+	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close_wait", p, 0, 0);
+	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_fin_wait", p, 0, 0);
+	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_time_wait", p, 0, 0);
+	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close_wait", p, 0, 0);
+	snprintf(p, sizeof(p), "300");
+	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established", p, 0, 0);
+	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established", p, 0, 0);
+#endif
 #if 0
 	if (!nvram_match("nf_rtsp", "0")) {
 		ct_modprobe("rtsp");
