@@ -8751,7 +8751,7 @@ void start_jitterentropy()
 	char *cmd_argv[] = { "/usr/sbin/jitterentropy-rngd",
 								"-p", "/var/run/jitterentropy-rngd.pid",
 								NULL};
-	_eval(cmd_argv, NULL, 0, &pid);
+//	_eval(cmd_argv, NULL, 0, &pid);
 }
 
 void stop_jitterentropy()
