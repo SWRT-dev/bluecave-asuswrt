@@ -8288,8 +8288,6 @@ int init_nvram(void)
 		nvram_set("lan_ifname", "br0");
 		nvram_set("landevs", "eth0_1 eth0_2 eth0_3 eth0_4");
 		nvram_set("ct_max", "300000");
-		nvram_set("ct_expect_max", "30000");
-		nvram_set("ct_hashsize", "10000");
 		nvram_unset("aimesh_macacl_2g_mac");
 		nvram_unset("aimesh_macacl_5g_mac");
 

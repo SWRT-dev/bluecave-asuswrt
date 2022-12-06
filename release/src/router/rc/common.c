@@ -542,7 +542,8 @@ static void write_ct_timeout(const char *type, const char *name, unsigned int va
 	unsigned char buf[128];
 	char v[16];
 
-	sprintf((char *) buf, "/proc/sys/net/ipv4/netfilter/ip_conntrack_%s_timeout%s%s",
+	sprintf((char *) buf, "/proc/sys/net/%s_%s_timeout%s%s",
+		d_exists("/proc/sys/net/ipv4/netfilter") ? "ipv4/netfilter/ip_conntrack" : "netfilter/nf_conntrack",
 		type, (name && name[0]) ? "_" : "", name ? name : "");
 	sprintf(v, "%u", val);
 
@@ -563,7 +564,8 @@ static unsigned int read_ct_timeout(const char *type, const char *name)
 	unsigned int val = 0;
 	char v[16];
 
-	sprintf((char *) buf, "/proc/sys/net/ipv4/netfilter/ip_conntrack_%s_timeout%s%s",
+	sprintf((char *) buf, "/proc/sys/net/%s_%s_timeout%s%s",
+		d_exists("/proc/sys/net/ipv4/netfilter") ? "ipv4/netfilter/ip_conntrack" : "netfilter/nf_conntrack",
 		type, (name && name[0]) ? "_" : "", name ? name : "");
 	if (f_read_string((const char *) buf, v, sizeof(v)) > 0)
 		val = atoi(v);
@@ -608,7 +610,7 @@ void setup_udp_timeout(int connflag)
 #endif
 	) {
 		snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_udp_timeout"));
-		if (sscanf(p, "%u%u", &v[0], &v[1]) == 2) {
+		if (strcmp(p,"0 0") && sscanf(p, "%u%u", &v[0], &v[1]) == 2) {
 			write_udp_timeout(NULL, v[0]);
 			write_udp_timeout("stream", v[1]);
 		}
@@ -668,7 +670,7 @@ void setup_ct_timeout(int connflag)
 #endif
 	) {
 		snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_timeout"));
-		if (sscanf(p, "%u%u", &v[0], &v[1]) == 2) {
+		if (strcmp(p,"0 0") && sscanf(p, "%u%u", &v[0], &v[1]) == 2) {
 //			write_ct_timeout("generic", NULL, v[0]);
 			write_ct_timeout("icmp", NULL, v[1]);
 		}
@@ -693,20 +695,51 @@ void setup_ct_timeout(int connflag)
 	}
 }
 
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+void gen_conntrack_conf(void)
+{
+#define RAM_1GB 1024 *1024 *1024
+#define RAM_512M 512 *1024 *1024
+#define RAM_256M 256 *1024 *1024
+#define RAM_128M 128 *1024 *1024
+	struct sysinfo sys;
+	sysinfo(&sys);
+	nvram_set("ct_tcp_timeout", "300 300 120 60 30 30 30 10 30 30");
+	if(sys.totalram >= RAM_1GB){
+		nvram_set("ct_hashsize", "65536");
+		nvram_set("ct_expect_max", "16384");
+	}else if(sys.totalram >= RAM_512M && sys.freeram >= RAM_128M){
+		nvram_set("ct_hashsize", "32768");
+		nvram_set("ct_expect_max", "16384");
+	}else if(sys.totalram >= RAM_256M && sys.freeram >= RAM_128M){
+		nvram_set("ct_hashsize", "16384");
+		nvram_set("ct_expect_max", "16384");
+	}else{
+		nvram_set("ct_hashsize", "16384");
+		nvram_set("ct_expect_max", "8192");
+	}
+}
+#endif
+
 void setup_conntrack(void)
 {
 	unsigned int v[10];
-	char p[32];
+	char p[64];
 	char buf[70];
 	int i;
 
 #ifdef RTCONFIG_CONCURRENTREPEATER
 	return;		/* don't need it for concurrent repeater */
 #endif
-
+#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+	gen_conntrack_conf();
+#endif
 	snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_tcp_timeout"));
-	if (sscanf(p, "%u%u%u%u%u%u%u%u%u%u",
+	if (strcmp(p,"0 0 0 0 0 0 0 0 0 0") && sscanf(p, "%u%u%u%u%u%u%u%u%u%u",
 		&v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7], &v[8], &v[9]) == 10) {	// lightly verify
+#if defined(RTCONFIG_HND_ROUTER_AX_675X)
+		fprintf(stderr, "ct_tcp_timeout:[%s]\n", p);
+#endif
 		write_tcp_timeout("established", v[1]);
 		write_tcp_timeout("syn_sent", v[2]);
 		write_tcp_timeout("syn_recv", v[3]);
@@ -733,7 +766,10 @@ void setup_conntrack(void)
 	setup_udp_timeout(FALSE);
 
 	snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_timeout"));
-	if (sscanf(p, "%u%u", &v[0], &v[1]) == 2) {
+	if (strcmp(p,"0 0") && sscanf(p, "%u%u", &v[0], &v[1]) == 2) {
+#if defined(RTCONFIG_HND_ROUTER_AX_675X)
+		fprintf(stderr, "ct_timeout:[%s]\n", p);
+#endif
 //		write_ct_timeout("generic", NULL, v[0]);
 		write_ct_timeout("icmp", NULL, v[1]);
 	}
@@ -787,16 +823,8 @@ void setup_conntrack(void)
 	}
 #endif
 #if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
-	snprintf(p, sizeof(p), "30");
-	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_fin_wait", p, 0, 0);
-	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait", p, 0, 0);
-	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close_wait", p, 0, 0);
-	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_fin_wait", p, 0, 0);
-	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_time_wait", p, 0, 0);
-	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_close_wait", p, 0, 0);
-	snprintf(p, sizeof(p), "300");
-	f_write_string("/proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established", p, 0, 0);
-	f_write_string("/proc/sys/net/ipv4/netfilter/ip_conntrack_tcp_timeout_established", p, 0, 0);
+	snprintf(p, sizeof(p), "%s", nvram_safe_get("ct_hashsize"));
+	f_write_string("/proc/sys/net/netfilter/nf_conntrack_buckets", p, 0, 0);
 #endif
 #if 0
 	if (!nvram_match("nf_rtsp", "0")) {
@@ -853,6 +881,10 @@ void setup_conntrack(void)
 		ct_modprobe_r("pptp");
 		ct_modprobe_r("proto_gre");
 	}
+#ifdef RTCONFIG_HND_ROUTER_AX_6756
+	f_write_string("/proc/sys/net/netfilter/nf_conntrack_helper", "1", 0, 0);
+#endif
+
 }
 
 void setup_pt_conntrack(void)
