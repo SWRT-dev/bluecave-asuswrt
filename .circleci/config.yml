@@ -1,0 +1,28 @@
+
+version: 2.1
+
+
+jobs:
+  testlantiq:
+    docker:
+      - image: paldier/swrt-docker:latest
+        environment:
+          PROJECT_DIR: "/home/docker/project"
+          TERM: "xterm-256color"
+    resource_class: large
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: build lantiq
+          shell: /bin/sh
+          command: |
+            git clone --depth=1 https://github.com/SWRT-dev/bluecave-asuswrt
+            cd bluecave-asuswrt/release/src-rt-lantiq
+            make bluecave
+
+workflows:
+  build-workflow:
+    jobs:
+      - testlantiq
+
