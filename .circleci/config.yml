@@ -18,7 +18,7 @@ jobs:
           shell: /bin/sh
           command: |
             git clone --depth=1 https://github.com/SWRT-dev/bluecave-asuswrt
-            cd bluecave-asuswrt/release/src-rt-lantiq
+            cd bluecave-asuswrt/release/src-lantiq
             make bluecave
 
 workflows:
