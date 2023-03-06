@@ -15,7 +15,9 @@
 #ifndef __RC_H__
 #define __RC_H__
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include <rtconfig.h>
 #include <stdio.h>
@@ -2261,5 +2263,5 @@ extern void GN_WBL_restart();
 #endif
 #endif
 
+extern void save_sys_time(void);
 #endif	/* __RC_H__ */
-

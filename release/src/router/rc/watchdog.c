@@ -3785,6 +3785,7 @@ void timecheck(void)
 				if (timecheck_reboot(reboot_schedule))
 				{
 					logmessage("reboot scheduler", "[%s] The system is going down for reboot\n", __FUNCTION__);
+					save_sys_time();
 					kill(1, SIGTERM);
 				}
 			}
@@ -7826,4 +7827,3 @@ int wdg_monitor_main(int argc, char *argv[])
 	return 0;
 }
 #endif
-

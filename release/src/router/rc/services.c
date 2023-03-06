@@ -8500,6 +8500,16 @@ stop_logger(void)
 		killall("syslogd", SIGTERM);
 }
 
+void save_sys_time(void)
+{
+	struct timeval tv;
+	char tmp[12] = {0};
+	gettimeofday(&tv,NULL);
+	snprintf(tmp, sizeof(tmp), "%ld", tv.tv_sec);
+	nvram_set("sys_last_time", tmp);
+	nvram_commit();
+}
+
 void
 stop_services(void)
 {
@@ -9845,6 +9855,7 @@ again:
 #endif
 
 	if (strcmp(script, "reboot") == 0 || strcmp(script,"rebootandrestore")==0) {
+		save_sys_time();
 		g_reboot = 1;
 		f_write_string("/tmp/reboot", "1", 0, 0);
 
@@ -10234,6 +10245,7 @@ again:
 	}
 	else if(strcmp(script, "upgrade") == 0) {
 		int stop_commit;
+		save_sys_time();
 		stop_commit = nvram_get_int(ASUS_STOP_COMMIT);
 		if(stop_commit == 0) {
 			nvram_set(ASUS_STOP_COMMIT, "1");	/* NOT TO COMMIT when FW Writting */
@@ -16844,4 +16856,3 @@ void PS_pod_main(void)
 	return;
 }
 #endif
-
