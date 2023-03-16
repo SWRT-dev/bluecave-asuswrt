@@ -5419,6 +5419,10 @@ void dnsmasq_check()
 extern void start_smartdns();
 void smartdns_check()
 {
+#if defined(RTCONFIG_AMAS)
+	if(aimesh_re_node())
+		return;
+#endif
 	if(!nvram_match("smartdns_enable", "1"))
 		return;
 	if (!pids("smartdns")) {
@@ -7636,9 +7640,8 @@ wdp:
 	if (!pids("lbd") && !repeater_mode()) start_qca_lbd();
 #endif
 #endif
-#if defined(SWRT_VER_MAJOR_R) || defined(SWRT_VER_MAJOR_X) || defined(SBRAC3200P)
-	check_auth_code();
-#endif
+	if(check_auth_code)
+		check_auth_code();
 }
 
 #if ! (defined(RTCONFIG_QCA) || defined(RTCONFIG_RALINK))
@@ -7827,3 +7830,4 @@ int wdg_monitor_main(int argc, char *argv[])
 	return 0;
 }
 #endif
+

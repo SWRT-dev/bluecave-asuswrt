@@ -161,6 +161,10 @@ static char *defenv[] = {
 extern int set_tcode_misc();
 extern int g_upgrade;
 
+#ifdef RTCONFIG_ASD
+	extern int monitor_asd(void);
+#endif
+
 #ifdef RTCONFIG_WPS
 static void
 wps_restore_defaults(void)
@@ -3042,6 +3046,9 @@ int init_nvram(void)
 		snprintf(ver, sizeof(ver), "%s.%s_%s", nvram_safe_get("firmver"), nvram_safe_get("buildno"), nvram_safe_get("extendno"));
 		nvram_set("innerver", ver);
 	}
+#if defined(RTCONFIG_SWRT)
+	swrt_init_pre();
+#endif
 
 	switch (model) {
 #ifdef RTCONFIG_RALINK
@@ -8367,7 +8374,6 @@ int init_nvram(void)
 		nvram_set_int("led_idr_sig1_gpio", 34);	// RED
 		nvram_set_int("led_idr_sig2_gpio", 35|GPIO_ACTIVE_LOW);	// BLUE
 		nvram_set_int("btn_wps_gpio", 30);
-		swrt_init();
 		k3c_init_led();
 		swrt_patch_nvram();
 		led_control(LED_INDICATOR_SIG3, LED_ON);//yellow
@@ -8380,7 +8386,6 @@ int init_nvram(void)
 		nvram_set_int("led_idr_sig2_gpio", 6);	// BLUE
 
 		nvram_set_int("btn_wps_gpio", 30|GPIO_ACTIVE_LOW);
-		swrt_init();
 #endif
 		nvram_set_int("btn_rst_gpio", 0|GPIO_ACTIVE_LOW);
 
@@ -11178,7 +11183,7 @@ dbg("boot/continue fail= %d/%d\n", nvram_get_int("Ate_boot_fail"),nvram_get_int(
 			force_free_caches();
 #endif
 
-			swrt_init_done();
+			swrt_init_post();
 
 #ifdef RTCONFIG_AMAS
 			nvram_set("start_service_ready", "1");

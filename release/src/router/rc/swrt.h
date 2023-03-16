@@ -14,9 +14,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2018-2022, SWRT.
- * Copyright 2018-2022, paldier <paldier@hotmail.com>.
- * Copyright 2018-2022, lostlonger<lostlonger.g@gmail.com>.
+ * Copyright 2018-2023, SWRT.
+ * Copyright 2018-2023, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2023, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
  * 
  */
@@ -37,9 +37,9 @@ enum {
 
 extern void softcenter_trigger(int sig);
 #endif
-extern void swrt_init(void);
-extern void swrt_init_model(void);
-extern void swrt_init_done(void);
+extern void swrt_init_pre(void);
+extern void swrt_init_model(void) __attribute__((weak));
+extern void swrt_init_post(void);
 extern void gen_swrtid(void);
 extern int swrt_toolbox(int argc, char **argv);
 enum {
@@ -76,16 +76,12 @@ extern void ac3200p_patch_cfe(void);
 #elif defined(R7000P)
 extern void r7000p_nvram_patch(void);
 #elif defined(RTCONFIG_RALINK) || defined(RTCONFIG_QCA)
-extern void patch_Factory(void);
+extern void patch_Factory(void) __attribute__((weak));
 #else
 extern void swrt_patch_nvram(void);
 #endif
 
-#if defined(RAX70)
-extern void rax70_sys_hack(void);
-#elif defined(MR60) || defined(MS60)
-extern void ntgr_sys_hack(void);
-#elif defined(TYAX5400)
+#if defined(RAX70) || defined(RGMA2820A) || defined(RGMA2820B) || defined(MR60) || defined(MS60) || defined(RAC2V1S) || defined(RMAX6000) || defined(RAX200)
 extern void swrt_sys_hack(void);
 #elif defined(TUFAX3000) || defined(RTAX58U) || defined(RTAX82U)
 extern void enable_4t4r_ax58(void);
@@ -106,9 +102,7 @@ extern void exec_uu_swrt(void);
 #if defined(RTCONFIG_FRS_LIVE_UPDATE) 
 extern int swrt_firmware_check_update_main(int argc, char *argv[]);
 #endif
-#if defined(SWRT_VER_MAJOR_R) || defined(SWRT_VER_MAJOR_X) || defined(SBRAC3200P)
-extern void check_auth_code(void);
-#endif
+extern void check_auth_code(void) __attribute__((weak));
 #if defined(RTCONFIG_SWRT_LED)
 extern void swrt_ledon(void);
 #endif
@@ -116,10 +110,14 @@ extern void swrt_ledon(void);
 extern void start_entware(void);
 extern void stop_entware(void);
 extern void init_entware(void);
+extern void gen_arch_conf(void);
 #endif
 #if defined(R6800)
 extern void show_boraddata(void);
 extern void fix_boraddata(char *key, char *value);
+#endif
+#if defined(RAX200)
+void fan_watchdog(void);
 #endif
 #endif
 

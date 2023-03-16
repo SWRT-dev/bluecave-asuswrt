@@ -14,9 +14,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2018-2022, SWRT.
- * Copyright 2018-2022, paldier <paldier@hotmail.com>.
- * Copyright 2018-2022, lostlonger<lostlonger.g@gmail.com>.
+ * Copyright 2018-2023, SWRT.
+ * Copyright 2018-2023, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2023, lostlonger<lostlonger.g@gmail.com>.
  * All Rights Reserved.
  *
  */
@@ -34,8 +34,13 @@
 #include <curl/curl.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #ifndef MNT_DETACH
 #define MNT_DETACH	0x00000002
+#endif
+
+#if defined(RTAC82U)
+void fix_jffs_size(void);
 #endif
 
 #if defined(RTCONFIG_SOFTCENTER)
@@ -72,7 +77,7 @@ void swrt_insmod(){
 	modprobe("cifs");
 }
 
-void swrt_init()
+void swrt_init_pre()
 {
 	_dprintf("############################ SWRT init #################################\n");
 #if defined(RTCONFIG_SOFTCENTER)
@@ -87,12 +92,12 @@ void swrt_init()
 	nvram_set("entware_wan_sig", "0");
 	nvram_set("entware_stop_sig", "0");
 #endif
-#if defined(RTCONFIG_AMAS) && defined(RTCONFIG_SMARTDNS)
-	if(aimesh_re_node())
-		nvram_set("smartdns_enable", "0");
+#if defined(RTAC82U)
+	fix_jffs_size();
 #endif
 	swrt_insmod();
-	swrt_init_model();
+	if(swrt_init_model)
+		swrt_init_model();
 #if defined(RTCONFIG_ROG_UI)
 	nvram_set("swrt_rog", "1");
 #endif
@@ -121,6 +126,8 @@ void swrt_init()
 		nvram_set("modelname", "R7000P");
 #elif defined(R8500)
 		nvram_set("modelname", "R8500");
+#elif defined(RAC2V1S)
+		nvram_set("modelname", "RAC2V1S");
 #elif defined(R8000P)
 		nvram_set("modelname", "R8000P");
 #elif defined(RAX20)
@@ -139,6 +146,10 @@ void swrt_init()
 		nvram_set("modelname", "TY6201_RTK");
 #elif defined(TY6202)
 		nvram_set("modelname", "TY6202");
+#elif defined(RGMA2820A)
+		nvram_set("modelname", "RGMA2820A");
+#elif defined(RGMA2820B)
+		nvram_set("modelname", "RGMA2820B");
 #elif defined(TYAX5400)
 		nvram_set("modelname", "TYAX5400");
 #elif defined(K3C)
@@ -151,6 +162,22 @@ void swrt_init()
 		nvram_set("modelname", "360V6");
 #elif defined(GLAX1800)
 		nvram_set("modelname", "GLAX1800");
+#elif defined(JDCAX1800)
+		nvram_set("modelname", "JDCAX1800");
+#elif defined(RMAX6000)
+		nvram_set("modelname", "RMAX6000");
+#elif defined(RMAC2100)
+		nvram_set("modelname", "RMAC2100");
+#elif defined(R6800)
+		nvram_set("modelname", "R6800");
+#elif defined(PGBM1)
+		nvram_set("modelname", "PGBM1");
+#elif defined(JCGQ10PRO)
+		nvram_set("modelname", "JCGQ10PRO");
+#elif defined(H3CTX1801)
+		nvram_set("modelname", "H3CTX1801");
+#elif defined(XMCR660X)
+		nvram_set("modelname", "XMCR660X");
 //asus
 #elif defined(RTAC68U)
 		nvram_set("modelname", "RTAC68U");
@@ -192,6 +219,8 @@ void swrt_init()
 		nvram_set("modelname", "RTAX82U");
 #elif defined(RTAX86U)
 		nvram_set("modelname", "RTAX86U");
+#elif defined(RTAX86U_PRO)
+		nvram_set("modelname", "RTAX86UPRO");
 #elif defined(RTAX88U)
 		nvram_set("modelname", "RTAX88U");
 #elif defined(GTAX6000)
@@ -212,16 +241,6 @@ void swrt_init()
 		nvram_set("modelname", "RTAX89X");
 #elif defined(RTAC85P)
 		nvram_set("modelname", "RTAC85P");
-#elif defined(RMAC2100)
-		nvram_set("modelname", "RMAC2100");
-#elif defined(R6800)
-		nvram_set("modelname", "R6800");
-#elif defined(PGBM1)
-		nvram_set("modelname", "PGBM1");
-#elif defined(JCGQ10PRO)
-		nvram_set("modelname", "JCGQ10PRO");
-#elif defined(H3CTX1801)
-		nvram_set("modelname", "H3CTX1801");
 #elif defined(TUFAC1750)
 		nvram_set("modelname", "TUFAC1750");
 #elif defined(RTAC95U)
@@ -248,6 +267,8 @@ void swrt_init()
 		nvram_set("modelname", "ZENWIFIXP4");
 #elif defined(ETJ)
 		nvram_set("modelname", "ZENWIFIETJ");
+#elif defined(XT12)
+		nvram_set("modelname", "XT12");
 #endif
 	if(!nvram_get("swrt_beta"))
 		nvram_set("swrt_beta", "0");
@@ -392,7 +413,7 @@ void enable_4t4r(void)
 }
 #endif
 
-void swrt_init_done(){
+void swrt_init_post(){
 	_dprintf("############################ SWRT init done #################################\n");
 #if defined(RTCONFIG_SOFTCENTER)
 //cifs
@@ -451,6 +472,14 @@ void swrt_init_done(){
 #endif
 #if defined(RTCONFIG_SWRT_LED)
 	swrt_ledon();//to fix LED state
+#endif
+#if defined(RTCONFIG_ENTWARE)
+	gen_arch_conf();
+#endif
+#if defined(MS60)
+	if(aimesh_re_node() && !d_exists("/sys/class/net/br0/brif/eth0")){
+		eval("brctl", "addif", "br0", "eth0");
+	}
 #endif
 }
 
@@ -860,7 +889,7 @@ void stop_entware(void)
 
 void init_entware(void)
 {
-	if(strlen(nvram_get("apps_mounted_path"))){
+	if(strlen(nvram_safe_get("apps_state_install")) || nvram_match("webdav_aidisk", "1")){
 		logmessage("[Entware]", "Downloadmaster/Aicloud is installed already! Entware can't install!\n");
 		return;
 	}
@@ -882,6 +911,8 @@ void init_entware(void)
 #define ENTWARE_ACT_STOP		16
 #define	ENTWARE_ACT_MASK (ENTWARE_ACT_INSTALL | ENTWARE_ACT_UPDATE | ENTWARE_ACT_REMOVE)
 #define	ENTWARE_ACT_MASK2 (ENTWARE_ACT_START | ENTWARE_ACT_STOP)
+#define ENTWARE_SERVER "bin.entware.net"
+#define ENTWARE_MIRROR "mirrors.bfsu.edu.cn/entware"
 
 void start_entware(void)
 {
@@ -901,9 +932,18 @@ void start_entware(void)
 	{
 		if (ent_action & ENTWARE_ACT_INSTALL)
 		{
-			snprintf(cmd, sizeof(cmd), "wget http://bin.entware.net/%s/installer/%s.sh -O /tmp/doentware.sh", nvram_get("entware_arch"), ent_arg);
+			snprintf(cmd, sizeof(cmd), "wget http://%s/%s/installer/%s.sh -O /tmp/doentware.sh", 
+				nvram_match("preferred_lang", "CN") ? ENTWARE_MIRROR : ENTWARE_SERVER, nvram_get("entware_arch"), ent_arg);
 			system(cmd);
 			system("chmod +x /tmp/doentware.sh");
+			if(nvram_match("preferred_lang", "CN")){
+				system("mkdir -p /opt/etc");
+				snprintf(cmd, sizeof(cmd), "wget http://%s/%s/installer/opkg.conf -O /opt/etc/opkg.conf", ENTWARE_MIRROR, nvram_get("entware_arch"));
+				system(cmd);
+				system("sed -i '/opkg.conf/d' /tmp/doentware.sh");
+				system("sed -i 's|https\?://bin.entware.net|http://mirrors.bfsu.edu.cn/entware|g' /tmp/doentware.sh");
+				system("sed -i 's|https\?://bin.entware.net|http://mirrors.bfsu.edu.cn/entware|g' /opt/etc/opkg.conf");
+			}
 			system("/tmp/doentware.sh");
 			nvram_set("entware_installed", "1");
 		}
@@ -969,6 +1009,27 @@ void start_entware(void)
 	nvram_unset("entware_app");
 	nvram_unset("entware_action");
 	nvram_unset("entware_arg");
+}
+
+void gen_arch_conf(void)
+{
+	struct utsname uts;
+	if(nvram_match("entware_arch", "") && uname(&uts) == 0){
+		if(!strcmp(uts.machine, "armv7l")){
+			if(!strcmp(uts.release, "2.6.36.4brcmarm"))
+				nvram_set("entware_arch", "armv7sf-k2.6");
+			else
+				nvram_set("entware_arch", "armv7sf-k3.2");
+		}else if(!strcmp(uts.machine, "mips")){
+			if(!strncmp(uts.release, "4.4", 3) || !strncmp(uts.release, "5.4", 3))
+				nvram_set("entware_arch", "mipselsf-k3.4");
+			else
+				nvram_set("entware_arch", "mipssf-k3.4");//lantiq: 3.10/4.9
+		}else if(!strcmp(uts.machine, "aarch64"))
+			nvram_set("entware_arch", "aarch64-k3.10");
+		else if(!strcmp(uts.machine, "x86_64"))
+			nvram_set("entware_arch", "x64");
+	}
 }
 #endif
 
@@ -1202,4 +1263,643 @@ void fix_boarddata(char *key, char *value)
 	}
 }
 #endif
+#if defined(PGBM1)
+int check_bwdpi_nvram_setting(){ return 0; }
+int check_wrs_switch(){ return 0; }
+#endif
 
+#if defined(RTCONFIG_BCMARM) && !defined(RTCONFIG_HND_ROUTER_AX)
+#define	HAPD_MAX_BUF			512
+void __attribute__((weak)) wl_apply_akm_by_auth_mode(int unit, int subunit, char *sp_prefix_auth)
+{
+	char prefix[] = "wlXXXXXXX_", sp_prefix[] = "wlXXXXXXX_";
+	char auth_mode[32] = {0}, tmp[32];
+
+	_dprintf("%s, unit=%d, subunit=%d, sp_prefix:%s\n", __func__, unit, subunit, sp_prefix_auth);
+	if(subunit == -1)
+		snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	else
+		snprintf(prefix, sizeof(prefix), "wl%d.%d_", unit, subunit);
+	if(sp_prefix_auth && strlen(sp_prefix_auth) > 3){
+		snprintf(sp_prefix, sizeof(sp_prefix), "%s", sp_prefix_auth);
+		strlcpy(auth_mode, "auth_mode", sizeof(auth_mode));
+	}else{
+		snprintf(sp_prefix, sizeof(sp_prefix), "%s", prefix);
+		strlcpy(auth_mode, "auth_mode_x", sizeof(auth_mode));
+	}
+	memset(tmp, 0, sizeof(tmp));
+	if(nvram_match(strcat_r(sp_prefix, auth_mode, tmp), "shared"))
+		nvram_set(strcat_r(sp_prefix, "auth", tmp), "1");
+	else
+		nvram_set(strcat_r(sp_prefix, "auth", tmp), "0");
+#ifdef RTAC68U_V4
+	if (strstr(nvram_safe_get(strcat_r(sp_prefix, "auth_mode_x", tmp)), "sae"))
+		nvram_set(strcat_r(sp_prefix, "auth_mode_x", tmp), "psk2");
+#endif
+	if(nvram_match(strcat_r(sp_prefix, auth_mode, tmp), "psk"))
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk");
+	else if(nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "psk2")){
+#if defined(HND_ROUTER) && defined(WLHOSTFBT)
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk2 psk2ft");
+#else
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk2");
+#endif
+	}
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "pskpsk2"))
+	{
+#if defined(HND_ROUTER) && defined(WLHOSTFBT)
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk psk2 psk2ft");
+#else
+		if((is_psta(unit) || is_psr(unit)) && subunit == -1)
+			nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk2");
+		else{
+			nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk psk2");
+			if(!nvram_match(strcat_r(sp_prefix, "mfp", tmp), "2"))
+				return;
+			else
+				nvram_set(strcat_r(sp_prefix, "mfp", tmp), "1");
+		}
+#endif
+	}
+#ifndef RTAC68U_V4
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "sae"))
+	{
+		if((is_psta(unit) || is_psr(unit)) && subunit == -1)
+			nvram_set(strcat_r(sp_prefix, "akm", tmp), "sae");
+		else
+			nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk2 sae");
+	}
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "psk2sae"))
+	{
+		if((is_psta(unit) || is_psr(unit)) && subunit == -1)
+			nvram_set(strcat_r(sp_prefix, "akm", tmp), "sae");
+		else{
+			nvram_set(strcat_r(sp_prefix, "akm", tmp), "psk2 sae");
+			if(!nvram_match(strcat_r(sp_prefix, "mfp", tmp), "2"))
+				return;
+			else
+				nvram_set(strcat_r(sp_prefix, "mfp", tmp), "1");
+		}
+	}
+#endif
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "wpa"))
+	{
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "wpa");
+	}
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "wpa2"))
+	{
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "wpa2");
+	}
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "wpawpa2"))
+	{
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "wpa wpa2");
+	}
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "owe"))
+	{
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "owe");
+	}
+#ifdef RTCONFIG_OWE_TRANS
+	else if (nvram_match(strcat_r(sp_prefix, "auth_mode_x", tmp), "openowe")) //OWE-Trainsition mode
+	{
+		// early convert owe-transition settings in wl_defaults()::set_owe_transition_bss_enabled(),
+		// in order to bring up owe vif properly
+	}
+#endif
+	else 
+		nvram_set(strcat_r(sp_prefix, "akm", tmp), "");
+}
+
+int __attribute__((weak)) get_hostapd_pid(int radio_idx, pid_t *pid)
+{
+	DIR *dir;
+	struct dirent *ent;
+	char path[PATH_MAX];
+	FILE *fp = NULL;
+	char *pStr = NULL, *pStrTmp = NULL;
+	char cmdline[HAPD_MAX_BUF] = {0};
+	bool bFound = FALSE;
+	char nvi_ifname[IFNAMSIZ];
+
+	snprintf(nvi_ifname, sizeof(nvi_ifname), "wl%d", radio_idx);
+
+	dir = opendir("/proc");
+	if (dir == NULL) {
+		cprintf("Err: %s fail to open /proc\n", __FUNCTION__);
+		return -1;
+	}
+
+	/* loops over all dir entries in /proc */
+	while (NULL != (ent = readdir(dir))) {
+		/* proceed only when dir name is a number, i.e., pid */
+		if (strlen(ent->d_name) != strspn(ent->d_name, "0123456789"))
+			continue;
+
+		/* open file /proc/<pid>/cmdline */
+		snprintf(path, sizeof(path), "/proc/%s/cmdline", ent->d_name);
+		fp = fopen(path, "r");
+		if (!fp) {
+			continue;
+		}
+
+		/* read from the file /proc/<pid>/cmdline */
+		memset(cmdline, '\0', sizeof(cmdline));
+		if (fgets(cmdline, sizeof(cmdline), fp) != NULL) {
+			/* go further only if the process name is 'hostapd' */
+			if (strcmp(cmdline, "hostapd")) {
+				fclose(fp);
+				continue;
+			}
+			pStr = cmdline;
+
+			/*
+			 * cmdline holds command-line arguments of process seperated by
+			 * null byte '\0', loop on each argument here.
+			 */
+			while (TRUE) {
+				if ((pStr >= (cmdline + sizeof(cmdline))) || (*pStr == '\0'))
+					break;
+
+				/* keep skipping to the next argument till the one for
+				 * hostapd config filename.
+				 */
+				if (!strstr(pStr, ".conf")) {
+					pStr += strlen(pStr);
+					/* skip '\0' */
+					++pStr;
+				}
+				else {
+					/* proceed if config filename has wl<radio_num> in it */
+					pStrTmp = strstr(pStr, nvi_ifname);
+					if (!pStrTmp)
+						break;
+					pStr = pStrTmp + strlen(nvi_ifname);
+					/*
+					 * hostapd config filename is wlx_hapd.conf or
+					 * wlx.y_hapd.conf, pStr points to the character after
+					 * wl<radio_num> must be a '.' or '_'
+					 */
+					if (*pStr == '.' || *pStr == '_') {
+						bFound = TRUE;
+						*pid = atoi(ent->d_name);
+					}
+					break;
+				}
+			}
+		}
+		fclose(fp);
+		if (bFound)
+			break;
+	}
+	closedir(dir);
+	return bFound ? 0 : -1;
+}
+
+void __attribute__((weak)) hapd_wpasupp_get_radio_list(char *ifnames_list, char *radio_iflist, int rlistsz, int idx)
+{
+	char ifname[IFNAMSIZ] = {0}, *next;
+	char nv_ifname[IFNAMSIZ] = {0}, nvram_name[HAPD_MAX_BUF] = {0};
+	int unit = -1;
+
+	snprintf(nvram_name, sizeof(nvram_name),  "wl%d_radio", idx);
+
+	if ((nvram_match(nvram_name, "0")) == TRUE) {
+		cprintf("Err: rc: %d: radio %d disabled\n", __LINE__, idx);
+		return;
+	}
+
+	foreach(ifname, ifnames_list, next) {
+		if (wl_probe(ifname)) {
+			dprintf("Err: rc: %d: Skipping %s - non wireless interface\n",
+					__LINE__, ifname);
+			continue;
+		}
+		if (osifname_to_nvifname(ifname, nv_ifname, IFNAMSIZ) < 0) {
+			cprintf("Err: rc: %d: osname to ifname\n", __LINE__);
+			return;
+		}
+		if (get_ifname_unit(nv_ifname, &unit, NULL) < 0) {
+			cprintf("Err: rc: %d: get_ifname_unit\n", __LINE__);
+			return;
+		}
+
+		if (unit == idx) {
+			add_to_list(ifname, radio_iflist, rlistsz);
+		} else {
+			dprintf("Info: rc: %d: skipped adding %s to radio_iflist[%d]\n",
+					__LINE__, ifname, idx);
+		}
+	} /* foreach */
+
+	return;
+}
+
+int __attribute__((weak)) hapd_wpasupp_is_bss_enabled(const char* ifname)
+{
+	char nv_ifname[IFNAMSIZ] = {0};
+	char nvram_name[HAPD_MAX_BUF] = {0};
+	bool ret = 0;
+
+	if (osifname_to_nvifname(ifname, nv_ifname, sizeof(nv_ifname))) {
+		dprintf("Err: rc: %d: converting os ifname %s to nv ifname\n", __LINE__, ifname);
+		return -1;
+	}
+
+	snprintf(nvram_name, sizeof(nvram_name),  "%s_bss_enabled", nv_ifname);
+
+	ret =  nvram_match(nvram_name, "1");
+
+	return ret;
+}
+
+int __attribute__((weak)) hapd_wpasupp_is_primary_ifce(const char *ifname)
+{
+	int unit = -1, subunit = -1;
+	char nv_ifname[IFNAMSIZ] = {0};
+
+	if (osifname_to_nvifname(ifname, nv_ifname, sizeof(nv_ifname))) {
+		dprintf("Err: rc: %d: converting os ifname %s to nv ifname\n", __LINE__, ifname);
+		return 0;
+	}
+
+	if (get_ifname_unit(nv_ifname, &unit, &subunit) < 0) {
+		dprintf("Err: rc: %d: get_ifname_unit %s\n", __LINE__, nv_ifname);
+		return 0;
+	}
+
+	if (subunit > 0) {
+		dprintf("Err: rc: %d: Non primary interface %s\n", __LINE__, nv_ifname);
+		return 0;
+	}
+
+	return 1;
+}
+
+void __attribute__((weak)) hapd_wpasupp_get_primary_virtual_iflist(char *filtered_list, char *pr_iflist, char *sec_iflist, int listsz)
+{
+	char ifname[IFNAMSIZ] = {0}, *next;
+
+	foreach(ifname, filtered_list, next) {
+		((hapd_wpasupp_is_primary_ifce(ifname) == TRUE) ?
+			add_to_list(ifname, pr_iflist, listsz) :
+			add_to_list(ifname, sec_iflist, listsz));
+	}
+}
+
+int __attribute__((weak)) hapd_wpasupp_is_ifce_monitormode(const char *ifname)
+{
+	char nv_ifname[IFNAMSIZ] = {0}, nvram_name[HAPD_MAX_BUF] = {0};
+	bool ret = 0;
+
+	if (osifname_to_nvifname(ifname, nv_ifname, sizeof(nv_ifname))) {
+		dprintf("Err: rc: %d: converting os ifname %s to nv ifname\n", __LINE__, ifname);
+		return -1;
+	}
+
+	snprintf(nvram_name, sizeof(nvram_name),  "%s_mode", nv_ifname);
+	ret = nvram_match(nvram_name, "monitor");
+	return ret;
+}
+
+int __attribute__((weak)) hapd_wpasupp_is_ifce_ap(const char *ifname)
+{
+	char nv_ifname[IFNAMSIZ] = {0}, nvram_name[HAPD_MAX_BUF] = {0};
+	bool ret = 0;
+
+	if (osifname_to_nvifname(ifname, nv_ifname, sizeof(nv_ifname))) {
+		dprintf("Err: rc: %d: converting os ifname %s to nv ifname\n", __LINE__, ifname);
+		return -1;
+	}
+
+	snprintf(nvram_name, sizeof(nvram_name),  "%s_mode", nv_ifname);
+
+	ret = nvram_match(nvram_name, "ap");
+
+	return ret;
+}
+
+void __attribute__((weak)) hapd_wpasupp_get_filtered_ifnames_list(char *ifnames_list, char *filtered_list, int flist_sz)
+{
+	char pr_ifname[IFNAMSIZ+1] = {0}; /* primary ifname */
+	char ifname[IFNAMSIZ] = {0}, tmp_list[HAPD_MAX_BUF] = {0};
+	char *next;
+
+	foreach(ifname, ifnames_list, next) {
+		if (!wl_probe(ifname)) { /* only wireless interfaces */
+			if (hapd_wpasupp_is_primary_ifce(ifname) == TRUE) {
+				/* copy primary BSS ifname */
+				strncpy(pr_ifname, ifname, IFNAMSIZ);
+			} else { /* add all vritual BSS' to temporary list */
+				add_to_list(ifname, tmp_list, HAPD_MAX_BUF);
+			}
+		}
+	}
+
+	/* if BSS on primary ifce is enabled, add it to filtered list */
+	if (hapd_wpasupp_is_bss_enabled(pr_ifname)) {
+		add_to_list(pr_ifname, filtered_list, flist_sz);
+	}
+
+	/* Check virtual BSS'. If any of the virtual BSS' enabled, then, blindly
+	 * add the primary BSS to the filtered list even if it is not enabled.
+	 */
+	foreach(ifname, tmp_list, next) {
+		if (hapd_wpasupp_is_bss_enabled(ifname)) {
+			add_to_list(ifname, filtered_list, flist_sz);
+		}
+	}
+}
+
+int __attribute__((weak)) restart_hostapd_per_radio_wps_ob(int radio_idx)
+{
+#if defined(RTCONFIG_HND_ROUTER_AX)
+	uint32 *o_flgs = 0;
+	size_t size;
+	int pid, retry, ret = 0, mode = 0;
+	char *wgn_ifnames;
+	char *lan_ifnames;
+	char *lan1_ifnames;
+	char *flist;
+	char *plist;
+	char *slist;
+	char *iflist;
+	char *ptr;
+	char prefix[16];
+	char file[512];
+	char wgn_ifbuf[2048];
+	char cmd[2080];
+	char word[16];
+	char *next;
+
+	wgn_ifnames = wgn_guest_lan_ifnames(wgn_ifbuf, sizeof(wgn_ifbuf));
+	memset(prefix, 0, sizeof(prefix));
+	memset(file, 0, sizeof(file));
+	memset(cmd, 0, sizeof(cmd));
+
+	lan_ifnames = nvram_safe_get("lan_ifnames");
+	lan1_ifnames = nvram_safe_get("lan1_ifnames");
+	if ( !*lan_ifnames && !*lan1_ifnames ){
+		_dprintf("Err: rc: %d:  No interfaces in LAN and GUEST bridges\n", __LINE__);
+		return -1;
+	}
+
+	if ( wgn_ifnames )
+		size = strlen(lan_ifnames) + strlen(lan1_ifnames) + 4 + strlen(wgn_ifnames);
+	else
+		size = strlen(lan_ifnames) + strlen(lan1_ifnames) + 2;
+	ptr = calloc(1, size);
+	if ( ptr ) {
+		flist = calloc(1, size);
+		if ( flist ) {
+			plist = calloc(1, size);
+			if ( plist ) {
+				slist = calloc(1, size);
+				if ( slist ) {
+					iflist = calloc(1, size);
+					if ( iflist ) {
+						strcat_r(lan_ifnames, " ", ptr);
+						strcat_r(ptr, lan1_ifnames, ptr);
+						if ( wgn_ifnames ) {
+							strcat_r(ptr, " ", ptr);
+							strcat_r(ptr, wgn_ifnames, ptr);
+						}
+						hapd_wpasupp_get_radio_list(ptr, iflist, size, radio_idx);
+						if ( *iflist ) {
+							memset(flist, 0, size);
+							memset(plist, 0, size);
+							memset(slist, 0, size);
+							hapd_wpasupp_get_filtered_ifnames_list(iflist, flist, size);
+							hapd_wpasupp_get_primary_virtual_iflist(flist, plist, slist, size);
+							_dprintf("radio_iflist: ");
+							foreach(word, iflist, next)
+								printf("%s ", word);
+							printf("\n");
+							printf("filtered_iflist: ");
+							foreach(word, flist, next)
+								printf("%s ", word);
+							printf("\n");
+							printf("primary_iflist: ");
+							foreach(word, plist, next)
+								printf("%s ", word);
+							printf("\n");
+							printf("virtual_iflist: ");
+							foreach(word, slist, next)
+								printf("%s ", word);
+							printf("\n");
+							foreach(word, slist, next){
+								if ( hapd_wpasupp_is_ifce_monitormode(word) == 1 ){
+									_dprintf("start_hostapd  %d: %s monitor skip hostapd \n", __LINE__, word);
+									ret = -1;
+									goto LABEL_86;
+								}
+								mode++;
+								if(hapd_wpasupp_is_ifce_ap(word))
+									break;
+ 							}
+							if(mode != 0)
+								mode = 1;
+							foreach(word, slist, next)
+								printf("%s ", word);
+							printf("\n");
+							foreach(word, slist, next)
+							{
+								if ( osifname_to_nvifname(word, prefix, 16) )
+								{
+									_dprintf("Err: rc: %d: converting os ifname %s to nv ifname\n", __LINE__, word);
+									ret = -1;
+									goto LABEL_86;
+								}
+								if ( hapd_get_config_filename(prefix, file, sizeof(file), &o_flgs, mode) >= 0 )
+								{
+									if ( hapd_create_config_file(prefix, file) < 0 )
+										_dprintf("Err: rc: %d: config file %s creation for %s failed. skip\n", __LINE__, file, prefix);
+									else
+  									_dprintf("Err: rc: %d: get config file name for %s failed. skip\n", __LINE__, prefix);
+								}
+							}
+							snprintf(prefix, sizeof(prefix), "wl%d", radio_idx);
+							if ( get_hostapd_pid(radio_idx, &pid) )
+								_dprintf("Err: %s hostapd instance for %s does not exist\n", __func__, prefix);
+	 						else
+							{
+								dm_unregister_app_restart_info(pid);
+								_dprintf("%s kill hostapd instance %d for %s\n", __func__, pid, prefix);
+								snprintf(cmd, sizeof(cmd), "%d", pid);
+ 								eval("kill", "-9", cmd);
+								for(retry = 5; ; retry--)
+ 								{
+									if ( !get_hostapd_pid(radio_idx, &pid) )
+										break;
+									_dprintf("%s hostapd is still alive, pid=%d, radio_idx=%d, keep waiting\n", __func__, pid, radio_idx);
+									sleep(1);
+									if ( retry == 0 )
+  									{
+										_dprintf("Err: %s exit with hostapd still alive\n", __func__);
+										ret = -1;
+										goto LABEL_86;
+									}
+								}
+								_dprintf("%s hostapd on radio %d exited\n", __func__, radio_idx);
+							}
+							_dprintf("Info: rc: %d: Running hostapd instance using %s configuration\n", __LINE__, file);
+							if ( nvram_match("hapd_dbg", "4") )
+								snprintf(cmd, sizeof(cmd), "hostapd %s %s &", "-sss", file);
+							else if ( nvram_match("hapd_dbg", "3") )
+								snprintf(cmd, sizeof(cmd), "hostapd %s %s &", "-ss", file);
+							else if ( nvram_match("hapd_dbg", "2") )
+								snprintf(cmd, sizeof(cmd), "hostapd %s %s &", "-s", file);
+							else if ( nvram_match("hapd_dbg", "1") )
+								snprintf(cmd, sizeof(cmd), "hostapd %s %s &", "-ddt", file);
+							else
+								snprintf(cmd, sizeof(cmd), "hostapd %s %s &", "-B", file);
+							_dprintf("Info: rc: %d: Running cmd: %s.\n", __LINE__, cmd);
+							system(cmd);
+							pid = radio_idx - 3;
+							for(retry = 5; ; retry--)
+ 							{
+								if ( !get_hostapd_pid(radio_idx, &pid) )
+									break;
+								sleep(1);
+								if ( retry == 0 )
+								{
+									_dprintf( "Err: %s Fail to start hostapd, radio_idx=%d\n", __func__, radio_idx);
+									ret = -1;
+									goto LABEL_86;
+								}
+							}
+							_dprintf("Info: %s hostapd is running pid=%d, radio_idx=%d\n", __func__, __LINE__, radio_idx);
+							goto LABEL_86;
+						}
+						_dprintf("Info: rc: %d: radio_iflist[%d] is empty. continue\n", __LINE__, radio_idx);
+					}
+					else
+					{
+						_dprintf("Err: rc: %d: calloc()\n", __LINE__);
+					}
+					ret = -1;
+				}
+				else
+				{
+					ret = -1;
+					_dprintf("Err: rc: %d: calloc()\n", __LINE__);
+					iflist = NULL;
+				}
+			}
+			else
+			{
+				ret = -1;
+				_dprintf("Err: rc: %d: calloc()\n", __LINE__);
+				iflist = NULL;
+				slist = NULL;
+			}
+		}
+		else
+		{
+			ret = -1;
+			_dprintf("Err: rc: %d: calloc()\n", __LINE__);
+			slist = NULL;
+			iflist = NULL;
+			plist = NULL;
+		}
+LABEL_86:
+		free(ptr);
+		if ( flist )
+			free(flist);
+		if ( plist )
+			free(plist);
+		if ( slist )
+			free(slist);
+		if ( iflist )
+			free(iflist);
+		return ret;
+	}
+	_dprintf("Err: rc: %d: calloc()\n", __LINE__);
+	return -1;
+#else
+	return 0;
+#endif
+}
+#endif
+
+#if defined(RTAC82U)
+//fix jffs rebuilt by pb-boot is too large
+void fix_jffs_size(void)
+{
+#define JFFS_SIZE_MAX 39*1024*1024 //asus:27MB
+	FILE *fp = NULL;
+	char buf[10] = {0};
+	if((fp = fopen("/sys/devices/virtual/ubi/ubi0/ubi0_5/data_bytes", "r"))){
+		fread(buf, 1, 9, fp);
+		fclose(fp);
+		if(JFFS_SIZE_MAX < strtol(buf, NULL, 10)){
+			eval("ubirmvol", "/dev/ubi0", "-N", "jffs2");
+			eval("ubimkvol", "/dev/ubi0", "-s", "38MiB", "-N", "jffs2");
+		}
+	}
+}
+#endif
+
+#if defined(RTCONFIG_HND_ROUTER_AX)
+void __attribute__((weak)) create_amas_sys_folder()
+{
+	if(!d_exists("/jffs/.sys"))
+		mkdir("/jffs/.sys", 0666);
+}
+
+void __attribute__((weak)) misc_info_chk()
+{
+	syslog(LOG_NOTICE, "fwver: %s_%s_%s (sn:%s /ha:%s )\n", rt_version, rt_serialno, rt_extendno, nvram_safe_get("serial_no"), nvram_safe_get("et0macaddr"));
+}
+#endif
+
+#if defined(RAX200)
+void fan_watchdog(void)
+{
+	FILE *fp;
+	int temperature, status;
+	static int gpio_init = 0;
+	const uint32_t gpio1 = 52;
+	const uint32_t gpio2 = 55;
+	const uint32_t gpio3 = 56;
+	if ((fp = fopen("/sys/class/thermal/thermal_zone0/temp", "r")) != NULL) {
+		fscanf(fp, "%d", &temperature);
+		fclose(fp);
+	}
+	temperature = temperature / 1000;
+	if(gpio_init == 0){
+		set_gpio(gpio1, 0);
+		set_gpio(gpio2, 0);
+		set_gpio(gpio3, 0);
+		gpio_init = 1;
+	}
+	if((status = get_gpio(gpio1)) < 0)
+		return;
+	if(nvram_get("fan_en") == NULL || nvram_match("fan_en", "1")){
+		if(temperature > 95 || nvram_match("fan_lv", "4")){
+			printf("Turn on FAN with level 4");
+			set_gpio(gpio1, 1);
+			set_gpio(gpio2, 1);
+			set_gpio(gpio3, 1);
+		}else if(temperature > 85 || nvram_match("fan_lv", "3")){
+			printf("Turn on FAN with level 3");
+			set_gpio(gpio1, 1);
+			set_gpio(gpio2, 1);
+			set_gpio(gpio3, 0);
+		}else if(temperature > 75 || nvram_match("fan_lv", "2")){
+			printf("Turn on FAN with level 2");
+			set_gpio(gpio1, 1);
+			set_gpio(gpio2, 0);
+			set_gpio(gpio3, 1);
+		}else if(temperature > 65 || nvram_match("fan_lv", "1")){
+			printf("Turn on FAN with level 1");
+			set_gpio(gpio1, 1);
+			set_gpio(gpio2, 0);
+			set_gpio(gpio3, 0);
+		}
+	}else if(nvram_match("fan_en", "0") && status == 1){
+		printf("Turn off FAN");
+		set_gpio(gpio1, 0);
+		set_gpio(gpio2, 0);
+		set_gpio(gpio3, 0);
+	}
+}
+#endif
