@@ -57,6 +57,10 @@
 //#include <stapriv.h>
 #include <shared.h>
 #include <sys/mman.h>
+#include <fapi_wlan_private.h>
+#include <fapi_wlan.h>
+#include <help_objlist.h>
+#include <wlan_config_api.h>
 #ifndef O_BINARY
 #define O_BINARY 	0
 #endif
@@ -90,6 +94,7 @@ extern u_int ieee80211_mhz2ieee(u_int freq);
 #define WL_G		(1U << 2)
 #define WL_N		(1U << 3)
 #define WL_AC		(1U << 4)
+#define WL_AX		(1U << 5)
 
 static const struct mode_s {
 	unsigned int mask;
@@ -100,6 +105,7 @@ static const struct mode_s {
 	{ WL_G, "g" },
 	{ WL_N, "n" },
 	{ WL_AC, "ac" },
+	{ WL_AX, "ax" },
 	{ 0, NULL },
 };
 
@@ -136,79 +142,6 @@ int is_if_up(char *ifname)
     return 0;
 }
 
-/**
- * Run "iwpriv XXX get_XXX" and return string behind colon.
- * Expected result is shown below:
- * ath1      get_mode:11ACVHT40
- *                    ^^^^^^^^^
- * @iface:	interface name
- * @cmd:	get cmd
- * @buf:	pointer to memory area which is used to keep result.
- * 		it is guarantee as valid/empty string, if it is valid pointer
- * @buf_len:	length of @buf
- * @return:
- * 	0:	success
- *     -1:	invalid parameter
- *     -2:	run iwpriv command fail
- *     -3:	read result strin fail
- */
-static int __iwpriv_get(const char *iface, char *cmd, char *buf, unsigned int buf_len)
-{
-	int len;
-	FILE *fp;
-	char *p = NULL, iwpriv_cmd[64], tmp[128];
-
-	if (!iface || *iface == '\0' || !cmd || *cmd == '\0' || !buf || buf_len <= 1)
-		return -1;
-
-	if (strncmp(cmd, "get_", 4) && strncmp(cmd, "g_", 2)) {
-		dbg("%s: iface [%s] cmd [%s] may not be supported!\n",
-			__func__, iface, cmd);
-	}
-
-	*buf = '\0';
-	sprintf(iwpriv_cmd, "iwpriv %s %s", iface, cmd);
-	if (!(fp = popen(iwpriv_cmd, "r")))
-		return -2;
-
-	len = fread(tmp, 1, sizeof(tmp), fp);
-	pclose(fp);
-	if (len < 1)
-		return -3;
-
-	tmp[len-1] = '\0';
-	if (!(p = strchr(tmp, ':'))) {
-		dbg("%s: parsing [%s] of cmd [%s] error!", __func__, tmp, cmd);
-		return -4;
-	}
-	p++;
-	chomp(p);
-	strlcpy(buf, p, buf_len);
-
-	return 0;
-}
-
-/**
- * Run "iwpriv XXX get_XXX" and return string behind colon.
- * Expected result is shown below:
- * ath1      get_mode:11ACVHT40
- *                    ^^^^^^^^^ result
- * @iface:	interface name
- * @cmd:	get cmd
- * @return:
- * 	NULL	invalid parameter or error.
- *  otherwise:	success
- */
-char *iwpriv_get(const char *iface, char *cmd)
-{
-	static char result[256];
-
-	if (__iwpriv_get(iface, cmd, result, sizeof(result)))
-		return NULL;
-
-	return result;
-}
-
 static int get_wlsubnet(int band, const char *ifname)
 {
 	int subnet, sidx;
@@ -235,8 +168,6 @@ unsigned int getAPChannelbyIface(const char *ifname)
 	struct iwreq		wrq;
 	struct iw_range	range;
 	double		freq;
-	int			channel;
-	char			buffer[128];	/* Temporary buffer */
 	char	vbuf[16];
 
   /* Create a channel to the NET kernel. */
@@ -278,7 +209,7 @@ unsigned int getAPChannel(int unit)
 char* getSSIDbyIFace(const char *iface)
 {
 	static char ssid[33] = "";
-	char ifname[16]
+	char ifname[16];
 	int skfd;
 	struct iwreq wrq;
 	/* Create a channel to the NET kernel. */
@@ -293,7 +224,7 @@ char* getSSIDbyIFace(const char *iface)
 		wrq.u.essid.flags = 0;
 		iw_get_ext(skfd, ifname, SIOCGIWESSID, &wrq);
 		/* Close the socket. */
-		iw_sockets_close(skfd)
+		iw_sockets_close(skfd);
 	}
 	return ssid;
 }
@@ -549,11 +480,6 @@ _fn_(_st_ HTSetting)							\
 
 int FN_GETRATE(getRate,      MACHTTRANSMIT_SETTING)		//getRate(MACHTTRANSMIT_SETTING)
 int FN_GETRATE(getRate_2g,   MACHTTRANSMIT_SETTING_2G)		//getRate_2g(MACHTTRANSMIT_SETTING_2G)
-#if defined(RTAC52U) || defined(RTAC51U)
-int FN_GETRATE(getRate_11ac, MACHTTRANSMIT_SETTING_11AC)	//getRate_11ac(MACHTTRANSMIT_SETTING_11AC)
-#endif
-
-
 
 int
 ej_wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
@@ -590,10 +516,10 @@ show_wliface_info(webs_t wp, int unit, char *ifname, char *op_mode)
 	struct iw_range	range;
 	int skfd;
 	double	freq;
-	int		channel;
-	char	buffer[128];	/* Temporary buffer */
+//	int		channel;
+//	char	buffer[128];	/* Temporary buffer */
 	char	vbuf[16];
-	struct ifreq ifr;
+//	struct ifreq ifr;
 
 	if (unit < 0 || !ifname || !op_mode)
 		return 0;
@@ -609,7 +535,7 @@ show_wliface_info(webs_t wp, int unit, char *ifname, char *op_mode)
 	ret += websWrite(wp, "=======================================================================================\n"); // separator
 	ret += websWrite(wp, "OP Mode\t\t: %s\n", op_mode);
 	ret += websWrite(wp, "SSID\t\t: %s\n", getSSIDbyIFace(ifname));
-	sprintf(cmd, "iwconfig %s", ifname);
+	snprintf(cmd, sizeof(cmd), "iwconfig %s", ifname);
 	if ((fp = popen(cmd, "r")) != NULL && fread(tmpstr, 1, sizeof(tmpstr), fp) > 1) {
 		pclose(fp);
 		*(tmpstr + sizeof(tmpstr) - 1) = '\0';
@@ -677,7 +603,7 @@ wl_status(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			ret += websWrite(wp, "\n");
 		}
 #endif
-		if (nvram_get_int("wave_action") == 1) {
+		if (nvram_get_int("wave_action_cur") == 1) {
 			ret += websWrite(wp, "%s radio is initializing\n",
 				nvram_match(strcat_r(prefix, "nband", tmp), "1") ? "5 GHz" : "2.4 GHz");
 			return ret;
@@ -861,7 +787,7 @@ static int wl_stainfo_list(int unit, webs_t wp)
 		if (!s)
 			strcpy(idx_str, "main");
 		else
-			sprintf(idx_str, "GN%d", s);
+			snprintf(idx_str, sizeof(idx_str), "GN%d", s);
 		websWrite(wp, ", \"%s\"", idx_str);
 		websWrite(wp, "]");
 	}
@@ -883,37 +809,33 @@ ej_wl_stainfo_list_5g(int eid, webs_t wp, int argc, char_t **argv)
 #endif	/* RTCONFIG_STAINFO */
 
 int getWscStatusStr(int unit, char *buf, int buf_size){
-	int retVal = wlan_getWpsStatus(unit, buf);
-
 	memset(buf, 0, buf_size);
-	retVal = wlan_getWpsStatus(unit, buf);
-
-	if(retVal)
+	if(wlan_getWpsStatus(unit, buf))
 		return -1;
-
-	return retVal;
+	return 0;
 }
 
 void getWPSAuthMode(int unit, char *ret_str){
 	char tmp[128], prefix[]="wlXXXXXXX_";
 
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
+	snprintf(tmp, sizeof(tmp), "%s%s", prefix, "auth_mode_x");
 
-	if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "shared"))
+	if(nvram_match(tmp, "shared"))
 		strcpy(ret_str, "Shared Key");
-	else if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "psk"))
+	else if(nvram_match(tmp, "psk"))
 		strcpy(ret_str, "WPA-Personal");
-	else if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "psk2"))
+	else if(nvram_match(tmp, "psk2"))
 		strcpy(ret_str, "WPA2-Personal");
-	else if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "pskpsk2"))
+	else if(nvram_match(tmp, "pskpsk2"))
 		strcpy(ret_str, "WPA-Auto-Personal");
-	else if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa"))
+	else if(nvram_match(tmp, "wpa"))
 		strcpy(ret_str, "WPA-Enterprise");
-	else if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpa2"))
+	else if(nvram_match(tmp, "wpa2"))
 		strcpy(ret_str, "WPA2-Enterprise");
-	else if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "wpawpa2"))
+	else if(nvram_match(tmp, "wpawpa2"))
 		strcpy(ret_str, "WPA-Auto-Enterprise");
-	else if(nvram_match(strcat_r(prefix, "auth_mode_x", tmp), "radius"))
+	else if(nvram_match(tmp, "radius"))
 		strcpy(ret_str, "802.1X");
 	else
 		strcpy(ret_str, "Open System");
@@ -1170,7 +1092,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	lock = file_lock("nvramcommit");
 	system("rm -f /tmp/wlist");
 	snprintf(prefix, sizeof(prefix), "wl%d_", unit);
-	sprintf(cmd,"iwlist %s scanning >> /tmp/wlist",nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
+	snprintf(cmd, sizeof(cmd),"iwlist %s scanning >> /tmp/wlist",nvram_safe_get(strcat_r(prefix, "ifname", tmp)));
 	system(cmd);
 	file_unlock(lock);
 	
@@ -1178,7 +1100,7 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	   return -1;
 	
 	memset(header, 0, sizeof(header));
-	sprintf(header, "%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode");
+	snprintf(header, sizeof(header), "%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode");
 
 	dbg("\n%s", header);
 
@@ -1253,16 +1175,16 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		{   
 			if(strstr(pt1+strlen("Encryption key:"),"on"))
 			{  	
-				sprintf(enc,"ENC");
+				snprintf(enc, sizeof(enc),"ENC");
 		
 			} 
 			else
-				sprintf(enc,"NONE");
+				snprintf(enc, sizeof(enc),"NONE");
 		}
 
 		//auth
 		memset(auth,0,sizeof(auth));
-		sprintf(auth,"N/A");    
+		snprintf(auth, sizeof(auth),"N/A");    
 
 		//sig
 	        pt1 = strstr(buf[2], "Quality=");	
@@ -1274,12 +1196,12 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 			memset(a2,0,sizeof(a2));
 			strncpy(a1,pt1+strlen("Quality="),pt2-pt1-strlen("Quality="));
 			strncpy(a2,pt2+1,strstr(pt2," ")-(pt2+1));
-			sprintf(sig,"%d",atoi(a1)/atoi(a2));
+			snprintf(sig, sizeof(sig), "%d", atoi(a1)/atoi(a2));
 		}   
 
 		//wmode
 		memset(wmode,0,sizeof(wmode));
-		sprintf(wmode,"11b/g/n");   
+		snprintf(wmode, sizeof(wmode), "11b/g/n");   
 
 
 #if 1
@@ -1347,11 +1269,11 @@ static int wl_scan(int eid, webs_t wp, int argc, char_t **argv, int unit)
 		return 0;
 	}
 	memset(header, 0, sizeof(header));
-	//sprintf(header, "%-3s%-33s%-18s%-8s%-15s%-9s%-8s%-2s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode", "NT");
+	//snprintf(header, sizeof(header), "%-3s%-33s%-18s%-8s%-15s%-9s%-8s%-2s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode", "NT");
 #if 0// defined(RTN14U)
-	sprintf(header, "%-4s%-33s%-18s%-9s%-16s%-9s%-8s%-4s%-5s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode"," WPS", " DPID");
+	snprintf(header, sizeof(header), "%-4s%-33s%-18s%-9s%-16s%-9s%-8s%-4s%-5s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode"," WPS", " DPID");
 #else
-	sprintf(header, "%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode");
+	snprintf(header, sizeof(header), "%-4s%-33s%-18s%-9s%-16s%-9s%-8s\n", "Ch", "SSID", "BSSID", "Enc", "Auth", "Siganl(%)", "W-Mode");
 #endif
 	dbg("\n%s", header);
 	if (wrq.u.data.length > 0)
@@ -1644,7 +1566,6 @@ int ej_wl_channel_list_5g_40m(int eid, webs_t wp, int argc, char_t **argv)
 	int retval = 0;
 	static char ch_list[256] = {0};
 	int check_bit;
-	int get_list_again;
 
 	if( (nvram_get_int("wl_country_changed") & 0x2) == 0x2){
 		check_bit = nvram_get_int("wl_country_changed") ^ 0x2 ;
@@ -1696,7 +1617,7 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	int sw_mode = nvram_get_int("sw_mode");
 	int wlc_band = nvram_get_int("wlc_band");
 
-	sprintf(rate_buf, "0 Mbps");
+	snprintf(rate_buf, sizeof(rate_buf), "0 Mbps");
 
 	if (!nvram_match("wlc_state", "2"))
 		goto ERROR;
@@ -1723,9 +1644,9 @@ static int ej_wl_rate(int eid, webs_t wp, int argc, char_t **argv, int unit)
 	}
 
 	if (rate[0] > rate[1])
-		sprintf(rate_buf, "%d Mbps", rate[0]);
+		snprintf(rate_buf, sizeof(rate_buf), "%d Mbps", rate[0]);
 	else
-		sprintf(rate_buf, "%d Mbps", rate[1]);
+		snprintf(rate_buf, sizeof(rate_buf), "%d Mbps", rate[1]);
 
 ERROR:
 	retval += websWrite(wp, "%s", rate_buf);

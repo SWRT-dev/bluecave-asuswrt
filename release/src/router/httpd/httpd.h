@@ -24,15 +24,17 @@
 #ifndef _httpd_h_
 #define _httpd_h_
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include <arpa/inet.h>
 #include <errno.h>
 #if defined(DEBUG) && defined(DMALLOC)
 #include <dmalloc.h>
 #endif
+#include <json.h>
 #include <rtconfig.h>
-#include "swrt.h"
 
 /* Basic authorization userid and passwd limit */
 #define AUTH_MAX 64
@@ -353,6 +355,7 @@ extern unsigned int get_radio_status(char *ifname);
 extern void do_f(char *path, webs_t wp);
 
 /* cgi.c */
+extern void unescape(char *s, size_t len);
 extern int web_read(void *buffer, int len);
 extern void set_cgi(char *name, char *value);
 
