@@ -312,6 +312,9 @@ var qos_enable_flag = ('<% nvram_get("qos_enable"); %>' == 1) ? true : false;
 var bwdpi_app_rulelist = "<% nvram_get("bwdpi_app_rulelist"); %>".replace(/&#60/g, "<");
 var qos_type_flag = "<% nvram_get("qos_type"); %>";
 var exist_firmver="<% nvram_get("firmver"); %>";
+var CoBrand_flag = '<% nvram_get("CoBrand"); %>';
+var SWRT_GD = '<% nvram_get("SWRT_GD"); %>';
+var SWRT_Kimetsu = '<% nvram_get("SWRT_Kimetsu"); %>';
 
 //territory_code sku
 function in_territory_code(_ptn){
@@ -323,6 +326,9 @@ var is_CN = in_territory_code("CN");
 var is_TW_sku = in_territory_code("TW");
 var is_US_sku = in_territory_code("US");
 var is_UA_sku = in_territory_code("UA");
+var isGundam = in_territory_code("GD") || CoBrand_flag == 1 || SWRT_GD == 1;
+var isKimetsu = (CoBrand_flag == '2' || SWRT_Kimetsu == 1);
+var isEva = (CoBrand_flag == '3');
 var is_RU_sku = (function(){
 	var location = '<% nvram_get("location_code"); %>';
 	if(location != ''){
