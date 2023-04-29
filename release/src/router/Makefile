@@ -1245,11 +1245,7 @@ obj-$(RTCONFIG_GEOIP) += GeoIP-1.6.2
 
 obj-$(RTCONFIG_TRANSMISSION) += Transmission curl libevent-2.0.21
 
-# Begin merlin add-ons
-ifeq ($(or $(RTCONFIG_HND_ROUTER),$(RTCONFIG_QCA),$(RTCONFIG_LANTIQ),$(RTCONFIG_RALINK)),y)
-obj-y += jitterentropy-rngd
-endif
-# End merlin add-ons
+obj-y += haveged
 
 ifeq ($(RTCONFIG_TOR),y)
 obj-y += openssl
@@ -7262,6 +7258,23 @@ jitterentropy-rngd:
 jitterentropy-rngd-install:
 	install -D jitterentropy-rngd/jitterentropy-rngd $(INSTALLDIR)/jitterentropy-rngd/usr/sbin/jitterentropy-rngd
 	$(STRIP) $(INSTALLDIR)/jitterentropy-rngd/usr/sbin/jitterentropy-rngd
+
+haveged/Makefile:
+	cd haveged && autoreconf -fi && CFLAGS="-Wall -Os $(EXTRACFLAGS) -ffunction-sections -fdata-sections" \
+	LDFLAGS="-ffunction-sections -fdata-sections -Wl,--gc-sections" \
+	$(CONFIGURE) --prefix=/usr --enable-static --disable-shared --enable-daemon --disable-tune --disable-olt
+
+haveged: haveged/Makefile
+	@$(SEP)
+	$(MAKE) -C $@ $(PARALLEL_BUILD)
+
+haveged-install:
+	install -D haveged/src/haveged $(INSTALLDIR)/haveged/usr/sbin/haveged
+	$(STRIP) $(INSTALLDIR)/haveged/usr/sbin/haveged
+
+haveged-clean:
+	[ ! -f haveged/Makefile ] || $(MAKE) -C haveged clean
+	@rm -f haveged/Makefile
 
 wsdd2:
 	@$(SEP)

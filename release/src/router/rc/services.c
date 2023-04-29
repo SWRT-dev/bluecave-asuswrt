@@ -169,9 +169,12 @@ static void start_toads(void);
 static void stop_toads(void);
 #endif
 
-#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+#if 0
 void start_jitterentropy(void);
 void stop_jitterentropy(void);
+#else
+void start_haveged(void);
+void stop_haveged(void);
 #endif
 
 #ifndef MS_MOVE
@@ -8161,8 +8164,10 @@ stop_netool(void)
 int
 start_services(void)
 {
-#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+#if 0
 	start_jitterentropy();
+#else
+	start_haveged();
 #endif
 #ifdef RTCONFIG_SOFTCENTER
 	start_skipd();
@@ -8756,19 +8761,21 @@ stop_services(void)
 #if defined(RTCONFIG_QCA_LBD)
 	stop_qca_lbd();
 #endif
-#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+#if 0
 	stop_jitterentropy();
+#else
+	stop_haveged();
 #endif
 }
 
-#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+#if 0
 void start_jitterentropy()
 {
 	pid_t pid;
 	char *cmd_argv[] = { "/usr/sbin/jitterentropy-rngd",
 								"-p", "/var/run/jitterentropy-rngd.pid",
 								NULL};
-//	_eval(cmd_argv, NULL, 0, &pid);
+	_eval(cmd_argv, NULL, 0, &pid);
 }
 
 void stop_jitterentropy()
@@ -8776,6 +8783,27 @@ void stop_jitterentropy()
 	pid_t pid;
 	char *cmd_argv[] = { "killall", "jitterentropy-rngd", NULL};
 	_eval(cmd_argv, NULL, 0, &pid);
+}
+#else
+void start_haveged()
+{
+	pid_t pid;
+	char *cmd_argv[] = { "/usr/sbin/haveged",
+	                     "-r", "0",
+	                     "-w", "1024",
+#if 1	// All supported models use 32 KB so far
+	                     "-d", "32",
+	                     "-i", "32",
+#endif
+	                     NULL };
+
+	_eval(cmd_argv, NULL, 0, &pid);
+}
+
+void stop_haveged()
+{
+	if (pids("haveged"))
+		killall_tk("haveged");
 }
 #endif
 
@@ -9922,7 +9950,7 @@ again:
 	{
 		factory_reset();
 	}
-#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+#if 0
 	else if(strcmp(script, "jitterentropy") == 0)
 	{
 		if(action & RC_SERVICE_STOP)
@@ -10330,7 +10358,7 @@ again:
 #ifdef RTCONFIG_QCA_PLC_UTILS
 			reset_plc();
 #endif
-#if defined(RTCONFIG_HND_ROUTER) || defined(RTCONFIG_QCA) || defined(RTCONFIG_LANTIQ) || defined(RTCONFIG_RALINK)
+#if 0
 			stop_jitterentropy();
 #endif
 			// TODO free necessary memory here
