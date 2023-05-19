@@ -4634,6 +4634,34 @@ void start_smartdns(void)
 		foreach(tmp, (*wan_dns ? wan_dns : wan_xdns), next)
 			fprintf(fp, "server %s -group master\n", tmp);
 	}
+#if defined(RTCONFIG_IPV6)
+	if (ipv6_enabled() && is_routing_enabled()) {
+		struct in6_addr addr;
+		switch (get_ipv6_service()) {
+		case IPV6_NATIVE_DHCP:
+#ifdef RTCONFIG_6RELAYD
+		case IPV6_PASSTHROUGH:
+#endif
+			if (nvram_get_int(ipv6_nvname("ipv6_dnsenable"))) {
+				wan_dns = nvram_safe_get_r(ipv6_nvname("ipv6_get_dns"), wan_dns_buf, sizeof(wan_dns_buf));
+				break;
+			}
+		default:
+			wan_dns = strcpy(wan_dns_buf, "");
+			for (unit = 1; unit <= 3; unit++) {
+				snprintf(tmp, sizeof(tmp), "ipv6_dns%d", unit);
+				if (*wan_dns_buf)
+					strlcat(wan_dns_buf, " ", sizeof(wan_dns_buf));
+				strlcat(wan_dns_buf, nvram_safe_get(ipv6_nvname(tmp)), sizeof(wan_dns_buf));
+			}
+		}
+		foreach(tmp, wan_dns, next) {
+			if (inet_pton(AF_INET6, tmp, &addr) <= 0)
+				continue;
+			fprintf(fp, "server %s -group master\n", tmp);
+		}
+	}
+#endif
 	//fprintf(fp, "server-tcp 8.8.8.8\n");
 	//fprintf(fp, "server-tcp 8.8.4.4\n");
 	//fprintf(fp, "tcp-idle-time 120\n");
