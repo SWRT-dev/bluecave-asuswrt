@@ -81,9 +81,8 @@ extern void patch_Factory(void) __attribute__((weak));
 extern void swrt_patch_nvram(void);
 #endif
 
-#if defined(RAX70) || defined(RGMA2820A) || defined(RGMA2820B) || defined(MR60) || defined(MS60) || defined(RAC2V1S) || defined(RMAX6000) || defined(RAX200)
-extern void swrt_sys_hack(void);
-#elif defined(TUFAX3000) || defined(RTAX58U) || defined(RTAX82U)
+extern void swrt_sys_hack(void) __attribute__((weak));
+#if defined(TUFAX3000) || defined(RTAX58U) || defined(RTAX82U)
 extern void enable_4t4r_ax58(void);
 extern void enable_4t4r(void);
 #elif defined(K3C)
@@ -117,7 +116,11 @@ extern void show_boraddata(void);
 extern void fix_boraddata(char *key, char *value);
 #endif
 #if defined(RAX200)
-void fan_watchdog(void);
+extern void fan_watchdog(void);
+#endif
+#if defined(RTCONFIG_BCMARM)
+extern void get_nvramstr(int unit, char *buf, size_t len, int which);
+extern void auth_unlock_power(int *max2g, int *max5g, int *max5g2, int *max6g) __attribute__((weak));
 #endif
 #endif
 
