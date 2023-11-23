@@ -53,6 +53,8 @@ all: $(BIN)
 $(BIN) : $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
+endif
+
 clang-tidy:
 	clang-tidy -p=. $(OBJS_MAIN:.o=.c) -- $(CFLAGS)
 
