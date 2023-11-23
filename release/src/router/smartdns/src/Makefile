@@ -45,6 +45,7 @@ all:
 	cp ./smartdns_arm ./smartdns
 
 else ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), BLUECAVE))
+all:
 	cp ./smartdns_mips ./smartdns
 
 else
