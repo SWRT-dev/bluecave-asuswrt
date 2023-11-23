@@ -39,6 +39,15 @@ endif
 
 .PHONY: all clean
 
+ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-AC88U RT-AC3100 RT-AC3200 RT-AC68U RT-AC5300))
+#toolchain is too old
+all:
+	cp ./smartdns_arm ./smartdns
+
+else ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), BLUECAVE))
+	cp ./smartdns_mips ./smartdns
+
+else
 all: $(BIN)
 
 $(BIN) : $(OBJS)
