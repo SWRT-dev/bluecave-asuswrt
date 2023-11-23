@@ -4537,9 +4537,12 @@ void start_smartdns(void)
 		return;
 	}
 	fprintf(fp, "server-name SWRT-smartdns\n");
-	fprintf(fp, "conf-file /etc/blacklist-ip.conf\n");
-	fprintf(fp, "conf-file /etc/whitelist-ip.conf\n");
-	fprintf(fp, "conf-file /etc/seconddns.conf\n");
+	if (f_exists("/etc/blacklist-ip.conf"))
+		fprintf(fp, "conf-file /etc/blacklist-ip.conf\n");
+	if (f_exists("/etc/whitelist-ip.conf"))
+		fprintf(fp, "conf-file /etc/whitelist-ip.conf\n");
+	if (f_exists("/etc/seconddns.conf"))
+		fprintf(fp, "conf-file /etc/seconddns.conf\n");
 #if defined(RTCONFIG_IPV6)
 	fprintf(fp, "bind [::]:9053 -group master\n");
 	fprintf(fp, "bind-tcp [::]:9053 -group master\n");
@@ -4565,6 +4568,12 @@ void start_smartdns(void)
 		fprintf(fp, "dualstack-ip-selection yes\n");
 	else
 		fprintf(fp, "dualstack-ip-selection no\n");
+	if(nvram_match("smartdns_responsemode", "0"))
+		fprintf(fp, "response-mode first-ping\n");
+	else if(nvram_match("smartdns_responsemode", "1"))
+		fprintf(fp, "response-mode fastest-ip\n");
+	else if(nvram_match("smartdns_responsemode", "2"))
+		fprintf(fp, "response-mode fastest-response\n");
 	//fprintf(fp, "edns-client-subnet 1.0.0.0/16\n");
 	//fprintf(fp, "rr-ttl 300\n");
 	//fprintf(fp, "rr-ttl-min 60\n");
