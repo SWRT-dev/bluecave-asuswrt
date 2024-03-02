@@ -3,7 +3,10 @@ export LINUXDIR := $(SRCBASE)/linux/linux-3.10.104
 else
 export LINUXDIR := $(SRCBASE)/linux/linux-3.10.104
 endif
-
+#1004kc-> no fpu, bad performance
+#1004kf-> hw fpu, bad performance
+#24kc-> no fpu, good performance
+#24kf-> hw fpu, good performance
 ifeq ($(EXTRACFLAGS),)
 EXTRACFLAGS := -DCONFIG_LANTIQ -DDEBUG_NOISY -DDEBUG_RCTEST -pipe -funit-at-a-time -Wno-pointer-sign -DLINUX30 -mips32r2 -mno-branch-likely -mtune=1004kc
 endif

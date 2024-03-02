@@ -1599,7 +1599,7 @@ function reset_portconflict_hint(){
 						<td colspan="2">Persistent JFFS2 partition</td>
 					</tr>
 				</thead>
-				<tr>
+				<tr style="display:none;">
 					<th>Format JFFS partition at next boot</th>
 					<td>
 						<input type="radio" name="jffs2_format" value="1" <% nvram_match("jffs2_format", "1", "checked"); %>><#checkbox_Yes#>

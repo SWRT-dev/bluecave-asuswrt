@@ -840,8 +840,9 @@ static INLINE int32_t ppa_pkt_filter(PPA_BUF *ppa_buf, uint32_t flags)
         || dport == 68 || dport == 67
         || sport == 53 || dport == 53 
 	/*for chinese,we need some software,like shadowsocks v2ray pcap-dnsproxy */
-        || sport == 1053 || dport == 1053 
-        || sport == 1234 || dport == 1234 
+        || sport == 7913 || dport == 7913 
+        || sport == 23456 || dport == 23456 
+        || sport == 3333 || dport == 3333 
 	/*end*/
         || sport == 1701 || dport == 1701 )
     {
