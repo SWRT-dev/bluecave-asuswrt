@@ -14,8 +14,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  *
- * Copyright 2018-2023, SWRTdev.
- * Copyright 2018-2023, paldier <paldier@hotmail.com>.
+ * Copyright 2018-2024, SWRTdev.
+ * Copyright 2018-2024, paldier <paldier@hotmail.com>.
  * All Rights Reserved.
  * 
  */
@@ -594,6 +594,17 @@ static int db_print2(dbclient* client,  json_object *result, char* prefix, char*
 	return 0;
 }
 
+static int dbapi_isid(int id, char *result)
+{
+	char str[20] = {0};
+	if(id > 0 && result){
+		snprintf(str, sizeof(str), "%d", id);
+		if(!strcmp(str, result))
+			return 1;
+	}
+	return 0;
+}
+
 static int dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char_t *url, char_t *path, char_t *query)
 {
 	int i, id=0, count;
@@ -685,14 +696,17 @@ static int dbapi_cgi(webs_t wp, char_t *urlPrefix, char_t *webDir, int arg, char
 					if((fp = fopen(scPath, "r"))!= NULL){
 						while(fgets(buf, sizeof(buf),fp) != NULL){
 							buf[strlen(buf)-1]=0;
-							websWrite(wp,"{\"result\":\"%s\"}\n",buf);
+							if(dbapi_isid(id, buf))
+								websWrite(wp,"{\"result\":%d}\n", id);
+							else
+								websWrite(wp,"{\"result\":\"%s\"}\n", buf);
 							unlink(scPath);
 							return 0;
 						}
 					}
 				}
 			}
-			websWrite(wp,"{\"result\":%d}\n",id);
+			websWrite(wp,"{\"result\":%d}\n", id);
 		}
 	}
 	return 0;
@@ -926,3 +940,4 @@ void get_traffic_hook(char *mode, char *name, char *dura, char *date, int *retva
 		websWrite(wp, "[]");
 }
 #endif
+
