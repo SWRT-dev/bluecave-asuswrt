@@ -133,13 +133,14 @@ cd /jffs/softcenter/bin && ln -sf /usr/sbin/base64_encode base64_encode
 cd /jffs/softcenter/bin && ln -sf /usr/sbin/base64_encode base64_decode
 cd /jffs/softcenter/bin && ln -sf /usr/sbin/versioncmp versioncmp
 cd /jffs/softcenter/bin && ln -sf /usr/sbin/resolveip resolveip
+cd /jffs/softcenter/bin && ln -sf /usr/bin/jq jq
 cd /jffs/softcenter/scripts && ln -sf ks_app_install.sh ks_app_remove.sh
 chmod 755 /jffs/softcenter/scripts/*.sh
 chmod 755 /jffs/softcenter/configs/*.sh
 chmod 755 /jffs/softcenter/bin/*
 chmod 755 /jffs/softcenter/init.d/*
 chmod 755 /jffs/softcenter/automount.sh
-echo 1.5.2 > /jffs/softcenter/.soft_ver
+echo 1.5.3 > /jffs/softcenter/.soft_ver
 dbus set softcenter_api="1.5"
 dbus set softcenter_version=`cat /jffs/softcenter/.soft_ver`
 nvram set sc_installed=1

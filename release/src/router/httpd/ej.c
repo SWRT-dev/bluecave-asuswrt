@@ -45,7 +45,7 @@ struct REPLACE_PRODUCTID_S replace_productid_t[] =
 };
 
 struct REPLACE_MODELNAME_S replace_modelname_t[] = {
-	{ "K3C" },//Must be before k3
+	{ "K3C" },
 	{ "K3" },
 	{ "XWR3100" },
 	{ "R7000P" },
@@ -54,12 +54,16 @@ struct REPLACE_MODELNAME_S replace_modelname_t[] = {
 	{ "F9K1118" },
 	{ "SBRAC3200P" },
 	{ "R8500" },
-	{ "R8000P" },
 	{ "TY6201_RTK" },
 	{ "TY6201_BCM" },
-	{ "RAX120" },
+	{ "TY6202" },
 	{ "DIR868L" },
-	//{ "RMAC2100" },move to model_list
+	{ "R6300V2" },
+	{ "RGMA2820A" },
+	{ "RGMA2820B" },
+	{ "TY6201PRO" },
+	{ "RGMA3062" },
+	{ "JDCBE6500" },
 	{ NULL },
 };
 
