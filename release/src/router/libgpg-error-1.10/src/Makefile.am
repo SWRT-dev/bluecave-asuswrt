@@ -138,7 +138,7 @@ code-to-errno.h: Makefile mkerrnos.awk errnos.in
 # It is correct to use $(CPP).  We want the host's idea of the error codes.
 mkerrcodes.h: Makefile mkerrcodes.awk $(gpg_extra_headers)
 	$(AWK) -f $(srcdir)/mkerrcodes1.awk $(srcdir)/errnos.in >_$@
-	$(CPP) $(extra_cppflags) _$@ | grep GPG_ERR_ | \
+	$(CPP) $(extra_cppflags) -P _$@ | grep GPG_ERR_ | \
                $(AWK) -f $(srcdir)/mkerrcodes.awk >$@
 	-rm _$@
 
@@ -182,7 +182,7 @@ code-from-errno.h: mkerrcodes Makefile
 
 errnos-sym.h: Makefile mkstrtable.awk errnos.in
 	$(AWK) -f $(srcdir)/mkstrtable.awk -v textidx=2 -v nogettext=1 \
-		-v prefix=GPG_ERR_ -v namespace=errnos_ \
+		-v prefix=GPG_ERR_ -v pkg_namespace=errnos_ \
 		$(srcdir)/errnos.in >$@
 
 extra-h.in: Makefile w32-add.h w32ce-add.h

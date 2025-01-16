@@ -86,7 +86,7 @@ sources_header {
 }
 
 sources_body {
-  sub (/\#.+/, "");
+  sub (/#.+/, "");
   sub (/[ 	]+$/, ""); # Strip trailing space and tab characters.
 
   if (/^$/)
@@ -115,7 +115,7 @@ between_sources_and_codes {
 }
 
 codes_body {
-  sub (/\#.+/, "");
+  sub (/#.+/, "");
   sub (/[ 	]+$/, ""); # Strip trailing space and tab characters.
 
   if (/^$/)
@@ -144,7 +144,7 @@ between_codes_and_errnos {
 }
 
 errnos_body {
-  sub (/\#.+/, "");
+  sub (/#.+/, "");
   sub (/[ 	]+$/, ""); # Strip trailing space and tab characters.
 
   if (/^$/)
