@@ -1161,21 +1161,20 @@ handle_request(void)
 
 #ifdef RTCONFIG_SOFTCENTER
 	char scPath[128];
-	if ((strncmp(file, "Main_S", 6)==0) || (strncmp(file, "Module_", 7)==0))//jsp
-	{
+	if (!strncmp(file, "Main_S", 6) || !strncmp(file, "Module_", 7)){//jsp
 		if(!check_if_file_exist(file)){
-			snprintf(scPath, sizeof(scPath), "/jffs/softcenter/webs/");
-			strcat(scPath, file);
+			snprintf(scPath, sizeof(scPath), "/jffs/softcenter/webs/%s", file);
 			if(check_if_file_exist(scPath)){
 				file = scPath;
 			}
 		}
-	}
-	else if (strstr(file, "res/"))//jpg,png,js,css,html
-	{
+	}else if (strstr(file, "res/")){//jpg,png,js,css,html
 		if(!check_if_file_exist(file)){
-			snprintf(scPath, sizeof(scPath), "/jffs/softcenter/");
-			strcat(scPath, file);
+			snprintf(scPath, sizeof(scPath), "/jffs/softcenter/%s", file);
+			if(strstr(scPath, "?")){//layer.css?v=3.1.0
+				char *p = strstr(scPath, "?");
+				*p = '\0';
+			}
 			if(check_if_file_exist(scPath)){
 				file = scPath;
 			}
