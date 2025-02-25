@@ -190,7 +190,7 @@ a{
 	font-family:Arial Bold;
 	font-size:1.875em;
 	background-color:rgba(79,79,79,62);
-	padding-left:11px;"	
+	padding-left:11px;
 }
 #welcome_button{
 	cursor:pointer;
@@ -278,7 +278,7 @@ a{
 	display: table-cell;
 	width: 100%;
 	padding-left: 12px;
-	cursor: pointer;"
+	cursor: pointer;
 	color: #111;
 }
 .selectBar > label{
@@ -336,7 +336,7 @@ a{
 	background:url('../../images/Model_product.png') no-repeat;
 	background-size: contain;
 	background-position:center;
-	margin-top:50px;"	
+	margin-top:50px;
 }
 .appIconContainer{
 	display: table;
