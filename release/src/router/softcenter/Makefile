@@ -7,7 +7,7 @@ else ifeq ($(or $(RTCONFIG_RALINK_MT7621),$(RTCONFIG_RALINK_EN7561)),y)
 SC_ARCH=mipsle
 else ifeq ($(or $(RTCONFIG_SOC_IPQ50XX),$(RTCONFIG_SOC_IPQ53XX),$(RTCONFIG_MT798X),$(AARCH64),$(MUSL64)),y)
 SC_ARCH=arm64
-else ifeq ($(BRCM_CHIP),$(or 4908,4912,4916))
+else ifeq ($(BRCM_CHIP),$(or 4908,4912,4916,6813,6765,6766))
 SC_ARCH=arm64
 else ifeq ($(BUILD_NAME), $(filter $(BUILD_NAME), RT-AC68U RT-AC88U RT-AC3100 RT-AC3200 RT-AC5300))
 SC_ARCH=arm
@@ -82,7 +82,10 @@ endif
 	install -m 0755 softcenter/res/eva.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/upgrade.png $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/softcenter.js $(INSTALLDIR)/rom/etc/softcenter/res
-	install -m 0755 softcenter/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/softcenter_asus.css $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/softcenter_rog.css $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/softcenter_ts.css $(INSTALLDIR)/rom/etc/softcenter/res
+	install -m 0755 softcenter/res/softcenter_tuf.css $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/proceding.gif $(INSTALLDIR)/rom/etc/softcenter/res
 	install -m 0755 softcenter/res/layer/layer.js $(INSTALLDIR)/rom/etc/softcenter/res/layer
 	install -m 0755 softcenter/res/layer/mobile/layer.js $(INSTALLDIR)/rom/etc/softcenter/res/layer/mobile
@@ -99,8 +102,6 @@ endif
 	install -m 0755 softcenter/scripts/dummy_script.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_app_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
 	install -m 0755 softcenter/scripts/ks_tar_install.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
-	#install -m 0755 softcenter/scripts/pluginbase.sh $(INSTALLDIR)/rom/etc/softcenter/scripts
-	install -m 0755 softcenter/ROG/res/softcenter.css $(INSTALLDIR)/rom/etc/softcenter/ROG/res
 	install -m 0755 jffsinit.sh $(INSTALLDIR)/usr/sbin
 ifeq ($(SWRT_NAME), $(filter $(SWRT_NAME), K3))
 	install -m 0755 mcu/uhmiMsg $(INSTALLDIR)/usr/sbin
